@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Chatbot from "../chat/Chatbot";
 import { FaRobot } from "react-icons/fa";
@@ -8,16 +9,6 @@ export default function MainLayout({ children }) {
 	const [chatOpen, setChatOpen] = useState(false);
 	const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-	const data = {
-		mobileNavItems: [
-			{ icon: '🏠', label: 'Bảng điều khiển' },
-			{ icon: '📁', label: 'Dự án' },
-			{ icon: '✅', label: 'Nhiệm vụ' },
-			{ icon: '💬', label: 'Tin nhắn' },
-			{ icon: '👥', label: 'Đội nhóm' },
-			{ icon: '🛠️', label: 'Quản trị' },
-		],
-	};
 
 	return (
 		<div className="flex h-screen w-full bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
@@ -75,9 +66,12 @@ export default function MainLayout({ children }) {
 							<button onClick={() => setMobileNavOpen(false)} className="text-blue-100">✕</button>
 						</div>
 						<nav className="space-y-1">
-							{data.mobileNavItems.map((it, i) => (
-								<div key={i} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">{it.icon} <span>{it.label}</span></div>
-							))}
+							<Link to="/dashboard" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">🏠 <span>Bảng điều khiển</span></Link>
+							<Link to="/projects" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">📁 <span>Dự án</span></Link>
+							<Link to="/tasks" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">✅ <span>Nhiệm vụ</span></Link>
+							<Link to="/messages" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">💬 <span>Tin nhắn</span></Link>
+							<Link to="/teams" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">👥 <span>Đội nhóm</span></Link>
+							<Link to="/admin" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">🛠️ <span>Quản trị</span></Link>
 						</nav>
 					</div>
 				</div>
