@@ -49,29 +49,31 @@ export default function TaskDetailModal({ open, onClose, task }) {
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mã nhiệm vụ</label>
-                        <div className="text-sm text-gray-900">{task.id}</div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Mã nhiệm vụ</label>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{task.id}</div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Dự án</label>
-                        <div className="text-sm text-gray-900">{task.project}</div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Dự án</label>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{task.project}</div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
-                        <div className="text-sm text-gray-900">{formatDueDate(task.dueDate)}</div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Hạn hoàn thành</label>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{formatDueDate(task.dueDate)}</div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian còn lại</label>
-                        <div className="text-sm text-gray-900">
+                        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Thời gian còn lại</label>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                             {getTimeRemaining(task.dueDate)}
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                    <div className="text-sm text-gray-900">{task.description}</div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Mô tả</label>
+                    <div className="text-sm text-gray-900 dark:text-gray-100">{task.description}</div>
                 </div>
             </div>
         </Modal>
     );
 }
+
+

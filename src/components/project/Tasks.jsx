@@ -4,6 +4,8 @@ import { Table, THead, TBody, TR, TH, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
+import Input from "../ui/Input";
+import Select from "../ui/Select";
 
 const tasksData = [
     { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
@@ -115,7 +117,7 @@ export default function Tasks() {
                                     <TD><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
                                     <TD>{t.priority}</TD>
                                     <TD>
-                                        <button 
+                                        <button
                                             onClick={() => handleEditTask(t)}
                                             className="text-xs text-blue-600 hover:underline"
                                         >
@@ -145,64 +147,64 @@ export default function Tasks() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mã task</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.id}
-                            onChange={(e) => setFormData({...formData, id: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập mã task"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.title}
-                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tiêu đề"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phụ trách</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.assignee}
-                            onChange={(e) => setFormData({...formData, assignee: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tên người phụ trách"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                        <select
+                        <Select
                             value={formData.status}
-                            onChange={(e) => setFormData({...formData, status: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="Chờ">Chờ</option>
                             <option value="Đang làm">Đang làm</option>
                             <option value="Hoàn thành">Hoàn thành</option>
-                        </select>
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ưu tiên</label>
-                        <select
+                        <Select
                             value={formData.priority}
-                            onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="Thấp">Thấp</option>
                             <option value="Trung bình">Trung bình</option>
                             <option value="Cao">Cao</option>
-                        </select>
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
-                        <input
+                        <Input
                             type="date"
                             value={formData.dueDate}
-                            onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
                     </div>

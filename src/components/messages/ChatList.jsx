@@ -1,30 +1,30 @@
 import React from "react";
 import Avatar from "../ui/Avatar";
+import Input from "../ui/Input";
 
-export default function ChatList({ 
-    chats, 
-    selectedChat, 
-    onChatSelect, 
-    activeTab, 
+export default function ChatList({
+    chats,
+    selectedChat,
+    onChatSelect,
+    activeTab,
     onTabChange,
     searchQuery,
     onSearchChange
 }) {
     return (
-        <div className="w-80 border-r border-gray-200 flex flex-col h-full">
+        <div className="w-80 border-r border-gray-200 flex flex-col h-full dark:border-gray-800">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Tin nhắn</h2>
-                
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+
                 {/* Search */}
                 <div className="mt-3">
                     <div className="relative">
-                        <input
+                        <Input
                             type="text"
                             placeholder="Tìm kiếm cuộc trò chuyện..."
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="pl-9"
                         />
                         <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -36,31 +36,28 @@ export default function ChatList({
                 <div className="mt-3 flex space-x-1">
                     <button
                         onClick={() => onTabChange("all")}
-                        className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                            activeTab === "all"
-                                ? "bg-blue-100 text-blue-700"
-                                : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                        className={`px-3 py-1 text-sm rounded-md transition-colors ${activeTab === "all"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                            }`}
                     >
                         Tất cả
                     </button>
                     <button
                         onClick={() => onTabChange("groups")}
-                        className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                            activeTab === "groups"
-                                ? "bg-blue-100 text-blue-700"
-                                : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                        className={`px-3 py-1 text-sm rounded-md transition-colors ${activeTab === "groups"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                            }`}
                     >
                         Nhóm
                     </button>
                     <button
                         onClick={() => onTabChange("individuals")}
-                        className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                            activeTab === "individuals"
-                                ? "bg-blue-100 text-blue-700"
-                                : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                        className={`px-3 py-1 text-sm rounded-md transition-colors ${activeTab === "individuals"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5"
+                            }`}
                     >
                         Cá nhân
                     </button>
@@ -70,7 +67,7 @@ export default function ChatList({
             {/* Chat List */}
             <div className="flex-1 overflow-y-auto">
                 {chats.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                         <p>Không tìm thấy cuộc trò chuyện nào</p>
                     </div>
                 ) : (
@@ -78,9 +75,8 @@ export default function ChatList({
                         <div
                             key={chat.id}
                             onClick={() => onChatSelect(chat)}
-                            className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                                selectedChat?.id === chat.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                            }`}
+                            className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/40 ${selectedChat?.id === chat.id ? "bg-blue-50 border-l-4 border-l-blue-500 dark:bg-blue-900/20" : ""
+                                }`}
                         >
                             <div className="flex items-start space-x-3">
                                 <div className="relative">
@@ -88,25 +84,24 @@ export default function ChatList({
                                         {chat.avatar}
                                     </Avatar>
                                     {chat.type === "individual" && (
-                                        <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
-                                            chat.status === "online" ? "bg-green-500" :
-                                            chat.status === "away" ? "bg-yellow-500" : "bg-gray-400"
-                                        }`}></div>
+                                        <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${chat.status === "online" ? "bg-green-500" :
+                                                chat.status === "away" ? "bg-yellow-500" : "bg-gray-400"
+                                            }`}></div>
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                             {chat.name}
                                         </h3>
-                                        <span className="text-xs text-gray-500">{chat.timestamp}</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">{chat.timestamp}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600 truncate mt-1">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate mt-1">
                                         {chat.lastSender}: {chat.lastMessage}
                                     </p>
                                     {chat.unreadCount > 0 && (
                                         <div className="mt-2 flex items-center justify-between">
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
                                                 {chat.type === "group" ? `${chat.members.length} thành viên` : chat.status}
                                             </span>
                                             <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1">
@@ -123,3 +118,5 @@ export default function ChatList({
         </div>
     );
 }
+
+

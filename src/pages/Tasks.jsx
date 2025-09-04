@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import MainLayout from "../components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import KanbanColumn from "../components/tasks/KanbanColumn";
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
+import PageHeader from "../components/common/PageHeader";
 
 const initialTasks = {
     "Chờ": [
@@ -59,11 +59,8 @@ export default function Tasks() {
 
     return (
         <>
-            <MainLayout>
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold">Nhiệm vụ</h1>
-                    </div>
+            <div className="space-y-6">
+                    <PageHeader breadcrumbs={[{ label: "Nhiệm vụ", to: "/tasks" }]} />
 
                     {/* Tab Content */}
                     <div>
@@ -82,7 +79,6 @@ export default function Tasks() {
                         </div>
                     </div>
                 </div>
-            </MainLayout>
 
             {/* Task Detail Modal */}
             <TaskDetailModal

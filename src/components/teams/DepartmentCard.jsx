@@ -14,12 +14,14 @@ export default function DepartmentCard({ department }) {
             <Card className="h-32 hover:shadow-lg transition-all duration-200 hover:scale-105">
                 <CardContent className="p-1 h-full justify-between">
                     <div className="text-center">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{department.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{department.name}</h3>
                         <div className="text-2xl font-bold text-blue-600">{department.memberCount}</div>
-                        <div className="text-sm text-gray-500">thành viên</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">thành viên</div>
                     </div>
                 </CardContent>
             </Card>
         </div>
     );
 }
+
+
