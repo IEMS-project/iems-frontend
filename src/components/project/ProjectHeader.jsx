@@ -3,7 +3,8 @@ import { Card, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import Modal from "../ui/Modal";
-
+import Input from "../ui/Input";
+import Textarea from "../ui/Textarea";
 const projectData = {
     id: "iems-001",
     name: "IEMS Platform",
@@ -86,7 +87,7 @@ export default function ProjectHeader() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -96,7 +97,7 @@ export default function ProjectHeader() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mã dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.code}
                             onChange={(e) => setFormData({...formData, code: e.target.value})}
@@ -106,7 +107,7 @@ export default function ProjectHeader() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.client}
                             onChange={(e) => setFormData({...formData, client: e.target.value})}
@@ -116,7 +117,7 @@ export default function ProjectHeader() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Quản lý dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.projectManager}
                             onChange={(e) => setFormData({...formData, projectManager: e.target.value})}
@@ -126,7 +127,7 @@ export default function ProjectHeader() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
-                        <input
+                        <Input
                             type="date"
                             value={formData.startDate}
                             onChange={(e) => setFormData({...formData, startDate: e.target.value})}
@@ -135,7 +136,7 @@ export default function ProjectHeader() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
-                        <input
+                        <Input
                             type="date"
                             value={formData.endDate}
                             onChange={(e) => setFormData({...formData, endDate: e.target.value})}
@@ -144,7 +145,7 @@ export default function ProjectHeader() {
                     </div>
                     <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                        <textarea
+                        <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             rows={4}

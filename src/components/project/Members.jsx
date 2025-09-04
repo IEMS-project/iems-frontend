@@ -3,8 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Avatar from "../ui/Avatar";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
+import Input from "../ui/Input";
 import Modal from "../ui/Modal";
-
+import Select from "../ui/Select";
 const membersData = [
     { id: 1, name: "Nguyễn Văn A", role: "PM", email: "nguyenvana@example.com", status: "Hoạt động" },
     { id: 2, name: "Trần Thị B", role: "Backend", email: "tranthib@example.com", status: "Hoạt động" },
@@ -78,7 +79,7 @@ export default function Members() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Badge variant="gray">{m.status}</Badge>
-                                    <button 
+                                    <button
                                         onClick={() => handleEditMember(m)}
                                         className="text-xs text-blue-600 hover:underline"
                                     >
@@ -107,45 +108,45 @@ export default function Members() {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tên thành viên"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.role}
-                            onChange={(e) => setFormData({...formData, role: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập vai trò"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
+                        <Input
                             type="email"
                             value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập email"
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                        <select
+                        <Select
                             value={formData.status}
-                            onChange={(e) => setFormData({...formData, status: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="Hoạt động">Hoạt động</option>
                             <option value="Không hoạt động">Không hoạt động</option>
                             <option value="Tạm nghỉ">Tạm nghỉ</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
             </Modal>

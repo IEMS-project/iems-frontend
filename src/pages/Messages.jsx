@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from "react";
-import MainLayout from "../components/layout/MainLayout";
 import ChatList from "../components/messages/ChatList";
 import ChatHeader from "../components/messages/ChatHeader";
 import MessageList from "../components/messages/MessageList";
 import MessageInput from "../components/messages/MessageInput";
 import EmptyChat from "../components/messages/EmptyChat";
+import PageHeader from "../components/common/PageHeader";
 
 const initialChats = {
     groups: [
@@ -165,7 +165,7 @@ export default function Messages() {
     // Filter chats based on active tab and search query
     const filteredChats = useMemo(() => {
         let chats = [];
-        
+
         if (activeTab === "all") {
             chats = [...initialChats.groups, ...initialChats.individuals];
         } else if (activeTab === "groups") {
@@ -176,7 +176,7 @@ export default function Messages() {
 
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            chats = chats.filter(chat => 
+            chats = chats.filter(chat =>
                 chat.name.toLowerCase().includes(query) ||
                 chat.lastMessage.toLowerCase().includes(query) ||
                 chat.lastSender.toLowerCase().includes(query)
@@ -187,8 +187,10 @@ export default function Messages() {
     }, [activeTab, searchQuery]);
 
     return (
-        <MainLayout>
-            <div className="flex h-screen bg-white rounded-lg border border-gray-200">
+        <div className="h-[calc(100vh-100px)] overflow-hidden flex flex-col space-y-6">
+            <PageHeader breadcrumbs={[{ label: "Tin nhắn", to: "/messages" }]} />
+
+            <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 {/* Sidebar - Chat List */}
                 <ChatList
                     chats={filteredChats}
@@ -217,6 +219,6 @@ export default function Messages() {
                     )}
                 </div>
             </div>
-        </MainLayout>
+        </div>
     );
 }

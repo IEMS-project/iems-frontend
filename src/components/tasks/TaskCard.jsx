@@ -25,21 +25,23 @@ export default function TaskCard({ task, status, onDragStart, onClick }) {
             draggable
             onDragStart={(e) => onDragStart(e, task, status)}
             onClick={() => onClick(task)}
-            className="p-3 bg-white border border-gray-200 rounded-md cursor-pointer hover:shadow-sm transition-all hover:border-gray-300"
+            className="p-3 rounded-md border border-gray-200 bg-white cursor-pointer transition-all hover:shadow-sm hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900"
         >
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm text-gray-900 leading-tight flex-1">
+                    <h4 className="font-medium text-sm leading-tight flex-1 text-gray-900 dark:text-gray-100">
                         {task.title}
                     </h4>
                     <span className="text-xs text-green-500 ml-2 flex-shrink-0">
                         {getTimeRemaining(task.dueDate)}
                     </span>
                 </div>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-gray-600 dark:text-gray-300">
                     {task.project}
                 </div>
             </div>
         </div>
     );
 }
+
+

@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import MainLayout from "../components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
 import MemberCard from "../components/teams/MemberCard";
 import MemberForm from "../components/teams/MemberForm";
+import PageHeader from "../components/common/PageHeader";
 
 const initialDepartments = {
     "dev": {
@@ -76,6 +78,9 @@ export default function DepartmentDetail() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -90,6 +95,32 @@ export default function DepartmentDetail() {
             navigate("/teams");
         }
     }, [departmentId, navigate]);
+
+    const filteredMembers = useMemo(() => {
+        if (!department) return [];
+        const q = search.trim().toLowerCase();
+        if (!q) return department.members;
+        return department.members.filter(m =>
+            m.name.toLowerCase().includes(q) ||
+            m.email.toLowerCase().includes(q) ||
+            m.role.toLowerCase().includes(q)
+        );
+    }, [department, search]);
+
+    const totalPages = useMemo(() => {
+        if (!filteredMembers) return 1;
+        return Math.max(1, Math.ceil(filteredMembers.length / pageSize));
+    }, [filteredMembers, pageSize]);
+
+    const paginatedMembers = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return filteredMembers.slice(start, start + pageSize);
+    }, [filteredMembers, page, pageSize]);
+
+    useEffect(() => {
+        // Reset to first page when search or pageSize changes
+        setPage(1);
+    }, [search, pageSize]);
 
     const handleAddMember = () => {
         setFormData({ name: "", email: "", role: "" });
@@ -143,8 +174,8 @@ export default function DepartmentDetail() {
 
     const handleSubmitEditMember = () => {
         if (formData.name && formData.email && formData.role && editingMember) {
-            const updatedMembers = department.members.map(m => 
-                m.id === editingMember.id 
+            const updatedMembers = department.members.map(m =>
+                m.id === editingMember.id
                     ? { ...m, name: formData.name, email: formData.email, role: formData.role, avatar: formData.name.charAt(0) }
                     : m
             );
@@ -167,108 +198,126 @@ export default function DepartmentDetail() {
 
     return (
         <>
-            <MainLayout>
-                <div className="space-y-6">
-                    {/* Page Header */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => navigate("/teams")}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">{department.name}</h1>
-                                <p className="text-gray-600 mt-1">{department.description}</p>
-                            </div>
-                        </div>
-                        <Button onClick={handleAddMember} className="flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Thêm thành viên
-                        </Button>
-                    </div>
+            <div className="space-y-6">
+                {/* Page Header */}
+                <div className="flex items-center justify-between">
+                    <PageHeader
+                        breadcrumbs={[{ label: "Đội nhóm", to: "/teams" }, { label: department.name }]}
+                    />
+                </div>
 
-                    {/* Department Stats */}
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                        <Card>
-                            <CardContent className="p-6">
-                                <div className="flex items-center">
-                                    <div className={`p-3 ${department.color} rounded-lg`}>
-                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-600">Tổng thành viên</p>
-                                        <p className="text-2xl font-semibold text-gray-900">{department.memberCount}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="p-6">
-                                <div className="flex items-center">
-                                    <div className="p-3 bg-green-100 rounded-lg">
-                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-600">Đang hoạt động</p>
-                                        <p className="text-2xl font-semibold text-gray-900">{department.memberCount}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="p-6">
-                                <div className="flex items-center">
-                                    <div className="p-3 bg-blue-100 rounded-lg">
-                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-600">Cập nhật gần nhất</p>
-                                        <p className="text-2xl font-semibold text-gray-900">Hôm nay</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Members List */}
+                {/* Department Stats */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Danh sách thành viên
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid gap-3">
-                                {department.members.map((member) => (
-                                    <MemberCard
-                                        key={member.id}
-                                        member={member}
-                                        onEdit={handleEditMember}
-                                        onDelete={handleDeleteMember}
-                                    />
-                                ))}
+
+                        <CardContent className="p-6">
+                            <div className="flex items-center">
+                                <div className={`p-3 ${department.color} rounded-lg`}>
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Tổng thành viên</p>
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.memberCount}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-6">
+                            <div className="flex items-center">
+                                <div className="p-3 bg-green-100 rounded-lg">
+                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Đang hoạt động</p>
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.memberCount}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-6">
+                            <div className="flex items-center">
+                                <div className="p-3 bg-blue-100 rounded-lg">
+                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Cập nhật gần nhất</p>
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Hôm nay</p>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
-            </MainLayout>
+
+                {/* Members List */}
+                <Card>
+                    <CardHeader className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Danh sách thành viên
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Tìm thành viên..."
+                                className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                            <Select
+                                className="h-10 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                value={pageSize}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                            >
+                                <option value={5}>5 / trang</option>
+                                <option value={10}>10 / trang</option>
+                                <option value={20}>20 / trang</option>
+                            </Select>
+                            <Button onClick={handleAddMember} className="flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Thêm thành viên
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-3">
+                            {paginatedMembers.map((member) => (
+                                <MemberCard
+                                    key={member.id}
+                                    member={member}
+                                    onEdit={handleEditMember}
+                                    onDelete={handleDeleteMember}
+                                />
+                            ))}
+                            {paginatedMembers.length === 0 && (
+                                <div className="text-sm text-gray-500">Không có thành viên phù hợp</div>
+                            )}
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                            <div>
+                                Trang {page} / {totalPages} • Tổng {filteredMembers.length}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Trước</Button>
+                                <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Add Member Modal */}
             <Modal

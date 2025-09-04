@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Chatbot from "../chat/Chatbot";
 import { FaRobot } from "react-icons/fa";
+import { FaMoon, FaSun } from "react-icons/fa";
 
 export default function MainLayout({ children }) {
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -28,8 +29,9 @@ export default function MainLayout({ children }) {
 						onClick={() => setChatOpen(v => !v)}
 						className="fixed bottom-6 right-6 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700 shadow-lg ring-1 ring-blue-500/30 transition hover:bg-blue-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-blue-300 dark:ring-0 dark:hover:bg-blue-700 dark:hover:text-white dark:focus:ring-blue-500"
 					>
-						<FaRobot  className="h-6 w-6" />
+						<FaRobot className="h-6 w-6" />
 					</button>
+
 					<button
 						aria-label="Open navigation"
 						onClick={() => setMobileNavOpen(true)}
@@ -43,18 +45,30 @@ export default function MainLayout({ children }) {
 			{/* Chat overlay drawer (all breakpoints) */}
 			{chatOpen && (
 				<div>
-					<div className="fixed inset-0 z-40 bg-black/30" onClick={() => setChatOpen(false)} />
+					<div
+						className="fixed inset-0 z-40 bg-black/30"
+						onClick={() => setChatOpen(false)}
+					/>
 					<div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm translate-x-0 transform bg-white shadow-xl transition-transform dark:bg-gray-950">
-						<div className="flex h-12 items-center justify-between border-b border-gray-200 px-4 text-sm font-semibold dark:border-gray-800">
+						{/* Header */}
+						<div className="flex h-12 items-center justify-between border-b border-gray-200 px-4 text-xl font-semibold dark:border-gray-800">
 							<span>Chatbot</span>
-							<button className="text-gray-500 hover:text-gray-700" onClick={() => setChatOpen(false)}>✕</button>
+							<button
+								className="text-gray-500 hover:text-gray-700"
+								onClick={() => setChatOpen(false)}
+							>
+								✕
+							</button>
 						</div>
-						<div className="min-h-0 flex-1 overflow-auto p-4">
+
+						{/* Body */}
+						<div className="flex h-[calc(100%-4rem)] flex-col">
 							<Chatbot />
 						</div>
 					</div>
 				</div>
 			)}
+
 
 			{/* Mobile nav overlay */}
 			{mobileNavOpen && (

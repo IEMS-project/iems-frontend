@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import MainLayout from "../components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
 import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
+import Input from "../components/ui/Input";
+import Textarea from "../components/ui/Textarea";
+import PageHeader from "../components/common/PageHeader";
 
 const projectsData = [
     { id: "iems-001", name: "IEMS Platform", status: "Đang thực hiện", owner: "Nguyễn Văn A", client: "ABC Corp", startDate: "2024-09-01" },
@@ -67,48 +69,45 @@ export default function Projects() {
 
     return (
         <>
-            <MainLayout>
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold">Dự án</h1>
+            <div className="space-y-6">
+                <PageHeader breadcrumbs={[{ label: "Dự án", to: "/projects" }]} />
+
+                <Card>
+
+                    <CardHeader className="flex items-center justify-between">
+                        <CardTitle>Danh sách dự án</CardTitle>
                         <Button onClick={handleCreateProject}>Tạo dự án</Button>
-                    </div>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <THead>
+                                <TR>
+                                    <TH>Mã</TH>
+                                    <TH>Tên</TH>
+                                    <TH>Trạng thái</TH>
+                                    <TH>Chủ sở hữu</TH>
+                                    <TH>Khách hàng</TH>
+                                    <TH></TH>
+                                </TR>
+                            </THead>
+                            <TBody>
+                                {projectsData.map(p => (
+                                    <TR key={p.id}>
+                                        <TD className="font-medium">{p.id.toUpperCase()}</TD>
+                                        <TD>
+                                            <Link to={`/projects/${p.id}`} className="text-blue-600 hover:underline">{p.name}</Link>
+                                        </TD>
+                                        <TD>{p.status}</TD>
+                                        <TD>{p.owner}</TD>
+                                        <TD>{p.client}</TD>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Danh sách dự án</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <THead>
-                                    <TR>
-                                        <TH>Mã</TH>
-                                        <TH>Tên</TH>
-                                        <TH>Trạng thái</TH>
-                                        <TH>Chủ sở hữu</TH>
-                                        <TH>Khách hàng</TH>
-                                        <TH></TH>
                                     </TR>
-                                </THead>
-                                <TBody>
-                                    {projectsData.map(p => (
-                                        <TR key={p.id}>
-                                            <TD className="font-medium">{p.id.toUpperCase()}</TD>
-                                            <TD>
-                                                <Link to={`/projects/${p.id}`} className="text-blue-600 hover:underline">{p.name}</Link>
-                                            </TD>
-                                            <TD>{p.status}</TD>
-                                            <TD>{p.owner}</TD>
-                                            <TD>{p.client}</TD>
-
-                                        </TR>
-                                    ))}
-                                </TBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </div>
-            </MainLayout>
+                                ))}
+                            </TBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
 
             <Modal
                 open={showModal}
@@ -124,7 +123,7 @@ export default function Projects() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -134,7 +133,7 @@ export default function Projects() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mã dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.id}
                             onChange={(e) => setFormData({ ...formData, id: e.target.value })}
@@ -144,7 +143,7 @@ export default function Projects() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.client}
                             onChange={(e) => setFormData({ ...formData, client: e.target.value })}
@@ -154,7 +153,7 @@ export default function Projects() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Quản lý dự án</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.owner}
                             onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
@@ -164,7 +163,7 @@ export default function Projects() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
-                        <input
+                        <Input
                             type="date"
                             value={formData.startDate}
                             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
@@ -173,7 +172,7 @@ export default function Projects() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
-                        <input
+                        <Input
                             type="date"
                             value={formData.endDate}
                             onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
@@ -182,7 +181,7 @@ export default function Projects() {
                     </div>
                     <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                        <textarea
+                        <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
