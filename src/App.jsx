@@ -12,6 +12,7 @@ import Documents from "./pages/Documents";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Calendar from "./pages/Calendar";
 import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
 import MainLayout from "./components/layout/MainLayout";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
 				<Route path="/documents" element={<Documents />} />
 				<Route path="/calendar" element={<Calendar />} />
 				<Route path="/notifications" element={<Notifications />} />
+				<Route path="/profile" element={<Profile />} />
 				<Route path="/admin" element={<AdminAnalytics />} />
 				<Route path="*" element={<Navigate to="/dashboard" replace />} />
 			</Routes>

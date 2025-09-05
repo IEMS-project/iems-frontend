@@ -5,6 +5,7 @@ import { NavLink as RRNavLink } from "react-router-dom";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useTheme } from "../../theme/ThemeProvider";
 import Toggle from "../ui/Toggle";
+import UserProfile from "./UserProfile";
 
 function Item({ icon, label, to, collapsed }) {
 	return (
@@ -34,7 +35,7 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 		],
 	};
 	return (
-		<aside className={`hidden shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950 md:block ${collapsed ? 'w-20' : 'w-64'}`}>
+		<aside className={`hidden shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950 md:flex md:flex-col ${collapsed ? 'w-20' : 'w-64'}`}>
 			<div className="flex h-16 items-center gap-3 px-4">
 				<div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-base font-bold text-gray-800 dark:bg-gray-800 dark:text-gray-100">I</div>
 				{!collapsed && (
@@ -44,7 +45,7 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 					</div>
 				)}
 			</div>
-			<nav className="space-y-1 px-3 pb-4">
+			<nav className="space-y-1 px-3 pb-4 flex-1">
 				{data.items.map((it, i) => (
 					<Item key={i} icon={it.icon} label={it.label} to={it.to} collapsed={collapsed} />
 				))}
@@ -64,6 +65,10 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 						<Toggle checked={theme === 'dark'} onChange={toggleTheme} />
 					</div>
 				)}
+			</div>
+			{/* User Profile Section */}
+			<div className="px-3 pb-4">
+				<UserProfile collapsed={collapsed} />
 			</div>
 		</aside>
 	);
