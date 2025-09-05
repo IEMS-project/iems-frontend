@@ -12,6 +12,26 @@ const tasksData = [
     { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
     { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
     { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
+    { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
+    { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
+    { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
+    { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
+    { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
+    { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
+    { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
+    { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
+];
+
+// Danh sách thành viên có sẵn để chọn làm người phụ trách
+const availableMembers = [
+    "Nguyễn Văn A",
+    "Trần Thị B", 
+    "Lê Văn C",
+    "Phạm D",
+    "Hoàng Thị E",
+    "Vũ Văn F",
+    "Đặng Thị G",
+    "Bùi Văn H"
 ];
 
 function statusVariant(status) {
@@ -97,37 +117,39 @@ export default function Tasks() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <THead>
-                            <TR>
-                                <TH>Mã</TH>
-                                <TH>Tiêu đề</TH>
-                                <TH>Phụ trách</TH>
-                                <TH>Trạng thái</TH>
-                                <TH>Ưu tiên</TH>
-                                <TH></TH>
-                            </TR>
-                        </THead>
-                        <TBody>
-                            {tasksData.map(t => (
-                                <TR key={t.id}>
-                                    <TD className="font-medium">{t.id}</TD>
-                                    <TD>{t.title}</TD>
-                                    <TD>{t.assignee}</TD>
-                                    <TD><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
-                                    <TD>{t.priority}</TD>
-                                    <TD>
-                                        <button
-                                            onClick={() => handleEditTask(t)}
-                                            className="text-xs text-blue-600 hover:underline"
-                                        >
-                                            Sửa
-                                        </button>
-                                    </TD>
+                    <div className="max-h-96 overflow-y-auto">
+                        <Table>
+                            <THead>
+                                <TR>
+                                    <TH>Mã</TH>
+                                    <TH>Tiêu đề</TH>
+                                    <TH>Phụ trách</TH>
+                                    <TH>Trạng thái</TH>
+                                    <TH>Ưu tiên</TH>
+                                    <TH></TH>
                                 </TR>
-                            ))}
-                        </TBody>
-                    </Table>
+                            </THead>
+                            <TBody>
+                                {tasksData.map(t => (
+                                    <TR key={t.id}>
+                                        <TD className="font-medium">{t.id}</TD>
+                                        <TD>{t.title}</TD>
+                                        <TD>{t.assignee}</TD>
+                                        <TD><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
+                                        <TD>{t.priority}</TD>
+                                        <TD>
+                                            <button
+                                                onClick={() => handleEditTask(t)}
+                                                className="text-xs text-blue-600 hover:underline"
+                                            >
+                                                Sửa
+                                            </button>
+                                        </TD>
+                                    </TR>
+                                ))}
+                            </TBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -167,13 +189,16 @@ export default function Tasks() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phụ trách</label>
-                        <Input
-                            type="text"
+                        <Select
                             value={formData.assignee}
                             onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tên người phụ trách"
-                        />
+                        >
+                            <option value="">Chọn người phụ trách</option>
+                            {availableMembers.map(member => (
+                                <option key={member} value={member}>{member}</option>
+                            ))}
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>

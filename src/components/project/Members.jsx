@@ -7,10 +7,39 @@ import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 import Select from "../ui/Select";
 const membersData = [
-    { id: 1, name: "Nguyễn Văn A", role: "PM", email: "nguyenvana@example.com", status: "Hoạt động" },
-    { id: 2, name: "Trần Thị B", role: "Backend", email: "tranthib@example.com", status: "Hoạt động" },
-    { id: 3, name: "Lê Văn C", role: "Frontend", email: "levanc@example.com", status: "Hoạt động" },
-    { id: 4, name: "Phạm D", role: "QA", email: "phamd@example.com", status: "Hoạt động" },
+    { id: 1, name: "Nguyễn Văn A", role: "PM", status: "Hoạt động" },
+    { id: 2, name: "Trần Thị B", role: "Backend", status: "Hoạt động" },
+    { id: 3, name: "Lê Văn C", role: "Frontend", status: "Hoạt động" },
+    { id: 4, name: "Phạm D", role: "QA", status: "Hoạt động" },
+    { id: 5, name: "Hoàng Thị E", role: "UI/UX", status: "Hoạt động" },
+    { id: 6, name: "Vũ Văn F", role: "DevOps", status: "Hoạt động" },
+    { id: 7, name: "Đặng Thị G", role: "Business Analyst", status: "Hoạt động" },
+    { id: 8, name: "Bùi Văn H", role: "Scrum Master", status: "Hoạt động" }
+];
+
+// Danh sách thành viên có sẵn để chọn
+const availableMembers = [
+    "Nguyễn Văn A",
+    "Trần Thị B", 
+    "Lê Văn C",
+    "Phạm D",
+    "Hoàng Thị E",
+    "Vũ Văn F",
+    "Đặng Thị G",
+    "Bùi Văn H"
+];
+
+// Danh sách vai trò có sẵn
+const availableRoles = [
+    "PM",
+    "Frontend",
+    "Backend", 
+    "Full-stack",
+    "QA",
+    "DevOps",
+    "UI/UX",
+    "Business Analyst",
+    "Scrum Master"
 ];
 
 export default function Members() {
@@ -19,7 +48,6 @@ export default function Members() {
     const [formData, setFormData] = useState({
         name: "",
         role: "",
-        email: "",
         status: "Hoạt động"
     });
 
@@ -28,7 +56,6 @@ export default function Members() {
         setFormData({
             name: member.name,
             role: member.role,
-            email: member.email,
             status: member.status
         });
         setShowModal(true);
@@ -39,7 +66,6 @@ export default function Members() {
         setFormData({
             name: "",
             role: "",
-            email: "",
             status: "Hoạt động"
         });
         setShowModal(true);
@@ -49,12 +75,12 @@ export default function Members() {
         // Here you would typically save the data
         console.log("Saving member:", formData);
         setShowModal(false);
-        setFormData({ name: "", role: "", email: "", status: "Hoạt động" });
+        setFormData({ name: "", role: "", status: "Hoạt động" });
     };
 
     const handleClose = () => {
         setShowModal(false);
-        setFormData({ name: "", role: "", email: "", status: "Hoạt động" });
+        setFormData({ name: "", role: "", status: "Hoạt động" });
     };
 
     return (
@@ -67,28 +93,30 @@ export default function Members() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-3">
-                        {membersData.map(m => (
-                            <li key={m.id} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={m.name} size={9} />
-                                    <div>
-                                        <div className="text-sm font-medium">{m.name}</div>
-                                        <div className="text-xs text-gray-500">{m.role}</div>
+                    <div className="max-h-44 overflow-y-auto">
+                        <ul className="space-y-3">
+                            {membersData.map(m => (
+                                <li key={m.id} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={m.name} size={9} />
+                                        <div>
+                                            <div className="text-sm font-medium">{m.name}</div>
+                                            <div className="text-xs text-gray-500">{m.role}</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="gray">{m.status}</Badge>
-                                    <button
-                                        onClick={() => handleEditMember(m)}
-                                        className="text-xs text-blue-600 hover:underline"
-                                    >
-                                        Sửa
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="gray">{m.status}</Badge>
+                                        <button
+                                            onClick={() => handleEditMember(m)}
+                                            className="text-xs text-blue-600 hover:underline"
+                                        >
+                                            Sửa
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -108,33 +136,29 @@ export default function Members() {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
-                        <Input
-                            type="text"
+                        <Select
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tên thành viên"
-                        />
+                        >
+                            <option value="">Chọn thành viên</option>
+                            {availableMembers.map(member => (
+                                <option key={member} value={member}>{member}</option>
+                            ))}
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
-                        <Input
-                            type="text"
+                        <Select
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập vai trò"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <Input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập email"
-                        />
+                        >
+                            <option value="">Chọn vai trò</option>
+                            {availableRoles.map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
