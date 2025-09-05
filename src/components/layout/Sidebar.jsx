@@ -29,7 +29,7 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 			{ icon: <FaComments className="h-5 w-5" />, label: "Tin nhắn", to: "/messages" },
 			{ icon: <FaBell className="h-5 w-5" />, label: "Thông báo", to: "/notifications" },
 			{ icon: <FaFileAlt className="h-5 w-5" />, label: "Tài liệu", to: "/documents" },
-			{ icon: <FaUsers className="h-5 w-5" />, label: "Phòng ban", to: "/teams" },
+			{ icon: <FaUsers className="h-5 w-5" />, label: "Phòng ban", to: "/departments" },
 			{ icon: <FaUserShield className="h-5 w-5" />, label: "Quản trị", to: "/admin" },
 		],
 	};

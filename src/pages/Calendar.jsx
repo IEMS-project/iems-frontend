@@ -279,12 +279,12 @@ export default function CalendarPage() {
                         </div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="h-fit min-h-[32rem]">
                     <CardHeader>
                         <CardTitle>Công việc ngày {selectedDate.toLocaleDateString('vi-VN')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-[28rem] overflow-y-auto">
                             {selectedDayTasks.length === 0 && (
                                 <div className="text-sm text-gray-500">Không có công việc</div>
                             )}

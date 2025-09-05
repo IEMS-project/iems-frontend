@@ -2,10 +2,10 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import Project from "./pages/Project";
+import ProjectDetail from "./pages/ProjectDetail";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
-import Teams from "./pages/Teams";
+import Departments from "./pages/Departments";
 import DepartmentDetail from "./pages/DepartmentDetail";
 import Messages from "./pages/Messages";
 import Documents from "./pages/Documents";
@@ -20,10 +20,10 @@ export default function App() {
 			<Routes>
 				<Route path="/dashboard" element={<Dashboard />} />
 				<Route path="/projects" element={<Projects />} />
-				<Route path="/projects/:projectId" element={<Project />} />
+				<Route path="/projects/:projectId" element={<ProjectDetail />} />
 				<Route path="/tasks" element={<Tasks />} />
-				<Route path="/teams" element={<Teams />} />
-				<Route path="/teams/:departmentId" element={<DepartmentDetail />} />
+				<Route path="/departments" element={<Departments />} />
+				<Route path="/departments/:departmentId" element={<DepartmentDetail />} />
 				<Route path="/messages" element={<Messages />} />
 				<Route path="/documents" element={<Documents />} />
 				<Route path="/calendar" element={<Calendar />} />
