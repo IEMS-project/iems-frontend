@@ -8,201 +8,16 @@ import Select from "../components/ui/Select";
 import MemberCard from "../components/departments/MemberCard";
 import MemberForm from "../components/departments/MemberForm";
 import PageHeader from "../components/common/PageHeader";
+import UserAvatar from "../components/ui/UserAvatar";
+import { departmentService } from "../services/departmentService";
 
-const initialDepartments = {
-    "dev": {
-        id: "dev",
-        name: "Phát triển",
-        description: "Phát triển sản phẩm và tính năng mới",
-        memberCount: 8,
-        color: "bg-blue-500",
-        members: [
-            { 
-                id: "M001", 
-                firstName: "Nguyễn", 
-                lastName: "Văn A", 
-                email: "a.nguyen@company.com", 
-                phone: "0123456789",
-                dob: "1990-05-15",
-                gender: "Nam",
-                role: "Backend", 
-                contractType: "Full-time", 
-                address: "123 Đường ABC, Quận 1, TP.HCM",
-                cccd: "123456789012",
-                bankName: "Vietcombank",
-                bankAccount: "1234567890",
-                joinDate: "2020-01-15",
-                avatar: "A" 
-            },
-            { 
-                id: "M002", 
-                firstName: "Trần", 
-                lastName: "Thị B", 
-                email: "b.tran@company.com", 
-                phone: "0123456790",
-                dob: "1992-08-20",
-                gender: "Nữ",
-                role: "Frontend", 
-                contractType: "Full-time", 
-                address: "456 Đường DEF, Quận 2, TP.HCM",
-                cccd: "123456789013",
-                bankName: "BIDV",
-                bankAccount: "1234567891",
-                joinDate: "2020-03-10",
-                avatar: "B" 
-            },
-            { 
-                id: "M003", 
-                firstName: "Lê", 
-                lastName: "Văn C", 
-                email: "c.le@company.com", 
-                phone: "0123456791",
-                dob: "1988-12-03",
-                gender: "Nam",
-                role: "Backend", 
-                contractType: "Part-time", 
-                address: "789 Đường GHI, Quận 3, TP.HCM",
-                cccd: "123456789014",
-                bankName: "Agribank",
-                bankAccount: "1234567892",
-                joinDate: "2021-06-01",
-                avatar: "C" 
-            },
-            { 
-                id: "M004", 
-                firstName: "Phạm", 
-                lastName: "Thị D", 
-                email: "d.pham@company.com", 
-                phone: "0123456792",
-                dob: "1995-03-25",
-                gender: "Nữ",
-                role: "Frontend", 
-                contractType: "Remote", 
-                address: "321 Đường JKL, Quận 4, TP.HCM",
-                cccd: "123456789015",
-                bankName: "Techcombank",
-                bankAccount: "1234567893",
-                joinDate: "2021-09-15",
-                avatar: "D" 
-            },
-            { 
-                id: "M005", 
-                firstName: "Hoàng", 
-                lastName: "Văn E", 
-                email: "e.hoang@company.com", 
-                phone: "0123456793",
-                dob: "1991-07-10",
-                gender: "Nam",
-                role: "Backend", 
-                contractType: "Full-time", 
-                address: "654 Đường MNO, Quận 5, TP.HCM",
-                cccd: "123456789016",
-                bankName: "Vietinbank",
-                bankAccount: "1234567894",
-                joinDate: "2020-11-20",
-                avatar: "E" 
-            },
-            { 
-                id: "M006", 
-                firstName: "Vũ", 
-                lastName: "Thị F", 
-                email: "f.vu@company.com", 
-                phone: "0123456794",
-                dob: "1993-11-18",
-                gender: "Nữ",
-                role: "Frontend", 
-                contractType: "Full-time", 
-                address: "987 Đường PQR, Quận 6, TP.HCM",
-                cccd: "123456789017",
-                bankName: "ACB",
-                bankAccount: "1234567895",
-                joinDate: "2022-02-01",
-                avatar: "F" 
-            },
-            { 
-                id: "M007", 
-                firstName: "Đặng", 
-                lastName: "Văn G", 
-                email: "g.dang@company.com", 
-                phone: "0123456795",
-                dob: "1989-04-12",
-                gender: "Nam",
-                role: "Backend", 
-                contractType: "Remote", 
-                address: "147 Đường STU, Quận 7, TP.HCM",
-                cccd: "123456789018",
-                bankName: "Sacombank",
-                bankAccount: "1234567896",
-                joinDate: "2021-04-10",
-                avatar: "G" 
-            },
-            { 
-                id: "M008", 
-                firstName: "Bùi", 
-                lastName: "Thị H", 
-                email: "h.bui@company.com", 
-                phone: "0123456796",
-                dob: "1994-09-30",
-                gender: "Nữ",
-                role: "Frontend", 
-                contractType: "Part-time", 
-                address: "258 Đường VWX, Quận 8, TP.HCM",
-                cccd: "123456789019",
-                bankName: "MB Bank",
-                bankAccount: "1234567897",
-                joinDate: "2022-07-05",
-                avatar: "H" 
-            }
-        ]
-    },
-    "design": {
-        id: "design",
-        name: "Thiết kế",
-        description: "Thiết kế UI/UX và trải nghiệm người dùng",
-        memberCount: 4,
-        color: "bg-purple-500",
-        members: [
-            { id: "M009", name: "Ngô Văn I", email: "i.ngo@company.com", role: "Designer", contractType: "Full-time", avatar: "I" },
-            { id: "M010", name: "Đinh Thị K", email: "k.dinh@company.com", role: "Designer", contractType: "Full-time", avatar: "K" },
-            { id: "M011", name: "Lý Văn L", email: "l.ly@company.com", role: "Designer", contractType: "Part-time", avatar: "L" },
-            { id: "M012", name: "Hồ Thị M", email: "m.ho@company.com", role: "Designer", contractType: "Remote", avatar: "M" }
-        ]
-    },
-    "marketing": {
-        id: "marketing",
-        name: "Marketing",
-        description: "Quảng cáo và truyền thông sản phẩm",
-        memberCount: 6,
-        color: "bg-green-500",
-        members: [
-            { id: "M013", name: "Dương Văn N", email: "n.duong@company.com", role: "Marketing", contractType: "Full-time", avatar: "N" },
-            { id: "M014", name: "Võ Thị O", email: "o.vo@company.com", role: "Marketing", contractType: "Full-time", avatar: "O" },
-            { id: "M015", name: "Tô Văn P", email: "p.to@company.com", role: "Marketing", contractType: "Part-time", avatar: "P" },
-            { id: "M016", name: "Châu Thị Q", email: "q.chau@company.com", role: "Marketing", contractType: "Remote", avatar: "Q" },
-            { id: "M017", name: "Hà Văn R", email: "r.ha@company.com", role: "Marketing", contractType: "Full-time", avatar: "R" },
-            { id: "M018", name: "Lâm Thị S", email: "s.lam@company.com", role: "Marketing", contractType: "Part-time", avatar: "S" }
-        ]
-    },
-    "support": {
-        id: "support",
-        name: "Hỗ trợ",
-        description: "Hỗ trợ khách hàng và giải đáp thắc mắc",
-        memberCount: 5,
-        color: "bg-orange-500",
-        members: [
-            { id: "M019", name: "Thái Văn T", email: "t.thai@company.com", role: "Support", contractType: "Full-time", avatar: "T" },
-            { id: "M020", name: "Từ Thị U", email: "u.tu@company.com", role: "Support", contractType: "Full-time", avatar: "U" },
-            { id: "M021", name: "Trịnh Văn V", email: "v.trinh@company.com", role: "Support", contractType: "Part-time", avatar: "V" },
-            { id: "M022", name: "Đoàn Thị W", email: "w.doan@company.com", role: "Support", contractType: "Remote", avatar: "W" },
-            { id: "M023", name: "Mai Văn X", email: "x.mai@company.com", role: "Support", contractType: "Full-time", avatar: "X" }
-        ]
-    }
-};
 
 export default function DepartmentDetail() {
     const { departmentId } = useParams();
     const navigate = useNavigate();
     const [department, setDepartment] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -228,22 +43,67 @@ export default function DepartmentDetail() {
     });
 
     useEffect(() => {
-        const dept = initialDepartments[departmentId];
-        if (dept) {
-            setDepartment(dept);
-        } else {
-            navigate("/departments");
+        const fetchDepartment = async () => {
+            try {
+                setLoading(true);
+                // Use new API that returns department with enriched user details
+                const dept = await departmentService.getDepartmentWithUsers(departmentId);
+                if (dept) {
+                    // Map the enriched users to the expected format
+                    if (dept.users && dept.users.length > 0) {
+                        const enrichedUsers = dept.users.map(deptUser => ({
+                            id: deptUser.id,
+                            departmentId: deptUser.departmentId,
+                            userId: deptUser.userId,
+                            role: deptUser.role,
+                            joinedAt: deptUser.joinedAt,
+                            leftAt: deptUser.leftAt,
+                            isActive: deptUser.isActive,
+                            // User details from User Service
+                            firstName: deptUser.userDetails?.firstName,
+                            lastName: deptUser.userDetails?.lastName,
+                            email: deptUser.userDetails?.email,
+                            phone: deptUser.userDetails?.phone,
+                            dob: deptUser.userDetails?.dob,
+                            gender: deptUser.userDetails?.gender,
+                            address: deptUser.userDetails?.address,
+                            personalID: deptUser.userDetails?.personalID,
+                            image: deptUser.userDetails?.image,
+                            bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                            bankName: deptUser.userDetails?.bankName,
+                            contractType: deptUser.userDetails?.contractType,
+                            startDate: deptUser.userDetails?.startDate,
+                            avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                        }));
+                        dept.users = enrichedUsers;
+                    }
+                    setDepartment(dept);
+                } else {
+                    navigate("/departments");
+                }
+            } catch (err) {
+                setError(err?.message || "Không tải được thông tin phòng ban");
+                navigate("/departments");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (departmentId) {
+            fetchDepartment();
         }
     }, [departmentId, navigate]);
 
     const filteredMembers = useMemo(() => {
-        if (!department) return [];
+        if (!department || !department.users) return [];
         const q = search.trim().toLowerCase();
-        if (!q) return department.members;
-        return department.members.filter(m =>
-            m.name.toLowerCase().includes(q) ||
-            m.email.toLowerCase().includes(q) ||
-            m.role.toLowerCase().includes(q)
+        if (!q) return department.users;
+        return department.users.filter(m =>
+            (m.firstName && m.firstName.toLowerCase().includes(q)) ||
+            (m.lastName && m.lastName.toLowerCase().includes(q)) ||
+            (m.email && m.email.toLowerCase().includes(q)) ||
+            (m.phone && m.phone.toLowerCase().includes(q)) ||
+            (m.userId && m.userId.toLowerCase().includes(q))
         );
     }, [department, search]);
 
@@ -308,11 +168,12 @@ export default function DepartmentDetail() {
 
     const handleDeleteMember = (memberId) => {
         if (department && window.confirm("Bạn có chắc muốn xóa thành viên này?")) {
-            const updatedMembers = department.members.filter(m => m.id !== memberId);
+            const updatedMembers = department.users.filter(m => m.id !== memberId);
             const updatedDepartment = {
                 ...department,
-                members: updatedMembers,
-                memberCount: updatedMembers.length
+                users: updatedMembers,
+                totalUsers: updatedMembers.length,
+                activeUsers: updatedMembers.filter(m => m.isActive).length
             };
             setDepartment(updatedDepartment);
         }
@@ -322,6 +183,11 @@ export default function DepartmentDetail() {
         if (formData.firstName && formData.lastName && formData.email && formData.role) {
             const newMember = {
                 id: `M${String(Date.now()).slice(-6)}`,
+                userId: `user_${String(Date.now()).slice(-6)}`,
+                departmentId: department.id,
+                joinedAt: new Date().toISOString(),
+                leftAt: null,
+                isActive: true,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
@@ -338,11 +204,12 @@ export default function DepartmentDetail() {
                 avatar: formData.firstName.charAt(0)
             };
 
-            const updatedMembers = [...department.members, newMember];
+            const updatedMembers = [...(department.users || []), newMember];
             const updatedDepartment = {
                 ...department,
-                members: updatedMembers,
-                memberCount: updatedMembers.length
+                users: updatedMembers,
+                totalUsers: updatedMembers.length,
+                activeUsers: updatedMembers.filter(m => m.isActive).length
             };
 
             setDepartment(updatedDepartment);
@@ -367,7 +234,7 @@ export default function DepartmentDetail() {
 
     const handleSubmitEditMember = () => {
         if (formData.firstName && formData.lastName && formData.email && formData.role && editingMember) {
-            const updatedMembers = department.members.map(m =>
+            const updatedMembers = (department.users || []).map(m =>
                 m.id === editingMember.id
                     ? { 
                         ...m, 
@@ -391,7 +258,9 @@ export default function DepartmentDetail() {
 
             const updatedDepartment = {
                 ...department,
-                members: updatedMembers
+                users: updatedMembers,
+                totalUsers: updatedMembers.length,
+                activeUsers: updatedMembers.filter(m => m.isActive).length
             };
 
             setDepartment(updatedDepartment);
@@ -415,6 +284,34 @@ export default function DepartmentDetail() {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Đang tải thông tin phòng ban...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <p className="text-red-600">{error}</p>
+                        <Button onClick={() => navigate("/departments")} className="mt-4">
+                            Quay lại danh sách
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (!department) {
         return null;
     }
@@ -425,7 +322,7 @@ export default function DepartmentDetail() {
                 {/* Page Header */}
                 <div className="flex items-center justify-between">
                     <PageHeader
-                        breadcrumbs={[{ label: "Phòng ban", to: "/departments" }, { label: department.name }]}
+                        breadcrumbs={[{ label: "Phòng ban", to: "/departments" }, { label: department.departmentName || department.name }]}
                     />
                 </div>
 
@@ -442,7 +339,7 @@ export default function DepartmentDetail() {
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Tổng thành viên</p>
-                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.memberCount}</p>
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.totalUsers || 0}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -458,7 +355,7 @@ export default function DepartmentDetail() {
                                 </div>
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Đang hoạt động</p>
-                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.memberCount}</p>
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.activeUsers || 0}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -533,33 +430,45 @@ export default function DepartmentDetail() {
                             {paginatedMembers.map((member) => (
                                         <tr key={member.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                             <td className="py-4 px-4">
-                                                <div className="font-medium text-gray-900 dark:text-gray-100">
-                                                    {member.firstName} {member.lastName}
+                                                <div className="flex items-center gap-3">
+                                                    <UserAvatar user={member} size="sm" />
+                                                    <div>
+                                                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                                                            {member.firstName && member.lastName 
+                                                                ? `${member.firstName} ${member.lastName}` 
+                                                                : `User ID: ${member.userId}`}
+                                                        </div>
+                                                        {member.email && (
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                {member.email}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className="text-gray-900 dark:text-gray-100">
-                                                    {member.role}
+                                                    {member.role || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className="text-gray-900 dark:text-gray-100">
-                                                    {member.contractType}
+                                                    {member.contractType || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className="text-gray-900 dark:text-gray-100">
-                                                    {member.dob}
+                                                    {member.dob ? new Date(member.dob).toLocaleDateString('vi-VN') : "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className="text-gray-900 dark:text-gray-100">
-                                                    {member.address}
+                                                    {member.address || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
                                                 <span className="text-gray-900 dark:text-gray-100">
-                                                    {member.phone}
+                                                    {member.phone || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
@@ -599,7 +508,9 @@ export default function DepartmentDetail() {
                             {paginatedMembers.length === 0 && (
                                         <tr>
                                             <td colSpan="7" className="py-8 px-4 text-center text-gray-500 dark:text-gray-400">
-                                                Không có thành viên phù hợp
+                                                {department.users && department.users.length === 0 
+                                                    ? "Phòng ban này chưa có thành viên nào" 
+                                                    : "Không có thành viên phù hợp với từ khóa tìm kiếm"}
                                             </td>
                                         </tr>
                                     )}
@@ -668,14 +579,17 @@ export default function DepartmentDetail() {
                     <div className="space-y-6">
                         {/* Avatar and Basic Info */}
                         <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {viewingMember.avatar}
-                            </div>
+                            <UserAvatar user={viewingMember} size="2xl" />
                             <div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                    {viewingMember.firstName} {viewingMember.lastName}
+                                    {viewingMember.firstName && viewingMember.lastName 
+                                        ? `${viewingMember.firstName} ${viewingMember.lastName}` 
+                                        : `User ID: ${viewingMember.userId}`}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-400">{viewingMember.email}</p>
+                                <p className="text-gray-600 dark:text-gray-400">{viewingMember.email || "N/A"}</p>
+                                {viewingMember.phone && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{viewingMember.phone}</p>
+                                )}
                             </div>
                         </div>
 
@@ -683,55 +597,59 @@ export default function DepartmentDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.firstName}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.firstName || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.lastName}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.lastName || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.phone}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.phone || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày sinh</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.dob}</p>
+                                <p className="text-gray-900 dark:text-gray-100">
+                                    {viewingMember.dob ? new Date(viewingMember.dob).toLocaleDateString('vi-VN') : "N/A"}
+                                </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giới tính</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.gender}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.gender || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.email}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.email || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vai trò</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.role}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.role || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại hợp đồng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.contractType}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.contractType || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên ngân hàng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankName}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankName || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tài khoản ngân hàng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankAccount}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankAccountNumber || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CCCD</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.cccd}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.personalID || "N/A"}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày vào làm</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.joinDate}</p>
+                                <p className="text-gray-900 dark:text-gray-100">
+                                    {viewingMember.startDate ? new Date(viewingMember.startDate).toLocaleDateString('vi-VN') : "N/A"}
+                                </p>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.address}</p>
+                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.address || "N/A"}</p>
                             </div>
                         </div>
                     </div>
