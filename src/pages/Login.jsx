@@ -1,15 +1,19 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Checkbox from "../components/ui/Checkbox";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
-	const navigate = useNavigate();
+    const { login } = useAuth();
+    const location = useLocation();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [remember, setRemember] = useState(false);
 	const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    const [serverError, setServerError] = useState("");
 
 	function validate() {
 		const next = {};
@@ -19,11 +23,19 @@ export default function Login() {
 		return Object.keys(next).length === 0;
 	}
 
-	function handleSubmit(e) {
-		e.preventDefault();
-		if (!validate()) return;
-		navigate("/dashboard", { replace: true });
-	}
+    async function handleSubmit(e) {
+        e.preventDefault();
+        if (!validate()) return;
+        setServerError("");
+        setSubmitting(true);
+        try {
+            await login(email, password);
+        } catch (err) {
+            setServerError(err?.message || "Đăng nhập thất bại");
+        } finally {
+            setSubmitting(false);
+        }
+    }
 
 	return (
 <div className="min-h-screen w-full bg-white">
@@ -43,6 +55,9 @@ export default function Login() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 md:p-8 shadow-xl">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold text-gray-900">Đăng nhập</h1>
+            {serverError && (
+                <p className="mt-2 text-sm text-red-600">{serverError}</p>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,8 +86,8 @@ export default function Login() {
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Đăng nhập
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </form>
         </div>

@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Avatar from "../ui/Avatar";
 import { FaUser, FaCog, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function UserProfile({ collapsed = false }) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const { logout } = useAuth();
 	
 	// Mock user data - trong thực tế sẽ lấy từ context hoặc API
 	const user = {
@@ -15,8 +17,7 @@ export default function UserProfile({ collapsed = false }) {
 	};
 
 	const handleLogout = () => {
-		// Xử lý đăng xuất
-		console.log("Đăng xuất");
+		logout();
 		setIsDropdownOpen(false);
 	};
 

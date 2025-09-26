@@ -1,75 +1,76 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import DepartmentCard from "../components/departments/DepartmentCard";
 import DepartmentForm from "../components/departments/DepartmentForm";
 import PageHeader from "../components/common/PageHeader";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
-
-const initialDepartments = {
-    "Phát triển": {
-        id: "dev",
-        name: "Phát triển",
-        description: "Phát triển sản phẩm và tính năng mới",
-        memberCount: 8,
-        color: "bg-blue-500",
-        members: [
-            { id: "M001", name: "Nguyễn Văn A", email: "a.nguyen@company.com", role: "Team Lead", avatar: "A" },
-            { id: "M002", name: "Trần Thị B", email: "b.tran@company.com", role: "Senior Developer", avatar: "B" },
-            { id: "M003", name: "Lê Văn C", email: "c.le@company.com", role: "Developer", avatar: "C" },
-            { id: "M004", name: "Phạm Thị D", email: "d.pham@company.com", role: "Developer", avatar: "D" },
-            { id: "M005", name: "Hoàng Văn E", email: "e.hoang@company.com", role: "Developer", avatar: "E" },
-            { id: "M006", name: "Vũ Thị F", email: "f.vu@company.com", role: "Developer", avatar: "F" },
-            { id: "M007", name: "Đặng Văn G", email: "g.dang@company.com", role: "Developer", avatar: "G" },
-            { id: "M008", name: "Bùi Thị H", email: "h.bui@company.com", role: "Developer", avatar: "H" }
-        ]
-    },
-    "Thiết kế": {
-        id: "design",
-        name: "Thiết kế",
-        description: "Thiết kế UI/UX và trải nghiệm người dùng",
-        memberCount: 4,
-        color: "bg-purple-500",
-        members: [
-            { id: "M009", name: "Ngô Văn I", email: "i.ngo@company.com", role: "Design Lead", avatar: "I" },
-            { id: "M010", name: "Đinh Thị K", email: "k.dinh@company.com", role: "UI Designer", avatar: "K" },
-            { id: "M011", name: "Lý Văn L", email: "l.ly@company.com", role: "UX Designer", avatar: "L" },
-            { id: "M012", name: "Hồ Thị M", email: "m.ho@company.com", role: "Graphic Designer", avatar: "M" }
-        ]
-    },
-    "Marketing": {
-        id: "marketing",
-        name: "Marketing",
-        description: "Quảng cáo và truyền thông sản phẩm",
-        memberCount: 6,
-        color: "bg-green-500",
-        members: [
-            { id: "M013", name: "Dương Văn N", email: "n.duong@company.com", role: "Marketing Manager", avatar: "N" },
-            { id: "M014", name: "Võ Thị O", email: "o.vo@company.com", role: "Content Creator", avatar: "O" },
-            { id: "M015", name: "Tô Văn P", email: "p.to@company.com", role: "SEO Specialist", avatar: "P" },
-            { id: "M016", name: "Châu Thị Q", email: "q.chau@company.com", role: "Social Media", avatar: "Q" },
-            { id: "M017", name: "Hà Văn R", email: "r.ha@company.com", role: "Analyst", avatar: "R" },
-            { id: "M018", name: "Lâm Thị S", email: "s.lam@company.com", role: "Event Coordinator", avatar: "S" }
-        ]
-    },
-    "Hỗ trợ": {
-        id: "support",
-        name: "Hỗ trợ",
-        description: "Hỗ trợ khách hàng và giải đáp thắc mắc",
-        memberCount: 5,
-        color: "bg-orange-500",
-        members: [
-            { id: "M019", name: "Thái Văn T", email: "t.thai@company.com", role: "Support Lead", avatar: "T" },
-            { id: "M020", name: "Từ Thị U", email: "u.tu@company.com", role: "Customer Success", avatar: "U" },
-            { id: "M021", name: "Trịnh Văn V", email: "v.trinh@company.com", role: "Support Agent", avatar: "V" },
-            { id: "M022", name: "Đoàn Thị W", email: "w.doan@company.com", role: "Support Agent", avatar: "W" },
-            { id: "M023", name: "Mai Văn X", email: "x.mai@company.com", role: "Support Agent", avatar: "X" }
-        ]
-    }
-};
+import { departmentService } from "../services/departmentService";
 
 export default function Teams() {
-    const [departments, setDepartments] = useState(initialDepartments);
+    const [departments, setDepartments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+                        try {
+                            const list = await departmentService.getDepartments();
+                            if (!mounted) return;
+
+                            // For each department, fetch enriched user details
+                            const enrichedDepartments = await Promise.all(
+                                list.map(async (dept) => {
+                                    if (dept.users && dept.users.length > 0) {
+                                        try {
+                                            // Use new API to get department with enriched users
+                                            const enrichedDept = await departmentService.getDepartmentWithUsers(dept.id);
+                                            if (enrichedDept && enrichedDept.users) {
+                                                const enrichedUsers = enrichedDept.users.map(deptUser => ({
+                                                    id: deptUser.id,
+                                                    departmentId: deptUser.departmentId,
+                                                    userId: deptUser.userId,
+                                                    role: deptUser.role,
+                                                    joinedAt: deptUser.joinedAt,
+                                                    leftAt: deptUser.leftAt,
+                                                    isActive: deptUser.isActive,
+                                                    // User details from User Service
+                                                    firstName: deptUser.userDetails?.firstName,
+                                                    lastName: deptUser.userDetails?.lastName,
+                                                    email: deptUser.userDetails?.email,
+                                                    phone: deptUser.userDetails?.phone,
+                                                    dob: deptUser.userDetails?.dob,
+                                                    gender: deptUser.userDetails?.gender,
+                                                    address: deptUser.userDetails?.address,
+                                                    personalID: deptUser.userDetails?.personalID,
+                                                    image: deptUser.userDetails?.image,
+                                                    bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                                                    bankName: deptUser.userDetails?.bankName,
+                                                    contractType: deptUser.userDetails?.contractType,
+                                                    startDate: deptUser.userDetails?.startDate,
+                                                    avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                                                }));
+                                                return { ...dept, members: enrichedUsers };
+                                            }
+                                        } catch (err) {
+                                            console.warn(`Failed to fetch enriched users for department ${dept.id}:`, err);
+                                        }
+                                    }
+                                    return dept;
+                                })
+                            );
+
+                            setDepartments(enrichedDepartments);
+            } catch (e) {
+                if (!mounted) return;
+                setError(e?.message || "Không tải được phòng ban");
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -81,8 +82,11 @@ export default function Teams() {
         color: "bg-blue-500"
     });
 
-    const totalMembers = Object.values(departments).reduce((sum, dept) => sum + dept.memberCount, 0);
-    const totalDepartments = Object.keys(departments).length;
+    const totalMembers = useMemo(() => {
+        if (!Array.isArray(departments)) return 0;
+        return departments.reduce((sum, d) => sum + (d.totalUsers || 0), 0);
+    }, [departments]);
+    const totalDepartments = Array.isArray(departments) ? departments.length : 0;
 
     // Reset form data
     const resetFormData = () => {
@@ -94,67 +98,55 @@ export default function Teams() {
     };
 
     // Handle add department
-    const handleAddDepartment = () => {
+    const handleAddDepartment = async () => {
         if (!formData.name.trim()) return;
-        
-        const newId = `dept_${Date.now()}`;
-        const newDepartment = {
-            id: newId,
-            name: formData.name,
-            description: formData.description,
-            memberCount: 0,
-            color: formData.color,
-            members: []
-        };
-
-        setDepartments(prev => ({
-            ...prev,
-            [formData.name]: newDepartment
-        }));
-
-        setIsAddModalOpen(false);
-        resetFormData();
+        try {
+            const created = await api.createDepartment({
+                departmentName: formData.name,
+                description: formData.description,
+                managerId: null,
+            });
+            setDepartments(prev => Array.isArray(prev) ? [created, ...prev] : [created]);
+            setIsAddModalOpen(false);
+            resetFormData();
+        } catch (e) {
+            setError(e?.message || "Không tạo được phòng ban");
+        }
     };
 
     // Handle edit department
-    const handleEditDepartment = () => {
+    const handleEditDepartment = async () => {
         if (!formData.name.trim() || !editingDepartment) return;
-
-        const updatedDepartment = {
-            ...editingDepartment,
-            name: formData.name,
-            description: formData.description,
-            color: formData.color
-        };
-
-        setDepartments(prev => {
-            const newDepartments = { ...prev };
-            // Xóa department cũ nếu tên thay đổi
-            if (editingDepartment.name !== formData.name) {
-                delete newDepartments[editingDepartment.name];
-            }
-            // Thêm department mới
-            newDepartments[formData.name] = updatedDepartment;
-            return newDepartments;
-        });
-
-        setIsEditModalOpen(false);
-        setEditingDepartment(null);
-        resetFormData();
+        try {
+            const updated = await api.updateDepartment(editingDepartment.id, {
+                departmentName: formData.name,
+                description: formData.description,
+                managerId: editingDepartment.managerId || null,
+            });
+            setDepartments(prev => Array.isArray(prev)
+                ? prev.map(d => d.id === updated.id ? updated : d)
+                : prev);
+            setIsEditModalOpen(false);
+            setEditingDepartment(null);
+            resetFormData();
+        } catch (e) {
+            setError(e?.message || "Không cập nhật được phòng ban");
+        }
     };
 
     // Handle delete department
-    const handleDeleteDepartment = () => {
+    const handleDeleteDepartment = async () => {
         if (!deletingDepartment) return;
-
-        setDepartments(prev => {
-            const newDepartments = { ...prev };
-            delete newDepartments[deletingDepartment.name];
-            return newDepartments;
-        });
-
-        setIsDeleteModalOpen(false);
-        setDeletingDepartment(null);
+        try {
+            await api.deleteDepartment(deletingDepartment.id);
+            setDepartments(prev => Array.isArray(prev)
+                ? prev.filter(d => d.id !== deletingDepartment.id)
+                : prev);
+            setIsDeleteModalOpen(false);
+            setDeletingDepartment(null);
+        } catch (e) {
+            setError(e?.message || "Không xóa được phòng ban");
+        }
     };
 
     // Open edit modal
@@ -241,10 +233,19 @@ export default function Teams() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {Object.entries(departments).map(([, dept]) => (
-                            <DepartmentCard 
-                                key={dept.id} 
-                                department={dept} 
+                        {loading && <div className="text-sm text-gray-500">Đang tải...</div>}
+                        {error && <div className="text-sm text-red-600">{error}</div>}
+                        {!loading && !error && Array.isArray(departments) && departments.map((dept) => (
+                            <DepartmentCard
+                                key={dept.id}
+                                department={{
+                                    id: dept.id,
+                                    name: dept.departmentName || dept.name,
+                                    description: dept.description,
+                                    memberCount: dept.totalUsers || 0,
+                                    color: "bg-blue-500",
+                                    members: dept.users || [],
+                                }}
                                 onEdit={openEditModal}
                                 onDelete={openDeleteModal}
                             />
