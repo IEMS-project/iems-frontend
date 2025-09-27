@@ -15,9 +15,9 @@ export default function Teams() {
     useEffect(() => {
         let mounted = true;
         (async () => {
-                        try {
+            try {
                             const list = await departmentService.getDepartments();
-                            if (!mounted) return;
+                if (!mounted) return;
 
                             // For each department, fetch enriched user details
                             const enrichedDepartments = await Promise.all(
@@ -101,14 +101,14 @@ export default function Teams() {
     const handleAddDepartment = async () => {
         if (!formData.name.trim()) return;
         try {
-            const created = await api.createDepartment({
+            const created = await departmentService.createDepartment({
                 departmentName: formData.name,
-                description: formData.description,
+            description: formData.description,
                 managerId: null,
             });
             setDepartments(prev => Array.isArray(prev) ? [created, ...prev] : [created]);
-            setIsAddModalOpen(false);
-            resetFormData();
+        setIsAddModalOpen(false);
+        resetFormData();
         } catch (e) {
             setError(e?.message || "Không tạo được phòng ban");
         }
@@ -118,7 +118,7 @@ export default function Teams() {
     const handleEditDepartment = async () => {
         if (!formData.name.trim() || !editingDepartment) return;
         try {
-            const updated = await api.updateDepartment(editingDepartment.id, {
+            const updated = await departmentService.updateDepartment(editingDepartment.id, {
                 departmentName: formData.name,
                 description: formData.description,
                 managerId: editingDepartment.managerId || null,
@@ -138,7 +138,7 @@ export default function Teams() {
     const handleDeleteDepartment = async () => {
         if (!deletingDepartment) return;
         try {
-            await api.deleteDepartment(deletingDepartment.id);
+            await departmentService.deleteDepartment(deletingDepartment.id);
             setDepartments(prev => Array.isArray(prev)
                 ? prev.filter(d => d.id !== deletingDepartment.id)
                 : prev);
@@ -153,9 +153,9 @@ export default function Teams() {
     const openEditModal = (department) => {
         setEditingDepartment(department);
         setFormData({
-            name: department.name,
+            name: department.departmentName || department.name,
             description: department.description,
-            color: department.color
+            color: department.color || "bg-blue-500"
         });
         setIsEditModalOpen(true);
     };
@@ -319,12 +319,12 @@ export default function Teams() {
             >
                 <div className="space-y-4">
                     <p className="text-gray-600 dark:text-gray-300">
-                        Bạn có chắc chắn muốn xóa phòng ban <strong>{deletingDepartment?.name}</strong>?
+                        Bạn có chắc chắn muốn xóa phòng ban <strong>{deletingDepartment?.departmentName || deletingDepartment?.name}</strong>?
                     </p>
-                    {deletingDepartment?.memberCount > 0 && (
+                    {(deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0 && (
                         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                ⚠️ Phòng ban này có {deletingDepartment.memberCount} thành viên. 
+                                ⚠️ Phòng ban này có {deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. 
                                 Tất cả thành viên sẽ bị xóa khỏi phòng ban này.
                             </p>
                         </div>
