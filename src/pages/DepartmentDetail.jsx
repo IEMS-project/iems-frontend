@@ -7,9 +7,12 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import MemberCard from "../components/departments/MemberCard";
 import MemberForm from "../components/departments/MemberForm";
+import AddExistingUsersModal from "../components/departments/AddExistingUsersModal";
 import PageHeader from "../components/common/PageHeader";
 import UserAvatar from "../components/ui/UserAvatar";
 import { departmentService } from "../services/departmentService";
+import { userService } from "../services/userService";
+import { api } from "../lib/api";
 
 
 export default function DepartmentDetail() {
@@ -22,6 +25,8 @@ export default function DepartmentDetail() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
+    const [showAddExistingModal, setShowAddExistingModal] = useState(false);
+    const [allBasicUsers, setAllBasicUsers] = useState([]);
     const [viewingMember, setViewingMember] = useState(null);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -32,14 +37,18 @@ export default function DepartmentDetail() {
         email: "",
         phone: "",
         dob: "",
-        gender: "Nam",
-        role: "",
-        contractType: "Full-time",
-        address: "",
-        cccd: "",
+        gender: "MALE",
+        personalID: "",
+        image: "",
+        bankAccountNumber: "",
         bankName: "",
-        bankAccount: "",
-        joinDate: ""
+        contractType: "REMOTE",
+        startDate: "",
+        role: "",
+        username: "",
+        password: "",
+        roleCodes: [],
+        address: ""
     });
 
     useEffect(() => {
@@ -55,7 +64,6 @@ export default function DepartmentDetail() {
                             id: deptUser.id,
                             departmentId: deptUser.departmentId,
                             userId: deptUser.userId,
-                            role: deptUser.role,
                             joinedAt: deptUser.joinedAt,
                             leftAt: deptUser.leftAt,
                             isActive: deptUser.isActive,
@@ -71,6 +79,7 @@ export default function DepartmentDetail() {
                             image: deptUser.userDetails?.image,
                             bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
                             bankName: deptUser.userDetails?.bankName,
+                            role: deptUser.userDetails?.role,
                             contractType: deptUser.userDetails?.contractType,
                             startDate: deptUser.userDetails?.startDate,
                             avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
@@ -93,6 +102,30 @@ export default function DepartmentDetail() {
             fetchDepartment();
         }
     }, [departmentId, navigate]);
+
+    // Load all basic users for selection modal
+    useEffect(() => {
+        const fetchBasicUsers = async () => {
+            try {
+                const users = await userService.getAllUserBasicInfos();
+                // Normalize fields for avatar/name rendering
+                const normalized = (users || []).map(u => ({
+                    id: u.id || u.userId,
+                    userId: u.id || u.userId,
+                    fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim(),
+                    email: u.email,
+                    image: u.image,
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                }));
+                setAllBasicUsers(normalized);
+            } catch (e) {
+                // non-blocking
+                console.error("Failed to load user basic infos", e);
+            }
+        };
+        fetchBasicUsers();
+    }, []);
 
     const filteredMembers = useMemo(() => {
         if (!department || !department.users) return [];
@@ -123,20 +156,24 @@ export default function DepartmentDetail() {
     }, [search, pageSize]);
 
     const handleAddMember = () => {
-        setFormData({ 
-            firstName: "", 
-            lastName: "", 
-            email: "", 
+        setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
             phone: "",
             dob: "",
-            gender: "Nam",
-            role: "", 
-            contractType: "Full-time",
-            address: "",
-            cccd: "",
+            gender: "MALE",
+            personalID: "",
+            image: "",
+            bankAccountNumber: "",
             bankName: "",
-            bankAccount: "",
-            joinDate: ""
+            contractType: "REMOTE",
+            startDate: "",
+            role: "",
+            username: "",
+            password: "",
+            roleCodes: [],
+            address: ""
         });
         setShowAddModal(true);
     };
@@ -153,134 +190,254 @@ export default function DepartmentDetail() {
             lastName: member.lastName,
             email: member.email,
             phone: member.phone,
-            dob: member.dob,
+            dob: member.dob || "",
             gender: member.gender,
-            role: member.role,
-            contractType: member.contractType,
-            address: member.address,
-            cccd: member.cccd,
+            personalID: member.personalID,
+            image: member.image,
+            bankAccountNumber: member.bankAccountNumber,
             bankName: member.bankName,
-            bankAccount: member.bankAccount,
-            joinDate: member.joinDate
+            contractType: member.contractType,
+            startDate: member.startDate || "",
+            role: member.role,
+            username: member.username || "",
+            password: "",
+            roleCodes: member.roleCodes || [],
+            address: member.address
         });
         setShowEditModal(true);
     };
 
-    const handleDeleteMember = (memberId) => {
+    const handleDeleteMember = async (member) => {
         if (department && window.confirm("Bạn có chắc muốn xóa thành viên này?")) {
-            const updatedMembers = department.users.filter(m => m.id !== memberId);
-            const updatedDepartment = {
-                ...department,
-                users: updatedMembers,
-                totalUsers: updatedMembers.length,
-                activeUsers: updatedMembers.filter(m => m.isActive).length
-            };
-            setDepartment(updatedDepartment);
-        }
-    };
+            try {
+                setLoading(true);
 
-    const handleSubmitAddMember = () => {
-        if (formData.firstName && formData.lastName && formData.email && formData.role) {
-            const newMember = {
-                id: `M${String(Date.now()).slice(-6)}`,
-                userId: `user_${String(Date.now()).slice(-6)}`,
-                departmentId: department.id,
-                joinedAt: new Date().toISOString(),
-                leftAt: null,
-                isActive: true,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-                phone: formData.phone,
-                dob: formData.dob,
-                gender: formData.gender,
-                role: formData.role,
-                contractType: formData.contractType,
-                address: formData.address,
-                cccd: formData.cccd,
-                bankName: formData.bankName,
-                bankAccount: formData.bankAccount,
-                joinDate: formData.joinDate,
-                avatar: formData.firstName.charAt(0)
-            };
+                // Gọi API remove user from department
+                await api.removeUserFromDepartment(departmentId, member.userId);
 
-            const updatedMembers = [...(department.users || []), newMember];
-            const updatedDepartment = {
-                ...department,
-                users: updatedMembers,
-                totalUsers: updatedMembers.length,
-                activeUsers: updatedMembers.filter(m => m.isActive).length
-            };
-
-            setDepartment(updatedDepartment);
-            setShowAddModal(false);
-            setFormData({ 
-                firstName: "", 
-                lastName: "", 
-                email: "", 
-                phone: "",
-                dob: "",
-                gender: "Nam",
-                role: "", 
-                contractType: "Full-time",
-                address: "",
-                cccd: "",
-                bankName: "",
-                bankAccount: "",
-                joinDate: ""
-            });
-        }
-    };
-
-    const handleSubmitEditMember = () => {
-        if (formData.firstName && formData.lastName && formData.email && formData.role && editingMember) {
-            const updatedMembers = (department.users || []).map(m =>
-                m.id === editingMember.id
-                    ? { 
-                        ...m, 
-                        firstName: formData.firstName,
-                        lastName: formData.lastName,
-                        email: formData.email, 
-                        phone: formData.phone,
-                        dob: formData.dob,
-                        gender: formData.gender,
-                        role: formData.role, 
-                        contractType: formData.contractType,
-                        address: formData.address,
-                        cccd: formData.cccd,
-                        bankName: formData.bankName,
-                        bankAccount: formData.bankAccount,
-                        joinDate: formData.joinDate,
-                        avatar: formData.firstName.charAt(0) 
+                // Refresh department data để cập nhật danh sách
+                const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
+                if (updatedDept) {
+                    // Map the enriched users to the expected format
+                    if (updatedDept.users && updatedDept.users.length > 0) {
+                        const enrichedUsers = updatedDept.users.map(deptUser => ({
+                            id: deptUser.id,
+                            departmentId: deptUser.departmentId,
+                            userId: deptUser.userId,
+                            
+                            joinedAt: deptUser.joinedAt,
+                            leftAt: deptUser.leftAt,
+                            isActive: deptUser.isActive,
+                            // User details from User Service
+                            firstName: deptUser.userDetails?.firstName,
+                            lastName: deptUser.userDetails?.lastName,
+                            email: deptUser.userDetails?.email,
+                            phone: deptUser.userDetails?.phone,
+                            dob: deptUser.userDetails?.dob,
+                            gender: deptUser.userDetails?.gender,
+                            address: deptUser.userDetails?.address,
+                            personalID: deptUser.userDetails?.personalID,
+                            image: deptUser.userDetails?.image,
+                            role: deptUser.userDetails?.role,
+                            bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                            bankName: deptUser.userDetails?.bankName,
+                            contractType: deptUser.userDetails?.contractType,
+                            startDate: deptUser.userDetails?.startDate,
+                            avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                        }));
+                        updatedDept.users = enrichedUsers;
                     }
-                    : m
-            );
+                    setDepartment(updatedDept);
+                }
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                setError(error?.message || "Có lỗi xảy ra khi xóa thành viên");
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
 
-            const updatedDepartment = {
-                ...department,
-                users: updatedMembers,
-                totalUsers: updatedMembers.length,
-                activeUsers: updatedMembers.filter(m => m.isActive).length
-            };
+    const handleSubmitAddMember = async () => {
+        if (formData.firstName && formData.lastName && formData.email && formData.username && formData.password && formData.roleCodes.length > 0) {
+            try {
+                setLoading(true);
 
-            setDepartment(updatedDepartment);
-            setShowEditModal(false);
-            setEditingMember(null);
-            setFormData({ 
-                firstName: "", 
-                lastName: "", 
-                email: "", 
-                phone: "",
-                dob: "",
-                gender: "Nam",
-                role: "", 
-                contractType: "Full-time",
-                address: "",
-                cccd: "",
-                bankName: "",
-                bankAccount: "",
-                joinDate: ""
-            });
+                // Chuẩn bị dữ liệu để gửi API
+                const userData = {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    address: formData.address,
+                    phone: formData.phone,
+                    dob: formData.dob ? new Date(formData.dob).toISOString() : null,
+                    gender: formData.gender,
+                    personalID: formData.personalID,
+                    image: formData.image,
+                    bankAccountNumber: formData.bankAccountNumber,
+                    bankName: formData.bankName,
+                    contractType: formData.contractType,
+                    startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
+                    role: formData.role,
+                    username: formData.username,
+                    password: formData.password,
+                    roleCodes: formData.roleCodes,
+                    departmentId: departmentId
+                };
+
+                // Gọi API tạo user
+                const newUser = await api.createUser(userData);
+
+                // Refresh department data để lấy user mới
+                const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
+                if (updatedDept) {
+                    // Map the enriched users to the expected format
+                    if (updatedDept.users && updatedDept.users.length > 0) {
+                        const enrichedUsers = updatedDept.users.map(deptUser => ({
+                            id: deptUser.id,
+                            departmentId: deptUser.departmentId,
+                            userId: deptUser.userId,
+                            joinedAt: deptUser.joinedAt,
+                            leftAt: deptUser.leftAt,
+                            isActive: deptUser.isActive,
+                            // User details from User Service
+                            firstName: deptUser.userDetails?.firstName,
+                            lastName: deptUser.userDetails?.lastName,
+                            email: deptUser.userDetails?.email,
+                            phone: deptUser.userDetails?.phone,
+                            dob: deptUser.userDetails?.dob,
+                            gender: deptUser.userDetails?.gender,
+                            address: deptUser.userDetails?.address,
+                            personalID: deptUser.userDetails?.personalID,
+                            image: deptUser.userDetails?.image,
+                            role: deptUser.userDetails?.role,
+                            bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                            bankName: deptUser.userDetails?.bankName,
+                            contractType: deptUser.userDetails?.contractType,
+                            startDate: deptUser.userDetails?.startDate,
+                            avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                        }));
+                        updatedDept.users = enrichedUsers;
+                    }
+                    setDepartment(updatedDept);
+                }
+
+                setShowAddModal(false);
+                setFormData({
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    phone: "",
+                    dob: "",
+                    gender: "MALE",
+                    personalID: "",
+                    image: "",
+                    bankAccountNumber: "",
+                    bankName: "",
+                    contractType: "REMOTE",
+                    startDate: "",
+                    role: "",
+                    username: "",
+                    password: "",
+                    roleCodes: [],
+                    address: ""
+                });
+            } catch (error) {
+                console.error("Error creating user:", error);
+                setError(error?.message || "Có lỗi xảy ra khi tạo thành viên mới");
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleSubmitEditMember = async () => {
+        if (formData.firstName && formData.lastName && formData.email && formData.role && editingMember) {
+            try {
+                setLoading(true);
+
+                // Chuẩn bị dữ liệu để gửi API (theo format của curl command)
+                const userData = {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    address: formData.address,
+                    phone: formData.phone,
+                    dob: formData.dob ? new Date(formData.dob).toISOString().split('T')[0] : null,
+                    gender: formData.gender,
+                    personalID: formData.personalID,
+                    image: formData.image,
+                    bankAccountNumber: formData.bankAccountNumber,
+                    bankName: formData.bankName,
+                    contractType: formData.contractType,
+                    startDate: formData.startDate ? new Date(formData.startDate).toISOString().split('T')[0] : null,
+                    role: formData.role
+                };
+
+                // Gọi API update user
+                await api.updateUser(editingMember.userId, userData);
+
+                // Refresh department data để lấy user đã cập nhật
+                const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
+                if (updatedDept) {
+                    // Map the enriched users to the expected format
+                    if (updatedDept.users && updatedDept.users.length > 0) {
+                        const enrichedUsers = updatedDept.users.map(deptUser => ({
+                            id: deptUser.id,
+                            departmentId: deptUser.departmentId,
+                            userId: deptUser.userId,
+                            joinedAt: deptUser.joinedAt,
+                            leftAt: deptUser.leftAt,
+                            isActive: deptUser.isActive,
+                            // User details from User Service
+                            firstName: deptUser.userDetails?.firstName,
+                            lastName: deptUser.userDetails?.lastName,
+                            email: deptUser.userDetails?.email,
+                            phone: deptUser.userDetails?.phone,
+                            dob: deptUser.userDetails?.dob,
+                            gender: deptUser.userDetails?.gender,
+                            address: deptUser.userDetails?.address,
+                            role: deptUser.userDetails?.role,
+                            personalID: deptUser.userDetails?.personalID,
+                            image: deptUser.userDetails?.image,
+                            bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                            bankName: deptUser.userDetails?.bankName,
+                            contractType: deptUser.userDetails?.contractType,
+                            startDate: deptUser.userDetails?.startDate,
+                            avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                        }));
+                        updatedDept.users = enrichedUsers;
+                    }
+                    setDepartment(updatedDept);
+                }
+
+                setShowEditModal(false);
+                setEditingMember(null);
+                setFormData({
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    phone: "",
+                    dob: "",
+                    gender: "MALE",
+                    personalID: "",
+                    image: "",
+                    bankAccountNumber: "",
+                    bankName: "",
+                    contractType: "REMOTE",
+                    startDate: "",
+                    role: "",
+                    username: "",
+                    password: "",
+                    roleCodes: [],
+                    address: ""
+                });
+            } catch (error) {
+                console.error("Error updating user:", error);
+                setError(error?.message || "Có lỗi xảy ra khi cập nhật thành viên");
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -404,11 +561,11 @@ export default function DepartmentDetail() {
                                 <option value={10}>10 / trang</option>
                                 <option value={20}>20 / trang</option>
                             </Select>
-                            <Button onClick={handleAddMember} className="flex items-center gap-2">
+                            <Button onClick={() => setShowAddExistingModal(true)} className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3M8 9l3 3-3 3M5 12h6" />
                                 </svg>
-                                Thêm thành viên
+                                Thêm thành viên có sẵn
                             </Button>
                         </div>
                     </CardHeader>
@@ -427,15 +584,15 @@ export default function DepartmentDetail() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                            {paginatedMembers.map((member) => (
+                                    {paginatedMembers.map((member) => (
                                         <tr key={member.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <UserAvatar user={member} size="sm" />
                                                     <div>
                                                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                                                            {member.firstName && member.lastName 
-                                                                ? `${member.firstName} ${member.lastName}` 
+                                                            {member.firstName && member.lastName
+                                                                ? `${member.firstName} ${member.lastName}`
                                                                 : `User ID: ${member.userId}`}
                                                         </div>
                                                         {member.email && (
@@ -493,7 +650,7 @@ export default function DepartmentDetail() {
                                                         </svg>
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteMember(member.id)}
+                                                        onClick={() => handleDeleteMember(member)}
                                                         className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                         title="Xóa"
                                                     >
@@ -504,12 +661,12 @@ export default function DepartmentDetail() {
                                                 </div>
                                             </td>
                                         </tr>
-                            ))}
-                            {paginatedMembers.length === 0 && (
+                                    ))}
+                                    {paginatedMembers.length === 0 && (
                                         <tr>
                                             <td colSpan="7" className="py-8 px-4 text-center text-gray-500 dark:text-gray-400">
-                                                {department.users && department.users.length === 0 
-                                                    ? "Phòng ban này chưa có thành viên nào" 
+                                                {department.users && department.users.length === 0
+                                                    ? "Phòng ban này chưa có thành viên nào"
                                                     : "Không có thành viên phù hợp với từ khóa tìm kiếm"}
                                             </td>
                                         </tr>
@@ -544,6 +701,56 @@ export default function DepartmentDetail() {
             >
                 <MemberForm formData={formData} setFormData={setFormData} />
             </Modal>
+
+            {/* Add Existing Users Modal */}
+            <AddExistingUsersModal
+                open={showAddExistingModal}
+                onClose={() => setShowAddExistingModal(false)}
+                allUsers={allBasicUsers}
+                onCreateNew={() => {
+                    setShowAddExistingModal(false);
+                    handleAddMember();
+                }}
+                onSubmit={async (userIds) => {
+                    try {
+                        setLoading(true);
+                        await departmentService.addUsersToDepartment(departmentId, userIds);
+                        const updated = await departmentService.getDepartmentWithUsers(departmentId);
+                        if (updated && updated.users && updated.users.length > 0) {
+                            const enriched = updated.users.map((deptUser) => ({
+                                id: deptUser.id,
+                                departmentId: deptUser.departmentId,
+                                userId: deptUser.userId,
+                                joinedAt: deptUser.joinedAt,
+                                leftAt: deptUser.leftAt,
+                                isActive: deptUser.isActive,
+                                firstName: deptUser.userDetails?.firstName,
+                                lastName: deptUser.userDetails?.lastName,
+                                email: deptUser.userDetails?.email,
+                                phone: deptUser.userDetails?.phone,
+                                dob: deptUser.userDetails?.dob,
+                                gender: deptUser.userDetails?.gender,
+                                address: deptUser.userDetails?.address,
+                                personalID: deptUser.userDetails?.personalID,
+                                image: deptUser.userDetails?.image,
+                                bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                                bankName: deptUser.userDetails?.bankName,
+                                role: deptUser.userDetails?.role,
+                                contractType: deptUser.userDetails?.contractType,
+                                startDate: deptUser.userDetails?.startDate,
+                                avatar: deptUser.userDetails?.firstName?.charAt(0) || "U",
+                            }));
+                            updated.users = enriched;
+                        }
+                        setDepartment(updated);
+                        setShowAddExistingModal(false);
+                    } catch (e) {
+                        setError(e?.message || "Có lỗi khi thêm thành viên");
+                    } finally {
+                        setLoading(false);
+                    }
+                }}
+            />
 
             {/* Edit Member Modal */}
             <Modal
@@ -582,8 +789,8 @@ export default function DepartmentDetail() {
                             <UserAvatar user={viewingMember} size="2xl" />
                             <div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                    {viewingMember.firstName && viewingMember.lastName 
-                                        ? `${viewingMember.firstName} ${viewingMember.lastName}` 
+                                    {viewingMember.firstName && viewingMember.lastName
+                                        ? `${viewingMember.firstName} ${viewingMember.lastName}`
                                         : `User ID: ${viewingMember.userId}`}
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400">{viewingMember.email || "N/A"}</p>
