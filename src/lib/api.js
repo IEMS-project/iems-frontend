@@ -153,6 +153,32 @@ export const api = {
     const data = await request(`/department-service/departments/${id}/users`);
     return data?.data || null;
   },
+  async createUser(userData) {
+    const data = await request("/user-service/users", {
+      method: "POST",
+      body: userData,
+    });
+    return data?.data || data;
+  },
+  async updateUser(userId, userData) {
+    const data = await request(`/user-service/users/${userId}`, {
+      method: "PUT",
+      body: userData,
+    });
+    return data?.data || data;
+  },
+  async deleteUser(userId) {
+    const data = await request(`/user-service/users/${userId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  async removeUserFromDepartment(departmentId, userId) {
+    const data = await request(`/department-service/departments/${departmentId}/users/${userId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
 };
 
 export { getStoredTokens, setStoredTokens, GATEWAY_BASE_URL };
