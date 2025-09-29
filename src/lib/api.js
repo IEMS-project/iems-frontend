@@ -136,6 +136,11 @@ export const api = {
     const data = await request("/user-service/users");
     return data?.data || [];
   },
+  async getAllUserBasicInfos() {
+    // Your gateway to user-service basic infos (secured)
+    const data = await request("/user-service/users/basic-infos");
+    return data?.data || [];
+  },
   async getUserById(userId) {
     const data = await request(`/user-service/users/${userId}`);
     return data?.data || null;
@@ -176,6 +181,13 @@ export const api = {
   async removeUserFromDepartment(departmentId, userId) {
     const data = await request(`/department-service/departments/${departmentId}/users/${userId}`, {
       method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  async addUsersToDepartment(departmentId, { userIds }) {
+    const data = await request(`/department-service/departments/${departmentId}/users`, {
+      method: "POST",
+      body: { userIds },
     });
     return data?.data || data;
   },

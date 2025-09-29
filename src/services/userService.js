@@ -4,6 +4,9 @@ export const userService = {
   async getAllUsers() {
     return api.getAllUsers();
   },
+  async getAllUserBasicInfos() {
+    return api.getAllUserBasicInfos();
+  },
   async getUserById(userId) {
     return api.getUserById(userId);
   },
