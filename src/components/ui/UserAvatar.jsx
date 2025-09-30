@@ -16,6 +16,8 @@ export default function UserAvatar({ user, size = "md", className = "" }) {
 
     const getSizeClasses = (size) => {
         switch (size) {
+            case "xs":
+                return "w-6 h-6 text-xs";
             case "sm":
                 return "w-8 h-8 text-sm";
             case "md":

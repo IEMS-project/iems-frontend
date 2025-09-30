@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Avatar from "../ui/Avatar";
 import Badge from "../ui/Badge";
@@ -6,16 +6,11 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 import Select from "../ui/Select";
-const membersData = [
-    { id: 1, name: "Nguyễn Văn A", role: "PM", status: "Hoạt động" },
-    { id: 2, name: "Trần Thị B", role: "Backend", status: "Hoạt động" },
-    { id: 3, name: "Lê Văn C", role: "Frontend", status: "Hoạt động" },
-    { id: 4, name: "Phạm D", role: "QA", status: "Hoạt động" },
-    { id: 5, name: "Hoàng Thị E", role: "UI/UX", status: "Hoạt động" },
-    { id: 6, name: "Vũ Văn F", role: "DevOps", status: "Hoạt động" },
-    { id: 7, name: "Đặng Thị G", role: "Business Analyst", status: "Hoạt động" },
-    { id: 8, name: "Bùi Văn H", role: "Scrum Master", status: "Hoạt động" }
-];
+import { useParams } from "react-router-dom";
+import { projectService } from "../../services/projectService";
+
+// availableMembers & availableRoles retained for modal placeholders
+const membersData = [];
 
 // Danh sách thành viên có sẵn để chọn
 const availableMembers = [
@@ -43,6 +38,9 @@ const availableRoles = [
 ];
 
 export default function Members() {
+    const { projectId } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [members, setMembers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
     const [formData, setFormData] = useState({
@@ -50,6 +48,21 @@ export default function Members() {
         role: "",
         status: "Hoạt động"
     });
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                setLoading(true);
+                const data = await projectService.getProjectMembers(projectId);
+                setMembers(Array.isArray(data) ? data : []);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (projectId) load();
+    }, [projectId]);
 
     const handleEditMember = (member) => {
         setEditingMember(member);
@@ -95,26 +108,32 @@ export default function Members() {
                 <CardContent>
                     <div className="max-h-44 overflow-y-auto">
                         <ul className="space-y-3">
-                            {membersData.map(m => (
-                                <li key={m.id} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar name={m.name} size={9} />
-                                        <div>
-                                            <div className="text-sm font-medium">{m.name}</div>
-                                            <div className="text-xs text-gray-500">{m.role}</div>
+                            {loading ? (
+                                <li className="text-center text-gray-500 py-4">Đang tải...</li>
+                            ) : members.length === 0 ? (
+                                <li className="text-center text-gray-500 py-4">Chưa có thành viên</li>
+                            ) : (
+                                members.map(m => (
+                                    <li key={m.id} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar name={m.userName || m.userEmail} size={9} />
+                                            <div>
+                                                <div className="text-sm font-medium">{m.userName || m.userEmail}</div>
+                                                <div className="text-xs text-gray-500">{m.role}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="gray">{m.status}</Badge>
-                                        <button
-                                            onClick={() => handleEditMember(m)}
-                                            className="text-xs text-blue-600 hover:underline"
-                                        >
-                                            Sửa
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="gray">Hoạt động</Badge>
+                                            <button
+                                                onClick={() => handleEditMember(m)}
+                                                className="text-xs text-blue-600 hover:underline"
+                                            >
+                                                Sửa
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))
+                            )}
                         </ul>
                     </div>
                 </CardContent>
