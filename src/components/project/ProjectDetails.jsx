@@ -1,44 +1,53 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
-
-const projectData = {
-    id: "iems-001",
-    name: "IEMS Platform",
-    status: "Đang thực hiện",
-    code: "IEMS-001",
-    client: "ABC Corp",
-    projectManager: "Nguyễn Văn A",
-    startDate: "2024-09-01",
-    endDate: "2024-12-31",
-    description: "Hệ thống quản lý năng lượng thông minh cho doanh nghiệp, bao gồm giám sát, báo cáo, tối ưu hóa tiêu thụ."
-};
+import { useParams } from "react-router-dom";
+import { projectService } from "../../services/projectService";
 
 export default function ProjectDetails() {
+    const { projectId } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [projectData, setProjectData] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [formData, setFormData] = useState({
-        name: projectData.name,
-        code: projectData.code,
-        client: projectData.client,
-        projectManager: projectData.projectManager,
-        startDate: projectData.startDate,
-        endDate: projectData.endDate,
-        description: projectData.description
+        name: "",
+        description: "",
+        startDate: "",
+        endDate: "",
     });
 
+    useEffect(() => {
+        const load = async () => {
+            try {
+                setLoading(true);
+                const data = await projectService.getProjectById(projectId);
+                setProjectData(data);
+                setFormData({
+                    name: data?.name || "",
+                    description: data?.description || "",
+                    startDate: data?.startDate ? (new Date(data.startDate)).toISOString().slice(0, 10) : "",
+                    endDate: data?.endDate ? (new Date(data.endDate)).toISOString().slice(0, 10) : "",
+                });
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (projectId) load();
+    }, [projectId]);
+
     const handleEditProject = () => {
+        if (!projectData) return;
         setFormData({
-            name: projectData.name,
-            code: projectData.code,
-            client: projectData.client,
-            projectManager: projectData.projectManager,
-            startDate: projectData.startDate,
-            endDate: projectData.endDate,
-            description: projectData.description
+            name: projectData.name || "",
+            description: projectData.description || "",
+            startDate: projectData.startDate ? (new Date(projectData.startDate)).toISOString().slice(0, 10) : "",
+            endDate: projectData.endDate ? (new Date(projectData.endDate)).toISOString().slice(0, 10) : "",
         });
         setShowEditModal(true);
     };
@@ -55,15 +64,15 @@ export default function ProjectDetails() {
 
     return (
         <>
-        <Card>
-            <CardHeader>
+            <Card>
+                <CardHeader>
                     <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
                         <div>
-                            <h1 className="text-2xl font-bold">Dự án: {projectData.name}</h1>
+                            <h1 className="text-2xl font-bold">Dự án: {projectData?.name || '-'}</h1>
                             <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                                <span>Mã: {projectData.code}</span>
+                                <span>Quản lý: {projectData?.managerName || projectData?.managerEmail || projectData?.managerId || '-'}</span>
                                 <span>•</span>
-                                <Badge variant="blue">{projectData.status}</Badge>
+                                <Badge variant="blue">{projectData?.status || 'Chưa xác định'}</Badge>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -71,28 +80,21 @@ export default function ProjectDetails() {
                             <Button onClick={handleEditProject}>Chỉnh sửa dự án</Button>
                         </div>
                     </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <div className="text-xs uppercase text-gray-500">Khách hàng</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData.client}</div>
-                        </div>
-                        <div>
-                            <div className="text-xs uppercase text-gray-500">Quản lý dự án</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData.projectManager}</div>
-                        </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+       
                         <div>
                             <div className="text-xs uppercase text-gray-500">Ngày bắt đầu</div>
-                            <div className="text-gray-800 dark:text-gray-100">01/09/2024</div>
+                            <div className="text-gray-800 dark:text-gray-100">{projectData?.startDate ? new Date(projectData.startDate).toLocaleDateString('vi-VN') : '-'}</div>
                         </div>
                         <div>
                             <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
-                            <div className="text-gray-800 dark:text-gray-100">31/12/2024</div>
+                            <div className="text-gray-800 dark:text-gray-100">{projectData?.endDate ? new Date(projectData.endDate).toLocaleDateString('vi-VN') : '-'}</div>
                         </div>
                         <div className="sm:col-span-2">
                             <div className="text-xs uppercase text-gray-500">Mô tả</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData.description}</div>
+                            <div className="text-gray-800 dark:text-gray-100">{projectData?.description || '-'}</div>
                         </div>
                     </div>
                 </CardContent>
@@ -115,7 +117,7 @@ export default function ProjectDetails() {
                         <Input
                             type="text"
                             value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tên dự án"
                         />
@@ -125,7 +127,7 @@ export default function ProjectDetails() {
                         <Input
                             type="text"
                             value={formData.code}
-                            onChange={(e) => setFormData({...formData, code: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập mã dự án"
                         />
@@ -135,7 +137,7 @@ export default function ProjectDetails() {
                         <Input
                             type="text"
                             value={formData.client}
-                            onChange={(e) => setFormData({...formData, client: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tên khách hàng"
                         />
@@ -145,7 +147,7 @@ export default function ProjectDetails() {
                         <Input
                             type="text"
                             value={formData.projectManager}
-                            onChange={(e) => setFormData({...formData, projectManager: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, projectManager: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập tên quản lý dự án"
                         />
@@ -155,7 +157,7 @@ export default function ProjectDetails() {
                         <Input
                             type="date"
                             value={formData.startDate}
-                            onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -164,7 +166,7 @@ export default function ProjectDetails() {
                         <Input
                             type="date"
                             value={formData.endDate}
-                            onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -172,7 +174,7 @@ export default function ProjectDetails() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
                         <Textarea
                             value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={4}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập mô tả dự án"

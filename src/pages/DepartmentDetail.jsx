@@ -30,7 +30,7 @@ export default function DepartmentDetail() {
     const [viewingMember, setViewingMember] = useState(null);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(7);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -224,7 +224,7 @@ export default function DepartmentDetail() {
                             id: deptUser.id,
                             departmentId: deptUser.departmentId,
                             userId: deptUser.userId,
-                            
+
                             joinedAt: deptUser.joinedAt,
                             leftAt: deptUser.leftAt,
                             isActive: deptUser.isActive,

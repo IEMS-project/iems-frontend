@@ -191,6 +191,47 @@ export const api = {
     });
     return data?.data || data;
   },
+  // Project Service APIs
+  async getProjectsTable() {
+    const data = await request("/project-service/projects/table");
+    return data?.data || data || [];
+  },
+  async createProject(projectData) {
+    const data = await request("/project-service/projects", {
+      method: "POST",
+      body: projectData,
+    });
+    return data?.data || data;
+  },
+  async getProjectById(projectId) {
+    const data = await request(`/project-service/projects/${projectId}`);
+    return data?.data || data;
+  },
+  async updateProject(projectId, projectData) {
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "PUT",
+      body: projectData,
+    });
+    return data?.data || data;
+  },
+  async deleteProject(projectId) {
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  // Project related aggregates
+  async getProjectMembers(projectId) {
+    // Prefer gateway facade per user's curl; fallback to service path if not available
+        const data = await request(`/project-service/api/projects/${projectId}/members`);
+        return data?.data || data || [];
+  },
+  async getTasksByProject(projectId) {
+    // User's curl hits task-service directly at 8084: /tasks/project/{id}
+    // Through gateway we expose it under /task-service/tasks/project/{id}
+    const data = await request(`/task-service/tasks/project/${projectId}`);
+    return data?.data || data || [];
+  },
 };
 
 export { getStoredTokens, setStoredTokens, GATEWAY_BASE_URL };
