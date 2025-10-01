@@ -3,6 +3,7 @@ import ProjectDetails from "../components/project/ProjectDetails";
 import Members from "../components/project/Members";
 import Tasks from "../components/project/Tasks";
 import Schedule from "../components/project/Schedule";
+import ProjectRoles from "../components/project/ProjectRoles";
 import PageHeader from "../components/common/PageHeader";
 
 export default function Project() {
@@ -22,6 +23,7 @@ export default function Project() {
                 <div className="space-y-6">
                     <Members />
                     <Schedule />
+                    <ProjectRoles />
                 </div>
             </div>
         </div>

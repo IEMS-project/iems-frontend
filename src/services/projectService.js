@@ -13,6 +13,15 @@ export const projectService = {
   async getProjectMembers(projectId) {
     return api.getProjectMembers(projectId);
   },
+  async getProjectRoles(projectId) {
+    return api.getProjectRoles(projectId);
+  },
+  async addProjectRole(projectId, payload) {
+    return api.addProjectRole(projectId, payload);
+  },
+  async deleteProjectRole(projectId, roleId) {
+    return api.deleteProjectRole(projectId, roleId);
+  },
   async updateProject(projectId, projectData) {
     return api.updateProject(projectId, projectData);
   },
