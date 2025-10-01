@@ -1,8 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
+import { userService } from "../../services/userService";
 
 export default function MemberForm({ formData, setFormData, isEdit = false }) {
+    const [roles, setRoles] = useState([]);
+    const [rolesLoading, setRolesLoading] = useState(false);
+    const [rolesError, setRolesError] = useState("");
+
+    useEffect(() => {
+        let mounted = true;
+        const loadRoles = async () => {
+            try {
+                setRolesLoading(true);
+                setRolesError("");
+                const data = await userService.getRoles();
+                if (!mounted) return;
+                const normalized = Array.isArray(data)
+                    ? data.map((r) => ({
+                        id: r.id || r.roleId || r.code || r.name,
+                        code: r.code || r.name || r.id,
+                        name: r.name || r.code || r.id,
+                    }))
+                    : [];
+                setRoles(normalized);
+            } catch (e) {
+                if (!mounted) return;
+                setRolesError(e?.message || "Không tải được danh sách vai trò");
+            } finally {
+                if (mounted) setRolesLoading(false);
+            }
+        };
+        loadRoles();
+        return () => { mounted = false; };
+    }, []);
     const formatDateInput = (value) => {
         if (!value) return "";
         try {
@@ -88,16 +119,30 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Vai trò công việc -> Input text */}
-                <Input
-                    label="Vai trò"
-                    type="text"
-                    value={formData.role}
-                    onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value })
-                    }
-                    placeholder="Nhập vai trò (VD: Backend, Kế toán, Marketing...)"
-                />
+                {/* Replace free-text role with system role select labelled 'Vai trò' */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Vai trò
+                    </label>
+                    <Select
+                        value={(formData.roleCodes && formData.roleCodes[0]) || ""}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                roleCodes: e.target.value ? [e.target.value] : [],
+                            })
+                        }
+                        className="w-full"
+                    >
+                        <option value="">{rolesLoading ? "Đang tải..." : "Chọn vai trò"}</option>
+                        {roles.map((r) => (
+                            <option key={r.id} value={r.code}>{r.name}</option>
+                        ))}
+                    </Select>
+                    {rolesError && (
+                        <div className="mt-1 text-xs text-red-600">{rolesError}</div>
+                    )}
+                </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -200,31 +245,6 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                     }
                     placeholder="Nhập URL hình ảnh"
                 />
-                {!isEdit && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Vai trò hệ thống
-                        </label>
-                        <Select
-                            value={formData.roleCodes}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    roleCodes: [e.target.value],
-                                })
-                            }
-                            className="w-full"
-                        >
-                            <option value="">Chọn vai trò hệ thống</option>
-                            <option value="SUPER_ADMIN">Super Admin</option>
-                            <option value="ADMIN">Admin</option>
-                            <option value="MANAGER">Manager</option>
-                            <option value="HR">HR</option>
-                            <option value="ACCOUNTANT">Accountant</option>
-                            <option value="EMPLOYEE">Employee</option>
-                        </Select>
-                    </div>
-                )}
             </div>
 
             <Input

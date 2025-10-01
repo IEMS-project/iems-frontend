@@ -259,7 +259,7 @@ export default function DepartmentDetail() {
     };
 
     const handleSubmitAddMember = async () => {
-        if (formData.firstName && formData.lastName && formData.email && formData.username && formData.password && formData.roleCodes.length > 0) {
+        if (formData.firstName && formData.lastName && formData.email && formData.username && formData.password && formData.roleCodes && formData.roleCodes.length > 0) {
             try {
                 setLoading(true);
 
@@ -278,7 +278,8 @@ export default function DepartmentDetail() {
                     bankName: formData.bankName,
                     contractType: formData.contractType,
                     startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
-                    role: formData.role,
+                    // Use first selected system role as persisted role string for display/compat
+                    role: (formData.roleCodes && formData.roleCodes[0]) || null,
                     username: formData.username,
                     password: formData.password,
                     roleCodes: formData.roleCodes,
@@ -287,6 +288,16 @@ export default function DepartmentDetail() {
 
                 // Gọi API tạo user
                 const newUser = await api.createUser(userData);
+
+                // Đảm bảo user vừa tạo được thêm vào phòng ban ngay lập tức nếu backend không tự gán
+                try {
+                    const newUserId = newUser?.userId || newUser?.id;
+                    if (newUserId) {
+                        await api.addUsersToDepartment(departmentId, { userIds: [newUserId] });
+                    }
+                } catch (_e) {
+                    // không chặn luồng nếu API thêm vào phòng ban thất bại; sẽ fallback bằng refresh
+                }
 
                 // Refresh department data để lấy user mới
                 const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
@@ -352,7 +363,7 @@ export default function DepartmentDetail() {
     };
 
     const handleSubmitEditMember = async () => {
-        if (formData.firstName && formData.lastName && formData.email && formData.role && editingMember) {
+        if (formData.firstName && formData.lastName && formData.email && formData.roleCodes && editingMember) {
             try {
                 setLoading(true);
 
@@ -371,7 +382,9 @@ export default function DepartmentDetail() {
                     bankName: formData.bankName,
                     contractType: formData.contractType,
                     startDate: formData.startDate ? new Date(formData.startDate).toISOString().split('T')[0] : null,
-                    role: formData.role
+                    // Use first selected system role as persisted role string for display/compat
+                    role: (formData.roleCodes && formData.roleCodes[0]) || null,
+                    roleCodes: formData.roleCodes
                 };
 
                 // Gọi API update user
@@ -565,7 +578,7 @@ export default function DepartmentDetail() {
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3M8 9l3 3-3 3M5 12h6" />
                                 </svg>
-                                Thêm thành viên có sẵn
+                                Thêm thành viên
                             </Button>
                         </div>
                     </CardHeader>

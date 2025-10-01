@@ -6,69 +6,84 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 import Select from "../ui/Select";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 
-// availableMembers & availableRoles retained for modal placeholders
 const membersData = [];
-
-// Danh sách thành viên có sẵn để chọn
-const availableMembers = [
-    "Nguyễn Văn A",
-    "Trần Thị B", 
-    "Lê Văn C",
-    "Phạm D",
-    "Hoàng Thị E",
-    "Vũ Văn F",
-    "Đặng Thị G",
-    "Bùi Văn H"
-];
-
-// Danh sách vai trò có sẵn
-const availableRoles = [
-    "PM",
-    "Frontend",
-    "Backend", 
-    "Full-stack",
-    "QA",
-    "DevOps",
-    "UI/UX",
-    "Business Analyst",
-    "Scrum Master"
-];
 
 export default function Members() {
     const { projectId } = useParams();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [members, setMembers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
     const [formData, setFormData] = useState({
-        name: "",
-        role: "",
+        userId: "",
+        roleId: "",
         status: "Hoạt động"
     });
+    const [assignableUsers, setAssignableUsers] = useState([]);
+    const [projectRoles, setProjectRoles] = useState([]);
 
     useEffect(() => {
         const load = async () => {
             try {
                 setLoading(true);
                 const data = await projectService.getProjectMembers(projectId);
+                
+                // Check if response indicates permission error
+                if (data && data.status === "error" && 
+                    (data.message?.includes("Permission denied") || 
+                     data.message?.includes("PERMISSION_DENIED"))) {
+                    console.log("Permission error in Members response data, redirecting...");
+                    navigate("/permission-denied");
+                    return;
+                }
+                
                 setMembers(Array.isArray(data) ? data : []);
+                // Load assignable users and project roles in parallel
+                const [users, roles] = await Promise.all([
+                    (async () => {
+                        try { return await import("../../lib/api").then(m => m.api.getAssignableUsers()); } catch { return []; }
+                    })(),
+                    (async () => {
+                        try { return await projectService.getProjectRoles(projectId); } catch { return []; }
+                    })()
+                ]);
+                setAssignableUsers(Array.isArray(users) ? users : []);
+                setProjectRoles(Array.isArray(roles) ? roles : []);
             } catch (e) {
-                console.error(e);
+                console.log("Members Error:", e);
+                console.log("Error status:", e.status);
+                console.log("Error message:", e.message);
+                console.log("Error data:", e.data);
+                
+                // Check if it's a permission error
+                if (e.status === 403 || 
+                    e.message?.includes("PERMISSION_DENIED") ||
+                    e.message?.includes("permission") ||
+                    e.message?.includes("quyền") ||
+                    e.message?.includes("Permission denied")) {
+                    console.log("Permission error detected in Members, redirecting...");
+                    // Redirect immediately to permission denied page
+                    navigate("/permission-denied");
+                    return;
+                } else {
+                    console.error(e);
+                }
             } finally {
                 setLoading(false);
             }
         };
         if (projectId) load();
-    }, [projectId]);
+    }, [projectId, navigate]);
 
     const handleEditMember = (member) => {
         setEditingMember(member);
         setFormData({
-            name: member.name,
-            role: member.role,
+            userId: member.userId || "",
+            roleId: member.roleId || "",
             status: member.status
         });
         setShowModal(true);
@@ -77,8 +92,8 @@ export default function Members() {
     const handleAddMember = () => {
         setEditingMember(null);
         setFormData({
-            name: "",
-            role: "",
+            userId: "",
+            roleId: "",
             status: "Hoạt động"
         });
         setShowModal(true);
@@ -156,26 +171,28 @@ export default function Members() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
                         <Select
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            value={formData.userId}
+                            onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="">Chọn thành viên</option>
-                            {availableMembers.map(member => (
-                                <option key={member} value={member}>{member}</option>
+                            {assignableUsers.map(u => (
+                                <option key={u.id} value={u.id}>
+                                    {(u.firstName || "") + (u.lastName ? " " + u.lastName : "")} - {u.email}
+                                </option>
                             ))}
                         </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
                         <Select
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            value={formData.roleId}
+                            onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="">Chọn vai trò</option>
-                            {availableRoles.map(role => (
-                                <option key={role} value={role}>{role}</option>
+                            {projectRoles.map(r => (
+                                <option key={r.id} value={r.id}>{r.roleName}</option>
                             ))}
                         </Select>
                     </div>

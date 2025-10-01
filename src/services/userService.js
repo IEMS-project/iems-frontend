@@ -7,6 +7,9 @@ export const userService = {
   async getAllUserBasicInfos() {
     return api.getAllUserBasicInfos();
   },
+  async getRoles() {
+    return api.getRoles();
+  },
   async getUserById(userId) {
     return api.getUserById(userId);
   },

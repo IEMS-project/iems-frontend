@@ -6,11 +6,12 @@ import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import UserAvatar from "../ui/UserAvatar";
 export default function Tasks() {
     const { projectId } = useParams();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
 
@@ -51,15 +52,42 @@ export default function Tasks() {
             try {
                 setLoading(true);
                 const data = await taskService.getTasksByProject(projectId);
+                
+                // Check if response indicates permission error
+                if (data && data.status === "error" && 
+                    (data.message?.includes("Permission denied") || 
+                     data.message?.includes("PERMISSION_DENIED"))) {
+                    console.log("Permission error in Tasks response data, redirecting...");
+                    navigate("/permission-denied");
+                    return;
+                }
+                
                 setTasksData(Array.isArray(data) ? data : []);
             } catch (e) {
-                console.error(e);
+                console.log("Tasks Error:", e);
+                console.log("Error status:", e.status);
+                console.log("Error message:", e.message);
+                console.log("Error data:", e.data);
+                
+                // Check if it's a permission error
+                if (e.status === 403 || 
+                    e.message?.includes("PERMISSION_DENIED") ||
+                    e.message?.includes("permission") ||
+                    e.message?.includes("quyền") ||
+                    e.message?.includes("Permission denied")) {
+                    console.log("Permission error detected in Tasks, redirecting...");
+                    // Redirect immediately to permission denied page
+                    navigate("/permission-denied");
+                    return;
+                } else {
+                    console.error(e);
+                }
             } finally {
                 setLoading(false);
             }
         };
         if (projectId) load();
-    }, [projectId]);
+    }, [projectId, navigate]);
 
     const handleEditTask = (task) => {
         setEditingTask(task);

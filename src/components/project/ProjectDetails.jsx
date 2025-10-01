@@ -5,11 +5,15 @@ import Badge from "../ui/Badge";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
-import { useParams } from "react-router-dom";
+import Select from "../ui/Select";
+import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
+import { useErrorHandler } from "../common/ErrorBoundary";
 
 export default function ProjectDetails() {
     const { projectId } = useParams();
+    const navigate = useNavigate();
+    const { handleError } = useErrorHandler();
     const [loading, setLoading] = useState(true);
     const [projectData, setProjectData] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -18,6 +22,8 @@ export default function ProjectDetails() {
         description: "",
         startDate: "",
         endDate: "",
+        status: "",
+        managerId: "",
     });
 
     useEffect(() => {
@@ -25,21 +31,51 @@ export default function ProjectDetails() {
             try {
                 setLoading(true);
                 const data = await projectService.getProjectById(projectId);
+                
+                // Check if response indicates permission error
+                if (data && data.status === "error" && 
+                    (data.message?.includes("Permission denied") || 
+                     data.message?.includes("PERMISSION_DENIED"))) {
+                    console.log("Permission error in response data, redirecting...");
+                    navigate("/permission-denied");
+                    return;
+                }
+                
                 setProjectData(data);
                 setFormData({
                     name: data?.name || "",
                     description: data?.description || "",
                     startDate: data?.startDate ? (new Date(data.startDate)).toISOString().slice(0, 10) : "",
                     endDate: data?.endDate ? (new Date(data.endDate)).toISOString().slice(0, 10) : "",
+                    status: data?.status || "",
+                    managerId: data?.managerId || "",
                 });
             } catch (e) {
-                console.error(e);
+                console.log("ProjectDetails Error:", e);
+                console.log("Error status:", e.status);
+                console.log("Error message:", e.message);
+                console.log("Error data:", e.data);
+                
+                // Check if it's a permission error
+                if (e.status === 403 || 
+                    e.message?.includes("PERMISSION_DENIED") ||
+                    e.message?.includes("permission") ||
+                    e.message?.includes("quyền") ||
+                    e.message?.includes("Permission denied")) {
+                    console.log("Permission error detected, redirecting...");
+                    // Redirect immediately to permission denied page
+                    navigate("/permission-denied");
+                    return;
+                } else {
+                    console.log("Other error, using handleError");
+                    handleError(e);
+                }
             } finally {
                 setLoading(false);
             }
         };
         if (projectId) load();
-    }, [projectId]);
+    }, [projectId, navigate]);
 
     const handleEditProject = () => {
         if (!projectData) return;
@@ -48,14 +84,50 @@ export default function ProjectDetails() {
             description: projectData.description || "",
             startDate: projectData.startDate ? (new Date(projectData.startDate)).toISOString().slice(0, 10) : "",
             endDate: projectData.endDate ? (new Date(projectData.endDate)).toISOString().slice(0, 10) : "",
+            status: projectData.status || "",
+            managerId: projectData.managerId || "",
         });
         setShowEditModal(true);
     };
 
-    const handleSubmit = () => {
-        // Here you would typically save the data
-        console.log("Updating project:", formData);
-        setShowEditModal(false);
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+            
+            // Basic validation
+            if (!formData.name.trim()) {
+                alert("Vui lòng nhập tên dự án");
+                return;
+            }
+            
+            // Prepare data for API call
+            const updateData = {
+                name: formData.name.trim(),
+                description: formData.description.trim() || null,
+                startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
+                endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
+                status: formData.status || null,
+                managerId: formData.managerId || null,
+            };
+            
+            console.log("Updating project:", updateData);
+            
+            // Call API to update project
+            const updatedProject = await projectService.updateProject(projectId, updateData);
+            
+            // Update local state with new data
+            setProjectData(updatedProject);
+            
+            // Close modal
+            setShowEditModal(false);
+            
+            console.log("Project updated successfully:", updatedProject);
+        } catch (error) {
+            console.error("Error updating project:", error);
+            handleError(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleClose = () => {
@@ -106,8 +178,12 @@ export default function ProjectDetails() {
                 title="Chỉnh sửa dự án"
                 footer={
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={handleClose}>Hủy</Button>
-                        <Button onClick={handleSubmit}>Lưu thay đổi</Button>
+                        <Button variant="secondary" onClick={handleClose} disabled={loading}>
+                            Hủy
+                        </Button>
+                        <Button onClick={handleSubmit} disabled={loading}>
+                            {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                        </Button>
                     </div>
                 }
             >
@@ -123,34 +199,19 @@ export default function ProjectDetails() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mã dự án</label>
-                        <Input
-                            type="text"
-                            value={formData.code}
-                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                        <Select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mã dự án"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
-                        <Input
-                            type="text"
-                            value={formData.client}
-                            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tên khách hàng"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Quản lý dự án</label>
-                        <Input
-                            type="text"
-                            value={formData.projectManager}
-                            onChange={(e) => setFormData({ ...formData, projectManager: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tên quản lý dự án"
-                        />
+                        >
+                            <option value="">Chọn trạng thái</option>
+                            <option value="PLANNING">Lập kế hoạch</option>
+                            <option value="IN_PROGRESS">Đang thực hiện</option>
+                            <option value="COMPLETED">Hoàn thành</option>
+                            <option value="CANCELLED">Hủy bỏ</option>
+                            <option value="ON_HOLD">Tạm dừng</option>
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>

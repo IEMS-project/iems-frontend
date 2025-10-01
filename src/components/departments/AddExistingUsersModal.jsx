@@ -11,7 +11,7 @@ export default function AddExistingUsersModal({
   initialSelectedIds = [],
   onSubmit,
   onCreateNew,
-  title = "Thêm thành viên có sẵn",
+  title = "Thêm thành viên",
 }) {
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set(initialSelectedIds));

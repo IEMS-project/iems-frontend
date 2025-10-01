@@ -13,6 +13,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import Calendar from "./pages/Calendar";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
+import PermissionDenied from "./pages/PermissionDenied";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import { useAuth } from "./context/AuthContext.jsx";
@@ -49,6 +50,7 @@ export default function App() {
                             <Route path="/notifications" element={<Notifications />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/admin" element={<AdminAnalytics />} />
+                            <Route path="/permission-denied" element={<PermissionDenied />} />
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />
                         </Routes>
                     </MainLayout>
