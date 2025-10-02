@@ -10,6 +10,7 @@ import MemberForm from "../components/departments/MemberForm";
 import AddExistingUsersModal from "../components/departments/AddExistingUsersModal";
 import PageHeader from "../components/common/PageHeader";
 import UserAvatar from "../components/ui/UserAvatar";
+import Pagination from "../components/ui/Pagination";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
 import { api } from "../lib/api";
@@ -565,15 +566,6 @@ export default function DepartmentDetail() {
                                 placeholder="Tìm thành viên..."
                                 className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
-                            <Select
-                                className="h-10 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                value={pageSize}
-                                onChange={(e) => setPageSize(Number(e.target.value))}
-                            >
-                                <option value={5}>5 / trang</option>
-                                <option value={10}>10 / trang</option>
-                                <option value={20}>20 / trang</option>
-                            </Select>
                             <Button onClick={() => setShowAddExistingModal(true)} className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3M8 9l3 3-3 3M5 12h6" />
@@ -687,15 +679,16 @@ export default function DepartmentDetail() {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                            <div>
-                                Trang {page} / {totalPages} • Tổng {filteredMembers.length}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Trước</Button>
-                                <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Sau</Button>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            totalItems={filteredMembers.length}
+                            pageSize={pageSize}
+                            onPageChange={setPage}
+                            onPageSizeChange={setPageSize}
+                            pageSizeOptions={[5, 10, 20]}
+                            className="mt-4"
+                        />
                     </CardContent>
                 </Card>
             </div>

@@ -28,5 +28,8 @@ export const projectService = {
   async deleteProject(projectId) {
     return api.deleteProject(projectId);
   },
+  async addProjectMember(projectId, memberData) {
+    return api.addProjectMember(projectId, memberData);
+  },
 };
 
