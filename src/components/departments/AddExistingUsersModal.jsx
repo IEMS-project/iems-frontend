@@ -49,6 +49,20 @@ export default function AddExistingUsersModal({
     setSelectedIds(next);
   }
 
+  function selectAllVisible() {
+    const next = new Set(selectedIds);
+    for (const u of filtered) {
+      const id = u.userId || u.id;
+      if (next.size >= 100) break;
+      next.add(id);
+    }
+    setSelectedIds(next);
+  }
+
+  function clearAll() {
+    setSelectedIds(new Set());
+  }
+
   function removeSelected(id) {
     const next = new Set(selectedIds);
     next.delete(id);
@@ -66,11 +80,12 @@ export default function AddExistingUsersModal({
       open={open}
       onClose={onClose}
       title={title}
+      className="max-w-4xl"
       footer={
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-600 dark:text-gray-300">
-              Đã chọn {selectedIds.size}/100
+              Đã chọn {selectedIds.size}/{allUsers?.length || 0}
             </div>
             {onCreateNew && (
               <Button variant="secondary" onClick={onCreateNew}>
@@ -89,17 +104,27 @@ export default function AddExistingUsersModal({
         </div>
       }
     >
-      {/* Search input */}
-      <Input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Nhập tên..."
-        className="w-full mb-4"
-      />
+      {/* Search input and bulk actions */}
+      <div className="flex items-center gap-3 mb-4">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Nhập tên..."
+          className="flex-1"
+        />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={selectAllVisible} className="whitespace-nowrap">
+            Chọn tất cả
+          </Button>
+          <Button variant="outline" onClick={clearAll} className="whitespace-nowrap">
+            Bỏ chọn tất cả
+          </Button>
+        </div>
+      </div>
 
       <div className="flex gap-4">
         {/* Danh sách bên trái */}
-        <div className="flex-1 border rounded-md max-h-96 overflow-auto divide-y divide-gray-100 dark:divide-gray-800">
+        <div className="w-3/5 border rounded-md max-h-[36rem] overflow-auto divide-y divide-gray-100 dark:divide-gray-800">
           {filtered.map((u) => {
             const id = u.userId || u.id;
             const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
@@ -136,8 +161,8 @@ export default function AddExistingUsersModal({
           )}
         </div>
 
-        {/* Danh sách đã chọn bên phải */}
-        <div className="w-64 border rounded-md p-2 bg-gray-50 dark:bg-gray-900 space-y-2 overflow-auto max-h-96">
+  {/* Danh sách đã chọn bên phải */}
+  <div className="w-2/5 border rounded-md p-2 bg-gray-50 dark:bg-gray-900 space-y-2 overflow-auto max-h-[36rem]">
           {selectedList.map((u) => {
             const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
             return (

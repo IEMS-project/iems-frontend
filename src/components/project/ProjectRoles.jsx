@@ -81,7 +81,6 @@ export default function ProjectRoles() {
                                     <li key={r.id} className="flex items-center justify-between">
                                         <div>
                                             <div className="text-sm font-medium">{r.roleName}</div>
-                                            {r.roleId && <div className="text-xs text-gray-500">{r.roleId}</div>}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => openEdit(r)} className="text-xs text-blue-600 hover:underline">Sửa</button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Avatar from "../ui/Avatar";
 import Badge from "../ui/Badge";
@@ -6,6 +6,7 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 import Select from "../ui/Select";
+import UserSelect from "./UserSelect";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 
@@ -99,11 +100,39 @@ export default function Members() {
         setShowModal(true);
     };
 
-    const handleSubmit = () => {
-        // Here you would typically save the data
-        console.log("Saving member:", formData);
-        setShowModal(false);
-        setFormData({ name: "", role: "", status: "Hoạt động" });
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+            // If editingMember exists, update flow would go here (not implemented yet)
+            if (!formData.userId) {
+                alert("Vui lòng chọn người dùng");
+                return;
+            }
+            
+            if (!formData.roleId) {
+                alert("Vui lòng chọn vai trò");
+                return;
+            }
+
+            const memberPayload = {
+                userId: formData.userId,
+                roleId: formData.roleId, // Required field
+            };
+
+            await projectService.addProjectMember(projectId, memberPayload);
+
+            // Refresh members list
+            const updated = await projectService.getProjectMembers(projectId);
+            setMembers(Array.isArray(updated) ? updated : []);
+
+            setShowModal(false);
+            setFormData({ name: "", role: "", status: "Hoạt động" });
+        } catch (e) {
+            console.error("Error adding project member:", e);
+            alert(e?.message || "Có lỗi khi thêm thành viên dự án");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleClose = () => {
@@ -134,7 +163,7 @@ export default function Members() {
                                             <Avatar name={m.userName || m.userEmail} size={9} />
                                             <div>
                                                 <div className="text-sm font-medium">{m.userName || m.userEmail}</div>
-                                                <div className="text-xs text-gray-500">{m.role}</div>
+                                                <div className="text-xs text-gray-500">{m.roleName || m.role || "N/A"}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -170,18 +199,12 @@ export default function Members() {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
-                        <Select
+                        {/* Custom searchable dropdown to show avatar + name (top) and email (bottom) */}
+                        <UserSelect
+                            assignableUsers={assignableUsers}
                             value={formData.userId}
-                            onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="">Chọn thành viên</option>
-                            {assignableUsers.map(u => (
-                                <option key={u.id} value={u.id}>
-                                    {(u.firstName || "") + (u.lastName ? " " + u.lastName : "")} - {u.email}
-                                </option>
-                            ))}
-                        </Select>
+                            onChange={(id) => setFormData({ ...formData, userId: id })}
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
@@ -192,7 +215,7 @@ export default function Members() {
                         >
                             <option value="">Chọn vai trò</option>
                             {projectRoles.map(r => (
-                                <option key={r.id} value={r.id}>{r.roleName}</option>
+                                <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
                             ))}
                         </Select>
                     </div>

@@ -244,6 +244,13 @@ export const api = {
         const data = await request(`/project-service/api/projects/${projectId}/members`);
         return data?.data || data || [];
   },
+  async addProjectMember(projectId, memberData) {
+    const data = await request(`/project-service/api/projects/${projectId}/members`, {
+      method: "POST",
+      body: memberData,
+    });
+    return data?.data || data;
+  },
   // Project Roles CRUD
   async getProjectRoles(projectId) {
     const data = await request(`/project-service/api/projects/${projectId}/roles`);
