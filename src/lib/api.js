@@ -136,6 +136,11 @@ export const api = {
     const data = await request("/user-service/users");
     return data?.data || [];
   },
+  async getAllUserBasicInfos() {
+    // Your gateway to user-service basic infos (secured)
+    const data = await request("/user-service/users/basic-infos");
+    return data?.data || [];
+  },
   async getUserById(userId) {
     const data = await request(`/user-service/users/${userId}`);
     return data?.data || null;
@@ -152,6 +157,80 @@ export const api = {
     // Requires Authorization so that Department Service can forward the token to User Service
     const data = await request(`/department-service/departments/${id}/users`);
     return data?.data || null;
+  },
+  async createUser(userData) {
+    const data = await request("/user-service/users", {
+      method: "POST",
+      body: userData,
+    });
+    return data?.data || data;
+  },
+  async updateUser(userId, userData) {
+    const data = await request(`/user-service/users/${userId}`, {
+      method: "PUT",
+      body: userData,
+    });
+    return data?.data || data;
+  },
+  async deleteUser(userId) {
+    const data = await request(`/user-service/users/${userId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  async removeUserFromDepartment(departmentId, userId) {
+    const data = await request(`/department-service/departments/${departmentId}/users/${userId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  async addUsersToDepartment(departmentId, { userIds }) {
+    const data = await request(`/department-service/departments/${departmentId}/users`, {
+      method: "POST",
+      body: { userIds },
+    });
+    return data?.data || data;
+  },
+  // Project Service APIs
+  async getProjectsTable() {
+    const data = await request("/project-service/projects/table");
+    return data?.data || data || [];
+  },
+  async createProject(projectData) {
+    const data = await request("/project-service/projects", {
+      method: "POST",
+      body: projectData,
+    });
+    return data?.data || data;
+  },
+  async getProjectById(projectId) {
+    const data = await request(`/project-service/projects/${projectId}`);
+    return data?.data || data;
+  },
+  async updateProject(projectId, projectData) {
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "PUT",
+      body: projectData,
+    });
+    return data?.data || data;
+  },
+  async deleteProject(projectId) {
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+  // Project related aggregates
+  async getProjectMembers(projectId) {
+    // Prefer gateway facade per user's curl; fallback to service path if not available
+        const data = await request(`/project-service/api/projects/${projectId}/members`);
+        return data?.data || data || [];
+  },
+  async getTasksByProject(projectId) {
+    // User's curl hits task-service directly at 8084: /tasks/project/{id}
+    // Through gateway we expose it under /task-service/tasks/project/{id}
+    const data = await request(`/task-service/tasks/project/${projectId}`);
+    return data?.data || data || [];
   },
 };
 
