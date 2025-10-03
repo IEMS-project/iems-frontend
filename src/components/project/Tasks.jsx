@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import { Table, THead, TBody, TR, TH, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
@@ -6,44 +6,36 @@ import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
-
-const tasksData = [
-    { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
-    { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
-    { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
-    { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
-    { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
-    { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
-    { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
-    { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
-    { id: "T-101", title: "Thiết kế kiến trúc", assignee: "Nguyễn Văn A", status: "Đang làm", priority: "Cao", dueDate: "2024-10-15" },
-    { id: "T-102", title: "API xác thực", assignee: "Trần Thị B", status: "Đang làm", priority: "Trung bình", dueDate: "2024-10-20" },
-    { id: "T-103", title: "UI Dashboard", assignee: "Lê Văn C", status: "Chờ", priority: "Thấp", dueDate: "2024-11-01" },
-    { id: "T-104", title: "Kiểm thử", assignee: "Phạm D", status: "Chờ", priority: "Trung bình", dueDate: "2024-11-15" },
-];
-
-// Danh sách thành viên có sẵn để chọn làm người phụ trách
-const availableMembers = [
-    "Nguyễn Văn A",
-    "Trần Thị B", 
-    "Lê Văn C",
-    "Phạm D",
-    "Hoàng Thị E",
-    "Vũ Văn F",
-    "Đặng Thị G",
-    "Bùi Văn H"
-];
-
-function statusVariant(status) {
-    switch (status) {
-        case "Hoàn thành": return "green";
-        case "Đang làm": return "blue";
-        case "Chờ": return "yellow";
-        default: return "gray";
-    }
-}
-
+import { useParams, useNavigate } from "react-router-dom";
+import { taskService } from "../../services/taskService";
+import UserAvatar from "../ui/UserAvatar";
 export default function Tasks() {
+    const { projectId } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [tasksData, setTasksData] = useState([]);
+
+    // Danh sách thành viên có sẵn để chọn làm người phụ trách
+    const availableMembers = [
+        "Nguyễn Văn A",
+        "Trần Thị B",
+        "Lê Văn C",
+        "Phạm D",
+        "Hoàng Thị E",
+        "Vũ Văn F",
+        "Đặng Thị G",
+        "Bùi Văn H"
+    ];
+
+    function statusVariant(status) {
+        switch (status) {
+            case "Hoàn thành": return "green";
+            case "Đang làm": return "blue";
+            case "Chờ": return "yellow";
+            default: return "gray";
+        }
+    }
+
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [formData, setFormData] = useState({
@@ -54,6 +46,48 @@ export default function Tasks() {
         priority: "Trung bình",
         dueDate: ""
     });
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                setLoading(true);
+                const data = await taskService.getTasksByProject(projectId);
+                
+                // Check if response indicates permission error
+                if (data && data.status === "error" && 
+                    (data.message?.includes("Permission denied") || 
+                     data.message?.includes("PERMISSION_DENIED"))) {
+                    console.log("Permission error in Tasks response data, redirecting...");
+                    navigate("/permission-denied");
+                    return;
+                }
+                
+                setTasksData(Array.isArray(data) ? data : []);
+            } catch (e) {
+                console.log("Tasks Error:", e);
+                console.log("Error status:", e.status);
+                console.log("Error message:", e.message);
+                console.log("Error data:", e.data);
+                
+                // Check if it's a permission error
+                if (e.status === 403 || 
+                    e.message?.includes("PERMISSION_DENIED") ||
+                    e.message?.includes("permission") ||
+                    e.message?.includes("quyền") ||
+                    e.message?.includes("Permission denied")) {
+                    console.log("Permission error detected in Tasks, redirecting...");
+                    // Redirect immediately to permission denied page
+                    navigate("/permission-denied");
+                    return;
+                } else {
+                    console.error(e);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (projectId) load();
+    }, [projectId, navigate]);
 
     const handleEditTask = (task) => {
         setEditingTask(task);
@@ -118,35 +152,60 @@ export default function Tasks() {
                 </CardHeader>
                 <CardContent>
                     <div className="max-h-96 overflow-y-auto">
-                        <Table>
+                        <Table className="min-w-full">
                             <THead>
                                 <TR>
-                                    <TH>Mã</TH>
-                                    <TH>Tiêu đề</TH>
-                                    <TH>Phụ trách</TH>
-                                    <TH>Trạng thái</TH>
-                                    <TH>Ưu tiên</TH>
-                                    <TH></TH>
+                                    <TH className="sticky top-0 bg-white z-10">Nhiệm vụ</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Người thực hiện</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Trạng thái</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Độ ưu tiên</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Bắt đầu</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Kết thúc</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Người tạo</TH>
+                                    <TH className="sticky top-0 bg-white z-10">Hành động</TH>
+
+
                                 </TR>
                             </THead>
                             <TBody>
-                                {tasksData.map(t => (
-                                    <TR key={t.id}>
-                                        <TD className="font-medium">{t.id}</TD>
-                                        <TD>{t.title}</TD>
-                                        <TD>{t.assignee}</TD>
-                                        <TD><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
-                                        <TD>{t.priority}</TD>
-                                        <TD>
-                                            <button
-                                                onClick={() => handleEditTask(t)}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                Sửa
-                                            </button>
-                                        </TD>
-                                    </TR>
-                                ))}
+                                {loading ? (
+                                    <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Đang tải...</TD></TR>
+                                ) : tasksData.length === 0 ? (
+                                    <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
+                                ) : (
+                                    tasksData.map(t => (
+                                        <TR key={t.id}>
+                                            <TD className="min-w-[180px]">{t.title}</TD>
+                                            <TD className="flex items-center gap-2 min-w-[180px]">
+                                                <UserAvatar user={{ firstName: t.assignedToName, email: t.assignedToEmail }} size="xs" />
+                                                <div className="flex flex-col flex-1 min-w-0">
+                                                    <span className="font-medium">{t.assignedToName || t.assignedToEmail || t.assignedTo}</span>
+                                                    <span className="text-sm text-gray-500">{t.assignedToEmail}</span>
+                                                </div>
+                                            </TD>
+
+                                            <TD className="min-w-[100px]"><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
+                                            <TD className="min-w-[100px]">{t.priority}</TD>
+                                            <TD className="min-w-[100px]">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                            <TD className="min-w-[100px]">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                            <TD className="flex items-center gap-2 min-w-[180px]">
+                                                <UserAvatar user={{ firstName: t.createdByName, email: t.createdByEmail }} size="xs" />
+                                                <div className="flex flex-col flex-1 min-w-0">
+                                                    <span className="font-medium">{t.createdByName || t.createdByEmail || t.createdBy}</span>
+                                                    <span className="text-sm text-gray-500">{t.createdByEmail}</span>
+                                                </div>
+                                            </TD>
+                                            <TD>
+                                                <button
+                                                    onClick={() => handleEditTask(t)}
+                                                    className="text-xs text-blue-600 hover:underline"
+                                                >
+                                                    Sửa
+                                                </button>
+                                            </TD>
+                                        </TR>
+                                    ))
+                                )}
                             </TBody>
                         </Table>
                     </div>

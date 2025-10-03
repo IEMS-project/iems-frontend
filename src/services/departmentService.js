@@ -10,6 +10,10 @@ export const departmentService = {
   async getDepartmentWithUsers(id) {
     return api.getDepartmentWithUsers(id);
   },
+  async addUsersToDepartment(departmentId, userIds) {
+    // userIds: string[]
+    return api.addUsersToDepartment(departmentId, { userIds });
+  },
   async createDepartment(payload) {
     // payload: { departmentName, description, managerId }
     return api.createDepartment(payload);

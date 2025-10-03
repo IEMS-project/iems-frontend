@@ -141,9 +141,27 @@ export const api = {
     const data = await request("/user-service/users/basic-infos");
     return data?.data || [];
   },
+  // Assignable users for selection in project member modal (basic fields only)
+  async getAssignableUsers() {
+    const data = await request("/user-service/users/basic-infos");
+    // Ensure we only return firstName, lastName, email, image, role, id
+    const list = data?.data || data || [];
+    return list.map(u => ({
+      id: u.id || u.userId,
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      email: u.email || "",
+      image: u.image || "",
+      role: u.role || (Array.isArray(u.roleCodes) ? u.roleCodes[0] : undefined)
+    }));
+  },
   async getUserById(userId) {
     const data = await request(`/user-service/users/${userId}`);
     return data?.data || null;
+  },
+  async getRoles() {
+    const data = await request(`/user-service/roles`);
+    return data?.data || [];
   },
   async getUsersByIds(userIds) {
     // Fetch multiple users by IDs
@@ -209,7 +227,7 @@ export const api = {
   },
   async updateProject(projectId, projectData) {
     const data = await request(`/project-service/projects/${projectId}`, {
-      method: "PUT",
+      method: "PATCH",
       body: projectData,
     });
     return data?.data || data;
@@ -225,6 +243,31 @@ export const api = {
     // Prefer gateway facade per user's curl; fallback to service path if not available
         const data = await request(`/project-service/api/projects/${projectId}/members`);
         return data?.data || data || [];
+  },
+  async addProjectMember(projectId, memberData) {
+    const data = await request(`/project-service/api/projects/${projectId}/members`, {
+      method: "POST",
+      body: memberData,
+    });
+    return data?.data || data;
+  },
+  // Project Roles CRUD
+  async getProjectRoles(projectId) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles`);
+    return data?.data || data || [];
+  },
+  async addProjectRole(projectId, payload) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles`, {
+      method: "POST",
+      body: payload,
+    });
+    return data?.data || data;
+  },
+  async deleteProjectRole(projectId, roleId) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles/${roleId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
   async getTasksByProject(projectId) {
     // User's curl hits task-service directly at 8084: /tasks/project/{id}
