@@ -7,7 +7,7 @@ import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import Departments from "./pages/Departments";
 import DepartmentDetail from "./pages/DepartmentDetail";
-import Messages from "./pages/Messages";
+import Messages from "./pages/Messages.jsx";
 import Documents from "./pages/Documents";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import Calendar from "./pages/Calendar";
@@ -28,12 +28,12 @@ function Protected({ children }) {
 }
 
 export default function App() {
-	return (
-		<Routes>
-			{/* Login page - standalone, no layout */}
-			<Route path="/login" element={<Login />} />
-			
-			{/* All other pages - with MainLayout */}
+    return (
+        <Routes>
+            {/* Login page - standalone, no layout */}
+            <Route path="/login" element={<Login />} />
+
+            {/* All other pages - with MainLayout */}
             <Route path="/*" element={
                 <Protected>
                     <MainLayout>
@@ -56,6 +56,6 @@ export default function App() {
                     </MainLayout>
                 </Protected>
             } />
-		</Routes>
-	);
+        </Routes>
+    );
 }
