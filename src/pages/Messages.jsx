@@ -5,14 +5,14 @@ import { chatService, chatWs } from "../services/chatService";
 import { UnreadCountsProvider, useUnreadCounts } from "../context/UnreadCountsContext";
 import { Client } from "@stomp/stompjs";
 import { getStoredTokens } from "../lib/api";
-import UserAvatar from "../components/ui/UserAvatar";
-import Avatar from "../components/ui/Avatar";
 import CreateGroupModal from "../components/messages/CreateGroupModal";
-import MessageItem from "../components/messages/MessageItem";
-import ReplyInput from "../components/messages/ReplyInput";
 import PinnedMessages from "../components/messages/PinnedMessages";
-import PinnedMessagesBanner from "../components/messages/PinnedMessagesBanner";
 import MessageSearch from "../components/messages/MessageSearch";
+import GroupMembersModal from "../components/messages/GroupMembersModal";
+import EmptyChat from "../components/messages/EmptyChat";
+import ConversationList from "./messages/ConversationList";
+import ChatArea from "./messages/ChatArea";
+
 
 // Utility function to generate unique message keys
 function generateMessageKey(message, index) {
@@ -53,15 +53,17 @@ function Messages() {
     const [replyingTo, setReplyingTo] = useState(null);
     const [showPinnedMessages, setShowPinnedMessages] = useState(false);
     const [showMessageSearch, setShowMessageSearch] = useState(false);
+    const [showGroupMembers, setShowGroupMembers] = useState(false);
     const [typingUsers, setTypingUsers] = useState({});
     const [isTyping, setIsTyping] = useState(false);
     const typingTimeoutRef = useRef(null);
     const messagesContainerRef = useRef(null);
-    
+
     // Pin message states
     const [pinnedMessages, setPinnedMessages] = useState([]);
     const pinnedMessagesBannerRef = useRef(null);
-    
+    const pinnedMessagesModalRef = useRef(null);
+
     // Message deduplication - track loaded message IDs
     const loadedMessageIdsRef = useRef(new Set());
 
@@ -122,6 +124,10 @@ function Messages() {
             convoSubRef.current = stompRef.current.subscribe(chatWs.convoTopic(conversationId), (message) => {
                 try {
                     const payload = JSON.parse(message.body);
+                    // Ensure typing events carry the current conversationId if missing
+                    if (payload && payload.event === 'typing' && !payload.conversationId) {
+                        payload.conversationId = conversationId;
+                    }
                     console.log('📨 Received conversation message:', payload);
                     handleIncoming(payload);
                 } catch (e) {
@@ -143,7 +149,10 @@ function Messages() {
                         loadConversations(userId);
                     } else if (payload.event === 'message') {
                         if (payload.conversationId && typeof payload.content === 'string') {
-                            lastMessagesByConvRef.current[payload.conversationId] = payload.content;
+                            lastMessagesByConvRef.current[payload.conversationId] = {
+                                content: payload.content,
+                                senderId: payload.senderId
+                            };
                             setUiTick(t => t + 1);
 
                             const isForOpen = payload.conversationId === selectedConversationIdRef.current;
@@ -221,7 +230,10 @@ function Messages() {
 
         // Handle regular message updates
         if (msg.conversationId) {
-            lastMessagesByConvRef.current[msg.conversationId] = msg.content;
+            lastMessagesByConvRef.current[msg.conversationId] = {
+                content: msg.content,
+                senderId: msg.senderId
+            };
             setUiTick(t => t + 1);
 
             const isForOpen = msg.conversationId === selectedConversationIdRef.current;
@@ -251,9 +263,9 @@ function Messages() {
                     incrementUnread(msg.conversationId, 1);
                     setUnreadCounts(prev => ({ ...prev, [msg.conversationId]: (prev[msg.conversationId] || 0) + 1 }));
                     setGlobalUnreadCounts(prev => ({ ...prev, [msg.conversationId]: (prev[msg.conversationId] || 0) + 1 }));
-                setUnreadByConv(prev => ({ ...prev, [msg.conversationId]: (prev[msg.conversationId] || 0) + 1 }));
+                    setUnreadByConv(prev => ({ ...prev, [msg.conversationId]: (prev[msg.conversationId] || 0) + 1 }));
+                }
             }
-        }
         }
 
         // Only process message updates for current conversation
@@ -310,12 +322,12 @@ function Messages() {
 
             // Add new message and scroll to bottom
             console.log('➕ Adding new message to current conversation');
-            
+
             // Add to loaded message IDs
             if (msgId) {
                 loadedMessageIdsRef.current.add(msgId);
             }
-            
+
             const normalized = {
                 ...msg,
                 id: msgId || msg.localId || `local-${Date.now()}`,
@@ -359,7 +371,10 @@ function Messages() {
                 });
                 const lastMsg = visible[visible.length - 1];
                 lastMessagesByConvRef.current[msg.conversationId] = lastMsg
-                    ? (lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''))
+                    ? {
+                        content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
+                        senderId: lastMsg.senderId
+                      }
                     : '';
                 setUiTick(t => t + 1);
             } catch (_e) { }
@@ -405,7 +420,10 @@ function Messages() {
         // If a message was recalled, immediately update sidebar last message preview
         if (msg.event === 'message_recalled') {
             try {
-                lastMessagesByConvRef.current[msg.conversationId] = 'Tin nhắn đã được thu hồi';
+                lastMessagesByConvRef.current[msg.conversationId] = {
+                    content: 'Tin nhắn đã được thu hồi',
+                    senderId: msg.senderId
+                };
                 setUiTick(t => t + 1);
             } catch (_e) { }
         }
@@ -413,43 +431,42 @@ function Messages() {
 
     function handlePinMessageEvent(msg) {
         console.log('📌 Pin message event received:', msg);
-        
+
         if (msg.conversationId !== selectedConversationIdRef.current) return;
-        
+
         if (msg.event === 'message_pinned') {
-            // Add to pinned messages list
+            // Add to pinned messages list using functional update to avoid stale state.
             setPinnedMessages(prev => {
-                const exists = prev.find(p => p.id === msg.messageId);
-            if (exists) return prev;
-                return [...prev, msg.message];
+                const exists = prev.find(p => (p.id || p._id) === msg.messageId);
+                if (exists) return prev;
+                const next = [...prev, msg.message];
+                // Notify banner and modal refs immediately with the new list for realtime feel
+                try { pinnedMessagesBannerRef.current?.updatePinnedMessages(next); } catch (_) { }
+                try { pinnedMessagesModalRef.current?.updatePinnedMessages(next); } catch (_) { }
+                return next;
             });
-            
+
             // Update message in messages list
-            setMessages(prev => prev.map(m => 
-                (m.id || m._id) === msg.messageId 
+            setMessages(prev => prev.map(m =>
+                (m.id || m._id) === msg.messageId
                     ? { ...m, pinned: true, pinnedBy: msg.pinnedBy, pinnedAt: msg.pinnedAt }
                     : m
             ));
-            
-            // Update pinned messages banner
-            if (pinnedMessagesBannerRef.current?.updatePinnedMessages) {
-                pinnedMessagesBannerRef.current.updatePinnedMessages([...pinnedMessages, msg.message]);
-            }
         } else if (msg.event === 'message_unpinned') {
-            // Remove from pinned messages list
-            setPinnedMessages(prev => prev.filter(p => p.id !== msg.messageId));
-            
+            // Remove from pinned messages list, also notify banner via updater
+            setPinnedMessages(prev => {
+                const next = prev.filter(p => (p.id || p._id) !== msg.messageId);
+                try { pinnedMessagesBannerRef.current?.updatePinnedMessages(next); } catch (_) { }
+                try { pinnedMessagesModalRef.current?.updatePinnedMessages(next); } catch (_) { }
+                return next;
+            });
+
             // Update message in messages list
-            setMessages(prev => prev.map(m => 
-                (m.id || m._id) === msg.messageId 
+            setMessages(prev => prev.map(m =>
+                (m.id || m._id) === msg.messageId
                     ? { ...m, pinned: false, pinnedBy: null, pinnedAt: null }
                     : m
             ));
-            
-            // Update pinned messages banner
-            if (pinnedMessagesBannerRef.current?.updatePinnedMessages) {
-                pinnedMessagesBannerRef.current.updatePinnedMessages(pinnedMessages.filter(p => p.id !== msg.messageId));
-            }
         }
     }
 
@@ -478,7 +495,10 @@ function Messages() {
 
         // Update last message content
         if (msg.conversationId && (msg.content || msg.event === 'message_recalled')) {
-            lastMessagesByConvRef.current[msg.conversationId] = msg.event === 'message_recalled' ? 'Tin nhắn đã được thu hồi' : msg.content;
+            lastMessagesByConvRef.current[msg.conversationId] = {
+                content: msg.event === 'message_recalled' ? 'Tin nhắn đã được thu hồi' : msg.content,
+                senderId: msg.senderId
+            };
             console.log('📝 Updated last message from message event:', msg.conversationId);
             setUiTick(t => t + 1);
         }
@@ -491,7 +511,10 @@ function Messages() {
         if (msg.conversationId) {
             // Update last message
             if (msg.lastMessage && (msg.lastMessage.content || msg.lastMessage.recalled)) {
-                lastMessagesByConvRef.current[msg.conversationId] = msg.lastMessage.recalled ? 'Tin nhắn đã được thu hồi' : msg.lastMessage.content;
+                lastMessagesByConvRef.current[msg.conversationId] = {
+                    content: msg.lastMessage.recalled ? 'Tin nhắn đã được thu hồi' : msg.lastMessage.content,
+                    senderId: msg.lastMessage.senderId
+                };
                 console.log('📝 Updated last message for conversation:', msg.conversationId);
             }
 
@@ -535,14 +558,17 @@ function Messages() {
 
             // Initialize unread counts and last messages from the enhanced API response
             const initialUnreadCounts = {};
-                for (const c of list) {
+            for (const c of list) {
                 if (c?.id) {
                     // Set unread count from API response
                     initialUnreadCounts[c.id] = c.unreadCount || 0;
 
                     // Set last message from API response
                     if (c.lastMessage && c.lastMessage.content) {
-                        lastMessagesByConvRef.current[c.id] = c.lastMessage.content;
+                        lastMessagesByConvRef.current[c.id] = {
+                            content: c.lastMessage.content,
+                            senderId: c.lastMessage.senderId
+                        };
                     }
                 }
             }
@@ -552,7 +578,7 @@ function Messages() {
             setGlobalUnreadCounts(initialUnreadCounts);
             // initialize global unread context as well
             try { setAllUnread(initialUnreadCounts); } catch (e) { console.debug(e); }
-                setUiTick(t => t + 1);
+            setUiTick(t => t + 1);
         } catch (_e) {
             console.error('Error loading conversations:', _e);
         }
@@ -576,27 +602,27 @@ function Messages() {
                 // Double-check conversation is still selected before updating state
                 if (conversationId === selectedConversationId) {
                     const newMessages = result.messages || [];
-                    
+
                     // Deduplicate messages by _id
                     const uniqueMessages = newMessages.filter(msg => {
                         const msgId = msg._id || msg.id;
                         if (!msgId) return false;
-                        
+
                         if (loadedMessageIdsRef.current.has(msgId)) {
                             console.log('🔄 Skipping duplicate message:', msgId);
                             return false;
                         }
-                        
+
                         loadedMessageIdsRef.current.add(msgId);
                         return true;
                     });
-                    
+
                     console.log('📥 Loaded', uniqueMessages.length, 'unique messages out of', newMessages.length, 'total');
-                    
+
                     setMessages(uniqueMessages);
                     setHasMoreMessages(result.hasMore || false);
                     setNextCursor(result.nextCursor);
-                    
+
                     // Load pinned messages for this conversation
                     try {
                         const pinnedMsgs = await chatService.getPinnedMessages(conversationId);
@@ -660,23 +686,23 @@ function Messages() {
                 // Double-check conversation is still selected before updating state
                 if (conversationId === selectedConversationId) {
                     const olderMessages = result.messages || [];
-                    
+
                     // Deduplicate older messages by _id
                     const uniqueOlderMessages = olderMessages.filter(msg => {
                         const msgId = msg._id || msg.id;
                         if (!msgId) return false;
-                        
+
                         if (loadedMessageIdsRef.current.has(msgId)) {
                             console.log('🔄 Skipping duplicate older message:', msgId);
                             return false;
                         }
-                        
+
                         loadedMessageIdsRef.current.add(msgId);
                         return true;
                     });
-                    
+
                     console.log('📥 Loaded', uniqueOlderMessages.length, 'unique older messages out of', olderMessages.length, 'total');
-                    
+
                     // Prepend older messages
                     setMessages(prev => [...uniqueOlderMessages, ...prev]);
                     setHasMoreMessages(result.hasMore || false);
@@ -695,7 +721,7 @@ function Messages() {
         } catch (error) {
             console.error('Error loading messages:', error);
             if (isInitialLoad) {
-            setMessages([]);
+                setMessages([]);
             }
         } finally {
             if (!isInitialLoad) {
@@ -739,7 +765,7 @@ function Messages() {
             if (uid) {
                 connectWS();
                 await loadConversations(uid);
-                await loadUnreadCounts(uid);
+                // Don't call loadUnreadCounts separately as loadConversations already sets unread counts
                 subscribeUser(uid);
             }
         })();
@@ -771,10 +797,10 @@ function Messages() {
             setLoadingOlderMessages(false);
             setLoadingNewerMessages(false);
             setShouldPreserveScroll(false);
-            
+
             // Reset pinned messages for new conversation
             setPinnedMessages([]);
-            
+
             // Clear loaded message IDs for new conversation
             loadedMessageIdsRef.current.clear();
 
@@ -805,7 +831,7 @@ function Messages() {
             // Ensure we don't scroll beyond the container bounds
             const maxScrollTop = el.scrollHeight - el.clientHeight;
             const finalScrollTop = Math.min(Math.max(newScrollTop, 0), maxScrollTop);
-            
+
             el.scrollTop = finalScrollTop;
             setShouldPreserveScroll(false);
         }
@@ -823,11 +849,11 @@ function Messages() {
             const result = await chatService.getMessagesAround(oldestId, limit, 0);
             const older = (result?.beforeMessages || []).filter(msg => {
                 const msgId = msg.id || msg._id;
-                    if (!msgId) return false;
+                if (!msgId) return false;
                 if (loadedMessageIdsRef.current.has(msgId)) return false;
-                    loadedMessageIdsRef.current.add(msgId);
-                    return true;
-                });
+                loadedMessageIdsRef.current.add(msgId);
+                return true;
+            });
             if (older.length > 0) {
                 // preserve scroll before prepend
                 setShouldPreserveScroll(true);
@@ -886,7 +912,7 @@ function Messages() {
             const scrollHeight = container.scrollHeight;
             const clientHeight = container.clientHeight;
             const scrollBottom = scrollHeight - scrollTop - clientHeight;
-            
+
             const scrollThreshold = 50; // Load when within 50px of top/bottom
 
             console.log('📜 Scroll event:', {
@@ -906,7 +932,7 @@ function Messages() {
                 console.log('🔄 Triggering load older-by-id at scrollTop:', scrollTop);
                 loadOlderById(selectedConversationId);
             }
-            
+
             // Load newer messages when scrolling down (if we're near bottom)
             if (scrollBottom <= scrollThreshold && !loadingNewerMessages && selectedConversationId) {
                 console.log('🔄 Triggering load newer-by-id at scrollBottom:', scrollBottom);
@@ -954,9 +980,40 @@ function Messages() {
 
     const filteredConversations = useMemo(() => {
         const q = (searchQuery || '').toLowerCase();
-        return (conversations || []).filter(c => {
+        const filtered = (conversations || []).filter(c => {
             const dn = getConversationDisplayName(c, currentUserId).toLowerCase();
             return !q || dn.includes(q) || (c.id || '').toLowerCase().includes(q);
+        });
+        
+        // Sort conversations: pinned first (by pinnedAt desc), then by last message time desc
+        return filtered.sort((a, b) => {
+            const aPinned = a.isPinned || false;
+            const bPinned = b.isPinned || false;
+            
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+            
+            if (aPinned && bPinned) {
+                // Both pinned, sort by pinnedAt desc
+                const aPinnedAt = a.pinnedAt ? new Date(a.pinnedAt).getTime() : 0;
+                const bPinnedAt = b.pinnedAt ? new Date(b.pinnedAt).getTime() : 0;
+                return bPinnedAt - aPinnedAt;
+            }
+            
+            // Both not pinned or same pinned status, sort by last message time
+            const aLastMsg = a.lastMessage;
+            const bLastMsg = b.lastMessage;
+            
+            if (aLastMsg && bLastMsg) {
+                const aTime = new Date(aLastMsg.sentAt || aLastMsg.timestamp || 0).getTime();
+                const bTime = new Date(bLastMsg.sentAt || bLastMsg.timestamp || 0).getTime();
+                return bTime - aTime;
+            }
+            
+            // Fallback to updatedAt
+            const aUpdated = new Date(a.updatedAt || 0).getTime();
+            const bUpdated = new Date(b.updatedAt || 0).getTime();
+            return bUpdated - aUpdated;
         });
     }, [searchQuery, conversations, currentUserId, uiTick]);
 
@@ -1013,9 +1070,10 @@ function Messages() {
         } catch (_e) { }
     }
 
-    async function onCreateGroupSubmit({ name, members }) {
+    async function onCreateGroupSubmit({ name, members, avatarUrl }) {
         try {
             const payload = { name, members, type: 'GROUP' };
+            if (avatarUrl && avatarUrl.trim()) payload.avatarUrl = avatarUrl.trim();
             const res = await chatService.createConversation(payload);
             const created = res?.data || res;
             setOpenCreateGroup(false);
@@ -1070,11 +1128,11 @@ function Messages() {
 
         // Add optimistic message immediately
         setMessages(prev => [...prev, optimisticMessage]);
-        
+
         // Add localId to loaded message IDs to prevent duplicates
         loadedMessageIdsRef.current.add(localId);
-        
-            setContent("");
+
+        setContent("");
         setReplyingTo(null);
 
         // Auto scroll to bottom after adding optimistic message
@@ -1201,7 +1259,10 @@ function Messages() {
                     const lastMsg = visible[visible.length - 1];
                     if (selectedConversationId) {
                         lastMessagesByConvRef.current[selectedConversationId] = lastMsg
-                            ? (lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''))
+                            ? {
+                                content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
+                                senderId: lastMsg.senderId
+                              }
                             : '';
                         setUiTick(t => t + 1);
                     }
@@ -1249,7 +1310,7 @@ function Messages() {
                     })
                 });
             } else {
-                await chatService.unpinMessage(conversationId, messageId);
+                await chatService.unpinMessage(conversationId, messageId, currentUserId);
             }
         } catch (error) {
             console.error('Error unpinning message:', error);
@@ -1279,7 +1340,7 @@ function Messages() {
         try {
             console.log('📥 Loading message with neighbors from API');
             const result = await chatService.getMessagesAround(messageId, 20, 20);
-            
+
             if (!result || !result.targetMessage) {
                 console.log('❌ Message not found or deleted');
                 alert('Tin nhắn gốc đã bị xóa');
@@ -1287,7 +1348,7 @@ function Messages() {
             }
 
             const { targetMessage, beforeMessages, afterMessages } = result;
-            
+
             // Check if we're in the right conversation
             if (targetMessage.conversationId !== conversationId) {
                 console.log('⚠️ Message belongs to different conversation, switching...');
@@ -1312,15 +1373,15 @@ function Messages() {
                 const msgId = msg.id || msg._id;
                 if (!msgId) return false;
                 if (loadedMessageIdsRef.current.has(msgId)) return false;
-                        loadedMessageIdsRef.current.add(msgId);
+                loadedMessageIdsRef.current.add(msgId);
                 return true;
             });
 
             // Replace entire list with the block only
             setMessages(uniqueBlock.sort((a, b) => {
-                        const timeA = new Date(a.sentAt || a.timestamp).getTime();
-                        const timeB = new Date(b.sentAt || b.timestamp).getTime();
-                        return timeA - timeB;
+                const timeA = new Date(a.sentAt || a.timestamp).getTime();
+                const timeB = new Date(b.sentAt || b.timestamp).getTime();
+                return timeA - timeB;
             }));
 
             // Update bi-directional hasMore flags based on neighbors
@@ -1329,7 +1390,7 @@ function Messages() {
             setIsJumpMode(true);
 
             // Focus target after render
-                setTimeout(() => {
+            setTimeout(() => {
                 handleScrollToMessage({ id: targetMessage.id || targetMessage._id });
             }, 50);
 
@@ -1361,11 +1422,11 @@ function Messages() {
         try {
             // Find the closest messages before and after the target
             const targetTime = new Date(targetMessage.sentAt || targetMessage.timestamp).getTime();
-            
+
             const beforeMessage = messages
                 .filter(m => new Date(m.sentAt || m.timestamp).getTime() < targetTime)
                 .sort((a, b) => new Date(b.sentAt || b.timestamp).getTime() - new Date(a.sentAt || a.timestamp).getTime())[0];
-            
+
             const afterMessage = messages
                 .filter(m => new Date(m.sentAt || m.timestamp).getTime() > targetTime)
                 .sort((a, b) => new Date(a.sentAt || a.timestamp).getTime() - new Date(b.sentAt || b.timestamp).getTime())[0];
@@ -1375,11 +1436,11 @@ function Messages() {
                 const beforeTime = new Date(beforeMessage.sentAt || beforeMessage.timestamp).getTime();
                 const afterTime = new Date(afterMessage.sentAt || afterMessage.timestamp).getTime();
                 const timeDiff = afterTime - beforeTime;
-                
+
                 // If there's a significant time gap (more than 5 minutes), fill it
                 if (timeDiff > 5 * 60 * 1000) {
                     console.log('🔍 Detected gap, filling messages between:', beforeMessage.id, 'and', afterMessage.id);
-                    
+
                     const gapMessages = await chatService.getMessagesBetween(
                         beforeMessage.id || beforeMessage._id,
                         afterMessage.id || afterMessage._id,
@@ -1388,7 +1449,7 @@ function Messages() {
 
                     if (gapMessages.length > 0) {
                         console.log('📥 Filling gap with', gapMessages.length, 'messages');
-                        
+
                         // Add to loaded message IDs
                         gapMessages.forEach(msg => {
                             const msgId = msg.id || msg._id;
@@ -1438,303 +1499,67 @@ function Messages() {
 
     return (
         <>
-            <div className="h-[calc(100vh-100px)] overflow-hidden flex flex-col space-y-6">
+            <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
                 <PageHeader breadcrumbs={[{ label: "Tin nhắn", to: "/messages" }]} />
                 <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    {/* Sidebar */}
-                    <div className="w-80 border-r border-gray-200 flex flex-col dark:border-gray-800">
-                        <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                            <div className="font-semibold">Chat</div>
-                            <button className="text-sm px-2 py-1 border rounded" onClick={() => setOpenCreateGroup(true)}>+ Tạo nhóm</button>
-                        </div>
-                        <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-                            <input className="w-full px-3 py-2 border rounded-full text-sm dark:bg-gray-900 dark:border-gray-700" placeholder="Tìm người để nhắn..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                            {searchQuery && (
-                                <div className="mt-3 max-h-60 overflow-auto rounded-md border border-gray-100 divide-y dark:border-gray-800 dark:divide-gray-800">
-                                    {allUsers.filter(u => (u.userId || u.id) !== currentUserId).filter(u => {
-                                        const q = searchQuery.trim().toLowerCase();
-                                        const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
-                                        return fullName.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
-                                    }).map(u => {
-                                        const id = u.userId || u.id;
-                                        const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
-                                        return (
-                                            <div key={id} onClick={() => startDirectWith(id)} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-800/50">
-                                                <Avatar src={u.image} name={fullName || u.email || id} size={8} />
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-medium truncate">{fullName || u.email || id}</div>
-                                                    <div className="text-xs text-gray-500 truncate">{u.email}</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {allUsers.filter(u => (u.userId || u.id) !== currentUserId).filter(u => {
-                                        const q = searchQuery.trim().toLowerCase();
-                                        const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
-                                        return fullName.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
-                                    }).length === 0 && (
-                                            <div className="p-3 text-sm text-gray-500">Không tìm thấy người dùng</div>
-                                        )}
-                                </div>
-                            )}
-                        </div>
-                        <div className="px-3 py-2 text-xs text-gray-500">Cuộc trò chuyện</div>
-                        <div className="flex-1 overflow-y-auto">
-                            {filteredConversations.map(c => {
-                                const dn = getConversationDisplayName(c, currentUserId);
-                                const isDir = isDirect(c);
-                                const peerId = isDir ? getPeerId(c) : null;
-                                const peerImg = isDir ? getUserImage(peerId) : "";
-                                const last = lastMessagesByConvRef.current[c.id] || "";
-                                const unread = unreadCounts[c.id] || globalUnreadCounts[c.id] || unreadByConv[c.id] || 0;
-
-                                // Format last message timestamp
-                                const lastMessageTime = c.lastMessage?.sentAt || c.updatedAt;
-                                const formatTime = (timestamp) => {
-                                    if (!timestamp) return '';
-                                    const date = new Date(timestamp);
-                                    const now = new Date();
-                                    const diffMs = now - date;
-                                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                                    if (diffDays === 0) {
-                                        // Today - show time
-                                        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-                                    } else if (diffDays === 1) {
-                                        // Yesterday
-                                        return 'Hôm qua';
-                                    } else if (diffDays < 7) {
-                                        // This week - show day name
-                                        return date.toLocaleDateString('vi-VN', { weekday: 'short' });
-                                    } else {
-                                        // Older - show date
-                                        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                                    }
-                                };
-
-                                return (
-                                    <div key={c.id} onClick={() => onSelectConversation(c)} className="flex gap-3 px-3 py-2 border-b border-gray-50 hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-800/50 dark:border-gray-800">
-                                        <div className="w-10 h-10">
-                                            {isDir ? (
-                                                <Avatar src={peerImg} name={dn} size={10} />
-                                            ) : (
-                                                <Avatar name={dn || c.id} size={10} />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between">
-                                                <div className="font-medium truncate">{dn}</div>
-                                                <div className="flex items-center gap-2">
-                                                    {lastMessageTime && (
-                                                        <span className="text-xs text-gray-400">{formatTime(lastMessageTime)}</span>
-                                                    )}
-                                                {unread > 0 && (
-                                                        <span className="shrink-0 bg-blue-600 text-white text-[10px] rounded-full px-2 py-0.5">{unread}</span>
-                                                )}
-                                                </div>
-                                            </div>
-                                            <div className="text-xs text-gray-500 truncate">{last}</div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    {/* Chat area */}
-                    <div className="flex-1 flex flex-col">
-                        <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
-                            <div className="flex items-center gap-3 min-w-0">
-                                {selectedConversationId ? (
-                                    (() => {
-                                        const conv = conversations.find(c => c.id === selectedConversationId);
-                                        const isDir = isDirect(conv);
-                                        const dn = getConversationDisplayName(conv, currentUserId);
-                                        const avatarSrc = isDir ? getUserImage(getPeerId(conv)) : "";
-                                        return (
-                                            <>
-                                                <Avatar src={avatarSrc} name={dn} size={10} />
-                                                <div className="font-semibold truncate">{dn}</div>
-                                                {/* show typing indicator */}
-                                                <div className="text-xs text-gray-500 ml-2">
-                                                    {Object.keys(typingUsers).length > 0 && (
-                                                        <span>{Object.keys(typingUsers).map(uid => getUserName(uid)).join(', ')} đang nhập...</span>
-                                                    )}
-                                                </div>
-                                            </>
-                                        );
-                                    })()
-                                ) : (
-                                    pendingDirect && selectedPeerId ? (
-                                        <>
-                                            <Avatar src={getUserImage(selectedPeerId)} name={getUserName(selectedPeerId)} size={10} />
-                                            <div className="font-semibold truncate">{getUserName(selectedPeerId)}</div>
-                                        </>
-                                    ) : (
-                                        <div className="font-semibold truncate">Chọn cuộc trò chuyện</div>
-                                    )
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {/* Search messages button */}
-                                {selectedConversationId && (
-                                    <button
-                                        onClick={() => setShowMessageSearch(true)}
-                                        className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                                        title="Tìm kiếm tin nhắn"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </button>
-                                )}
-
-                                {/* Pin messages button */}
-                                {selectedConversationId && pinnedMessages.length > 0 && (
-                                    <button
-                                        onClick={() => setShowPinnedMessages(true)}
-                                        className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                                        title="Tin nhắn đã ghim"
-                                    >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                        {pinnedMessages.length > 1 && (
-                                            <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                                {pinnedMessages.length}
-                                            </span>
-                                        )}
-                                    </button>
-                                )}
-                        </div>
-                                        </div>
-
-                        {/* Pinned messages banner */}
-                        {selectedConversationId && (
-                            <PinnedMessagesBanner
-                                ref={pinnedMessagesBannerRef}
-                                conversationId={selectedConversationId}
-                                getUserName={getUserName}
-                                onMessageClick={(message) => jumpToMessage(selectedConversationId, message.id || message._id)}
-                                onShowAllPinned={() => setShowPinnedMessages(true)}
-                            />
-                        )}
-
-                        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 relative">
-                            {isJumpMode && (
-                                <button
-                                    onClick={returnToLatest}
-                                    title="Trở về hiện tại"
-                                    className="absolute right-4 bottom-4 z-10 w-10 h-10 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            )}
-                            {/* Loading indicator for older messages at top */}
-                            {loadingOlderMessages && (
-                                <div className="flex justify-center py-4 bg-blue-50 dark:bg-blue-900/20">
-                                    <div className="flex items-center gap-2">
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                                        <span className="text-sm text-blue-600 dark:text-blue-400">Đang tải tin nhắn cũ hơn...</span>
-                                    </div>
-                        </div>
-                            )}
-
-                            {/* Loading indicator for newer messages at bottom */}
-                            {loadingNewerMessages && (
-                                <div className="flex justify-center py-4 bg-green-50 dark:bg-green-900/20">
-                                    <div className="flex items-center gap-2">
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
-                                        <span className="text-sm text-green-600 dark:text-green-400">Đang tải tin nhắn mới hơn...</span>
-                        </div>
-                    </div>
-                            )}
-
-                            {/* Messages */}
-                            {messages.map((m, idx) => (
-                                <div key={generateMessageKey(m, idx)} data-message-id={m.id || m._id}>
-                                    <MessageItem
-                                        message={m}
-                                        currentUserId={currentUserId}
-                                        getUserName={getUserName}
-                                        getUserImage={getUserImage}
-                                        onReply={handleReply}
-                                        stompClient={stompRef.current}
-                                        conversationId={selectedConversationId}
-                                        onMessageUpdate={handleMessageUpdate}
-                                        onJumpToMessage={(messageId) => jumpToMessage(selectedConversationId, messageId)}
-                                    />
-                    </div>
-                            ))}
-
-
-
-                        </div>
-
-                        {/* Reply input */}
-                        <ReplyInput
-                            replyingTo={replyingTo}
-                            onCancelReply={handleCancelReply}
+                    <ConversationList
+                        conversations={conversations}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        allUsers={allUsers}
+                        currentUserId={currentUserId}
+                        unreadCounts={unreadCounts}
+                        globalUnreadCounts={globalUnreadCounts}
+                        unreadByConv={unreadByConv}
+                        lastMessagesByConv={lastMessagesByConvRef}
+                        onSelectConversation={onSelectConversation}
+                        onCreateGroupClick={() => setOpenCreateGroup(true)}
+                        startDirectWith={startDirectWith}
+                        getConversationDisplayName={getConversationDisplayName}
+                        isDirect={isDirect}
+                        getPeerId={getPeerId}
+                        getUserName={getUserName}
+                        getUserImage={getUserImage}
+                        onConversationUpdate={() => loadConversations(currentUserId)}
+                    />
+                    {selectedConversationId ? (
+                        <ChatArea
+                            selectedConversationId={selectedConversationId}
+                            selectedConversation={conversations.find(c => c.id === selectedConversationId)}
+                            messages={messages}
+                            currentUserId={currentUserId}
                             getUserName={getUserName}
+                            getUserImage={getUserImage}
+                            onSend={onSend}
+                            onReply={handleReply}
+                            onCancelReply={handleCancelReply}
+                            onMessageUpdate={handleMessageUpdate}
+                            onJumpToMessage={jumpToMessage}
+                            typingUsers={typingUsers}
+                            onShowMessageSearch={() => setShowMessageSearch(true)}
+                            onShowGroupMembers={() => setShowGroupMembers(true)}
+                            isJumpMode={isJumpMode}
+                            onReturnToLatest={returnToLatest}
+                            loadingOlderMessages={loadingOlderMessages}
+                            loadingNewerMessages={loadingNewerMessages}
+                            messagesContainerRef={messagesContainerRef}
+                            content={content}
+                            onContentChange={setContent}
+                            onTyping={handleTyping}
+                            replyingTo={replyingTo}
+                            pendingDirect={pendingDirect}
+                            selectedPeerId={selectedPeerId}
+                            pinnedMessagesBannerRef={pinnedMessagesBannerRef}
+                            loadOlderById={loadOlderById}
+                            loadNewerById={loadNewerById}
+                            isDirect={isDirect}
+                            getPeerId={getPeerId}
+                            getConversationDisplayName={getConversationDisplayName}
+                            onShowPinnedMessages={() => setShowPinnedMessages(true)}
                         />
-
-                        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                            <div className="flex items-end gap-3">
-                                {/* Emoji button */}
-                                <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd" />
-                                    </svg>
-                                </button>
-
-                                {/* Message input */}
-                                <div className="flex-1 relative">
-                                    <textarea
-                                        className="w-full px-4 py-2 pr-12 border border-gray-300 dark:border-gray-600 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white max-h-32"
-                                        placeholder={replyingTo ? "Trả lời tin nhắn..." : "Nhập tin nhắn..."}
-                                        value={content}
-                                        rows={1}
-                                        onChange={(e) => {
-                                            setContent(e.target.value);
-                                            handleTyping();
-                                            // Auto-resize textarea
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                onSend();
-                                            }
-                                        }}
-                                    />
-
-                                    {/* Send button inside input */}
-                                    <button
-                                        onClick={onSend}
-                                        disabled={!content.trim()}
-                                        className={`absolute right-2 bottom-2 p-2 rounded-full transition-colors ${content.trim()
-                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                : 'bg-gray-300 text-gray-500 dark:bg-gray-600 dark:text-gray-400'
-                                            }`}
-                                    >
-                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                                        </svg>
-                                    </button>
-                        </div>
-
-                                {/* Attachment button */}
-                                <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    ) : (
+                        <EmptyChat />
+                    )}
                 </div>
             </div>
             <CreateGroupModal
@@ -1746,6 +1571,7 @@ function Messages() {
             />
 
             <PinnedMessages
+                ref={pinnedMessagesModalRef}
                 conversationId={selectedConversationId}
                 isVisible={showPinnedMessages}
                 onClose={() => setShowPinnedMessages(false)}
@@ -1764,6 +1590,15 @@ function Messages() {
                 getUserImage={getUserImage}
                 onMessageClick={(message) => jumpToMessage(selectedConversationId, message.id || message._id)}
                 currentUserId={currentUserId}
+            />
+
+            <GroupMembersModal
+                open={showGroupMembers}
+                onClose={() => setShowGroupMembers(false)}
+                conversationId={selectedConversationId}
+                allUsers={allUsers}
+                currentUserId={currentUserId}
+                onChanged={() => loadConversations(currentUserId)}
             />
         </>
     );

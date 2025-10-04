@@ -1,6 +1,7 @@
 import React from "react";
 import Avatar from "../ui/Avatar";
 import Input from "../ui/Input";
+import { FaSearch } from "react-icons/fa";
 
 export default function ChatList({
     chats,
@@ -26,9 +27,7 @@ export default function ChatList({
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="pl-9"
                         />
-                        <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <FaSearch className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     </div>
                 </div>
 
