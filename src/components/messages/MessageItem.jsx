@@ -32,6 +32,20 @@ export default function MessageItem({
     const [openMenuUp, setOpenMenuUp] = useState(false);
     const [emojiOpenUp, setEmojiOpenUp] = useState(false);
 
+    // Validate message before rendering - skip invalid messages
+    if (!message || !message.senderId || message.senderId === 'U' || message.senderId === 'unknown' || message.senderId.length < 3) {
+        console.log('⚠️ Skipping invalid message in MessageItem:', message?.senderId);
+        return null;
+    }
+
+    // Skip messages without content (except system messages)
+    if (!message.type || message.type !== 'SYSTEM_LOG') {
+        if (!message.content || message.content.trim() === '') {
+            console.log('⚠️ Skipping message without content in MessageItem');
+            return null;
+        }
+    }
+
     const isMe = message.senderId === currentUserId;
     const senderName = getUserName(message.senderId);
     const senderImg = getUserImage(message.senderId);
@@ -89,6 +103,10 @@ export default function MessageItem({
                 if (name && name !== token && name !== 'unknown') {
                     return name;
                 }
+                // If token looks like a UUID, don't show it - use fallback
+                if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
+                    return 'Người dùng';
+                }
                 return token;
             }).join('');
         };
@@ -120,7 +138,7 @@ export default function MessageItem({
                     })
                 });
             } else {
-                await chatService.addReaction(message.id, currentUserId, emoji);
+                await chatService.addReaction(message.id, emoji);
                 // rely on WS broadcast; don't reload all messages
             }
         } catch (error) {
@@ -143,7 +161,7 @@ export default function MessageItem({
                     })
                 });
             } else {
-                await chatService.removeReaction(message.id, currentUserId);
+                await chatService.removeReaction(message.id);
                 // rely on WS broadcast; don't reload all messages
             }
         } catch (error) {
@@ -169,7 +187,7 @@ export default function MessageItem({
                         })
                     });
                 } else {
-                    await chatService.removeReaction(message.id, currentUserId);
+                    await chatService.removeReaction(message.id);
                 }
             }
             setShowReactionModal(false);
@@ -184,7 +202,7 @@ export default function MessageItem({
             onMessageUpdate?.('delete-for-me', message.id, currentUserId);
 
             // Then call API
-            await chatService.deleteForMe(message.id, currentUserId);
+            await chatService.deleteForMe(message.id);
         } catch (error) {
             console.error('Error deleting message:', error);
             // Revert optimistic update on error
@@ -206,7 +224,7 @@ export default function MessageItem({
                     })
                 });
             } else {
-                await chatService.recallMessage(message.id, currentUserId);
+                await chatService.recallMessage(message.id);
                 // rely on WS broadcast; don't reload all messages
             }
         } catch (error) {
@@ -228,9 +246,9 @@ export default function MessageItem({
                 });
             } else {
                 if (message.pinned) {
-                    await chatService.unpinMessage(conversationId, message.id, currentUserId);
+                    await chatService.unpinMessage(conversationId, message.id);
                 } else {
-                    await chatService.pinMessage(conversationId, message.id, currentUserId);
+                    await chatService.pinMessage(conversationId, message.id);
                 }
                 // rely on WS broadcast; don't reload all messages
             }

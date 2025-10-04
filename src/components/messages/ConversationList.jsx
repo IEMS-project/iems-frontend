@@ -13,6 +13,7 @@ export default function ConversationList({
   globalUnreadCounts,
   unreadByConv,
   lastMessagesByConv,
+  uiTick,
   onSelectConversation,
   onCreateGroupClick,
   startDirectWith,
@@ -28,11 +29,27 @@ export default function ConversationList({
 
   const filteredConversations = useMemo(() => {
     const q = (searchQuery || '').toLowerCase();
-    return (conversations || []).filter(c => {
+    const filtered = (conversations || []).filter(c => {
       const dn = getConversationDisplayName(c, currentUserId).toLowerCase();
       return !q || dn.includes(q) || (c.id || '').toLowerCase().includes(q);
     });
-  }, [searchQuery, conversations, currentUserId, getConversationDisplayName]);
+
+    // Sort conversations: pinned first, then regular ones, both sorted by timestamp
+    return filtered.sort((a, b) => {
+      const aIsPinned = a.isPinned || false;
+      const bIsPinned = b.isPinned || false;
+
+      // If one is pinned and the other isn't, pinned comes first
+      if (aIsPinned && !bIsPinned) return -1;
+      if (!aIsPinned && bIsPinned) return 1;
+
+      // If both have same pinned status, sort by timestamp (newest first)
+      const aTime = lastMessagesByConv?.current?.[a.id]?.timestamp || a.lastMessage?.sentAt || a.updatedAt || new Date(0);
+      const bTime = lastMessagesByConv?.current?.[b.id]?.timestamp || b.lastMessage?.sentAt || b.updatedAt || new Date(0);
+      
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
+    });
+  }, [searchQuery, conversations, currentUserId, getConversationDisplayName, lastMessagesByConv, uiTick]);
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -53,9 +70,9 @@ export default function ConversationList({
   const handlePinConversation = async (conversationId, isPinned) => {
     try {
       if (isPinned) {
-        await chatService.unpinConversation(conversationId, currentUserId);
+        await chatService.unpinConversation(conversationId);
       } else {
-        await chatService.pinConversation(conversationId, currentUserId);
+        await chatService.pinConversation(conversationId);
       }
       // Trigger conversation list refresh
       if (onConversationUpdate) {
@@ -70,7 +87,7 @@ export default function ConversationList({
 
   const handleMarkAsUnread = async (conversationId) => {
     try {
-      await chatService.markConversationAsUnread(conversationId, currentUserId);
+      await chatService.markConversationAsUnread(conversationId);
       // Trigger conversation list refresh
       if (onConversationUpdate) {
         onConversationUpdate();
@@ -84,7 +101,7 @@ export default function ConversationList({
 
   const handleToggleNotifications = async (conversationId) => {
     try {
-      await chatService.toggleNotificationSettings(conversationId, currentUserId);
+      await chatService.toggleNotificationSettings(conversationId);
       // Trigger conversation list refresh
       if (onConversationUpdate) {
         onConversationUpdate();
@@ -113,7 +130,7 @@ export default function ConversationList({
     }
 
     try {
-      await chatService.deleteGroupConversation(conversationId, currentUserId);
+      await chatService.deleteGroupConversation(conversationId);
       // Trigger conversation list refresh
       if (onConversationUpdate) {
         onConversationUpdate();
@@ -215,7 +232,8 @@ export default function ConversationList({
           const lastMessageSenderId = lastMessageData?.senderId || c.lastMessage?.senderId;
           const lastMessageSenderName = lastMessageSenderId ? getUserName(lastMessageSenderId) : "";
           const unread = (unreadCounts?.[c.id]) || (globalUnreadCounts?.[c.id]) || (unreadByConv?.[c.id]) || 0;
-          const lastMessageTime = c.lastMessage?.sentAt || c.updatedAt;
+          // Use timestamp from lastMessagesByConv if available, fallback to conversation data
+          const lastMessageTime = lastMessageData?.timestamp || c.lastMessage?.sentAt || c.updatedAt;
           const isPinned = c.isPinned || false;
           const notificationsEnabled = c.notificationsEnabled !== false; // Default to true
           const manuallyMarkedAsUnread = c.manuallyMarkedAsUnread || false;

@@ -2,49 +2,39 @@ import { api, GATEWAY_BASE_URL, getStoredTokens } from "../lib/api";
 
 // REST calls align with backend static demo HTML, prefixed with chat-service behind gateway
 export const chatService = {
-  async getConversationsByUser(userId) {
+  async getConversationsByUser() {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/user/${encodeURIComponent(userId)}`, { headers });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/user`, { headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async createConversation(payload, actorUserId = null) {
+  async createConversation(payload) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type':'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     
-    // Add actorUserId to URL if provided
-    let url = `${GATEWAY_BASE_URL}/chat-service/api/conversations`;
-    if (actorUserId) {
-      url += `?actorUserId=${encodeURIComponent(actorUserId)}`;
-    }
-    
-    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations`, { method: 'POST', headers, body: JSON.stringify(payload) });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async addMember(conversationId, userId, actorUserId = null) {
+  async addMember(conversationId, userId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const url = new URL(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`);
-    if (actorUserId) url.searchParams.set('actorUserId', actorUserId);
-    const res = await fetch(url.toString(), { method: 'POST', headers });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`, { method: 'POST', headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async removeMember(conversationId, userId, actorUserId = null) {
+  async removeMember(conversationId, userId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const url = new URL(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`);
-    if (actorUserId) url.searchParams.set('actorUserId', actorUserId);
-    const res = await fetch(url.toString(), { method: 'DELETE', headers });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE', headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
@@ -103,14 +93,13 @@ export const chatService = {
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async markRead(conversationId, userId, lastMessageId = null) {
+  async markRead(conversationId, lastMessageId = null) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     
     const params = new URLSearchParams({
-      conversationId,
-      userId
+      conversationId
     });
     if (lastMessageId) {
       params.append('lastMessageId', lastMessageId);
@@ -127,20 +116,20 @@ export const chatService = {
     }
     return res.ok;
   },
-  async getUnreadCounts(userId) {
+  async getUnreadCounts() {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/unread/${encodeURIComponent(userId)}`, { headers });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/unread`, { headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async addReaction(messageId, userId, emoji) {
+  async addReaction(messageId, emoji) {
     const tokens = getStoredTokens();
     const headers = {};
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const params = new URLSearchParams({ userId, emoji });
+    const params = new URLSearchParams({ emoji });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions?${params.toString()}`, { 
       method: 'POST', 
       headers 
@@ -152,10 +141,10 @@ export const chatService = {
     }
     return res.ok;
   },
-  async removeReaction(messageId, userId) {
+  async removeReaction(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions/${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions`, { 
       method: 'DELETE', 
       headers 
     });
@@ -166,10 +155,10 @@ export const chatService = {
     }
     return res.ok;
   },
-  async deleteForMe(messageId, userId) {
+  async deleteForMe(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/delete?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/delete`, { 
       method: 'POST', 
       headers
     });
@@ -180,11 +169,10 @@ export const chatService = {
     }
     return res.ok;
   },
-  async recallMessage(messageId, userId) {
+  async recallMessage(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const params = new URLSearchParams({ userId });
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall?${params.toString()}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall`, { 
       method: 'POST', 
       headers 
     });
@@ -195,14 +183,14 @@ export const chatService = {
     }
     return res.ok;
   },
-  async pinMessage(conversationId, messageId, userId) {
+  async pinMessage(conversationId, messageId) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin`, { 
       method: 'POST', 
       headers, 
-      body: JSON.stringify({ messageId, userId }) 
+      body: JSON.stringify({ messageId }) 
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
@@ -211,14 +199,14 @@ export const chatService = {
     }
     return res.ok;
   },
-  async unpinMessage(conversationId, messageId, userId) {
+  async unpinMessage(conversationId, messageId) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin`, { 
       method: 'POST', 
       headers, 
-      body: JSON.stringify({ messageId, userId }) 
+      body: JSON.stringify({ messageId }) 
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
@@ -229,13 +217,12 @@ export const chatService = {
   },
   
   // Reply to message
-  async replyToMessage(conversationId, senderId, content, replyToMessageId) {
+  async replyToMessage(conversationId, content, replyToMessageId) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const params = new URLSearchParams({
       conversationId,
-      senderId,
       content,
       replyToMessageId
     });
@@ -261,12 +248,11 @@ export const chatService = {
   },
 
   // Get messages for user (with filtering)
-  async getMessagesForUser(conversationId, userId, page = 0, size = 30) {
+  async getMessagesForUser(conversationId, page = 0, size = 30) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const params = new URLSearchParams({
       conversationId,
-      userId,
       page: page.toString(),
       size: size.toString()
     });
@@ -278,11 +264,10 @@ export const chatService = {
   },
 
   // Get paginated messages for conversation
-  async getConversationMessages(conversationId, userId, limit = 20, before = null) {
+  async getConversationMessages(conversationId, limit = 20, before = null) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const params = new URLSearchParams({
-      userId,
       limit: limit.toString()
     });
     if (before) {
@@ -296,11 +281,11 @@ export const chatService = {
   },
 
   // Mark entire conversation as read
-  async markConversationAsRead(conversationId, userId) {
+  async markConversationAsRead(conversationId) {
     const tokens = getStoredTokens();
     const headers = {};
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-read?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-read`, { 
       method: 'POST', 
       headers
     });
@@ -313,10 +298,10 @@ export const chatService = {
   },
 
   // Get unread counts for all conversations
-  async getUnreadCounts(userId) {
+  async getUnreadCounts() {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/unread-count?userId=${encodeURIComponent(userId)}`, { headers });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/unread-count`, { headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
@@ -387,10 +372,10 @@ export const chatService = {
   },
 
   // Pin conversation for a user
-  async pinConversation(conversationId, userId) {
+  async pinConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin-conversation?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin-conversation`, { 
       method: 'POST', 
       headers
     });
@@ -401,10 +386,10 @@ export const chatService = {
   },
 
   // Unpin conversation for a user
-  async unpinConversation(conversationId, userId) {
+  async unpinConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin-conversation?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin-conversation`, { 
       method: 'POST', 
       headers
     });
@@ -415,10 +400,10 @@ export const chatService = {
   },
 
   // Mark conversation as unread for a user
-  async markConversationAsUnread(conversationId, userId) {
+  async markConversationAsUnread(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-unread?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-unread`, { 
       method: 'POST', 
       headers
     });
@@ -429,10 +414,10 @@ export const chatService = {
   },
 
   // Toggle notification settings for a user
-  async toggleNotificationSettings(conversationId, userId) {
+  async toggleNotificationSettings(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications?userId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications`, { 
       method: 'POST', 
       headers
     });
@@ -443,10 +428,10 @@ export const chatService = {
   },
 
   // Delete group conversation (only by creator)
-  async deleteGroupConversation(conversationId, userId) {
+  async deleteGroupConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}?actorUserId=${encodeURIComponent(userId)}`, { 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}`, { 
       method: 'DELETE', 
       headers
     });

@@ -80,10 +80,10 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
 
             // Apply changes
             for (const uid of additions) {
-                await chatService.addMember(conversationId, uid, currentUserId);
+                await chatService.addMember(conversationId, uid);
             }
             for (const uid of removals) {
-                await chatService.removeMember(conversationId, uid, currentUserId);
+                await chatService.removeMember(conversationId, uid);
             }
 
             // Reload and notify

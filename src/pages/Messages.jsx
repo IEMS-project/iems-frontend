@@ -10,8 +10,8 @@ import PinnedMessages from "../components/messages/PinnedMessages";
 import MessageSearch from "../components/messages/MessageSearch";
 import GroupMembersModal from "../components/messages/GroupMembersModal";
 import EmptyChat from "../components/messages/EmptyChat";
-import ConversationList from "./messages/ConversationList";
-import ChatArea from "./messages/ChatArea";
+import ConversationList from "../components/messages/ConversationList";
+import ChatArea from "../components/messages/ChatArea";
 
 
 // Utility function to generate unique message keys
@@ -178,7 +178,8 @@ function Messages() {
                         if (payload.conversationId && typeof payload.content === 'string') {
                             lastMessagesByConvRef.current[payload.conversationId] = {
                                 content: payload.content,
-                                senderId: payload.senderId
+                                senderId: payload.senderId,
+                                timestamp: payload.timestamp || payload.sentAt || new Date().toISOString()
                             };
                             setUiTick(t => t + 1);
 
@@ -190,7 +191,7 @@ function Messages() {
                                 // Only manage unread counters and mark-as-read.
                                 try { resetUnread(payload.conversationId); } catch (e) { console.debug(e); }
                                 (async () => {
-                                    try { await chatService.markConversationAsRead(payload.conversationId, currentUserId); } catch (e) { console.debug(e); }
+                                    try { await chatService.markConversationAsRead(payload.conversationId); } catch (e) { console.debug(e); }
                                 })();
                             } else if (!isMine) {
                                 // If not viewing and not my message -> increment unread badge
@@ -259,7 +260,8 @@ function Messages() {
         if (msg.conversationId) {
             lastMessagesByConvRef.current[msg.conversationId] = {
                 content: msg.content,
-                senderId: msg.senderId
+                senderId: msg.senderId,
+                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString()
             };
             setUiTick(t => t + 1);
 
@@ -279,7 +281,7 @@ function Messages() {
                     // call backend to persist
                     (async () => {
                         try {
-                            await chatService.markConversationAsRead(msg.conversationId, currentUserId);
+                            await chatService.markConversationAsRead(msg.conversationId);
                         } catch (e) {
                             console.error('Error auto-marking conversation as read:', e);
                         }
@@ -298,11 +300,29 @@ function Messages() {
         // Only process message updates for current conversation
         if (msg.conversationId !== selectedConversationIdRef.current) return;
 
+        // Validate message before processing - skip invalid messages
+        const msgId = msg.id || msg._id || msg.messageId;
+        if (!msgId || msgId.startsWith('temp-') || msgId.startsWith('local-')) {
+            console.log('⚠️ Skipping message without valid ID:', msgId);
+            return;
+        }
+
+        // Skip messages with invalid senderId (like "U" or "unknown")
+        if (!msg.senderId || msg.senderId === 'U' || msg.senderId === 'unknown' || msg.senderId.length < 3) {
+            console.log('⚠️ Skipping message with invalid senderId:', msg.senderId);
+            return;
+        }
+
+        // Skip messages without content or with empty content
+        if (!msg.content || msg.content.trim() === '') {
+            console.log('⚠️ Skipping message without content');
+            return;
+        }
+
         // Handle regular message - replace optimistic message if it exists
         console.log('💬 Processing message for current conversation:', msg.conversationId);
         setMessages(prev => {
             const isMine = msg.senderId === currentUserId;
-            const msgId = msg.id || msg._id || msg.messageId;
 
             // If this is my message, try to replace the optimistic message
             if (isMine) {
@@ -357,7 +377,7 @@ function Messages() {
 
             const normalized = {
                 ...msg,
-                id: msgId || msg.localId || `local-${Date.now()}`,
+                id: msgId,
                 sentAt: msg.sentAt || msg.timestamp || new Date().toISOString(),
                 timestamp: msg.timestamp || msg.sentAt || new Date().toISOString()
             };
@@ -401,7 +421,7 @@ function Messages() {
                     ? {
                         content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
                         senderId: lastMsg.senderId
-                      }
+                    }
                     : '';
                 setUiTick(t => t + 1);
             } catch (_e) { }
@@ -524,7 +544,8 @@ function Messages() {
         if (msg.conversationId && (msg.content || msg.event === 'message_recalled')) {
             lastMessagesByConvRef.current[msg.conversationId] = {
                 content: msg.event === 'message_recalled' ? 'Tin nhắn đã được thu hồi' : msg.content,
-                senderId: msg.senderId
+                senderId: msg.senderId,
+                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString()
             };
             console.log('📝 Updated last message from message event:', msg.conversationId);
             setUiTick(t => t + 1);
@@ -540,7 +561,8 @@ function Messages() {
             if (msg.lastMessage && (msg.lastMessage.content || msg.lastMessage.recalled)) {
                 lastMessagesByConvRef.current[msg.conversationId] = {
                     content: msg.lastMessage.recalled ? 'Tin nhắn đã được thu hồi' : msg.lastMessage.content,
-                    senderId: msg.lastMessage.senderId
+                    senderId: msg.lastMessage.senderId,
+                    timestamp: msg.lastMessage.timestamp || msg.lastMessage.sentAt || msg.updatedAt || new Date().toISOString()
                 };
                 console.log('📝 Updated last message for conversation:', msg.conversationId);
             }
@@ -579,7 +601,7 @@ function Messages() {
 
     async function loadConversations(userId) {
         try {
-            const data = await chatService.getConversationsByUser(userId);
+            const data = await chatService.getConversationsByUser();
             const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
             setConversations(list);
 
@@ -623,7 +645,7 @@ function Messages() {
                     return;
                 }
 
-                const result = await chatService.getConversationMessages(conversationId, currentUserId, 20);
+                const result = await chatService.getConversationMessages(conversationId, 20);
                 console.log('📥 Initial messages API result:', result);
 
                 // Double-check conversation is still selected before updating state
@@ -669,7 +691,7 @@ function Messages() {
                 // Mark entire conversation as read when opening
                 try {
                     console.log('📖 Marking conversation as read:', conversationId);
-                    await chatService.markConversationAsRead(conversationId, currentUserId);
+                    await chatService.markConversationAsRead(conversationId);
                     // Update all unread count states to 0
                     setUnreadCounts(prev => ({ ...prev, [conversationId]: 0 }));
                     setUnreadByConv(prev => ({ ...prev, [conversationId]: 0 }));
@@ -706,7 +728,7 @@ function Messages() {
                 console.log('📥 Loading older messages with cursor:', beforeCursor);
 
                 setLoadingOlderMessages(true);
-                const result = await chatService.getConversationMessages(conversationId, currentUserId, 20, beforeCursor);
+                const result = await chatService.getConversationMessages(conversationId, 20, beforeCursor);
 
                 console.log('📥 Older messages API result:', result);
 
@@ -769,7 +791,7 @@ function Messages() {
     // Load unread counts for all conversations
     async function loadUnreadCounts(userId) {
         try {
-            const counts = await chatService.getUnreadCounts(userId);
+            const counts = await chatService.getUnreadCounts();
             setUnreadCounts(counts || {});
             setGlobalUnreadCounts(counts || {});
             setUnreadByConv(counts || {});
@@ -872,6 +894,14 @@ function Messages() {
             setLoadingOlderMessages(true);
             const oldest = messages[0];
             const oldestId = oldest.id || oldest._id;
+            
+            // Skip if oldestId is a local/temp ID (not from server)
+            if (!oldestId || oldestId.startsWith('local-') || oldestId.startsWith('temp-')) {
+                console.log('📥 Skipping loadOlderById - oldest message is local/temp:', oldestId);
+                setLoadingOlderMessages(false);
+                return;
+            }
+            
             console.log('📥 Loading older-by-id before:', oldestId);
             const result = await chatService.getMessagesAround(oldestId, limit, 0);
             const older = (result?.beforeMessages || []).filter(msg => {
@@ -909,6 +939,14 @@ function Messages() {
             setLoadingNewerMessages(true);
             const newest = messages[messages.length - 1];
             const newestId = newest.id || newest._id;
+            
+            // Skip if newestId is a local/temp ID (not from server)
+            if (!newestId || newestId.startsWith('local-') || newestId.startsWith('temp-')) {
+                console.log('📥 Skipping loadNewerById - newest message is local/temp:', newestId);
+                setLoadingNewerMessages(false);
+                return;
+            }
+            
             console.log('📥 Loading newer-by-id after:', newestId);
             const result = await chatService.getMessagesAround(newestId, 0, limit);
             const newer = (result?.afterMessages || []).filter(msg => {
@@ -1011,32 +1049,32 @@ function Messages() {
             const dn = getConversationDisplayName(c, currentUserId).toLowerCase();
             return !q || dn.includes(q) || (c.id || '').toLowerCase().includes(q);
         });
-        
+
         // Sort conversations: pinned first (by pinnedAt desc), then by last message time desc
         return filtered.sort((a, b) => {
             const aPinned = a.isPinned || false;
             const bPinned = b.isPinned || false;
-            
+
             if (aPinned && !bPinned) return -1;
             if (!aPinned && bPinned) return 1;
-            
+
             if (aPinned && bPinned) {
                 // Both pinned, sort by pinnedAt desc
                 const aPinnedAt = a.pinnedAt ? new Date(a.pinnedAt).getTime() : 0;
                 const bPinnedAt = b.pinnedAt ? new Date(b.pinnedAt).getTime() : 0;
                 return bPinnedAt - aPinnedAt;
             }
-            
+
             // Both not pinned or same pinned status, sort by last message time
             const aLastMsg = a.lastMessage;
             const bLastMsg = b.lastMessage;
-            
+
             if (aLastMsg && bLastMsg) {
                 const aTime = new Date(aLastMsg.sentAt || aLastMsg.timestamp || 0).getTime();
                 const bTime = new Date(bLastMsg.sentAt || bLastMsg.timestamp || 0).getTime();
                 return bTime - aTime;
             }
-            
+
             // Fallback to updatedAt
             const aUpdated = new Date(a.updatedAt || 0).getTime();
             const bUpdated = new Date(b.updatedAt || 0).getTime();
@@ -1074,7 +1112,7 @@ function Messages() {
         // Fire-and-forget: mark conversation as read on backend as soon as user opens it
         (async () => {
             try {
-                await chatService.markConversationAsRead(conv.id, currentUserId);
+                await chatService.markConversationAsRead(conv.id);
             } catch (e) {
                 console.error('Error marking conversation as read on select:', e);
             }
@@ -1101,7 +1139,7 @@ function Messages() {
         try {
             const payload = { name, members, type: 'GROUP' };
             if (avatarUrl && avatarUrl.trim()) payload.avatarUrl = avatarUrl.trim();
-            const res = await chatService.createConversation(payload, currentUserId);
+            const res = await chatService.createConversation(payload);
             const created = res?.data || res;
             setOpenCreateGroup(false);
             if (created?.id) {
@@ -1158,6 +1196,14 @@ function Messages() {
 
         // Add optimistic message immediately
         setMessages(prev => [...prev, optimisticMessage]);
+
+        // Update lastMessagesByConv for immediate UI update
+        lastMessagesByConvRef.current[selectedConversationId] = {
+            content: text,
+            senderId: currentUserId,
+            timestamp: optimisticMessage.timestamp
+        };
+        setUiTick(t => t + 1);
 
         // Add localId to loaded message IDs to prevent duplicates
         loadedMessageIdsRef.current.add(localId);
@@ -1292,7 +1338,7 @@ function Messages() {
                             ? {
                                 content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
                                 senderId: lastMsg.senderId
-                              }
+                            }
                             : '';
                         setUiTick(t => t + 1);
                     }
@@ -1340,7 +1386,7 @@ function Messages() {
                     })
                 });
             } else {
-                await chatService.unpinMessage(conversationId, messageId, currentUserId);
+                await chatService.unpinMessage(conversationId, messageId);
             }
         } catch (error) {
             console.error('Error unpinning message:', error);
@@ -1507,21 +1553,21 @@ function Messages() {
 
     async function startDirectWith(userId) {
         if (!userId || userId === currentUserId) return;
-        
+
         console.log('🔄 Starting direct conversation with user:', userId);
-        
+
         // First, reload conversations to get the latest data
         try {
-            const data = await chatService.getConversationsByUser(currentUserId);
+            const data = await chatService.getConversationsByUser();
             const latestConversations = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-            
+
             // Check if an existing direct conversation already exists
             const existing = latestConversations.find(c => {
                 const isDirectConv = ((c?.type || '').toUpperCase() === 'DIRECT') || (((c?.members || []).length === 2) && !c?.name);
                 const hasBothMembers = (c.members || []).includes(userId) && (c.members || []).includes(currentUserId);
                 return isDirectConv && hasBothMembers;
             });
-            
+
             if (existing) {
                 console.log('✅ Found existing direct conversation:', existing.id);
                 // Update conversations state
@@ -1533,7 +1579,7 @@ function Messages() {
                 // useEffect will automatically handle subscribeConversation and loadMessages
                 return;
             }
-            
+
             // No existing conversation found, prepare for new direct conversation
             console.log('🆕 No existing conversation found, preparing for new direct chat');
             setSelectedConversationId(null);
@@ -1541,10 +1587,10 @@ function Messages() {
             setSelectedPeerId(userId);
             setMessages([]);
             setSearchQuery("");
-            
+
             // Update conversations state with latest data
             setConversations(latestConversations);
-            
+
         } catch (error) {
             console.error('❌ Error starting direct conversation:', error);
             // Fallback: just prepare for new conversation
@@ -1571,6 +1617,7 @@ function Messages() {
                         globalUnreadCounts={globalUnreadCounts}
                         unreadByConv={unreadByConv}
                         lastMessagesByConv={lastMessagesByConvRef}
+                        uiTick={uiTick}
                         onSelectConversation={onSelectConversation}
                         onCreateGroupClick={() => setOpenCreateGroup(true)}
                         startDirectWith={startDirectWith}
