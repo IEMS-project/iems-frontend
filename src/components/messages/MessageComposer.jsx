@@ -7,7 +7,7 @@ import {
   FaImage,
   FaStickyNote
 } from "react-icons/fa";
-import ReplyInput from "../../components/messages/ReplyInput";
+import ReplyInput from "../messages/ReplyInput";
 
 export default function MessageComposer({
   content,

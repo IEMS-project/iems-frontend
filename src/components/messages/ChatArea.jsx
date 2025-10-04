@@ -1,9 +1,9 @@
 import React from "react";
 import ChatHeader from "./ChatHeader";
-import PinnedMessagesBannerWrapper from "./PinnedMessagesBannerWrapper";
-import MessageList from "./MessageList";
-import TypingIndicatorWrapper from "./TypingIndicatorWrapper";
-import MessageComposer from "./MessageComposer";
+import PinnedMessagesBannerWrapper from "../messages/PinnedMessagesBannerWrapper";
+import MessageList from "../messages/MessageList";
+import TypingIndicatorWrapper from "../messages/TypingIndicatorWrapper";
+import MessageComposer from "../messages/MessageComposer";
 
 export default function ChatArea({
   selectedConversationId,

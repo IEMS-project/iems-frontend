@@ -1,5 +1,5 @@
 import React from "react";
-import TypingIndicator from "../../components/messages/TypingIndicator";
+import TypingIndicator from "../messages/TypingIndicator";
 
 export default function TypingIndicatorWrapper({ typingUsers, getUserName }) {
   return (

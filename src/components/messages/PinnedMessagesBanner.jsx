@@ -127,7 +127,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                             <button
                                                 className="w-full text-left px-3 py-2 text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
                                                 onClick={async () => {
-                                                    try { await chatService.unpinMessage(conversationId, key, currentUserId); } catch (e) { /* ignore */ }
+                                                    try { await chatService.unpinMessage(conversationId, key); } catch (e) { /* ignore */ }
                                                     setOpenMenuId(null);
                                                     loadPinnedMessages();
                                                 }}
@@ -187,7 +187,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                                         if (typeof onUnpinMessage === 'function') {
                                                             await onUnpinMessage(conversationId, key);
                                                         } else {
-                                                            await chatService.unpinMessage(conversationId, key, currentUserId);
+                                                            await chatService.unpinMessage(conversationId, key);
                                                         }
                                                         // Optimistically remove from local state
                                                         setPinnedMessages(prev => prev.filter(pm => (pm.id || pm._id) !== key));

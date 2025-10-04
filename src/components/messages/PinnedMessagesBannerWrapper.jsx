@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from "react";
-import PinnedMessagesBanner from "../../components/messages/PinnedMessagesBanner";
+import PinnedMessagesBanner from "../messages/PinnedMessagesBanner";
 
 const PinnedMessagesBannerWrapper = forwardRef(function PinnedMessagesBannerWrapper(
   { conversationId, getUserName, onMessageClick, onShowAllPinned, onUnpinMessage, currentUserId },
