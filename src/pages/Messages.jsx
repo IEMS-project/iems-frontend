@@ -147,6 +147,33 @@ function Messages() {
                     if (!payload) return;
                     if (payload.event === 'conversation_created') {
                         loadConversations(userId);
+                    } else if (payload.event === 'conversation_deleted') {
+                        // Handle group deletion
+                        console.log('🗑️ Group conversation deleted:', payload.conversationId);
+                        // Remove from conversations list
+                        setConversations(prev => prev.filter(c => c.id !== payload.conversationId));
+                        // If the deleted conversation is currently selected, clear selection
+                        if (selectedConversationIdRef.current === payload.conversationId) {
+                            setSelectedConversationId(null);
+                            setMessages([]);
+                        }
+                        // Clear unread counts for deleted conversation
+                        setUnreadCounts(prev => {
+                            const updated = { ...prev };
+                            delete updated[payload.conversationId];
+                            return updated;
+                        });
+                        setGlobalUnreadCounts(prev => {
+                            const updated = { ...prev };
+                            delete updated[payload.conversationId];
+                            return updated;
+                        });
+                        setUnreadByConv(prev => {
+                            const updated = { ...prev };
+                            delete updated[payload.conversationId];
+                            return updated;
+                        });
+                        try { resetUnread(payload.conversationId); } catch (e) { console.debug(e); }
                     } else if (payload.event === 'message') {
                         if (payload.conversationId && typeof payload.content === 'string') {
                             lastMessagesByConvRef.current[payload.conversationId] = {
@@ -1074,7 +1101,7 @@ function Messages() {
         try {
             const payload = { name, members, type: 'GROUP' };
             if (avatarUrl && avatarUrl.trim()) payload.avatarUrl = avatarUrl.trim();
-            const res = await chatService.createConversation(payload);
+            const res = await chatService.createConversation(payload, currentUserId);
             const created = res?.data || res;
             setOpenCreateGroup(false);
             if (created?.id) {
@@ -1092,19 +1119,22 @@ function Messages() {
 
         if (!selectedConversationId && pendingDirect && selectedPeerId) {
             try {
+                console.log('📤 Sending first direct message to:', selectedPeerId);
                 const saved = await chatService.sendDirectOnce({ senderId: currentUserId, recipientId: selectedPeerId, content: text });
                 const payload = saved?.data || saved;
                 const conId = payload?.conversationId;
                 if (conId) {
+                    console.log('✅ Direct conversation created:', conId);
                     setSelectedConversationId(conId);
                     setPendingDirect(false);
-                    subscribeConversation(conId);
-                    setMessages(m => [...m, payload]);
+                    // useEffect will automatically handle subscribeConversation and loadMessages
                     await loadConversations(currentUserId);
                 }
                 setContent("");
                 setReplyingTo(null);
-            } catch (_e) { }
+            } catch (error) {
+                console.error('❌ Error sending direct message:', error);
+            }
             return;
         }
 
@@ -1477,24 +1507,53 @@ function Messages() {
 
     async function startDirectWith(userId) {
         if (!userId || userId === currentUserId) return;
-        // Do not create a conversation yet; wait until first message is sent
-        setSelectedConversationId(null);
-        setPendingDirect(true);
-        setSelectedPeerId(userId);
-        setMessages([]);
-        setSearchQuery("");
-        // Optionally, check if an existing direct conversation already exists and open it
+        
+        console.log('🔄 Starting direct conversation with user:', userId);
+        
+        // First, reload conversations to get the latest data
         try {
-            await loadConversations(currentUserId);
-            const existing = (conversations || []).find(c => isDirect(c) && (c.members || []).includes(userId) && (c.members || []).includes(currentUserId));
+            const data = await chatService.getConversationsByUser(currentUserId);
+            const latestConversations = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+            
+            // Check if an existing direct conversation already exists
+            const existing = latestConversations.find(c => {
+                const isDirectConv = ((c?.type || '').toUpperCase() === 'DIRECT') || (((c?.members || []).length === 2) && !c?.name);
+                const hasBothMembers = (c.members || []).includes(userId) && (c.members || []).includes(currentUserId);
+                return isDirectConv && hasBothMembers;
+            });
+            
             if (existing) {
+                console.log('✅ Found existing direct conversation:', existing.id);
+                // Update conversations state
+                setConversations(latestConversations);
+                // Open the existing conversation
                 setPendingDirect(false);
                 setSelectedPeerId(null);
                 setSelectedConversationId(existing.id);
-                subscribeConversation(existing.id);
-                await loadMessages(existing.id);
+                // useEffect will automatically handle subscribeConversation and loadMessages
+                return;
             }
-        } catch (_e) { }
+            
+            // No existing conversation found, prepare for new direct conversation
+            console.log('🆕 No existing conversation found, preparing for new direct chat');
+            setSelectedConversationId(null);
+            setPendingDirect(true);
+            setSelectedPeerId(userId);
+            setMessages([]);
+            setSearchQuery("");
+            
+            // Update conversations state with latest data
+            setConversations(latestConversations);
+            
+        } catch (error) {
+            console.error('❌ Error starting direct conversation:', error);
+            // Fallback: just prepare for new conversation
+            setSelectedConversationId(null);
+            setPendingDirect(true);
+            setSelectedPeerId(userId);
+            setMessages([]);
+            setSearchQuery("");
+        }
     }
 
     return (
@@ -1522,7 +1581,7 @@ function Messages() {
                         getUserImage={getUserImage}
                         onConversationUpdate={() => loadConversations(currentUserId)}
                     />
-                    {selectedConversationId ? (
+                    {(selectedConversationId || pendingDirect) ? (
                         <ChatArea
                             selectedConversationId={selectedConversationId}
                             selectedConversation={conversations.find(c => c.id === selectedConversationId)}
