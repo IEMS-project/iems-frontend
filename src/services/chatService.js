@@ -11,11 +11,18 @@ export const chatService = {
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async createConversation(payload) {
+  async createConversation(payload, actorUserId = null) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type':'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations`, { method: 'POST', headers, body: JSON.stringify(payload) });
+    
+    // Add actorUserId to URL if provided
+    let url = `${GATEWAY_BASE_URL}/chat-service/api/conversations`;
+    if (actorUserId) {
+      url += `?actorUserId=${encodeURIComponent(actorUserId)}`;
+    }
+    
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
@@ -427,6 +434,20 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications?userId=${encodeURIComponent(userId)}`, { 
       method: 'POST', 
+      headers
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+
+  // Delete group conversation (only by creator)
+  async deleteGroupConversation(conversationId, userId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}?actorUserId=${encodeURIComponent(userId)}`, { 
+      method: 'DELETE', 
       headers
     });
     const ct = res.headers.get('content-type') || '';

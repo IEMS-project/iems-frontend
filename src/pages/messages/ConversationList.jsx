@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Avatar from "../../components/ui/Avatar";
-import { FaPlus, FaThumbtack, FaEllipsisV, FaBell, FaBellSlash } from "react-icons/fa";
+import { FaPlus, FaThumbtack, FaEllipsisV, FaBell, FaBellSlash, FaTrash } from "react-icons/fa";
 import { chatService } from "../../services/chatService";
 
 export default function ConversationList({
@@ -93,6 +93,37 @@ export default function ConversationList({
       setContextMenu({ show: false, conversationId: null, x: 0, y: 0 });
     } catch (error) {
       console.error('Error toggling notification settings:', error);
+    }
+  };
+
+  const handleDeleteGroup = async (conversationId) => {
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (!conversation) return;
+
+    // Check if user is the creator
+    if (conversation.createdBy !== currentUserId) {
+      alert('Chỉ người tạo nhóm mới có thể xóa nhóm này');
+      return;
+    }
+
+    // Confirm deletion
+    const confirmMessage = `Bạn có chắc chắn muốn xóa nhóm "${conversation.name || 'Nhóm này'}"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await chatService.deleteGroupConversation(conversationId, currentUserId);
+      // Trigger conversation list refresh
+      if (onConversationUpdate) {
+        onConversationUpdate();
+      }
+      // Close context menu
+      setContextMenu({ show: false, conversationId: null, x: 0, y: 0 });
+      alert('Nhóm đã được xóa thành công');
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      alert('Không thể xóa nhóm. Vui lòng thử lại.');
     }
   };
 
@@ -288,6 +319,8 @@ export default function ConversationList({
             const conversation = conversations.find(c => c.id === contextMenu.conversationId);
             const isPinned = conversation?.isPinned || false;
             const notificationsEnabled = conversation?.notificationsEnabled !== false;
+            const isGroup = conversation?.type === 'GROUP';
+            const isCreator = conversation?.createdBy === currentUserId;
 
             return (
               <>
@@ -312,6 +345,18 @@ export default function ConversationList({
                   {notificationsEnabled ? <FaBellSlash className="w-3 h-3" /> : <FaBell className="w-3 h-3" />}
                   {notificationsEnabled ? 'Tắt thông báo' : 'Bật thông báo'}
                 </button>
+                {isGroup && isCreator && (
+                  <>
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                    <button
+                      onClick={() => handleDeleteGroup(contextMenu.conversationId)}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
+                    >
+                      <FaTrash className="w-3 h-3" />
+                      Xóa nhóm
+                    </button>
+                  </>
+                )}
               </>
             );
           })()}
