@@ -1,38 +1,112 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
 import PageHeader from "../components/common/PageHeader";
-
-// Mock data based on user's sample API responses
-const mockFolders = [
-	{ id: "fe45de6e-98bf-4af4-95b4-1b0e89e8f824", name: "folder_1", parentId: null, ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", createdAt: "2025-09-08T03:07:22.751596Z" },
-	{ id: "a93856bf-8e67-4e91-ac57-e9416b278c76", name: "test", parentId: null, ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", createdAt: "2025-09-08T06:33:35.102565Z" },
-	{ id: "a389e207-3491-443c-8c82-e31a83431a84", name: "test", parentId: "fe45de6e-98bf-4af4-95b4-1b0e89e8f824", ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", createdAt: "2025-09-08T06:33:40.364709Z" },
-];
-
-const mockFiles = [
-	{ id: "e786a703-7c62-47d4-991e-3d7693995485", name: "Logo_Trường_Đại_Học_Sư_Phạm_Kỹ_Thuật_TP_Hồ_Chí_Minh.png", folderId: "fe45de6e-98bf-4af-95b4-1b0e89e8f824", ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", path: "owners/a35.../1757300943986-Logo.png", size: 39385, type: "image/png", permission: "SHARED", createdAt: "2025-09-08T03:09:04.030589Z" },
-	{ id: "8e0e9ca0-4fc4-4dbc-ac21-32b3fe13823e", name: "logo.png", folderId: "fe45de6e-98bf-4af-95b4-1b0e89e8f824", ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", path: "owners/a35.../1757313064437-logo.png", size: 56595, type: "image/png", permission: "PRIVATE", createdAt: "2025-09-08T06:31:04.4561Z" },
-	{ id: "513dd29b-7e8e-4d6f-a9f5-a8ea3886b673", name: "favicon.png", folderId: "a389e207-3491-443c-8c82-e31a83431a84", ownerId: "a35b5506-ba88-47ad-86bc-87efae610f0e", path: "owners/a35.../1757313231048-favicon.png", size: 21144, type: "image/png", permission: "PRIVATE", createdAt: "2025-09-08T06:33:51.058083Z" },
-];
-
-function humanSize(bytes) {
-	if (bytes == null) return "-";
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { documentService } from "../services/documentService";
+import DocumentGrid from "../components/documents/DocumentGrid";
+import DocumentList from "../components/documents/DocumentList";
+import DocumentToolbar from "../components/documents/DocumentToolbar";
+import ShareModal from "../components/documents/ShareModal";
+import DeleteModal from "../components/documents/DeleteModal";
+import UploadModal from "../components/documents/UploadModal";
+import CreateFolderModal from "../components/documents/CreateFolderModal";
+import RenameModal from "../components/documents/RenameModal";
+import PermissionModal from "../components/documents/PermissionModal";
+import SharedUsersModal from "../components/documents/SharedUsersModal";
 
 export default function Documents() {
-	const [folders, setFolders] = useState(mockFolders);
-	const [files, setFiles] = useState(mockFiles);
-	const [currentFolderId, setCurrentFolderId] = useState(null); // null = root
+	// `folders` is the current visible folder list (children of current folder)
+	// `allFolders` keeps the full list fetched for parent lookups and breadcrumb building
+	const [folders, setFolders] = useState([]);
+	const [allFolders, setAllFolders] = useState([]);
+	const [files, setFiles] = useState([]);
+	const [currentFolderId, setCurrentFolderId] = useState(null);
 	const [search, setSearch] = useState("");
-	const [viewMode, setViewMode] = useState("grid"); // grid | list
+	const [viewMode, setViewMode] = useState("grid");
+	const [isDragging, setIsDragging] = useState(false);
+	const [shareItem, setShareItem] = useState(null);
+	const [deleteItem, setDeleteItem] = useState(null);
+	const [openMenu, setOpenMenu] = useState({ id: null, type: null, anchorRect: null });
+	const [isUploadOpen, setIsUploadOpen] = useState(false);
+	const [uploadDrag, setUploadDrag] = useState(false);
+	const [uploadFiles, setUploadFiles] = useState([]);
+	const [isCreateOpen, setIsCreateOpen] = useState(false);
+	const [newFolderName, setNewFolderName] = useState("");
+	const [selectedRecipients, setSelectedRecipients] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [renameItem, setRenameItem] = useState(null);
+	const [permissionItem, setPermissionItem] = useState(null);
+	const [sharedItem, setSharedItem] = useState(null);
+	const fileInputRef = useRef(null);
 
+	// Load data when component mounts or currentFolderId changes
+
+	// Close dropdown when clicking outside or pressing Escape
+	useEffect(() => {
+		function onDocClick(e) {
+			if (!openMenu.anchorRect) return;
+			let node = e.target;
+			while (node) {
+				if (node.getAttribute) {
+					if (node.getAttribute('data-dropdown-portal') === 'true') return;
+					if (node.getAttribute('data-dropdown-trigger') === 'true') return;
+				}
+				node = node.parentNode;
+			}
+			setOpenMenu({ id: null, type: null, anchorRect: null });
+		}
+
+		function onKey(e) {
+			if (e.key === 'Escape') setOpenMenu({ id: null, type: null, anchorRect: null });
+		}
+
+		document.addEventListener('click', onDocClick);
+		document.addEventListener('keydown', onKey);
+		return () => {
+			document.removeEventListener('click', onDocClick);
+			document.removeEventListener('keydown', onKey);
+		};
+	}, [openMenu.anchorRect]);
+
+	// Load folder contents
+	const loadFolderContents = React.useCallback(async () => {
+		try {
+			setLoading(true);
+			if (currentFolderId) {
+				// When viewing a child folder, also fetch all folders so we can resolve parents for breadcrumb/up-navigation
+				const [contentsResp, allFoldersResp] = await Promise.all([
+					documentService.getFolderContents(currentFolderId),
+					documentService.getAllFolders()
+				]);
+				setFolders(contentsResp.folders || []);
+				setFiles(contentsResp.files || []);
+				setAllFolders(allFoldersResp || []);
+			} else {
+				const [foldersResponse, filesResponse] = await Promise.all([
+					documentService.getAllFolders(),
+					documentService.getAllFiles()
+				]);
+				setAllFolders(foldersResponse || []);
+				setFolders(foldersResponse || []);
+				setFiles(filesResponse || []);
+			}
+		} catch (error) {
+			console.error('Error loading folder contents:', error);
+			// Show empty state instead of mock data
+			setFolders([]);
+			setFiles([]);
+		} finally {
+			setLoading(false);
+		}
+	}, [currentFolderId]);
+
+	// Load data when component mounts or currentFolderId changes
+	useEffect(() => {
+		loadFolderContents();
+	}, [loadFolderContents]);
+
+	// Build breadcrumb path from the full folder list so parents are resolvable
 	const currentPath = useMemo(() => {
-		const idToFolder = new Map(folders.map(f => [f.id, f]));
+		const idToFolder = new Map(allFolders.map(f => [f.id, f]));
 		const path = [];
 		let cursor = currentFolderId ? idToFolder.get(currentFolderId) : null;
 		while (cursor) {
@@ -40,9 +114,9 @@ export default function Documents() {
 			cursor = cursor.parentId ? idToFolder.get(cursor.parentId) : null;
 		}
 		return path;
-	}, [folders, currentFolderId]);
+	}, [allFolders, currentFolderId]);
 
-	const idToFolder = useMemo(() => new Map(folders.map(f => [f.id, f])), [folders]);
+	const idToFolder = useMemo(() => new Map(allFolders.map(f => [f.id, f])), [allFolders]);
 
 	function goUpOneLevel() {
 		if (!currentFolderId) return;
@@ -50,134 +124,311 @@ export default function Documents() {
 		setCurrentFolderId(current?.parentId ?? null);
 	}
 
-	const visibleFolders = useMemo(() => folders.filter(f => f.parentId === currentFolderId && f.name.toLowerCase().includes(search.toLowerCase())), [folders, currentFolderId, search]);
-	const visibleFiles = useMemo(() => files.filter(f => f.folderId === currentFolderId && f.name.toLowerCase().includes(search.toLowerCase())), [files, currentFolderId, search]);
+	const visibleFolders = useMemo(() => 
+		(allFolders.length ? allFolders : folders).filter(f => f.parentId === currentFolderId && f.name.toLowerCase().includes(search.toLowerCase())), 
+		[allFolders, folders, currentFolderId, search]
+	);
+    
+	const visibleFiles = useMemo(() => 
+		files.filter(f => f.folderId === currentFolderId && f.name.toLowerCase().includes(search.toLowerCase())), 
+		[files, currentFolderId, search]
+	);
 
-	function onCreateFolder() {
-		const name = prompt("Tên thư mục mới");
+	// Event handlers
+	async function onCreateFolderConfirmed() {
+		const name = newFolderName.trim();
 		if (!name) return;
-		const newFolder = { id: crypto.randomUUID(), name, parentId: currentFolderId, ownerId: "me", createdAt: new Date().toISOString() };
-		setFolders(prev => [...prev, newFolder]);
+        
+		try {
+			await documentService.createFolder(name, currentFolderId);
+			setNewFolderName("");
+			setIsCreateOpen(false);
+			loadFolderContents();
+		} catch (error) {
+			console.error('Error creating folder:', error);
+			alert('Lỗi khi tạo thư mục');
+		}
 	}
 
-	function onCreateFile() {
-		const name = prompt("Tên tệp mới (vd: document.txt)");
-		if (!name) return;
-		const size = Math.floor(Math.random() * 200000) + 1024;
-		const type = name.includes('.') ? `application/${name.split('.').pop()}` : "application/octet-stream";
-		const newFile = { id: crypto.randomUUID(), name, folderId: currentFolderId, ownerId: "me", path: "mock", size, type, permission: "PRIVATE", createdAt: new Date().toISOString() };
-		setFiles(prev => [...prev, newFile]);
+	async function onUploadFiles(fileList) {
+		if (!fileList || fileList.length === 0) return;
+        
+		try {
+			for (const file of fileList) {
+				await documentService.uploadFile(currentFolderId, file);
+			}
+			loadFolderContents();
+		} catch (error) {
+			console.error('Error uploading files:', error);
+			alert('Lỗi khi tải tệp lên');
+		}
+	}
+
+	// file input handling is done via fileInputRef and UploadModal; remove unused handler
+
+	function onDrop(e) {
+		e.preventDefault();
+		setIsDragging(false);
+		onUploadFiles(e.dataTransfer.files);
+	}
+
+	async function toggleFavorite(item, type) {
+		try {
+			console.log('Toggling favorite for:', item.name, 'current favorite:', item.favorite);
+			const result = await documentService.toggleFavorite(item.id, type.toUpperCase());
+			console.log('API result:', result);
+            
+			// Update UI immediately instead of reloading
+			const updateItem = (items) => 
+				items.map(i => i.id === item.id ? { ...i, favorite: result } : i);
+            
+			setFolders(prev => updateItem(prev));
+			setFiles(prev => updateItem(prev));
+            
+			// Show success notification
+			const action = result ? 'thêm' : 'xóa';
+			const itemType = type === 'folder' ? 'thư mục' : 'tệp';
+			alert(`Đã ${action} ${itemType} '${item.name}' ${result ? 'vào' : 'khỏi'} mục yêu thích.`);
+		} catch (error) {
+			console.error('Error toggling favorite:', error);
+			alert('Lỗi khi cập nhật yêu thích');
+		}
+	}
+
+	function openShare(item, type) {
+		setSelectedRecipients([]);
+		setShareItem({ type, data: item });
+	}
+
+	function confirmDelete(item, type) {
+		setDeleteItem({ type, data: item });
+	}
+
+	async function onConfirmDelete() {
+		if (!deleteItem) return;
+        
+		try {
+			if (deleteItem.type === "folder") {
+				await documentService.deleteFolder(deleteItem.data.id);
+				if (currentFolderId === deleteItem.data.id) {
+					setCurrentFolderId(deleteItem.data.parentId ?? null);
+				}
+			} else {
+				await documentService.deleteFile(deleteItem.data.id);
+			}
+			loadFolderContents();
+			setDeleteItem(null);
+		} catch (error) {
+			console.error('Error deleting item:', error);
+			alert('Lỗi khi xóa');
+		}
+	}
+
+	function startUploadModal() {
+		setUploadFiles([]);
+		setIsUploadOpen(true);
+	}
+
+	function completeUpload() {
+		if (uploadFiles.length) {
+			onUploadFiles(uploadFiles);
+		}
+		setIsUploadOpen(false);
+	}
+
+	async function handleShare(permission) {
+		try {
+			await documentService.shareItem(
+				shareItem.data.id,
+				shareItem.type.toUpperCase(),
+				selectedRecipients,
+				permission
+			);
+			setShareItem(null);
+			alert('Chia sẻ thành công');
+		} catch (error) {
+			console.error('Error sharing:', error);
+			alert('Lỗi khi chia sẻ');
+		}
+	}
+
+	function handleRename(item, type) {
+		setRenameItem({ id: item.id, type, data: item });
+	}
+
+	function handlePermission(item, type) {
+		setPermissionItem({ id: item.id, type, data: item });
+	}
+
+	function handleSharedUsers(item, type) {
+		setSharedItem({ id: item.id, type, data: item });
+	}
+
+	async function handleRenameConfirm(newName) {
+			if (!renameItem) return;
+			try {
+				if (renameItem.type === "folder") {
+					await documentService.renameFolder(renameItem.data.id, newName);
+				} else {
+					await documentService.renameFile(renameItem.data.id, newName);
+				}
+				loadFolderContents();
+			} catch (error) {
+				console.error('Error renaming:', error);
+				throw error;
+			}
+	}
+
+	async function handlePermissionConfirm(permission) {
+		if (!permissionItem) return;
+		try {
+				if (permissionItem.type === "folder") {
+					await documentService.updateFolderPermission(permissionItem.data.id, permission);
+				} else {
+					await documentService.updateFilePermission(permissionItem.data.id, permission);
+				}
+			loadFolderContents();
+		} catch (error) {
+			console.error('Error updating permission:', error);
+			throw error;
+		}
 	}
 
 	return (
 		<div className="space-y-6">
-			<PageHeader breadcrumbs={[{ label: "Drive", to: "/documents" }, ...currentPath.map(f => ({ label: f.name, to: "#" }))]} />
+			<PageHeader
+				breadcrumbs={[{ label: "Trang chủ", to: "/" }, { label: "Tài liệu", to: "/documents" }, ...currentPath.map(f => ({ label: f.name, id: f.id }))]}
+				onCrumbClick={(item) => {
+					// If crumb has an id, navigate to that folder; if it's the second crumb (Tài liệu), go to root
+					if (item.id) {
+						setCurrentFolderId(item.id);
+					} else if (item.to === "/documents" || item.label === "Tài liệu") {
+						setCurrentFolderId(null);
+					} else if (item.to === "/") {
+						setCurrentFolderId(null);
+					}
+				}}
+			/>
 
 			<Card>
 				<CardHeader>
 					<CardTitle></CardTitle>
-					<div className="flex items-center gap-2">
-						<Input
-							type="text"
-							placeholder="Tìm kiếm trong Drive"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-						/>
-						<Button variant="secondary" onClick={() => setViewMode(v => v === "grid" ? "list" : "grid")}>{viewMode === "grid" ? "Danh sách" : "Lưới"}</Button>
-						<Button onClick={onCreateFolder}>+ Thư mục</Button>
-						<Button onClick={onCreateFile}>+ Tệp</Button>
-					</div>
+					<DocumentToolbar
+						search={search}
+						setSearch={setSearch}
+						viewMode={viewMode}
+						setViewMode={setViewMode}
+						onUploadClick={startUploadModal}
+						onCreateFolderClick={() => setIsCreateOpen(true)}
+					/>
 				</CardHeader>
 				<CardContent>
-					{viewMode === "grid" ? (
-						<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-							{/* Up one level */}
-							{currentFolderId && (
-								<button onClick={goUpOneLevel} className="group flex flex-col rounded border border-gray-200 p-3 text-left hover:border-blue-500 hover:bg-blue-50/40 dark:border-gray-800 dark:hover:bg-gray-800/40">
-									<div className="mb-2 h-10 w-12 rounded bg-gray-300" />
-									<div className="font-medium">..</div>
-								</button>
+					{loading && (
+						<div className="flex items-center justify-center py-8">
+							<div className="text-gray-500">Đang tải...</div>
+								</div>
+					)}
+					{!loading && (
+						<div
+							onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+							onDragLeave={() => setIsDragging(false)}
+							onDrop={onDrop}
+							className={`rounded-md ${isDragging ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}
+						>
+							{viewMode === "grid" ? (
+								<DocumentGrid
+									folders={visibleFolders}
+									files={visibleFiles}
+									currentFolderId={currentFolderId}
+									onFolderClick={setCurrentFolderId}
+									onUpLevel={goUpOneLevel}
+									onToggleFavorite={toggleFavorite}
+									onShare={openShare}
+									onDelete={confirmDelete}
+									onRename={handleRename}
+									onPermission={handlePermission}
+									onSharedUsers={handleSharedUsers}
+									openMenu={openMenu}
+									setOpenMenu={setOpenMenu}
+								/>
+							) : (
+								<DocumentList
+									folders={visibleFolders}
+									files={visibleFiles}
+									currentFolderId={currentFolderId}
+									onFolderClick={setCurrentFolderId}
+									onUpLevel={goUpOneLevel}
+									onToggleFavorite={toggleFavorite}
+									onShare={openShare}
+									onDelete={confirmDelete}
+									onRename={handleRename}
+									onPermission={handlePermission}
+									onSharedUsers={handleSharedUsers}
+									openMenu={openMenu}
+									setOpenMenu={setOpenMenu}
+								/>
 							)}
-							{visibleFolders.map(f => (
-								<button key={f.id} onClick={() => setCurrentFolderId(f.id)} className="group flex flex-col rounded border border-gray-200 p-3 text-left hover:border-blue-500 hover:bg-blue-50/40 dark:border-gray-800 dark:hover:bg-gray-800/40">
-									<div className="mb-2 h-10 w-12 rounded bg-yellow-400/80 flex items-center justify-center">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-yellow-900/80"><path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path><path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path></svg>
-									</div>
-									<div className="truncate font-medium">{f.name}</div>
-									<div className="text-xs text-gray-500">Thư mục</div>
-								</button>
-							))}
-							{visibleFolders.length === 0 && visibleFiles.length === 0 && (
-								<div className="text-sm text-gray-500">Thư mục trống</div>
-							)}
-						</div>
-					) : (
-						<div className="w-full overflow-x-auto">
-							<table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
-								<thead>
-									<tr className="text-left text-gray-500 dark:text-gray-400">
-										<th className="px-4 py-2 font-medium">Tên</th>
-										<th className="px-4 py-2 font-medium">Loại</th>
-										<th className="px-4 py-2 font-medium">Kích thước</th>
-										<th className="px-4 py-2 font-medium">Ngày tạo</th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-									{currentFolderId && (
-										<tr className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 cursor-pointer" onClick={goUpOneLevel}>
-											<td className="px-4 py-3 font-medium">..</td>
-											<td className="px-4 py-3">-</td>
-											<td className="px-4 py-3">-</td>
-											<td className="px-4 py-3">-</td>
-										</tr>
-									)}
-									{visibleFolders.map(f => (
-										<tr key={f.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 cursor-pointer" onClick={() => setCurrentFolderId(f.id)}>
-											<td className="px-4 py-3 font-medium flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-yellow-600"><path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path><path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path></svg><span>{f.name}</span></td>
-											<td className="px-4 py-3">Thư mục</td>
-											<td className="px-4 py-3">-</td>
-											<td className="px-4 py-3">{new Date(f.createdAt).toLocaleString()}</td>
-										</tr>
-									))}
-									{visibleFiles.map(file => (
-										<tr key={file.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40">
-											<td className="px-4 py-3 font-medium">{file.name}</td>
-											<td className="px-4 py-3">{file.type || "Tệp"}</td>
-											<td className="px-4 py-3">{humanSize(file.size)}</td>
-											<td className="px-4 py-3">{new Date(file.createdAt).toLocaleString()}</td>
-										</tr>
-									))}
-									{visibleFolders.length === 0 && visibleFiles.length === 0 && (
-										<tr>
-											<td className="px-4 py-3" colSpan={4}>Thư mục trống</td>
-										</tr>
-									)}
-								</tbody>
-							</table>
 						</div>
 					)}
 
-					{viewMode === "grid" && visibleFiles.length > 0 && (
-						<>
-							<div className="mt-4 text-xs uppercase tracking-wide text-gray-500">Tệp</div>
-							<div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-								{visibleFiles.map(file => (
-									<div key={file.id} className="group rounded border border-gray-200 p-3 hover:border-blue-500 hover:bg-blue-50/40 dark:border-gray-800 dark:hover:bg-gray-800/40">
-										<div className="mb-2 h-20 w-full rounded bg-gray-100 dark:bg-gray-800" />
-										<div className="truncate font-medium">{file.name}</div>
-										<div className="text-xs text-gray-500">{humanSize(file.size)}</div>
-									</div>
-								))}
-							</div>
-						</>
-					)}
+					{/* Modals */}
+					<ShareModal
+						isOpen={!!shareItem}
+						onClose={() => setShareItem(null)}
+						shareItem={shareItem}
+						selectedRecipients={selectedRecipients}
+						setSelectedRecipients={setSelectedRecipients}
+						onShare={handleShare}
+					/>
+
+					<DeleteModal
+						isOpen={!!deleteItem}
+						onClose={() => setDeleteItem(null)}
+						deleteItem={deleteItem}
+						onConfirm={onConfirmDelete}
+					/>
+
+					<UploadModal
+						isOpen={isUploadOpen}
+						onClose={() => setIsUploadOpen(false)}
+						uploadDrag={uploadDrag}
+						setUploadDrag={setUploadDrag}
+						uploadFiles={uploadFiles}
+						setUploadFiles={setUploadFiles}
+						fileInputRef={fileInputRef}
+						onComplete={completeUpload}
+					/>
+
+					<CreateFolderModal
+						isOpen={isCreateOpen}
+						onClose={() => setIsCreateOpen(false)}
+						newFolderName={newFolderName}
+						setNewFolderName={setNewFolderName}
+						onConfirm={onCreateFolderConfirmed}
+					/>
+
+					<RenameModal
+						isOpen={!!renameItem}
+						onClose={() => setRenameItem(null)}
+						item={renameItem}
+						onConfirm={handleRenameConfirm}
+					/>
+
+					<PermissionModal
+						isOpen={!!permissionItem}
+						onClose={() => setPermissionItem(null)}
+						item={permissionItem}
+						onConfirm={handlePermissionConfirm}
+					/>
+
+					<SharedUsersModal
+						isOpen={!!sharedItem}
+						onClose={() => setSharedItem(null)}
+						item={sharedItem}
+					/>
 				</CardContent>
 			</Card>
-
-
 		</div>
 	);
 }
-
 

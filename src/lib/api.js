@@ -275,6 +275,150 @@ export const api = {
     const data = await request(`/task-service/tasks/project/${projectId}`);
     return data?.data || data || [];
   },
+  // Document Service APIs
+  async getFolderContents(folderId) {
+    const data = await request(`/document-service/api/folders/${folderId}/contents`);
+    return data?.data || data;
+  },
+  async getAllFolders() {
+    const data = await request("/document-service/api/folders");
+    return data?.data || data || [];
+  },
+  async getAllFiles() {
+    const data = await request("/document-service/api/files");
+    return data?.data || data || [];
+  },
+  async createFolder(name, parentId = null) {
+    const data = await request("/document-service/api/folders", {
+      method: "POST",
+      body: { name, parentId }
+    });
+    return data?.data || data;
+  },
+  async uploadFile(folderId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const tokens = getStoredTokens();
+    const finalHeaders = {};
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+    
+    const res = await fetch(`${GATEWAY_BASE_URL}/document-service/api/files/upload?folderId=${folderId || ''}`, {
+      method: 'POST',
+      headers: finalHeaders,
+      body: formData
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      const message = errorData?.message || errorData?.error || res.statusText;
+      const error = new Error(message || "Upload failed");
+      error.status = res.status;
+      error.data = errorData;
+      throw error;
+    }
+    
+    return await res.json();
+  },
+  async deleteFolder(folderId) {
+    const data = await request(`/document-service/api/folders/${folderId}`, {
+      method: "DELETE"
+    });
+    return data?.data || data;
+  },
+  async deleteFile(fileId) {
+    const data = await request(`/document-service/api/files/${fileId}`, {
+      method: "DELETE"
+    });
+    return data?.data || data;
+  },
+  async toggleFavorite(targetId, type) {
+    const data = await request(`/document-service/api/favorites?id=${targetId}&type=${type}`, {
+      method: "POST"
+    });
+    // Ensure we return a boolean value
+    const result = data?.data !== undefined ? data.data : data;
+    return Boolean(result);
+  },
+  async getFavorites() {
+    const data = await request("/document-service/api/favorites");
+    return data?.data || data || [];
+  },
+  async shareItem(itemId, type, userIds, permission = "VIEWER") {
+    const data = await request(`/document-service/api/items/${itemId}/share?type=${type}`, {
+      method: "POST",
+      body: { userIds, permission }
+    });
+    return data?.data || data;
+  },
+  async unshareItem(itemId, type, userIds) {
+    const data = await request(`/document-service/api/items/${itemId}/unshare?type=${type}`, {
+      method: "POST",
+      body: { userIds }
+    });
+    return data?.data || data;
+  },
+  async searchDocuments(query) {
+    const data = await request(`/document-service/api/search?q=${encodeURIComponent(query)}`);
+    return data?.data || data || [];
+  },
+  // Get users for sharing
+  async getUsersForSharing() {
+    const data = await request("/user-service/users/basic-infos");
+    return data?.data || data || [];
+  },
+  // Update folder permission
+	async updateFolderPermission(folderId, permission) {
+		const data = await request(`/document-service/api/folders/${folderId}/permission?permission=${permission}`, {
+			method: "PATCH"
+		});
+		return data?.data || data;
+	},
+
+	async updateFilePermission(fileId, permission) {
+		const data = await request(`/document-service/api/files/${fileId}/permission?permission=${permission}`, {
+			method: "PATCH"
+		});
+		return data?.data || data;
+	},
+  // Rename folder
+  async renameFolder(folderId, newName) {
+    const data = await request(`/document-service/api/folders/${folderId}/rename`, {
+      method: "PATCH",
+      body: { name: newName }
+    });
+    return data?.data || data;
+  },
+  // Rename file
+  async renameFile(fileId, newName) {
+    const data = await request(`/document-service/api/files/${fileId}/rename`, {
+      method: "PATCH",
+      body: { name: newName }
+    });
+    return data?.data || data;
+  },
+  // Get shared users
+  async getSharedUsers(itemId, type) {
+    const data = await request(`/document-service/api/items/${itemId}/shared-users?type=${type}`);
+    return data?.data || data || [];
+  },
+  // Update share permission
+  async updateSharePermission(shareId, permission) {
+    const data = await request(`/document-service/api/shares/${shareId}/permission`, {
+      method: "PATCH",
+      body: { permission }
+    });
+    return data?.data || data;
+  },
+  // Remove share
+  async removeShare(shareId) {
+    const data = await request(`/document-service/api/shares/${shareId}`, {
+      method: "DELETE"
+    });
+    return data?.data || data;
+  },
 };
 
 export { getStoredTokens, setStoredTokens, GATEWAY_BASE_URL };
