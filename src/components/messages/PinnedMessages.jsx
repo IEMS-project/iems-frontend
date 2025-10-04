@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "../../services/chatService";
 import Avatar from "../ui/Avatar";
+import { FaThumbtack, FaTimes, FaSpinner, FaBookmark } from "react-icons/fa";
 
-export default function PinnedMessages({ 
+const PinnedMessages = forwardRef(function PinnedMessages({ 
     conversationId, 
     isVisible, 
     onClose, 
@@ -11,9 +12,16 @@ export default function PinnedMessages({
     onMessageClick,
     onUnpinMessage,
     currentUserId
-}) {
+}, ref) {
     const [pinnedMessages, setPinnedMessages] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Expose updatePinnedMessages function to parent via ref
+    useImperativeHandle(ref, () => ({
+        updatePinnedMessages: (newPinnedMessages) => {
+            setPinnedMessages(newPinnedMessages || []);
+        }
+    }));
 
     useEffect(() => {
         if (isVisible && conversationId) {
@@ -75,9 +83,7 @@ export default function PinnedMessages({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
+                        <FaThumbtack className="w-5 h-5 text-blue-600" />
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Tin nhắn đã ghim
                         </h3>
@@ -86,9 +92,7 @@ export default function PinnedMessages({
                         onClick={onClose}
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <FaTimes className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -96,14 +100,12 @@ export default function PinnedMessages({
                 <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
                         <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <FaSpinner className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
                             <p className="text-gray-500 mt-2">Đang tải...</p>
                         </div>
                     ) : pinnedMessages.length === 0 ? (
                         <div className="text-center py-8">
-                            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
+                            <FaBookmark className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-500">Chưa có tin nhắn nào được ghim</p>
                         </div>
                     ) : (
@@ -181,7 +183,9 @@ export default function PinnedMessages({
             </div>
         </div>
     );
-}
+});
+
+export default PinnedMessages;
 
 
 

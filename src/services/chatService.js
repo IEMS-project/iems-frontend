@@ -21,10 +21,23 @@ export const chatService = {
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async addMember(conversationId, userId) {
+  async addMember(conversationId, userId, actorUserId = null) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`, { method: 'POST', headers });
+    const url = new URL(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`);
+    if (actorUserId) url.searchParams.set('actorUserId', actorUserId);
+    const res = await fetch(url.toString(), { method: 'POST', headers });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async removeMember(conversationId, userId, actorUserId = null) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const url = new URL(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`);
+    if (actorUserId) url.searchParams.set('actorUserId', actorUserId);
+    const res = await fetch(url.toString(), { method: 'DELETE', headers });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
@@ -118,12 +131,12 @@ export const chatService = {
   },
   async addReaction(messageId, userId, emoji) {
     const tokens = getStoredTokens();
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {};
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions`, { 
+    const params = new URLSearchParams({ userId, emoji });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions?${params.toString()}`, { 
       method: 'POST', 
-      headers, 
-      body: JSON.stringify({ userId, emoji }) 
+      headers 
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
@@ -160,10 +173,11 @@ export const chatService = {
     }
     return res.ok;
   },
-  async recallMessage(messageId) {
+  async recallMessage(messageId, userId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall`, { 
+    const params = new URLSearchParams({ userId });
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall?${params.toString()}`, { 
       method: 'POST', 
       headers 
     });
@@ -174,14 +188,14 @@ export const chatService = {
     }
     return res.ok;
   },
-  async pinMessage(conversationId, messageId) {
+  async pinMessage(conversationId, messageId, userId) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin`, { 
       method: 'POST', 
       headers, 
-      body: JSON.stringify({ messageId }) 
+      body: JSON.stringify({ messageId, userId }) 
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
@@ -190,14 +204,14 @@ export const chatService = {
     }
     return res.ok;
   },
-  async unpinMessage(conversationId, messageId) {
+  async unpinMessage(conversationId, messageId, userId) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin`, { 
       method: 'POST', 
       headers, 
-      body: JSON.stringify({ messageId }) 
+      body: JSON.stringify({ messageId, userId }) 
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
@@ -277,7 +291,8 @@ export const chatService = {
   // Mark entire conversation as read
   async markConversationAsRead(conversationId, userId) {
     const tokens = getStoredTokens();
-    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const headers = {};
+    if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-read?userId=${encodeURIComponent(userId)}`, { 
       method: 'POST', 
       headers
@@ -358,6 +373,62 @@ export const chatService = {
       conversationId
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/between?${params}`, { headers });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+
+  // Pin conversation for a user
+  async pinConversation(conversationId, userId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin-conversation?userId=${encodeURIComponent(userId)}`, { 
+      method: 'POST', 
+      headers
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+
+  // Unpin conversation for a user
+  async unpinConversation(conversationId, userId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin-conversation?userId=${encodeURIComponent(userId)}`, { 
+      method: 'POST', 
+      headers
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+
+  // Mark conversation as unread for a user
+  async markConversationAsUnread(conversationId, userId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-unread?userId=${encodeURIComponent(userId)}`, { 
+      method: 'POST', 
+      headers
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+
+  // Toggle notification settings for a user
+  async toggleNotificationSettings(conversationId, userId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications?userId=${encodeURIComponent(userId)}`, { 
+      method: 'POST', 
+      headers
+    });
     const ct = res.headers.get('content-type') || '';
     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
