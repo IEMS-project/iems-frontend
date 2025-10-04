@@ -1,8 +1,11 @@
 import React, { useEffect } from "react";
 
-export default function Modal({ open, onClose, title, children, footer, className = "" }) {
+// Modal accepts both `open` and `isOpen` props for backwards/alternate compatibility.
+export default function Modal({ open, isOpen, onClose, title, children, footer, className = "" }) {
+	const visible = open ?? isOpen;
+
 	useEffect(() => {
-		if (open) {
+		if (visible) {
 			// Prevent body scroll when modal is open
 			document.body.style.overflow = 'hidden';
 		} else {
@@ -12,10 +15,10 @@ export default function Modal({ open, onClose, title, children, footer, classNam
 		return () => {
 			document.body.style.overflow = 'unset';
 		};
-	}, [open]);
+	}, [visible]);
 
-	if (!open) return null;
-	
+	if (!visible) return null;
+    
 	return (
 		<div 
 			className="fixed z-[9999] flex items-center justify-center" 
