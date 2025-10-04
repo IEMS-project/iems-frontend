@@ -53,6 +53,7 @@ export default function DocumentGrid({
 	onRename,
 	onPermission,
 	onSharedUsers,
+	onMove,
 	openMenu,
 	setOpenMenu,
 }) {
@@ -139,6 +140,13 @@ export default function DocumentGrid({
 
 											<div className="border-t my-1" />
 
+											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onMove(f, "folder"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
+												<span>📁</span>
+												<span>Di chuyển</span>
+											</button>
+
+											<div className="border-t my-1" />
+
 											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100 text-red-600" onClick={() => { onDelete(f, "folder"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
 												{renderDeleteIcon()}<span>Xóa</span>
 											</button>
@@ -193,6 +201,11 @@ export default function DocumentGrid({
 												<span>Đổi tên</span>
 											</button>
 
+											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onPermission(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
+												<span>🔒</span>
+												<span>Thuộc tính</span>
+											</button>
+
 											<div className="border-t my-1" />
 
 											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onShare(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
@@ -202,6 +215,13 @@ export default function DocumentGrid({
 											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onSharedUsers(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
 												<span>👥</span>
 												<span>Người dùng đã chia sẻ</span>
+											</button>
+
+											<div className="border-t my-1" />
+
+											<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onMove(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>
+												<span>📁</span>
+												<span>Di chuyển</span>
 											</button>
 
 											<div className="border-t my-1" />
@@ -226,3 +246,5 @@ export default function DocumentGrid({
 		</div>
 	);
 }
+
+

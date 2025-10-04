@@ -12,6 +12,7 @@ import CreateFolderModal from "../components/documents/CreateFolderModal";
 import RenameModal from "../components/documents/RenameModal";
 import PermissionModal from "../components/documents/PermissionModal";
 import SharedUsersModal from "../components/documents/SharedUsersModal";
+import MoveModal from "../components/documents/MoveModal";
 
 export default function Documents() {
 	// `folders` is the current visible folder list (children of current folder)
@@ -36,6 +37,7 @@ export default function Documents() {
 	const [renameItem, setRenameItem] = useState(null);
 	const [permissionItem, setPermissionItem] = useState(null);
 	const [sharedItem, setSharedItem] = useState(null);
+	const [moveItem, setMoveItem] = useState(null);
 	const fileInputRef = useRef(null);
 
 	// Load data when component mounts or currentFolderId changes
@@ -264,6 +266,10 @@ export default function Documents() {
 		setSharedItem({ id: item.id, type, data: item });
 	}
 
+	function handleMove(item, type) {
+		setMoveItem({ id: item.id, type, data: item });
+	}
+
 	async function handleRenameConfirm(newName) {
 			if (!renameItem) return;
 			try {
@@ -292,6 +298,10 @@ export default function Documents() {
 			console.error('Error updating permission:', error);
 			throw error;
 		}
+	}
+
+	function handleMoveCompleted() {
+		loadFolderContents();
 	}
 
 	return (
@@ -348,6 +358,7 @@ export default function Documents() {
 									onRename={handleRename}
 									onPermission={handlePermission}
 									onSharedUsers={handleSharedUsers}
+									onMove={handleMove}
 									openMenu={openMenu}
 									setOpenMenu={setOpenMenu}
 								/>
@@ -364,6 +375,7 @@ export default function Documents() {
 									onRename={handleRename}
 									onPermission={handlePermission}
 									onSharedUsers={handleSharedUsers}
+									onMove={handleMove}
 									openMenu={openMenu}
 									setOpenMenu={setOpenMenu}
 								/>
@@ -425,6 +437,13 @@ export default function Documents() {
 						isOpen={!!sharedItem}
 						onClose={() => setSharedItem(null)}
 						item={sharedItem}
+					/>
+
+					<MoveModal
+						isOpen={!!moveItem}
+						onClose={() => setMoveItem(null)}
+						moveItem={moveItem}
+						onMoveCompleted={handleMoveCompleted}
 					/>
 				</CardContent>
 			</Card>

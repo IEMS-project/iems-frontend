@@ -55,5 +55,13 @@ export const documentService = {
 
   async updateFilePermission(id, permission) {
     return api.updateFilePermission(id, permission);
+  },
+
+  async moveFolder(folderId, newParentId) {
+    return api.moveFolder(folderId, newParentId);
+  },
+
+  async moveFile(fileId, newFolderId) {
+    return api.moveFile(fileId, newFolderId);
   }
 };

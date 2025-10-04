@@ -419,6 +419,28 @@ export const api = {
     });
     return data?.data || data;
   },
+
+  // Move folder
+  async moveFolder(folderId, newParentId) {
+    const params = new URLSearchParams();
+    if (newParentId) params.append('parentId', newParentId);
+    
+    const data = await request(`/document-service/api/folders/${folderId}/move?${params}`, {
+      method: "PATCH"
+    });
+    return data?.data || data;
+  },
+
+  // Move file
+  async moveFile(fileId, newFolderId) {
+    const params = new URLSearchParams();
+    if (newFolderId) params.append('folderId', newFolderId);
+    
+    const data = await request(`/document-service/api/files/${fileId}/move?${params}`, {
+      method: "PATCH"
+    });
+    return data?.data || data;
+  }
 };
 
 export { getStoredTokens, setStoredTokens, GATEWAY_BASE_URL };

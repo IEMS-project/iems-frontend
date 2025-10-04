@@ -53,6 +53,7 @@ export default function DocumentList({
 	onRename,
 	onPermission,
 	onSharedUsers,
+	onMove,
 	openMenu, 
 	setOpenMenu 
 }) {
@@ -113,6 +114,8 @@ export default function DocumentList({
 															<div className="border-t my-1"></div>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onShare(f, "folder"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>{renderShareIcon()}<span>Chia sẻ</span></button>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onSharedUsers(f, "folder"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>👥</span><span>Người dùng đã chia sẻ</span></button>
+															<div className="border-t my-1"></div>
+															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onMove(f, "folder"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>📁</span><span>Di chuyển</span></button>
 														</>
 													) : (
 															<div className="px-2 py-2 text-sm text-gray-500">Bạn không có quyền chỉnh sửa</div>
@@ -147,9 +150,12 @@ export default function DocumentList({
 													{isOwner ? (
 														<>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onRename(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>🖊️</span><span>Đổi tên</span></button>
+														<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onPermission(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>🔒</span><span>Thuộc tính</span></button>
 															<div className="border-t my-1"></div>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onShare(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>{renderShareIcon()}<span>Chia sẻ</span></button>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onSharedUsers(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>👥</span><span>Người dùng đã chia sẻ</span></button>
+															<div className="border-t my-1"></div>
+															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100" onClick={() => { onMove(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}><span>📁</span><span>Di chuyển</span></button>
 															<div className="border-t my-1"></div>
 															<button className="flex w-full items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100 text-red-600" onClick={() => { onDelete(file, "file"); setOpenMenu({ id: null, type: null, anchorRect: null }); }}>{renderDeleteIcon()}<span>Xóa</span></button>
 														</>
