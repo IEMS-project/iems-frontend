@@ -136,6 +136,24 @@ export const api = {
     const data = await request("/user-service/users");
     return data?.data || [];
   },
+  async getMyProfile() {
+    const data = await request("/user-service/users/me");
+    return data?.data || data;
+  },
+  async updateMyProfile(payload) {
+    const data = await request("/user-service/users/me", {
+      method: "PUT",
+      body: payload,
+    });
+    return data?.data || data;
+  },
+  async updateMyAvatar(imageUrl) {
+    const data = await request("/user-service/users/me/avatar", {
+      method: "PUT",
+      body: { imageUrl },
+    });
+    return data?.data || data;
+  },
   async getAllUserBasicInfos() {
     // Your gateway to user-service basic infos (secured)
     const data = await request("/user-service/users/basic-infos");
@@ -321,6 +339,59 @@ export const api = {
     }
     
     return await res.json();
+  },
+  async uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const tokens = getStoredTokens();
+    const finalHeaders = {};
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const res = await fetch(`${GATEWAY_BASE_URL}/document-service/api/documents/upload/avatar`, {
+      method: 'POST',
+      headers: finalHeaders,
+      body: formData
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message = data?.message || data?.error || res.statusText;
+      const error = new Error(message || "Upload failed");
+      error.status = res.status;
+      error.data = data;
+      throw error;
+    }
+    // data may be {code,message,data:url}
+    return data?.data || data;
+  },
+  async uploadGroupAvatar(groupId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const tokens = getStoredTokens();
+    const finalHeaders = {};
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const res = await fetch(`${GATEWAY_BASE_URL}/document-service/api/documents/upload/group-avatar?groupId=${encodeURIComponent(groupId)}` , {
+      method: 'POST',
+      headers: finalHeaders,
+      body: formData
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message = data?.message || data?.error || res.statusText;
+      const error = new Error(message || "Upload failed");
+      error.status = res.status;
+      error.data = data;
+      throw error;
+    }
+    return data?.data || data;
   },
   async deleteFolder(folderId) {
     const data = await request(`/document-service/api/folders/${folderId}`, {

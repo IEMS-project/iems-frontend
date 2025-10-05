@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBuilding, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaProjectDiagram, FaTasks, FaTrophy, FaChartLine, FaClock, FaUsers } from "react-icons/fa";
 import Avatar from "../components/ui/Avatar";
 import Button from "../components/ui/Button";
@@ -7,19 +7,23 @@ import Textarea from "../components/ui/Textarea";
 import { Card } from "../components/ui/Card";
 import PageHeader from "../components/common/PageHeader";
 import StatsCard from "../components/ui/StatsCard";
+import { userService } from "../services/userService";
 
 export default function Profile() {
 	const [isEditing, setIsEditing] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [avatarUploading, setAvatarUploading] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+	const [profile, setProfile] = useState(null);
 	const [formData, setFormData] = useState({
-		name: "Nguyễn Văn A",
-		email: "nguyenvana@example.com",
-		phone: "0123456789",
-		position: "Quản lý dự án",
-		department: "Phòng Công nghệ thông tin",
-		location: "Hà Nội, Việt Nam",
-		bio: "Chuyên viên quản lý dự án với 5 năm kinh nghiệm trong lĩnh vực công nghệ thông tin. Đam mê tạo ra những sản phẩm chất lượng cao và đóng góp vào sự phát triển của tổ chức.",
-		joinDate: "15/01/2020",
-		lastActive: "Hôm nay"
+		firstName: "",
+		lastName: "",
+		email: "",
+		phone: "",
+		address: "",
+		bankAccountNumber: "",
+		bankName: "",
 	});
 
 	// Mock data for statistics
@@ -30,6 +34,32 @@ export default function Profile() {
 		hoursWorked: 1840
 	};
 
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				setLoading(true);
+				const data = await userService.getMyProfile();
+				if (!mounted) return;
+				setProfile(data);
+				setFormData({
+					firstName: data?.firstName || "",
+					lastName: data?.lastName || "",
+					email: data?.email || "",
+					phone: data?.phone || "",
+					address: data?.address || "",
+					bankAccountNumber: data?.bankAccountNumber || "",
+					bankName: data?.bankName || "",
+				});
+			} catch (e) {
+				setError(e?.message || "Tải hồ sơ thất bại");
+			} finally {
+				setLoading(false);
+			}
+		})();
+		return () => { mounted = false; };
+	}, []);
+
 	const handleInputChange = (field, value) => {
 		setFormData(prev => ({
 			...prev,
@@ -37,10 +67,26 @@ export default function Profile() {
 		}));
 	};
 
-	const handleSave = () => {
-		// Xử lý lưu thông tin
-		console.log("Lưu thông tin:", formData);
-		setIsEditing(false);
+	const handleSave = async () => {
+		try {
+			setLoading(true);
+			setError("");
+			setSuccess("");
+			const payload = {
+				address: formData.address,
+				phone: formData.phone,
+				bankAccountNumber: formData.bankAccountNumber,
+				bankName: formData.bankName,
+			};
+			const updated = await userService.updateMyProfile(payload);
+			setProfile(updated);
+			setSuccess("Cập nhật hồ sơ thành công");
+			setIsEditing(false);
+		} catch (e) {
+			setError(e?.message || "Cập nhật thất bại");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleCancel = () => {
@@ -48,10 +94,30 @@ export default function Profile() {
 		setIsEditing(false);
 	};
 
+	const handlePickAvatar = async (e) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		try {
+			setAvatarUploading(true);
+			setError("");
+			setSuccess("");
+			await userService.uploadAvatar(file);
+			const fresh = await userService.getMyProfile();
+			setProfile(fresh);
+			setSuccess("Cập nhật ảnh đại diện thành công");
+		} catch (e) {
+			setError(e?.message || "Tải ảnh thất bại");
+		} finally {
+			setAvatarUploading(false);
+		}
+	};
+
+	const fullName = `${formData.firstName || ""} ${formData.lastName || ""}`.trim() || "Người dùng";
+
 	return (
 		<div className="space-y-6">
-			<PageHeader 
-				title="Hồ sơ cá nhân" 
+			<PageHeader
+				title="Hồ sơ cá nhân"
 				subtitle="Quản lý thông tin tài khoản của bạn"
 			/>
 
@@ -93,26 +159,25 @@ export default function Profile() {
 					<Card className="p-8 h-full">
 						<div className="text-center">
 							<div className="relative inline-block">
-								<Avatar 
-									src={null} 
-									name={formData.name} 
-									size={24} 
+								<Avatar
+									src={profile?.image || null}
+									name={fullName}
+									size={24}
 									className="mx-auto"
 								/>
-								{isEditing && (
-									<button className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors">
-										<FaEdit className="h-5 w-5" />
-									</button>
-								)}
+								<label className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors cursor-pointer">
+									<FaEdit className="h-5 w-5" />
+									<input type="file" accept="image/*" className="hidden" onChange={handlePickAvatar} disabled={avatarUploading} />
+								</label>
 							</div>
 							<h2 className="mt-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-								{formData.name}
+								{fullName}
 							</h2>
 							<p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
-								{formData.position}
+								{profile?.role || ""}
 							</p>
 							<p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-								Tham gia từ {formData.joinDate}
+								{profile?.startDate ? `Tham gia từ ${new Date(profile.startDate).toLocaleDateString()}` : null}
 							</p>
 						</div>
 
@@ -127,18 +192,30 @@ export default function Profile() {
 							</div>
 							<div className="flex items-center gap-4 text-base">
 								<FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.location}</span>
+								<span className="text-gray-600 dark:text-gray-300">{formData.address}</span>
+							</div>
+							<div className="flex items-center gap-4 text-base">
+								<FaCalendarAlt className="h-5 w-5 text-gray-400" />
+								<span className="text-gray-600 dark:text-gray-300">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
+							</div>
+							<div className="flex items-center gap-4 text-base">
+								<FaUsers className="h-5 w-5 text-gray-400" />
+								<span className="text-gray-600 dark:text-gray-300">{profile?.gender === 'MALE' ? 'Nam' : profile?.gender === 'FEMALE' ? 'Nữ' : (profile?.gender || '')}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
 								<FaBuilding className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.department}</span>
+								<span className="text-gray-600 dark:text-gray-300">{
+									profile?.contractType === 'FULLTIME' ? 'Toàn thời gian' :
+										profile?.contractType === 'PARTTIME' ? 'Bán thời gian' :
+											profile?.contractType === 'CONTRACT' ? 'Hợp đồng' : (profile?.contractType || '')
+								}</span>
 							</div>
 						</div>
 
 						<div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
 							<div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-								<span>Hoạt động cuối</span>
-								<span>{formData.lastActive}</span>
+								<span>Cập nhật lần cuối</span>
+								<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
 							</div>
 						</div>
 					</Card>
@@ -183,25 +260,13 @@ export default function Profile() {
 						<div className="space-y-8">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Họ và tên
-									</label>
-									{isEditing ? (
-										<Input
-											value={formData.name}
-											onChange={(e) => handleInputChange('name', e.target.value)}
-											placeholder="Nhập họ và tên"
-											className="text-base py-3"
-										/>
-									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.name}</p>
-									)}
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Họ và tên</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.firstName} {formData.lastName}</p>
 								</div>
 
+
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Email
-									</label>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Email</label>
 									{isEditing ? (
 										<Input
 											type="email"
@@ -232,34 +297,35 @@ export default function Profile() {
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Vị trí
-									</label>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">CMND/CCCD</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.personalID || ''}</p>
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Số tài khoản</label>
 									{isEditing ? (
 										<Input
-											value={formData.position}
-											onChange={(e) => handleInputChange('position', e.target.value)}
-											placeholder="Nhập vị trí"
+											value={formData.bankAccountNumber}
+											onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
+											placeholder="Nhập số tài khoản"
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.position}</p>
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankAccountNumber}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Phòng ban
-									</label>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngân hàng</label>
 									{isEditing ? (
 										<Input
-											value={formData.department}
-											onChange={(e) => handleInputChange('department', e.target.value)}
-											placeholder="Nhập phòng ban"
+											value={formData.bankName}
+											onChange={(e) => handleInputChange('bankName', e.target.value)}
+											placeholder="Nhập ngân hàng"
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.department}</p>
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankName}</p>
 									)}
 								</div>
 
@@ -269,38 +335,61 @@ export default function Profile() {
 									</label>
 									{isEditing ? (
 										<Input
-											value={formData.location}
-											onChange={(e) => handleInputChange('location', e.target.value)}
+											value={formData.address}
+											onChange={(e) => handleInputChange('address', e.target.value)}
 											placeholder="Nhập địa chỉ"
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.location}</p>
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.address}</p>
 									)}
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngày sinh</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Giới tính</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.gender === 'MALE' ? 'Nam' : profile?.gender === 'FEMALE' ? 'Nữ' : (profile?.gender || '')}</p>
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Loại hợp đồng</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{
+										profile?.contractType === 'FULLTIME' ? 'Toàn thời gian' :
+											profile?.contractType === 'PARTTIME' ? 'Bán thời gian' :
+												profile?.contractType === 'CONTRACT' ? 'Hợp đồng' : (profile?.contractType || '')
+									}</p>
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngày bắt đầu</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
+								</div>
+
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Chức vụ</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.role || ''}</p>
 								</div>
 							</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-									Giới thiệu bản thân
-								</label>
-								{isEditing ? (
-									<Textarea
-										value={formData.bio}
-										onChange={(e) => handleInputChange('bio', e.target.value)}
-										placeholder="Nhập giới thiệu về bản thân"
-										rows={5}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100 leading-relaxed">{formData.bio}</p>
-								)}
-							</div>
+							{/* Removed Giới thiệu bản thân section as requested */}
 						</div>
 					</Card>
 				</div>
 			</div>
 
+			{(loading || avatarUploading) && (
+				<p className="text-sm text-gray-500">Đang xử lý...</p>
+			)}
+			{error && (
+				<p className="text-sm text-red-600">{error}</p>
+			)}
+			{success && (
+				<p className="text-sm text-green-600">{success}</p>
+			)}
 		</div>
 	);
 }
