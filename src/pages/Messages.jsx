@@ -174,7 +174,7 @@ function Messages() {
                             return updated;
                         });
                         try { resetUnread(payload.conversationId); } catch (e) { console.debug(e); }
-                    } else if (payload.event === 'message') {
+            } else if (payload.event === 'message') {
                         if (payload.conversationId && typeof payload.content === 'string') {
                             lastMessagesByConvRef.current[payload.conversationId] = {
                                 content: payload.content,
@@ -201,7 +201,18 @@ function Messages() {
                                 setUnreadByConv(prev => ({ ...prev, [payload.conversationId]: (prev[payload.conversationId] || 0) + 1 }));
                             }
                         }
-                    }
+            } else if (payload.event === 'conversation_meta_updated') {
+                const { conversationId, name, avatarUrl, updatedAt } = payload;
+                if (conversationId) {
+                    setConversations(prev => prev.map(c => c.id === conversationId ? {
+                        ...c,
+                        name: name !== undefined ? name : c.name,
+                        avatarUrl: avatarUrl !== undefined ? avatarUrl : c.avatarUrl,
+                        updatedAt: updatedAt || c.updatedAt
+                    } : c));
+                    setUiTick(t => t + 1);
+                }
+            }
                 } catch (_e) { }
             });
         });
@@ -1194,8 +1205,13 @@ function Messages() {
             isOptimistic: true
         };
 
-        // Add optimistic message immediately
-        setMessages(prev => [...prev, optimisticMessage]);
+        // Add optimistic message immediately; include reply metadata for UI
+        setMessages(prev => [...prev, {
+            ...optimisticMessage,
+            replyToMessageId: replyingTo ? (replyingTo.id || replyingTo._id) : null,
+            replyToSenderId: replyingTo ? replyingTo.senderId : null,
+            replyToContent: replyingTo ? replyingTo.content : null
+        }]);
 
         // Update lastMessagesByConv for immediate UI update
         lastMessagesByConvRef.current[selectedConversationId] = {
@@ -1662,6 +1678,11 @@ function Messages() {
                             getPeerId={getPeerId}
                             getConversationDisplayName={getConversationDisplayName}
                             onShowPinnedMessages={() => setShowPinnedMessages(true)}
+                        onConversationMetaUpdated={(updated) => {
+                            if (!updated?.id) return;
+                            setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
+                            setUiTick(t => t + 1);
+                        }}
                         />
                     ) : (
                         <EmptyChat />

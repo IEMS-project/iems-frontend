@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import ChatHeader from "./ChatHeader";
 import PinnedMessagesBannerWrapper from "../messages/PinnedMessagesBannerWrapper";
 import MessageList from "../messages/MessageList";
 import TypingIndicatorWrapper from "../messages/TypingIndicatorWrapper";
 import MessageComposer from "../messages/MessageComposer";
+import GroupSidebar from "../messages/GroupSidebar";
 
 export default function ChatArea({
   selectedConversationId,
@@ -39,11 +40,22 @@ export default function ChatArea({
   getConversationDisplayName,
   onShowPinnedMessages,
   onUnpinMessage,
+  onConversationMetaUpdated,
 }) {
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [localConversation, setLocalConversation] = useState(null);
+  const handleToggleSidebar = () => setShowSidebar(s => !s);
+  const effectiveConversation = useMemo(() => localConversation || selectedConversation, [localConversation, selectedConversation]);
+
+  // Reset local overrides when switching to a different conversation
+  useEffect(() => {
+    setLocalConversation(null);
+  }, [selectedConversationId]);
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex">
+      <div className="flex-1 flex flex-col">
       <ChatHeader
-        selectedConversation={selectedConversation}
+        selectedConversation={effectiveConversation}
         currentUserId={currentUserId}
         getUserName={getUserName}
         getUserImage={getUserImage}
@@ -54,6 +66,7 @@ export default function ChatArea({
         isDirect={isDirect}
         getPeerId={getPeerId}
         getConversationDisplayName={getConversationDisplayName}
+        onToggleSidebar={handleToggleSidebar}
       />
 
       {selectedConversationId && (
@@ -99,6 +112,21 @@ export default function ChatArea({
         onCancelReply={onCancelReply}
         getUserName={getUserName}
       />
+      </div>
+      {showSidebar && effectiveConversation && (
+        <GroupSidebar
+          conversation={effectiveConversation}
+          currentUserId={currentUserId}
+          getUserName={getUserName}
+          getUserImage={getUserImage}
+          onConversationUpdated={(updated) => {
+            // Update local state so header and sidebar reflect changes immediately
+            setLocalConversation(updated);
+            try { onConversationMetaUpdated && onConversationMetaUpdated(updated); } catch (_) { }
+          }}
+          onClose={() => setShowSidebar(false)}
+        />
+      )}
     </div>
   );
 }

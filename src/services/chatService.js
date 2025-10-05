@@ -11,6 +11,52 @@ export const chatService = {
     if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
     return data;
   },
+  // Groups
+  async createGroup({ name, members }) {
+    const tokens = getStoredTokens();
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/groups`, {
+      method: 'POST', headers, body: JSON.stringify({ name, members })
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async getGroup(groupId) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/groups/${encodeURIComponent(groupId)}`, { headers });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async updateGroupName(groupId, name) {
+    const tokens = getStoredTokens();
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/groups/${encodeURIComponent(groupId)}/name`, {
+      method: 'PUT', headers, body: JSON.stringify({ name })
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async updateGroupAvatar(groupId, imageUrl) {
+    const tokens = getStoredTokens();
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/groups/${encodeURIComponent(groupId)}/avatar`, {
+      method: 'PUT', headers, body: JSON.stringify({ imageUrl })
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
   async createConversation(payload) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type':'application/json' };
