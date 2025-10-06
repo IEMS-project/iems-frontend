@@ -11,7 +11,8 @@ import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
 import UserAvatar from "../ui/UserAvatar";
-export default function Tasks() {
+import TaskDetailModal from "./TaskDetailModal";
+export default function Tasks({ tasks: tasksProp, onTasksChange }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -50,20 +51,22 @@ export default function Tasks() {
             try {
                 setLoading(true);
                 const [data, members] = await Promise.all([
-                    taskService.getTasksByProject(projectId),
+                    tasksProp ? Promise.resolve(tasksProp) : taskService.getTasksByProject(projectId),
                     projectService.getProjectMembers(projectId)
                 ]);
-                
+
                 // Check if response indicates permission error
-                if (data && data.status === "error" && 
-                    (data.message?.includes("Permission denied") || 
-                     data.message?.includes("PERMISSION_DENIED"))) {
+                if (data && data.status === "error" &&
+                    (data.message?.includes("Permission denied") ||
+                        data.message?.includes("PERMISSION_DENIED"))) {
                     console.log("Permission error in Tasks response data, redirecting...");
                     navigate("/permission-denied");
                     return;
                 }
-                
-                setTasksData(Array.isArray(data) ? data : []);
+
+                const nextTasks = Array.isArray(data) ? data : [];
+                setTasksData(nextTasks);
+                if (onTasksChange && !tasksProp) onTasksChange(nextTasks);
                 const users = Array.isArray(members) ? members.map(m => ({
                     id: m.userId,
                     fullName: m.userName || m.userEmail,
@@ -75,9 +78,9 @@ export default function Tasks() {
                 console.log("Error status:", e.status);
                 console.log("Error message:", e.message);
                 console.log("Error data:", e.data);
-                
+
                 // Check if it's a permission error
-                if (e.status === 403 || 
+                if (e.status === 403 ||
                     e.message?.includes("PERMISSION_DENIED") ||
                     e.message?.includes("permission") ||
                     e.message?.includes("quyền") ||
@@ -94,7 +97,7 @@ export default function Tasks() {
             }
         };
         if (projectId) load();
-    }, [projectId, navigate]);
+    }, [projectId, navigate, tasksProp]);
 
     const handleEditTask = (task) => {
         setEditingTask(task);
@@ -108,8 +111,8 @@ export default function Tasks() {
             assignee: assignedId,
             status: statusForSelect,
             priority: task.priority,
-            startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0,10) : "",
-            dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0,10) : ""
+            startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
         });
         setShowModal(true);
     };
@@ -163,7 +166,9 @@ export default function Tasks() {
             }
 
             const refreshed = await taskService.getTasksByProject(projectId);
-            setTasksData(Array.isArray(refreshed) ? refreshed : []);
+            const list = Array.isArray(refreshed) ? refreshed : [];
+            setTasksData(list);
+            if (onTasksChange) onTasksChange(list);
 
             setShowModal(false);
             setFormData({
@@ -178,7 +183,7 @@ export default function Tasks() {
             });
         } catch (e) {
             console.error("Error saving task:", e);
-            if (e.status === 403 || 
+            if (e.status === 403 ||
                 e.message?.includes("PERMISSION_DENIED") ||
                 e.message?.includes("permission") ||
                 e.message?.includes("quyền") ||
@@ -265,19 +270,19 @@ export default function Tasks() {
                                                     </div>
                                                 </TD>
                                                 <TD>
-                                                <button
+                                                    <button
                                                         onClick={() => handleEditTask(t)}
                                                         className="text-xs text-blue-600 hover:underline"
                                                     >
                                                         Sửa
                                                     </button>
-                                                <span className="mx-1 text-gray-300">|</span>
-                                                <button
-                                                    onClick={() => { setDetailTask(t); setShowDetail(true); }}
-                                                    className="text-xs text-gray-700 hover:underline"
-                                                >
-                                                    Xem
-                                                </button>
+                                                    <span className="mx-1 text-gray-300">|</span>
+                                                    <button
+                                                        onClick={() => { setDetailTask(t); setShowDetail(true); }}
+                                                        className="text-xs text-gray-700 hover:underline"
+                                                    >
+                                                        Xem
+                                                    </button>
                                                 </TD>
                                             </TR>
                                         );
@@ -381,51 +386,16 @@ export default function Tasks() {
                 </div>
             </Modal>
 
-            <Modal
-                open={showDetail}
-                onClose={() => { setShowDetail(false); setDetailTask(null); }}
-                title="Chi tiết task"
-                footer={
-                    <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => { setShowDetail(false); setDetailTask(null); }}>Đóng</Button>
-                    </div>
-                }
-            >
-                {detailTask && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Dự án</div>
-                                <div className="text-gray-800">{(detailTask.project && detailTask.project.name) || detailTask.projectName || '-'}</div>
-                            </div>
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Trạng thái</div>
-                                <div className="text-gray-800"><Badge variant={statusVariant(detailTask.status)}>{detailTask.status}</Badge></div>
-                            </div>
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Ưu tiên</div>
-                                <div className="text-gray-800">{detailTask.priority}</div>
-                            </div>
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Người thực hiện</div>
-                                <div className="text-gray-800">{detailTask.assignedToName || detailTask.assignedTo?.name || detailTask.assignedToEmail || '-'}</div>
-                            </div>
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Bắt đầu</div>
-                                <div className="text-gray-800">{detailTask.startDate ? new Date(detailTask.startDate).toLocaleDateString('vi-VN') : '-'}</div>
-                            </div>
-                            <div>
-                                <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
-                                <div className="text-gray-800">{detailTask.dueDate ? new Date(detailTask.dueDate).toLocaleDateString('vi-VN') : '-'}</div>
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-xs uppercase text-gray-500 mb-1">Mô tả</div>
-                            <div className="whitespace-pre-wrap rounded border p-3 text-sm text-gray-800 bg-white">{detailTask.description || '—'}</div>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+            <TaskDetailModal open={showDetail} onClose={() => { setShowDetail(false); setDetailTask(null); }} task={detailTask} />
+
+
+
+
+
         </>
+
     );
+
 }
+
+

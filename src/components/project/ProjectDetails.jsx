@@ -90,6 +90,7 @@ export default function ProjectDetails() {
         setShowEditModal(true);
     };
 
+
     const handleSubmit = async () => {
         try {
             setLoading(true);
