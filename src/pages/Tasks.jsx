@@ -4,102 +4,171 @@ import KanbanColumn from "../components/tasks/KanbanColumn";
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/ui/Button";
+import { taskService } from "../services/taskService";
 
-const initialTasks = {
-    "Chờ": [
-        { id: "T-101", title: "Thiết kế kiến trúc", project: "IEMS Platform", dueDate: "2025-10-15T14:30", description: "Thiết kế kiến trúc tổng thể cho hệ thống" },
-        { id: "T-103", title: "UI Dashboard", project: "IEMS Platform", dueDate: "2025-11-01T09:00", description: "Thiết kế giao diện dashboard chính" },
-    ],
-    "Đang làm": [
-        { id: "T-102", title: "API xác thực", project: "IEMS Platform", dueDate: "2025-10-20T16:00", description: "Phát triển API xác thực người dùng" },
-        { id: "T-104", title: "Database Schema", project: "IEMS Platform", dueDate: "2025-10-25T11:30", description: "Thiết kế cấu trúc cơ sở dữ liệu" },
-    ],
-    "Hoàn thành": [
-        { id: "T-100", title: "Setup Project", project: "IEMS Platform", dueDate: "2025-09-30T10:00", description: "Khởi tạo dự án và cấu hình ban đầu" },
-    ]
-};
+const initialTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
 
 export default function Tasks() {
     const [tasks, setTasks] = useState(initialTasks);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [draggedTask, setDraggedTask] = useState(null);
+    const [selectedIds, setSelectedIds] = useState(new Set());
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [savedTasks, setSavedTasks] = useState(initialTasks);
 
 
     const handleDragStart = (e, task, status) => {
-        setDraggedTask({ ...task, sourceStatus: status });
+        // Nếu task đang nằm trong nhóm đã chọn, kéo cả nhóm; ngược lại kéo một task
+        const isMulti = selectedIds.has(task.id) && selectedIds.size > 1;
+        if (isMulti) {
+            setDraggedTask({ ids: Array.from(selectedIds), sourceStatus: status });
+        } else {
+            setDraggedTask({ id: task.id, sourceStatus: status });
+        }
     };
 
     const handleDragOver = (e) => {
         e.preventDefault();
     };
 
-    const handleDrop = (e, targetStatus) => {
+    const handleDrop = async (e, targetStatus) => {
         e.preventDefault();
-        if (draggedTask && draggedTask.sourceStatus !== targetStatus) {
-            const newTasks = { ...tasks };
+        if (!draggedTask || draggedTask.sourceStatus === targetStatus) return;
 
-            // Remove from source
-            newTasks[draggedTask.sourceStatus] = newTasks[draggedTask.sourceStatus].filter(
-                t => t.id !== draggedTask.id
-            );
+        const mapStatusToEnum = (s) => {
+            if (s === "Chờ") return "TO_DO";
+            if (s === "Đang làm") return "IN_PROGRESS";
+            if (s === "Hoàn thành") return "COMPLETED";
+            return undefined;
+        };
+        const backendStatus = mapStatusToEnum(targetStatus);
+        if (!backendStatus) return;
 
-            // Add to target
-            newTasks[targetStatus] = [...newTasks[targetStatus], { ...draggedTask, status: targetStatus }];
+        const newTasks = { ...tasks };
+
+        try {
+            if (draggedTask.ids && Array.isArray(draggedTask.ids)) {
+                // Queue locally only; save button will persist
+
+                // Remove from source columns and add to target
+                const idSet = new Set(draggedTask.ids);
+                Object.keys(newTasks).forEach(col => {
+                    newTasks[col] = newTasks[col].filter(t => !idSet.has(t.id));
+                });
+                const moved = [];
+                idSet.forEach(id => {
+                    const original = findTaskById(tasks, id);
+                    if (original) moved.push({ ...original, status: targetStatus });
+                });
+                newTasks[targetStatus] = [...newTasks[targetStatus], ...moved];
+
+                // Clear selection after move
+                setSelectedIds(new Set());
+            } else if (draggedTask.id) {
+                // Remove from source
+                newTasks[draggedTask.sourceStatus] = newTasks[draggedTask.sourceStatus].filter(
+                    t => t.id !== draggedTask.id
+                );
+                // Add to target with original object
+                const original = findTaskById(tasks, draggedTask.id);
+                newTasks[targetStatus] = [...newTasks[targetStatus], { ...(original || {}), id: draggedTask.id, status: targetStatus }];
+            }
 
             setTasks(newTasks);
             setHasUnsavedChanges(true);
+        } finally {
             setDraggedTask(null);
         }
     };
 
     const handleTaskClick = (task) => {
-        setSelectedTask(task);
-        setShowDetailModal(true);
+        // Toggle multi-select; click lần nữa để bỏ chọn
+        const next = new Set(selectedIds);
+        if (next.has(task.id)) next.delete(task.id); else next.add(task.id);
+        setSelectedIds(next);
+
+        // Mở chi tiết khi chỉ chọn một
+        if (next.size === 1 && next.has(task.id)) {
+            setSelectedTask(task);
+            setShowDetailModal(true);
+        }
     };
 
-    // Load tasks from localStorage on component mount
-    useEffect(() => {
-        const savedTasksData = localStorage.getItem('iems-tasks');
-        if (savedTasksData) {
-            try {
-                const parsedTasks = JSON.parse(savedTasksData);
-                setTasks(parsedTasks);
-                setSavedTasks(parsedTasks);
-            } catch (error) {
-                console.error('Error loading tasks from localStorage:', error);
-            }
+    const findTaskById = (data, id) => {
+        for (const status of Object.keys(data)) {
+            const f = data[status].find(t => t.id === id);
+            if (f) return f;
         }
+        return null;
+    };
+
+    // Load tasks from backend: my-tasks across all projects
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const list = await taskService.getMyTasks();
+                // list is TaskResponseDto (flat); group into Kanban columns by status display name
+                const group = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
+                for (const t of Array.isArray(list) ? list : []) {
+                    const status = (t.status || '').toLowerCase();
+                    const uiStatus = status.includes('to do') || status.includes('chờ') ? 'Chờ'
+                        : status.includes('progress') || status.includes('làm') ? 'Đang làm'
+                        : 'Hoàn thành';
+                    group[uiStatus].push({
+                        id: t.id,
+                        title: t.title,
+                        project: t.projectName || t.projectId,
+                        dueDate: t.dueDate,
+                        description: t.description,
+                    });
+                }
+                setTasks(group);
+                setSavedTasks(group);
+            } catch (e) {
+                console.error('Error loading my tasks:', e);
+            }
+        };
+        load();
     }, []);
 
-    // Save tasks to localStorage
+    // Save tasks: no-op (state reflects backend already via bulk update)
     const handleSave = async () => {
-        setIsSaving(true);
-        try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Save to localStorage (in real app, this would be an API call)
-            localStorage.setItem('iems-tasks', JSON.stringify(tasks));
-            setSavedTasks(tasks);
-            setHasUnsavedChanges(false);
-            
-            // Show success message (you can add a toast notification here)
-            console.log('Tasks saved successfully!');
-        } catch (error) {
-            console.error('Error saving tasks:', error);
-        } finally {
-            setIsSaving(false);
+        // Persist all moves since last save: compare savedTasks vs tasks
+        const toUpdate = [];
+        Object.entries(tasks).forEach(([status, list]) => {
+            list.forEach(t => {
+                const prev = findTaskById(savedTasks, t.id);
+                if (prev && prev.status !== status) {
+                    // map UI status to enum
+                    const map = s => s === 'Chờ' ? 'TO_DO' : s === 'Đang làm' ? 'IN_PROGRESS' : 'COMPLETED';
+                    toUpdate.push({ id: t.id, newStatus: map(status) });
+                }
+            });
+        });
+
+        if (toUpdate.length > 0) {
+            const idsByStatus = toUpdate.reduce((acc, cur) => {
+                acc[cur.newStatus] = acc[cur.newStatus] || [];
+                acc[cur.newStatus].push(cur.id);
+                return acc;
+            }, {});
+            // Call bulk API per status group
+            for (const [newStatus, ids] of Object.entries(idsByStatus)) {
+                await taskService.bulkUpdateStatus(ids, newStatus);
+            }
         }
+
+        setSavedTasks(tasks);
+        setHasUnsavedChanges(false);
     };
 
     // Reset to last saved state
     const handleReset = () => {
         setTasks(savedTasks);
         setHasUnsavedChanges(false);
+        setSelectedIds(new Set());
     };
 
 
@@ -168,6 +237,7 @@ export default function Tasks() {
                                 onDrop={handleDrop}
                                 onDragStart={handleDragStart}
                                 onTaskClick={handleTaskClick}
+                                selectedIds={selectedIds}
                             />
                         ))}
                     </div>

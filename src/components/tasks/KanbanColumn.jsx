@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import TaskCard from "../tasks/TaskCard";
 
-export default function KanbanColumn({ status, tasks, onDragOver, onDrop, onDragStart, onTaskClick }) {
+export default function KanbanColumn({ status, tasks, onDragOver, onDrop, onDragStart, onTaskClick, selectedIds = new Set() }) {
     return (
         <Card>
             <CardHeader className="pb-3">
@@ -26,6 +26,7 @@ export default function KanbanColumn({ status, tasks, onDragOver, onDrop, onDrag
                             status={status}
                             onDragStart={onDragStart}
                             onClick={onTaskClick}
+                            selected={selectedIds.has(task.id)}
                         />
                     ))}
                 </div>
