@@ -8,24 +8,18 @@ import Input from "../ui/Input";
 import Select from "../ui/Select";
 import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
+import { projectService } from "../../services/projectService";
+import UserSelect from "./UserSelect";
 import UserAvatar from "../ui/UserAvatar";
 export default function Tasks() {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
+    const [assignableUsers, setAssignableUsers] = useState([]);
 
-    // Danh sách thành viên có sẵn để chọn làm người phụ trách
-    const availableMembers = [
-        "Nguyễn Văn A",
-        "Trần Thị B",
-        "Lê Văn C",
-        "Phạm D",
-        "Hoàng Thị E",
-        "Vũ Văn F",
-        "Đặng Thị G",
-        "Bùi Văn H"
-    ];
+    // Danh sách thành viên trong dự án để chọn làm người phụ trách
+    // Tải từ API dự án
 
     function statusVariant(status) {
         switch (status) {
@@ -38,12 +32,16 @@ export default function Tasks() {
 
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [showDetail, setShowDetail] = useState(false);
+    const [detailTask, setDetailTask] = useState(null);
     const [formData, setFormData] = useState({
         id: "",
         title: "",
+        description: "",
         assignee: "",
         status: "Chờ",
         priority: "Trung bình",
+        startDate: "",
         dueDate: ""
     });
 
@@ -51,7 +49,10 @@ export default function Tasks() {
         const load = async () => {
             try {
                 setLoading(true);
-                const data = await taskService.getTasksByProject(projectId);
+                const [data, members] = await Promise.all([
+                    taskService.getTasksByProject(projectId),
+                    projectService.getProjectMembers(projectId)
+                ]);
                 
                 // Check if response indicates permission error
                 if (data && data.status === "error" && 
@@ -63,6 +64,12 @@ export default function Tasks() {
                 }
                 
                 setTasksData(Array.isArray(data) ? data : []);
+                const users = Array.isArray(members) ? members.map(m => ({
+                    id: m.userId,
+                    fullName: m.userName || m.userEmail,
+                    email: m.userEmail
+                })) : [];
+                setAssignableUsers(users);
             } catch (e) {
                 console.log("Tasks Error:", e);
                 console.log("Error status:", e.status);
@@ -91,13 +98,18 @@ export default function Tasks() {
 
     const handleEditTask = (task) => {
         setEditingTask(task);
+        const assignedId = task.assignedTo?.id || task.assignedTo || "";
+        const currentStatus = (task.status || '').toString();
+        const statusForSelect = currentStatus.includes('In Progress') ? 'Đang làm' : (currentStatus.includes('Hoàn thành') || currentStatus.includes('Completed')) ? 'Hoàn thành' : 'Chờ';
         setFormData({
             id: task.id,
             title: task.title,
-            assignee: task.assignee,
-            status: task.status,
+            description: task.description || "",
+            assignee: assignedId,
+            status: statusForSelect,
             priority: task.priority,
-            dueDate: task.dueDate
+            startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0,10) : "",
+            dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0,10) : ""
         });
         setShowModal(true);
     };
@@ -107,26 +119,78 @@ export default function Tasks() {
         setFormData({
             id: "",
             title: "",
+            description: "",
             assignee: "",
             status: "Chờ",
             priority: "Trung bình",
+            startDate: "",
             dueDate: ""
         });
         setShowModal(true);
     };
 
-    const handleSubmit = () => {
-        // Here you would typically save the data
-        console.log("Saving task:", formData);
-        setShowModal(false);
-        setFormData({
-            id: "",
-            title: "",
-            assignee: "",
-            status: "Chờ",
-            priority: "Trung bình",
-            dueDate: ""
-        });
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+            if (!formData.title.trim()) {
+                alert("Vui lòng nhập tiêu đề");
+                return;
+            }
+            if (!formData.assignee) {
+                alert("Vui lòng chọn người phụ trách trong dự án");
+                return;
+            }
+            if (!formData.dueDate) {
+                alert("Vui lòng chọn hạn hoàn thành");
+                return;
+            }
+
+            const payload = {
+                projectId,
+                title: formData.title.trim(),
+                description: formData.description?.trim() || undefined,
+                assignedTo: formData.assignee,
+                status: formData.status,
+                priority: formData.priority,
+                startDate: formData.startDate || undefined,
+                dueDate: formData.dueDate,
+            };
+
+            if (editingTask?.id) {
+                await taskService.updateTask(editingTask.id, payload);
+            } else {
+                await taskService.createTask(payload);
+            }
+
+            const refreshed = await taskService.getTasksByProject(projectId);
+            setTasksData(Array.isArray(refreshed) ? refreshed : []);
+
+            setShowModal(false);
+            setFormData({
+                id: "",
+                title: "",
+                description: "",
+                assignee: "",
+                status: "Chờ",
+                priority: "Trung bình",
+                startDate: "",
+                dueDate: ""
+            });
+        } catch (e) {
+            console.error("Error saving task:", e);
+            if (e.status === 403 || 
+                e.message?.includes("PERMISSION_DENIED") ||
+                e.message?.includes("permission") ||
+                e.message?.includes("quyền") ||
+                e.message?.includes("Permission denied")) {
+                navigate("/permission-denied");
+                return;
+            } else {
+                alert(e?.message || "Có lỗi xảy ra khi lưu task");
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleClose = () => {
@@ -173,38 +237,51 @@ export default function Tasks() {
                                 ) : tasksData.length === 0 ? (
                                     <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
                                 ) : (
-                                    tasksData.map(t => (
-                                        <TR key={t.id}>
-                                            <TD className="min-w-[180px]">{t.title}</TD>
-                                            <TD className="flex items-center gap-2 min-w-[180px]">
-                                                <UserAvatar user={{ firstName: t.assignedToName, email: t.assignedToEmail }} size="xs" />
-                                                <div className="flex flex-col flex-1 min-w-0">
-                                                    <span className="font-medium">{t.assignedToName || t.assignedToEmail || t.assignedTo}</span>
-                                                    <span className="text-sm text-gray-500">{t.assignedToEmail}</span>
-                                                </div>
-                                            </TD>
+                                    tasksData.map(t => {
+                                        const assignedName = t.assignedToName || t.assignedTo?.name || t.assignedToEmail || '';
+                                        const assignedEmail = t.assignedToEmail || '';
+                                        const createdName = t.createdByName || t.createdBy?.name || t.createdByEmail || '';
+                                        const createdEmail = t.createdByEmail || '';
+                                        return (
+                                            <TR key={t.id}>
+                                                <TD className="min-w-[180px]">{t.title}</TD>
+                                                <TD className="flex items-center gap-2 min-w-[180px]">
+                                                    <UserAvatar user={{ firstName: assignedName, email: assignedEmail }} size="xs" />
+                                                    <div className="flex flex-col flex-1 min-w-0">
+                                                        <span className="font-medium">{assignedName}</span>
+                                                        <span className="text-sm text-gray-500">{assignedEmail}</span>
+                                                    </div>
+                                                </TD>
 
-                                            <TD className="min-w-[100px]"><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
-                                            <TD className="min-w-[100px]">{t.priority}</TD>
-                                            <TD className="min-w-[100px]">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                            <TD className="min-w-[100px]">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                            <TD className="flex items-center gap-2 min-w-[180px]">
-                                                <UserAvatar user={{ firstName: t.createdByName, email: t.createdByEmail }} size="xs" />
-                                                <div className="flex flex-col flex-1 min-w-0">
-                                                    <span className="font-medium">{t.createdByName || t.createdByEmail || t.createdBy}</span>
-                                                    <span className="text-sm text-gray-500">{t.createdByEmail}</span>
-                                                </div>
-                                            </TD>
-                                            <TD>
+                                                <TD className="min-w-[100px]"><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
+                                                <TD className="min-w-[100px]">{t.priority}</TD>
+                                                <TD className="min-w-[100px]">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                                <TD className="min-w-[100px]">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                                <TD className="flex items-center gap-2 min-w-[180px]">
+                                                    <UserAvatar user={{ firstName: createdName, email: createdEmail }} size="xs" />
+                                                    <div className="flex flex-col flex-1 min-w-0">
+                                                        <span className="font-medium">{createdName}</span>
+                                                        <span className="text-sm text-gray-500">{createdEmail}</span>
+                                                    </div>
+                                                </TD>
+                                                <TD>
                                                 <button
-                                                    onClick={() => handleEditTask(t)}
-                                                    className="text-xs text-blue-600 hover:underline"
+                                                        onClick={() => handleEditTask(t)}
+                                                        className="text-xs text-blue-600 hover:underline"
+                                                    >
+                                                        Sửa
+                                                    </button>
+                                                <span className="mx-1 text-gray-300">|</span>
+                                                <button
+                                                    onClick={() => { setDetailTask(t); setShowDetail(true); }}
+                                                    className="text-xs text-gray-700 hover:underline"
                                                 >
-                                                    Sửa
+                                                    Xem
                                                 </button>
-                                            </TD>
-                                        </TR>
-                                    ))
+                                                </TD>
+                                            </TR>
+                                        );
+                                    })
                                 )}
                             </TBody>
                         </Table>
@@ -226,16 +303,11 @@ export default function Tasks() {
                 }
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mã task</label>
-                        <Input
-                            type="text"
-                            value={formData.id}
-                            onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mã task"
-                        />
-                    </div>
+                    {editingTask && (
+                        <div className="sm:col-span-2">
+                            <div className="text-sm text-gray-600">Dự án: <span className="font-medium">{(editingTask.project && editingTask.project.name) || editingTask.projectName || '-'}</span></div>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
                         <Input
@@ -246,18 +318,23 @@ export default function Tasks() {
                             placeholder="Nhập tiêu đề"
                         />
                     </div>
+                    <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={5}
+                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            placeholder="Nhập mô tả chi tiết cho task"
+                        />
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phụ trách</label>
-                        <Select
+                        <UserSelect
+                            assignableUsers={assignableUsers}
                             value={formData.assignee}
-                            onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="">Chọn người phụ trách</option>
-                            {availableMembers.map(member => (
-                                <option key={member} value={member}>{member}</option>
-                            ))}
-                        </Select>
+                            onChange={(id) => setFormData({ ...formData, assignee: id })}
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
@@ -284,6 +361,15 @@ export default function Tasks() {
                         </Select>
                     </div>
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
+                        <Input
+                            type="date"
+                            value={formData.startDate}
+                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
                         <Input
                             type="date"
@@ -293,6 +379,52 @@ export default function Tasks() {
                         />
                     </div>
                 </div>
+            </Modal>
+
+            <Modal
+                open={showDetail}
+                onClose={() => { setShowDetail(false); setDetailTask(null); }}
+                title="Chi tiết task"
+                footer={
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => { setShowDetail(false); setDetailTask(null); }}>Đóng</Button>
+                    </div>
+                }
+            >
+                {detailTask && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Dự án</div>
+                                <div className="text-gray-800">{(detailTask.project && detailTask.project.name) || detailTask.projectName || '-'}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Trạng thái</div>
+                                <div className="text-gray-800"><Badge variant={statusVariant(detailTask.status)}>{detailTask.status}</Badge></div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Ưu tiên</div>
+                                <div className="text-gray-800">{detailTask.priority}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Người thực hiện</div>
+                                <div className="text-gray-800">{detailTask.assignedToName || detailTask.assignedTo?.name || detailTask.assignedToEmail || '-'}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Bắt đầu</div>
+                                <div className="text-gray-800">{detailTask.startDate ? new Date(detailTask.startDate).toLocaleDateString('vi-VN') : '-'}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
+                                <div className="text-gray-800">{detailTask.dueDate ? new Date(detailTask.dueDate).toLocaleDateString('vi-VN') : '-'}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-xs uppercase text-gray-500 mb-1">Mô tả</div>
+                            <div className="whitespace-pre-wrap rounded border p-3 text-sm text-gray-800 bg-white">{detailTask.description || '—'}</div>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </>
     );

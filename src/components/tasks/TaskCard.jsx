@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function TaskCard({ task, status, onDragStart, onClick }) {
+export default function TaskCard({ task, status, onDragStart, onClick, selected = false }) {
     const getTimeRemaining = (dueDate) => {
         const today = new Date();
         const due = new Date(dueDate);
@@ -25,7 +25,7 @@ export default function TaskCard({ task, status, onDragStart, onClick }) {
             draggable
             onDragStart={(e) => onDragStart(e, task, status)}
             onClick={() => onClick(task)}
-            className="p-3 rounded-md border border-gray-200 bg-white cursor-pointer transition-all hover:shadow-sm hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900"
+            className={"p-3 rounded-md border cursor-pointer transition-all hover:shadow-sm " + (selected ? "border-blue-500 bg-blue-50 dark:bg-blue-950" : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900")}
         >
             <div className="space-y-2">
                 <div className="flex items-center justify-between">

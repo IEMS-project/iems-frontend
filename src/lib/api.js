@@ -80,6 +80,24 @@ export const api = {
     setStoredTokens(payload);
     return payload;
   },
+  async bulkUpdateTaskStatus(taskIds, newStatus) {
+    const data = await request(`/task-service/tasks/status-bulk?newStatus=${encodeURIComponent(newStatus)}`, {
+      method: "POST",
+      body: { ids: taskIds },
+    });
+    return data?.data || data || [];
+  },
+  async getTaskComments(taskId) {
+    const data = await request(`/task-service/tasks/${taskId}/comments`);
+    return data?.data || data || [];
+  },
+  async addTaskComment(taskId, content) {
+    const data = await request(`/task-service/tasks/${taskId}/comments`, {
+      method: "POST",
+      body: { content },
+    });
+    return data?.data || data;
+  },
   logout() {
     setStoredTokens(null);
   },
@@ -291,7 +309,131 @@ export const api = {
     // User's curl hits task-service directly at 8084: /tasks/project/{id}
     // Through gateway we expose it under /task-service/tasks/project/{id}
     const data = await request(`/task-service/tasks/project/${projectId}`);
+    const payload = data?.data || data || [];
+    // Support both old flat shape and new nested shape with count
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.data)) return payload.data;
+    return [];
+  },
+  async getMyTasks() {
+    const data = await request(`/task-service/tasks/my-tasks`);
     return data?.data || data || [];
+  },
+  async createTask(payload) {
+    // Backend expects LocalDate for startDate/dueDate and enum priority; also requires X-User-Id
+    const tokens = getStoredTokens();
+    if (!tokens?.accessToken) {
+      throw new Error("Bạn cần đăng nhập để tạo nhiệm vụ");
+    }
+    const mapPriority = (p) => {
+      if (!p) return undefined;
+      const v = (p || '').toString().trim().toUpperCase();
+      if (v === 'CAO' || v === 'HIGH') return 'HIGH';
+      if (v === 'TRUNG BÌNH' || v === 'TRUNG BINH' || v === 'MEDIUM') return 'MEDIUM';
+      if (v === 'THẤP' || v === 'THAP' || v === 'LOW') return 'LOW';
+      return v; // fallback
+    };
+    const toLocalDate = (d) => {
+      if (!d) return undefined;
+      try {
+        const date = new Date(d);
+        if (!isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+      } catch {}
+      // if already in YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return d;
+      return undefined;
+    };
+    const body = {
+      projectId: payload.projectId,
+      title: payload.title,
+      description: payload.description || undefined,
+      assignedTo: payload.assignedTo,
+      priority: mapPriority(payload.priority),
+      startDate: toLocalDate(payload.startDate),
+      dueDate: toLocalDate(payload.dueDate),
+    };
+    const data = await request(`/task-service/tasks`, {
+      method: "POST",
+      body,
+    });
+    return data?.data || data;
+  },
+  async updateTask(taskId, payload) {
+    // Map priority and dates to backend types
+    const mapPriority = (p) => {
+      if (!p) return undefined;
+      const v = (p || '').toString().trim().toUpperCase();
+      if (v === 'CAO' || v === 'HIGH') return 'HIGH';
+      if (v === 'TRUNG BÌNH' || v === 'TRUNG BINH' || v === 'MEDIUM') return 'MEDIUM';
+      if (v === 'THẤP' || v === 'THAP' || v === 'LOW') return 'LOW';
+      return v;
+    };
+    const mapStatus = (s) => {
+      if (!s) return undefined;
+      const v = (s || '').toString().trim().toUpperCase();
+      if (v === 'CHỜ' || v === 'CHO' || v === 'TO DO' || v === 'TO_DO' || v === 'TODO') return 'TO_DO';
+      if (v === 'ĐANG LÀM' || v === 'DANG LAM' || v === 'IN PROGRESS' || v === 'IN_PROGRESS') return 'IN_PROGRESS';
+      if (v === 'HOÀN THÀNH' || v === 'HOAN THANH' || v === 'COMPLETED' || v === 'COMPLETE') return 'COMPLETED';
+      return v; // if already enum
+    };
+    const toLocalDate = (d) => {
+      if (!d) return undefined;
+      try {
+        const date = new Date(d);
+        if (!isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+      } catch {}
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return d;
+      return undefined;
+    };
+    const body = {
+      title: payload.title,
+      description: payload.description,
+      assignedTo: payload.assignedTo,
+      status: mapStatus(payload.status),
+      priority: mapPriority(payload.priority),
+      startDate: toLocalDate(payload.startDate),
+      dueDate: toLocalDate(payload.dueDate),
+    };
+    const data = await request(`/task-service/tasks/${taskId}`, {
+      method: "PATCH",
+      body,
+    });
+    return data?.data || data;
+  },
+  async assignTask(taskId, newAssigneeId) {
+    const data = await request(`/task-service/tasks/${taskId}/assign?newAssigneeId=${newAssigneeId}`, {
+      method: "PATCH",
+    });
+    return data?.data || data;
+  },
+  async updateTaskPriorityAndDates(taskId, { priority, startDate, dueDate }) {
+    const mapPriority = (p) => {
+      if (!p) return undefined;
+      const v = (p || '').toString().trim().toUpperCase();
+      if (v === 'CAO' || v === 'HIGH') return 'HIGH';
+      if (v === 'TRUNG BÌNH' || v === 'TRUNG BINH' || v === 'MEDIUM') return 'MEDIUM';
+      if (v === 'THẤP' || v === 'THAP' || v === 'LOW') return 'LOW';
+      return v;
+    };
+    const toLocalDate = (d) => {
+      if (!d) return undefined;
+      try {
+        const date = new Date(d);
+        if (!isNaN(date.getTime())) return date.toISOString().slice(0, 10);
+      } catch {}
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return d;
+      return undefined;
+    };
+    const body = {
+      priority: mapPriority(priority),
+      startDate: toLocalDate(startDate),
+      dueDate: toLocalDate(dueDate),
+    };
+    const data = await request(`/task-service/tasks/${taskId}/priority-date`, {
+      method: "PUT",
+      body,
+    });
+    return data?.data || data;
   },
   // Document Service APIs
   async getFolderContents(folderId) {
