@@ -4,6 +4,15 @@ export const userService = {
   async getAllUsers() {
     return api.getAllUsers();
   },
+  async getMyProfile() {
+    return api.getMyProfile();
+  },
+  async updateMyProfile(payload) {
+    return api.updateMyProfile(payload);
+  },
+  async updateMyAvatar(imageUrl) {
+    return api.updateMyAvatar(imageUrl);
+  },
   async getAllUserBasicInfos() {
     return api.getAllUserBasicInfos();
   },
@@ -15,6 +24,9 @@ export const userService = {
   },
   async getUsersByIds(userIds) {
     return api.getUsersByIds(userIds);
+  },
+  async uploadAvatar(file) {
+    return api.uploadAvatar(file);
   },
 };
 

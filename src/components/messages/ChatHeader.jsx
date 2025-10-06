@@ -1,6 +1,6 @@
 import React from "react";
 import Avatar from "../ui/Avatar";
-import { FaSearch, FaUsers } from "react-icons/fa";
+import { FaSearch, FaUsers, FaInfoCircle } from "react-icons/fa";
 
 export default function ChatHeader({
   selectedConversation,
@@ -14,6 +14,7 @@ export default function ChatHeader({
   isDirect,
   getPeerId,
   getConversationDisplayName,
+  onToggleSidebar,
 }) {
   const conv = selectedConversation;
   const showGroupButton = conv && !isDirect(conv);
@@ -25,7 +26,12 @@ export default function ChatHeader({
       return (
         <>
           <Avatar src={avatarSrc} name={dn} size={10} />
-          <div className="font-semibold truncate">{dn}</div>
+          <div className="min-w-0">
+            <div className="font-semibold truncate">{dn}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {dir ? 'Đang hoạt động' : `${(conv?.members || []).length} thành viên`}
+            </div>
+          </div>
         </>
       );
     }
@@ -55,6 +61,7 @@ export default function ChatHeader({
             <FaSearch className="w-5 h-5" />
           </button>
         )}
+
         {showGroupButton && (
           <button
             onClick={onShowGroupMembers}
@@ -62,6 +69,15 @@ export default function ChatHeader({
             title="Quản lý thành viên"
           >
             <FaUsers className="w-5 h-5" />
+          </button>
+        )}
+        {conv && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            title="Thông tin cuộc trò chuyện"
+          >
+            <FaInfoCircle className="w-5 h-5" />
           </button>
         )}
       </div>
