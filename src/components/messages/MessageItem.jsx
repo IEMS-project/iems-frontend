@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import MediaPreviewModal from "./MediaPreviewModal";
 import Avatar from "../ui/Avatar";
 import { chatService, chatWs } from "../../services/chatService";
 import {
@@ -12,6 +13,21 @@ import {
     FaTimes,
     FaCheck
 } from "react-icons/fa";
+
+// Simple in-memory cache for file sizes keyed by URL
+const fileSizeCache = new Map();
+
+const formatBytes = (bytes) => {
+    if (!Number.isFinite(bytes) || bytes < 0) return null;
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    let val = bytes;
+    while (val >= 1024 && i < units.length - 1) {
+        val /= 1024;
+        i++;
+    }
+    return `${val.toFixed(val >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+};
 
 export default function MessageItem({
     message,
@@ -31,20 +47,12 @@ export default function MessageItem({
     const bubbleRef = useRef(null);
     const [openMenuUp, setOpenMenuUp] = useState(false);
     const [emojiOpenUp, setEmojiOpenUp] = useState(false);
+    const hideEmojiTimeoutRef = useRef(null);
 
-    // Validate message before rendering - skip invalid messages
-    if (!message || !message.senderId || message.senderId === 'U' || message.senderId === 'unknown' || message.senderId.length < 3) {
-        console.log('⚠️ Skipping invalid message in MessageItem:', message?.senderId);
-        return null;
-    }
-
-    // Skip messages without content (except system messages)
-    if (!message.type || message.type !== 'SYSTEM_LOG') {
-        if (!message.content || message.content.trim() === '') {
-            console.log('⚠️ Skipping message without content in MessageItem');
-            return null;
-        }
-    }
+    // Validate and derive booleans without early-returning (keep hooks order stable)
+    const invalidSender = !message || !message.senderId || message.senderId === 'U' || message.senderId === 'unknown' || message.senderId.length < 3;
+    const isSystemLog = (message?.type || '') === 'SYSTEM_LOG';
+    const isEmptyNonSystem = !isSystemLog && (!message?.content || (message.content + '').trim() === '');
 
     const isMe = message.senderId === currentUserId;
     const senderName = getUserName(message.senderId);
@@ -87,43 +95,16 @@ export default function MessageItem({
             }
         };
         window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
+        return () => {
+            window.removeEventListener('resize', onResize);
+            if (hideEmojiTimeoutRef.current) {
+                clearTimeout(hideEmojiTimeoutRef.current);
+            }
+        };
     }, []);
 
-    // Render system log specially (prettify IDs to names when possible)
-    if (message?.type === 'SYSTEM_LOG') {
-        const prettifySystemContent = (raw) => {
-            if (!raw || typeof raw !== 'string') return raw;
-            // Replace any token that maps to a known user name
-            return raw.split(/(\s+)/).map(token => {
-                // Keep whitespace tokens untouched
-                if (/^\s+$/.test(token)) return token;
-                const name = getUserName?.(token);
-                // getUserName returns token itself when unknown; only replace when different
-                if (name && name !== token && name !== 'unknown') {
-                    return name;
-                }
-                // If token looks like a UUID, don't show it - use fallback
-                if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
-                    return 'Người dùng';
-                }
-                return token;
-            }).join('');
-        };
-
-        return (
-            <div className="my-2 px-4">
-                <div className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
-                    {prettifySystemContent(message.content)}
-                </div>
-            </div>
-        );
-    }
-
-    // Don't render deleted messages
-    if (isDeletedForMe) {
-        return null;
-    }
+    // Don't render deleted messages or invalid/empty ones
+    const shouldHide = isDeletedForMe || invalidSender || isEmptyNonSystem;
 
     const handleReaction = async (emoji) => {
         try {
@@ -315,11 +296,109 @@ export default function MessageItem({
     const reactions = formatReactions();
     const emojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
+    const [previewMedia, setPreviewMedia] = useState({ isOpen: false, url: "", type: "" });
+    const [fileSizeText, setFileSizeText] = useState(null);
+
+    const stripTsPrefixFromUrl = (url) => {
+        try {
+            const decoded = decodeURIComponent(url || '');
+            const last = decoded.substring(decoded.lastIndexOf('/') + 1);
+            const hyphen = last.indexOf('-');
+            const leading = hyphen > 0 ? last.substring(0, hyphen) : '';
+            if (/^\d{10,17}$/.test(leading)) return last.substring(hyphen + 1) || last;
+            return last || decoded;
+        } catch (_) { return url || 'Tệp'; }
+    };
+
+    const renderReplyPreview = () => {
+        const content = message.replyToContent || '';
+        const type = (message.replyToType || '').toUpperCase();
+        if (type === 'IMAGE') return <span className="text-gray-600 dark:text-gray-300">[Ảnh]</span>;
+        if (type === 'VIDEO') return <span className="text-gray-600 dark:text-gray-300">[Video]</span>;
+        if (type === 'FILE') {
+            const name = stripTsPrefixFromUrl(content);
+            return <span className="text-gray-600 dark:text-gray-300">[Tệp] {name}</span>;
+        }
+        if (/^https?:\/\//i.test(content)) {
+            const name = stripTsPrefixFromUrl(content);
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-gray-600 dark:text-gray-300">[Ảnh]</span>;
+            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-gray-600 dark:text-gray-300">[Video]</span>;
+            return <span className="text-gray-600 dark:text-gray-300">[Tệp] {name}</span>;
+        }
+        return <span className="text-gray-600 dark:text-gray-300">{content}</span>;
+    };
+
     // When any floating UI for this message is open, elevate the whole message
     // so its children (menu, emoji picker, modals) render above neighboring messages.
     const elevated = showMenu || showEmojiPicker || showReactionModal;
 
+    // Try to resolve file size for FILE messages
+    useEffect(() => {
+        const t = (message.type || '').toUpperCase();
+        if (t !== 'FILE') {
+            setFileSizeText(null);
+            return;
+        }
+        const url = message.content || '';
+        // Prefer explicit size from message when available
+        const explicitSize = message.fileSizeBytes || message.fileSize || message.sizeBytes || message.metadata?.size;
+        if (Number.isFinite(explicitSize)) {
+            setFileSizeText(formatBytes(Number(explicitSize)));
+            return;
+        }
+        if (!url || url.startsWith('blob:')) {
+            setFileSizeText(null);
+            return;
+        }
+        if (fileSizeCache.has(url)) {
+            setFileSizeText(fileSizeCache.get(url));
+            return;
+        }
+        let aborted = false;
+        (async () => {
+            try {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 5000);
+                const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+                clearTimeout(timer);
+                const len = res.headers.get('content-length');
+                const sizeText = len ? formatBytes(Number(len)) : null;
+                if (!aborted) {
+                    if (sizeText) fileSizeCache.set(url, sizeText);
+                    setFileSizeText(sizeText);
+                }
+            } catch {
+                if (!aborted) setFileSizeText(null);
+            }
+        })();
+        return () => { aborted = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [message.type, message.content]);
+
     return (
+        <>
+        {/* System log render */}
+        {isSystemLog && !invalidSender && (
+            <div className="my-2 px-4">
+                <div className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
+                    {(() => {
+                        const raw = message?.content;
+                        if (!raw || typeof raw !== 'string') return raw;
+                        return raw.split(/(\s+)/).map(token => {
+                            if (/^\s+$/.test(token)) return token;
+                            const name = getUserName?.(token);
+                            if (name && name !== token && name !== 'unknown') return name;
+                            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return 'Người dùng';
+                            return token;
+                        }).join('');
+                    })()}
+                </div>
+            </div>
+        )}
+
+        {/* Regular message render */}
+        {!isSystemLog && !shouldHide && (
         <div className={`group relative ${elevated ? 'z-50' : ''} flex ${isMe ? 'justify-end' : 'justify-start'} mb-2 px-4`}>
             <div className={`flex items-end max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
                 {/* Avatar for others */}
@@ -340,7 +419,7 @@ export default function MessageItem({
                                     {getUserName(message.replyToSenderId)}
                                 </div>
                                 <div className="text-gray-600 dark:text-gray-300 text-xs truncate">
-                                    {message.replyToContent}
+                                    {renderReplyPreview()}
                                 </div>
                             </div>
                         </div>
@@ -357,13 +436,18 @@ export default function MessageItem({
                             setShowMenu(true);
                         }}
                     >
-                        <div className={`relative px-3 py-2 rounded-2xl max-w-xs break-words ${isRecalled
+                        { /* Different container styles for media vs text */ }
+                        <div className={`relative ${isRecalled
+                            ? 'px-3 py-2 max-w-xs break-words'
+                            : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())
+                                ? 'p-1 max-w-sm'
+                                : 'px-3 py-2 max-w-xs break-words')} rounded-2xl ${isRecalled
                             ? isMe
                                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 italic border border-dashed border-blue-300 dark:border-blue-600"
                                 : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic border border-dashed"
                             : isMe
-                                ? "bg-blue-500 text-white"
-                                : "bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                                ? (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-blue-500 text-white')
+                                : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600')
                             }`}>
                             {isRecalled ? (
                                 <span className="text-sm">Tin nhắn đã được thu hồi</span>
@@ -376,43 +460,113 @@ export default function MessageItem({
                                         </div>
                                     )}
                                     <div className="text-sm">
-                                        {message.content}
+                                        {(() => {
+                                            const t = (message.type || '').toUpperCase();
+                                            if (t === 'IMAGE') {
+                                                return (
+                                                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-black/5">
+                                                        <img
+                                                            src={message.content}
+                                                            alt="image"
+                                                            className="max-w-xs cursor-pointer hover:opacity-90 transition"
+                                                            loading="lazy"
+                                                            onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'IMAGE' })}
+                                                        />
+                                                    </div>
+                                                );
+                                            }
+                                            if (t === 'VIDEO') {
+                                                return (
+                                                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-black">
+                                                        <video
+                                                            className="max-w-xs cursor-pointer"
+                                                            onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'VIDEO' })}
+                                                            controls
+                                                            preload="metadata"
+                                                        >
+                                                            <source src={message.content} />
+                                                        </video>
+                                                    </div>
+                                                );
+                                            }
+                                            if (t === 'FILE') {
+                                                const url = message.content || '';
+                                                let name = 'Tệp đính kèm';
+                                                try {
+                                                    if (!url.startsWith('blob:')) {
+                                                        const decoded = decodeURIComponent(url);
+                                                        const lastSlash = decoded.lastIndexOf('/') + 1;
+                                                        const lastSegment = decoded.substring(lastSlash) || '';
+                                                        const hyphenIdx = lastSegment.indexOf('-');
+                                                        const leading = hyphenIdx > 0 ? lastSegment.substring(0, hyphenIdx) : '';
+                                                        name = /^\d{10,17}$/.test(leading) ? (lastSegment.substring(hyphenIdx + 1) || lastSegment) : (lastSegment || 'Tệp đính kèm');
+                                                    }
+                                                } catch(_) { }
+                                                const linkCls = isMe ? 'text-white hover:underline' : 'text-blue-600 dark:text-blue-400 underline';
+                                                return (
+                                                    <div className={`flex items-start gap-3`}>
+                                                        <span className="inline-flex w-8 h-8 items-center justify-center rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs">FILE</span>
+                                                        <div className="flex flex-col min-w-0">
+                                                            <a href={url} target="_blank" rel="noreferrer" className={`truncate ${linkCls}`} title={name}>{name}</a>
+                                                            {fileSizeText && (
+                                                                <span className={`text-xs ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-300'}`}>{fileSizeText}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return (<>{message.content}</>);
+                                        })()}
                                     </div>
                                     {message.edited && (
                                         <span className="text-xs opacity-70 ml-2">(đã chỉnh sửa)</span>
                                     )}
-                                    {/* Time inside message bubble */}
-                                    <div className={`text-xs mt-1 ${isRecalled
-                                        ? isMe
-                                            ? 'text-blue-500 dark:text-blue-400'
-                                            : 'text-gray-500 dark:text-gray-400'
-                                        : isMe
-                                            ? 'text-blue-100'
-                                            : 'text-gray-500 dark:text-gray-400'
-                                        }`}>
-                                        {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                        {message.pinned && (
-                                            <span className="ml-1">📌</span>
-                                        )}
-                                    </div>
+                                    {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
+                                    {!(isMe && ['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())) && (
+                                        <div className={`text-xs mt-1 ${isRecalled
+                                            ? isMe
+                                                ? 'text-blue-500 dark:text-blue-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                            : isMe
+                                                ? 'text-gray-100'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                            }`}>
+                                            {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                            {message.pinned && (
+                                                <span className="ml-1">📌</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>
 
                         {/* Heart reaction button - positioned on bubble edge */}
                         {!isRecalled && (
-                            <div className="relative">
+                            <div
+                                className="relative"
+                                onMouseEnter={() => {
+                                    if (hideEmojiTimeoutRef.current) {
+                                        clearTimeout(hideEmojiTimeoutRef.current);
+                                    }
+                                    setEmojiOpenUp(computeOpenUp(bubbleRef, 120));
+                                    setShowEmojiPicker(true);
+                                }}
+                                onMouseLeave={() => {
+                                    if (hideEmojiTimeoutRef.current) {
+                                        clearTimeout(hideEmojiTimeoutRef.current);
+                                    }
+                                    hideEmojiTimeoutRef.current = setTimeout(() => {
+                                        setShowEmojiPicker(false);
+                                    }, 150);
+                                }}
+                            >
                                 <button
                                     className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700"
                                     title="Thả cảm xúc"
                                     style={{
                                         [isMe ? 'right' : 'right']: '12px'
                                     }}
-                                    onMouseEnter={() => {
-                                        setEmojiOpenUp(computeOpenUp(bubbleRef, 120));
-                                        setShowEmojiPicker(true);
-                                    }}
-                                    onMouseLeave={() => setShowEmojiPicker(false)}
                                 >
                                     <FaHeart className="w-4 h-4 text-red-500" />
                                 </button>
@@ -424,8 +578,6 @@ export default function MessageItem({
                                         style={{
                                             [isMe ? 'right' : 'left']: '-12px'
                                         }}
-                                        onMouseEnter={() => setShowEmojiPicker(true)}
-                                        onMouseLeave={() => setShowEmojiPicker(false)}
                                     >
                                         <div className="flex gap-2 items-center">
                                             {emojis.map(emoji => (
@@ -603,5 +755,42 @@ export default function MessageItem({
                 </div>
             )}
         </div>
+        )}
+        {!isSystemLog && !shouldHide && (
+            <MediaPreviewModal
+                isOpen={previewMedia.isOpen}
+                mediaUrl={previewMedia.url}
+                mediaType={previewMedia.type}
+                messageId={message.id}
+                senderId={message.senderId}
+                senderName={senderName}
+                senderImage={senderImg}
+                sentAt={message.sentAt}
+                onReplyMessage={(msg) => {
+                    onReply?.({
+                        ...message,
+                        id: msg.id,
+                        content: msg.content,
+                        type: msg.type,
+                        senderId: msg.senderId,
+                        sentAt: msg.sentAt
+                    });
+                    setPreviewMedia({ isOpen: false, url: "", type: "" });
+                }}
+                getUserName={getUserName}
+                getUserImage={getUserImage}
+                onViewUser={() => {}}
+                onPrev={undefined}
+                onNext={undefined}
+                onClose={() => setPreviewMedia({ isOpen: false, url: "", type: "" })}
+            />
+        )}
+        </>
     );
+}
+
+// Render media preview modal at the end to avoid z-index conflicts
+// We attach it outside of the returned bubble content so it overlays properly
+export function MessageItemWithPreview(props) {
+    return <MessageItem {...props} />;
 }

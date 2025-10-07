@@ -7,6 +7,33 @@ export default function ReplyInput({
 }) {
     if (!replyingTo) return null;
 
+    const stripTsPrefixFromUrl = (url) => {
+        try {
+            const decoded = decodeURIComponent(url || '');
+            const last = decoded.substring(decoded.lastIndexOf('/') + 1);
+            const hyphen = last.indexOf('-');
+            const leading = hyphen > 0 ? last.substring(0, hyphen) : '';
+            if (/^\d{10,17}$/.test(leading)) return last.substring(hyphen + 1) || last;
+            return last || decoded;
+        } catch (_) { return url || 'Tệp'; }
+    };
+
+    const renderPreview = () => {
+        const content = replyingTo.content || '';
+        const type = (replyingTo.type || '').toUpperCase();
+        if (type === 'IMAGE') return '[Ảnh]';
+        if (type === 'VIDEO') return '[Video]';
+        if (type === 'FILE') return `[Tệp] ${stripTsPrefixFromUrl(content)}`;
+        if (/^https?:\/\//i.test(content)) {
+            const name = stripTsPrefixFromUrl(content);
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return '[Ảnh]';
+            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return '[Video]';
+            return `[Tệp] ${name}`;
+        }
+        return content;
+    };
+
     return (
         <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-3 mx-4 mb-2 rounded-r-lg">
             <div className="flex items-start justify-between">
@@ -21,7 +48,7 @@ export default function ReplyInput({
                             Trả lời {getUserName(replyingTo.senderId)}
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-300 truncate mt-1">
-                            {replyingTo.content}
+                            {renderPreview()}
                         </div>
                     </div>
                 </div>
