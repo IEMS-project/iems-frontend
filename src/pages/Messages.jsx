@@ -58,6 +58,7 @@ function Messages() {
     const [isTyping, setIsTyping] = useState(false);
     const typingTimeoutRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const tempSendingRef = useRef({});
 
     // Pin message states
     const [pinnedMessages, setPinnedMessages] = useState([]);
@@ -179,7 +180,8 @@ function Messages() {
                             lastMessagesByConvRef.current[payload.conversationId] = {
                                 content: payload.content,
                                 senderId: payload.senderId,
-                                timestamp: payload.timestamp || payload.sentAt || new Date().toISOString()
+                                timestamp: payload.timestamp || payload.sentAt || new Date().toISOString(),
+                                type: payload.type || 'TEXT'
                             };
                             setUiTick(t => t + 1);
 
@@ -272,7 +274,8 @@ function Messages() {
             lastMessagesByConvRef.current[msg.conversationId] = {
                 content: msg.content,
                 senderId: msg.senderId,
-                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString()
+                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString(),
+                type: msg.type || 'TEXT'
             };
             setUiTick(t => t + 1);
 
@@ -431,7 +434,9 @@ function Messages() {
                 lastMessagesByConvRef.current[msg.conversationId] = lastMsg
                     ? {
                         content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
-                        senderId: lastMsg.senderId
+                        senderId: lastMsg.senderId,
+                        timestamp: lastMsg.sentAt || lastMsg.timestamp || new Date().toISOString(),
+                        type: (lastMsg.type || 'TEXT')
                     }
                     : '';
                 setUiTick(t => t + 1);
@@ -480,7 +485,9 @@ function Messages() {
             try {
                 lastMessagesByConvRef.current[msg.conversationId] = {
                     content: 'Tin nhắn đã được thu hồi',
-                    senderId: msg.senderId
+                    senderId: msg.senderId,
+                    timestamp: msg.timestamp || msg.sentAt || new Date().toISOString(),
+                    type: 'TEXT'
                 };
                 setUiTick(t => t + 1);
             } catch (_e) { }
@@ -556,7 +563,8 @@ function Messages() {
             lastMessagesByConvRef.current[msg.conversationId] = {
                 content: msg.event === 'message_recalled' ? 'Tin nhắn đã được thu hồi' : msg.content,
                 senderId: msg.senderId,
-                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString()
+                timestamp: msg.timestamp || msg.sentAt || new Date().toISOString(),
+                type: msg.type || 'TEXT'
             };
             console.log('📝 Updated last message from message event:', msg.conversationId);
             setUiTick(t => t + 1);
@@ -1353,7 +1361,9 @@ function Messages() {
                         lastMessagesByConvRef.current[selectedConversationId] = lastMsg
                             ? {
                                 content: lastMsg.recalled ? 'Tin nhắn đã được thu hồi' : (lastMsg.content || ''),
-                                senderId: lastMsg.senderId
+                                senderId: lastMsg.senderId,
+                                timestamp: lastMsg.sentAt || lastMsg.timestamp || new Date().toISOString(),
+                                type: (lastMsg.type || 'TEXT')
                             }
                             : '';
                         setUiTick(t => t + 1);
@@ -1618,6 +1628,16 @@ function Messages() {
         }
     }
 
+    const handleSendMedia = async (files) => {
+        if (!selectedConversationId || !currentUserId || !files?.length) return;
+        try {
+            await chatService.sendMedia({ conversationId: selectedConversationId, senderId: currentUserId, files });
+        } catch (e) {
+            console.error('❌ Error sending media:', e);
+            alert('Gửi tệp thất bại. Vui lòng thử lại.');
+        }
+    };
+
     return (
         <>
             <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
@@ -1668,6 +1688,7 @@ function Messages() {
                             content={content}
                             onContentChange={setContent}
                             onTyping={handleTyping}
+                            onSendMedia={handleSendMedia}
                             replyingTo={replyingTo}
                             pendingDirect={pendingDirect}
                             selectedPeerId={selectedPeerId}

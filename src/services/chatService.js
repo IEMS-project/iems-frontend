@@ -2,6 +2,45 @@ import { api, GATEWAY_BASE_URL, getStoredTokens } from "../lib/api";
 
 // REST calls align with backend static demo HTML, prefixed with chat-service behind gateway
 export const chatService = {
+  async sendMedia({ conversationId, senderId, files }) {
+    const tokens = getStoredTokens();
+    const headers = {};
+    if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
+    const form = new FormData();
+    form.append('conversationId', conversationId);
+    form.append('senderId', senderId);
+    for (const f of files) form.append('files', f);
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/media`, {
+      method: 'POST',
+      headers,
+      body: form
+    });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async getMediaAroundByType(messageId, type = 'MEDIA', before = 5, after = 5) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const params = new URLSearchParams({ type, before: String(before), after: String(after) }).toString();
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/around/${encodeURIComponent(messageId)}/by-type?${params}`, { headers });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data;
+  },
+  async getLatestByType(conversationId, type = 'MEDIA', limit = 8, before = null) {
+    const tokens = getStoredTokens();
+    const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+    const params = new URLSearchParams({ type, limit: String(limit) });
+    if (before) params.append('before', before);
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/conversations/${encodeURIComponent(conversationId)}/latest-by-type?${params.toString()}`, { headers });
+    const ct = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    return data; // { messages: [], hasMore, nextCursor, type }
+  },
   async getConversationsByUser() {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};

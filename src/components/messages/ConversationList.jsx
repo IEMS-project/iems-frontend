@@ -228,7 +228,9 @@ export default function ConversationList({
           const peerId = isDir ? getPeerId(c) : null;
           const peerImg = isDir ? getUserImage(peerId) : (c.avatarUrl || "");
           const lastMessageData = lastMessagesByConv?.current?.[c.id];
-          const last = typeof lastMessageData === 'string' ? lastMessageData : (lastMessageData?.content || "");
+          const lastType = (typeof lastMessageData === 'object' && lastMessageData?.type) || c.lastMessage?.type || 'TEXT';
+          const lastRaw = typeof lastMessageData === 'string' ? lastMessageData : (lastMessageData?.content || c.lastMessage?.content || "");
+          const last = lastType === 'IMAGE' ? '[Ảnh]' : lastType === 'VIDEO' ? '[Video]' : lastType === 'FILE' ? '[Tệp]' : lastRaw;
           const lastMessageSenderId = lastMessageData?.senderId || c.lastMessage?.senderId;
           const lastMessageSenderName = lastMessageSenderId ? getUserName(lastMessageSenderId) : "";
           const unread = (unreadCounts?.[c.id]) || (globalUnreadCounts?.[c.id]) || (unreadByConv?.[c.id]) || 0;

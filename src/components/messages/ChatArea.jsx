@@ -18,6 +18,7 @@ export default function ChatArea({
   onCancelReply,
   onMessageUpdate,
   onJumpToMessage,
+  onSendMedia,
   typingUsers,
   onShowMessageSearch,
   onShowGroupMembers,
@@ -108,6 +109,7 @@ export default function ChatArea({
         onContentChange={onContentChange}
         onSend={onSend}
         onTyping={onTyping}
+        onSendMedia={onSendMedia}
         replyingTo={replyingTo}
         onCancelReply={onCancelReply}
         getUserName={getUserName}
@@ -119,6 +121,7 @@ export default function ChatArea({
           currentUserId={currentUserId}
           getUserName={getUserName}
           getUserImage={getUserImage}
+          onReply={onReply}
           onConversationUpdated={(updated) => {
             // Update local state so header and sidebar reflect changes immediately
             setLocalConversation(updated);
