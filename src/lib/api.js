@@ -158,6 +158,10 @@ export const api = {
     const data = await request("/user-service/users/me");
     return data?.data || data;
   },
+  async getMyProfileInfo() {
+    const data = await request("/user-service/users/me/profile");
+    return data?.data || data;
+  },
   async updateMyProfile(payload) {
     const data = await request("/user-service/users/me", {
       method: "PUT",

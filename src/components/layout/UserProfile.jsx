@@ -6,14 +6,19 @@ import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function UserProfile({ collapsed = false }) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const { logout } = useAuth();
+	const { logout, userProfile } = useAuth();
 	
-	// Mock user data - trong thực tế sẽ lấy từ context hoặc API
-	const user = {
-		name: "Nguyễn Văn A",
-		email: "nguyenvana@example.com",
-		role: "Quản lý dự án",
-		avatar: null, // URL ảnh đại diện nếu có
+	// Use real user data from context
+	const user = userProfile ? {
+		name: `${userProfile.firstName} ${userProfile.lastName}`,
+		email: userProfile.email,
+		role: userProfile.role,
+		avatar: userProfile.image,
+	} : {
+		name: "Loading...",
+		email: "",
+		role: "",
+		avatar: null,
 	};
 
 	const handleLogout = () => {

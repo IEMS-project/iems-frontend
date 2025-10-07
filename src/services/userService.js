@@ -7,6 +7,9 @@ export const userService = {
   async getMyProfile() {
     return api.getMyProfile();
   },
+  async getMyProfileInfo() {
+    return api.getMyProfileInfo();
+  },
   async updateMyProfile(payload) {
     return api.updateMyProfile(payload);
   },
