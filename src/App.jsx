@@ -14,6 +14,7 @@ import Calendar from "./pages/Calendar";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import PermissionDenied from "./pages/PermissionDenied";
+import Chatbot from "./pages/Chatbot";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import { useAuth } from "./context/AuthContext.jsx";
@@ -46,6 +47,7 @@ export default function App() {
                             <Route path="/departments/:departmentId" element={<DepartmentDetail />} />
                             <Route path="/messages" element={<Messages />} />
                             <Route path="/documents" element={<Documents />} />
+                            <Route path="/chatbot" element={<Chatbot />} />
                             <Route path="/calendar" element={<Calendar />} />
                             <Route path="/notifications" element={<Notifications />} />
                             <Route path="/profile" element={<Profile />} />

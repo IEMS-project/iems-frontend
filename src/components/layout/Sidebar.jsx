@@ -1,5 +1,5 @@
 import React from "react";
-import { FaHome, FaProjectDiagram, FaTasks, FaComments, FaUsers, FaFileAlt, FaCalendarAlt, FaUserShield, FaBell } from "react-icons/fa";
+import { FaHome, FaProjectDiagram, FaTasks, FaComments, FaUsers, FaFileAlt, FaCalendarAlt, FaUserShield, FaBell, FaRobot } from "react-icons/fa";
 import { FaC } from "react-icons/fa6";
 import { NavLink as RRNavLink } from "react-router-dom";
 import { FaMoon, FaSun } from "react-icons/fa";
@@ -28,6 +28,7 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 			{ icon: <FaTasks className="h-5 w-5" />, label: "Nhiệm vụ", to: "/tasks" },
 			{ icon: <FaCalendarAlt className="h-5 w-5" />, label: "Lịch", to: "/calendar" },
 			{ icon: <FaComments className="h-5 w-5" />, label: "Tin nhắn", to: "/messages" },
+			{ icon: <FaRobot className="h-5 w-5" />, label: "AI Assistant", to: "/chatbot" },
 			{ icon: <FaBell className="h-5 w-5" />, label: "Thông báo", to: "/notifications" },
 			{ icon: <FaFileAlt className="h-5 w-5" />, label: "Tài liệu", to: "/documents" },
 			{ icon: <FaUsers className="h-5 w-5" />, label: "Phòng ban", to: "/departments" },
