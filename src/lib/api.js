@@ -1,6 +1,6 @@
 // Simple API client for calling backend through API Gateway
 const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
-
+const CHATBOT_BASE_URL = import.meta.env.VITE_CHATBOT_URL || "http://localhost:8000";
 function getStoredTokens() {
   try {
     const raw = localStorage.getItem("iems.auth");
@@ -653,6 +653,308 @@ export const api = {
       method: "PATCH"
     });
     return data?.data || data;
+  },
+
+  // Chatbot Service APIs
+  async sendChatMessage(question, conversationId = null) {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+    if (tokens?.userInfo?.userId) {
+      finalHeaders["X-User-Id"] = tokens.userInfo.userId;
+    }
+
+    const body = { question };
+    if (conversationId) {
+      body.conversationId = conversationId;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: finalHeaders,
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const message = errorData?.detail || errorData?.message || `HTTP error! status: ${response.status}`;
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async sendChatMessageStream(question, onChunk, onEnd, onError, conversationId = null) {
+    try {
+      const tokens = getStoredTokens();
+      const finalHeaders = { "Content-Type": "application/json" };
+      if (tokens?.accessToken) {
+        finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+      }
+      if (tokens?.userInfo?.userId) {
+        finalHeaders["X-User-Id"] = tokens.userInfo.userId;
+      }
+
+      const body = { question };
+      if (conversationId) {
+        body.conversationId = conversationId;
+      }
+
+      const response = await fetch(`${CHATBOT_BASE_URL}/api/chat/stream`, {
+        method: 'POST',
+        headers: finalHeaders,
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'chunk') {
+                onChunk(data.content);
+              } else if (data.type === 'end') {
+                onEnd();
+                return;
+              } else if (data.type === 'error') {
+                onError(data.error);
+                return;
+              }
+            } catch (parseError) {
+              console.error('Error parsing SSE data:', parseError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in streaming:', error);
+      onError(error.message);
+    }
+  },
+
+  async getUserInfo() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/info`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async getConversations() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/conversations`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data || [];
+  },
+
+  async getConversationMessages(conversationId) {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+    if (tokens?.userInfo?.userId) {
+      finalHeaders["X-User-Id"] = tokens.userInfo.userId;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/conversations/${conversationId}/messages`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const message = errorData?.detail || errorData?.message || `HTTP error! status: ${response.status}`;
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async getMemory() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/memory`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+
+  async switchConversation(conversationId) {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/conversations/switch`, {
+      method: 'POST',
+      headers: finalHeaders,
+      body: JSON.stringify({ conversationId })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async deleteConversation(conversationId) {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/conversations/${conversationId}`, {
+      method: 'DELETE',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async renameConversation(conversationId, newName) {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/conversations/${conversationId}/rename?new_name=${encodeURIComponent(newName)}`, {
+      method: 'PATCH',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async clearMemory() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/user/memory/clear`, {
+      method: 'POST',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async getChatbotStatus() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/status`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async getChatbotHealth() {
+    const tokens = getStoredTokens();
+    const finalHeaders = { "Content-Type": "application/json" };
+    if (tokens?.accessToken) {
+      finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+    }
+
+    const response = await fetch(`${CHATBOT_BASE_URL}/api/health`, {
+      method: 'GET',
+      headers: finalHeaders
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
   }
 };
 
