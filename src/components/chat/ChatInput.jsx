@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import { FaPaperPlane, FaSpinner, FaPlus, FaMicrophone, FaEllipsisV } from 'react-icons/fa';
 
 const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }) => {
   const [message, setMessage] = useState('');
@@ -20,44 +20,67 @@ const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }) => {
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="flex-1">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Nhập câu hỏi của bạn..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-none"
-            rows="1"
-            disabled={isLoading || disabled}
-            style={{ minHeight: '40px', maxHeight: '120px' }}
-          />
+    <form onSubmit={handleSubmit} className="flex items-end gap-3">
+      <div className="flex-1 relative">
+        {/* Plus icon on the left */}
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+          <button
+            type="button"
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            title="Thêm tệp đính kèm"
+          >
+            <FaPlus className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          type="submit"
-          disabled={!message.trim() || isLoading || disabled}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-        >
-          {isLoading ? (
-            <FaSpinner className="w-4 h-4 animate-spin" />
+        
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Hỏi bất kỳ điều gì..."
+          className="w-full pl-10 pr-20 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white resize-none transition-colors"
+          rows="1"
+          disabled={isLoading || disabled}
+          style={{ minHeight: '48px', maxHeight: '120px' }}
+        />
+        
+        {/* Right side icons */}
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+          {/* Microphone icon */}
+          <button
+            type="button"
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            title="Ghi âm"
+          >
+            <FaMicrophone className="w-4 h-4" />
+          </button>
+          
+          {/* Send button or loading */}
+          {message.trim() ? (
+            <button
+              type="submit"
+              disabled={isLoading || disabled}
+              className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              title="Gửi tin nhắn"
+            >
+              {isLoading ? (
+                <FaSpinner className="w-4 h-4 animate-spin" />
+              ) : (
+                <FaPaperPlane className="w-4 h-4" />
+              )}
+            </button>
           ) : (
-            <FaPaperPlane className="w-4 h-4" />
+            <button
+              type="button"
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Tùy chọn"
+            >
+              <FaEllipsisV className="w-4 h-4" />
+            </button>
           )}
-        </button>
-      </form>
-      <div className="flex items-center justify-between mt-2">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Nhấn Enter để gửi, Shift+Enter để xuống dòng
-        </p>
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            AI Ready
-          </span>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 
