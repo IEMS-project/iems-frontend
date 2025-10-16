@@ -42,6 +42,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
         assignee: "",
         status: "Chờ",
         priority: "Trung bình",
+        taskType: "TASK",
+        parentTaskId: "",
         startDate: "",
         dueDate: ""
     });
@@ -111,6 +113,11 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
             assignee: assignedId,
             status: statusForSelect,
             priority: task.priority,
+            taskType: (task.taskType || '').toString().toUpperCase().includes('EPIC') ? 'EPIC'
+                : (task.taskType || '').toString().toUpperCase().includes('STORY') ? 'STORY'
+                : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
+                : 'TASK',
+            parentTaskId: task.parentTaskId || "",
             startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
         });
@@ -126,6 +133,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
             assignee: "",
             status: "Chờ",
             priority: "Trung bình",
+            taskType: "TASK",
+            parentTaskId: "",
             startDate: "",
             dueDate: ""
         });
@@ -155,6 +164,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
                 assignedTo: formData.assignee,
                 status: formData.status,
                 priority: formData.priority,
+                taskType: formData.taskType,
+                parentTaskId: formData.parentTaskId || undefined,
                 startDate: formData.startDate || undefined,
                 dueDate: formData.dueDate,
             };
@@ -178,6 +189,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
                 assignee: "",
                 status: "Chờ",
                 priority: "Trung bình",
+                taskType: "TASK",
+                parentTaskId: "",
                 startDate: "",
                 dueDate: ""
             });
@@ -206,6 +219,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
             assignee: "",
             status: "Chờ",
             priority: "Trung bình",
+            taskType: "TASK",
+            parentTaskId: "",
             dueDate: ""
         });
     };
@@ -323,6 +338,19 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
                             placeholder="Nhập tiêu đề"
                         />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Loại nhiệm vụ</label>
+                        <Select
+                            value={formData.taskType}
+                            onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
+                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="EPIC">Epic</option>
+                            <option value="TASK">Task</option>
+                            <option value="STORY">Story</option>
+                            <option value="BUG">Bug</option>
+                        </Select>
+                    </div>
                     <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
                         <textarea
@@ -332,6 +360,21 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             placeholder="Nhập mô tả chi tiết cho task"
                         />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Thuộc nhiệm vụ (Subtask của)</label>
+                        <Select
+                            value={formData.parentTaskId}
+                            onChange={(e) => setFormData({ ...formData, parentTaskId: e.target.value })}
+                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="">-- Không --</option>
+                            {tasksData
+                                .filter(t => !editingTask || t.id !== editingTask.id)
+                                .map(t => (
+                                    <option key={t.id} value={t.id}>{t.title}</option>
+                                ))}
+                        </Select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phụ trách</label>

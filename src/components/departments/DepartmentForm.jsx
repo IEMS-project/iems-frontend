@@ -14,7 +14,7 @@ const colorOptions = [
     { value: "bg-teal-500", label: "Xanh ngọc", color: "bg-teal-500" },
 ];
 
-export default function DepartmentForm({ formData, setFormData, isEdit = false }) {
+export default function DepartmentForm({ formData, setFormData, isEdit = false, userOptions = [] }) {
     return (
         <div className="space-y-4">
             <Input
@@ -32,6 +32,23 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false }
                 placeholder="Nhập mô tả phòng ban"
                 rows={3}
             />
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Quản lý (Manager) {isEdit ? "(tùy chọn)" : "(có thể bỏ trống)"}
+                </label>
+                <select
+                    className="w-full h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-700"
+                    value={formData.managerId || ""}
+                    onChange={(e) => setFormData({ ...formData, managerId: e.target.value || null })}
+                >
+                    <option value="">Chưa chọn</option>
+                    {userOptions.map(u => (
+                        <option key={u.id} value={u.id}>
+                            {u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email}
+                        </option>
+                    ))}
+                </select>
+            </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Màu sắc
