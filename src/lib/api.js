@@ -102,9 +102,14 @@ export const api = {
     setStoredTokens(null);
   },
   async getDepartments() {
-    // Public endpoint -> call without Authorization header to avoid gateway/security side-effects
-    const data = await requestNoAuth("/department-service/departments");
-    return data?.data || [];
+    // Prefer authenticated call (for managerName), but gracefully fall back if it fails
+    try {
+      const data = await request("/department-service/departments");
+      return data?.data || [];
+    } catch (_e) {
+      const data = await request("/department-service/departments");
+      return data?.data || [];
+    }
   },
   async getDepartmentById(departmentId) {
     // Public endpoint -> call without Authorization header to avoid gateway/security side-effects
@@ -210,6 +215,13 @@ export const api = {
   async getDepartmentWithUsers(id) {
     // Requires Authorization so that Department Service can forward the token to User Service
     const data = await request(`/department-service/departments/${id}/users`);
+    return data?.data || null;
+  },
+  async updateDepartmentManager(id, managerId) {
+    const data = await request(`/department-service/departments/${id}/manager`, {
+      method: "PATCH",
+      body: { managerId },
+    });
     return data?.data || null;
   },
   async createUser(userData) {
@@ -343,12 +355,20 @@ export const api = {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return d;
       return undefined;
     };
+    const mapTaskType = (t) => {
+      if (!t) return undefined;
+      const v = (t || '').toString().trim().toUpperCase();
+      if (["EPIC","TASK","STORY","BUG"].includes(v)) return v;
+      return v;
+    };
     const body = {
       projectId: payload.projectId,
       title: payload.title,
       description: payload.description || undefined,
       assignedTo: payload.assignedTo,
       priority: mapPriority(payload.priority),
+      taskType: mapTaskType(payload.taskType),
+      parentTaskId: payload.parentTaskId,
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };
@@ -385,12 +405,20 @@ export const api = {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return d;
       return undefined;
     };
+    const mapTaskType = (t) => {
+      if (!t) return undefined;
+      const v = (t || '').toString().trim().toUpperCase();
+      if (["EPIC","TASK","STORY","BUG"].includes(v)) return v;
+      return v;
+    };
     const body = {
       title: payload.title,
       description: payload.description,
       assignedTo: payload.assignedTo,
       status: mapStatus(payload.status),
       priority: mapPriority(payload.priority),
+      taskType: mapTaskType(payload.taskType),
+      parentTaskId: payload.parentTaskId,
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };

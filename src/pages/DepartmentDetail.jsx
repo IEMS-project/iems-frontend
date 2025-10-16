@@ -534,15 +534,39 @@ export default function DepartmentDetail() {
 
                     <Card>
                         <CardContent className="p-6">
-                            <div className="flex items-center">
-                                <div className="p-3 bg-blue-100 rounded-lg">
-                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-blue-100 rounded-lg">
+                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-4">
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Quản lý</p>
+                                        <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.managerName || 'Chưa gán'}</p>
+                                    </div>
                                 </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Cập nhật gần nhất</p>
-                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">Hôm nay</p>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-700"
+                                        value={department.managerId || ''}
+                                        onChange={async (e) => {
+                                            try {
+                                                const newId = e.target.value || null;
+                                                const updated = await departmentService.updateDepartmentManager(department.id, newId);
+                                                setDepartment({ ...department, managerId: updated?.managerId || null, managerName: updated?.managerName || null });
+                                            } catch (err) {
+                                                console.error(err);
+                                            }
+                                        }}
+                                    >
+                                        <option value="">Chưa gán</option>
+                                        {(allBasicUsers || []).map(u => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.fullName}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                         </CardContent>

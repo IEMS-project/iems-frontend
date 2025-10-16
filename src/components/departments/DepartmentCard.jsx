@@ -52,7 +52,7 @@ export default function DepartmentCard({ department, onEdit, onDelete }) {
                     {/* Department content */}
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                            <div className={`w-3 h-3 rounded-full ${department.color}`}></div>
+                            <div className={`w-3 h-3 rounded-full ${department.color || 'bg-blue-500'}`}></div>
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{department.name}</h3>
                         </div>
                         <div className="text-2xl font-bold text-blue-600">{department.memberCount}</div>

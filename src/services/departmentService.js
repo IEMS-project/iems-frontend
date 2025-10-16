@@ -22,6 +22,9 @@ export const departmentService = {
     // payload: { departmentName, description, managerId }
     return api.updateDepartment(id, payload);
   },
+  async updateDepartmentManager(id, managerId) {
+    return api.updateDepartmentManager(id, managerId);
+  },
   async deleteDepartment(id) {
     return api.deleteDepartment(id);
   },

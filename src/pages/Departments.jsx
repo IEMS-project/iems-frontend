@@ -6,62 +6,31 @@ import PageHeader from "../components/common/PageHeader";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import { departmentService } from "../services/departmentService";
+import { userService } from "../services/userService";
 
 export default function Teams() {
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [departmentColors, setDepartmentColors] = useState(() => {
+        try {
+            const raw = localStorage.getItem("iems.departmentColors");
+            return raw ? JSON.parse(raw) : {};
+        } catch { return {}; }
+    });
 
     useEffect(() => {
         let mounted = true;
         (async () => {
             try {
-                            const list = await departmentService.getDepartments();
+                const list = await departmentService.getDepartments();
                 if (!mounted) return;
 
-                            // For each department, fetch enriched user details
-                            const enrichedDepartments = await Promise.all(
-                                list.map(async (dept) => {
-                                    if (dept.users && dept.users.length > 0) {
-                                        try {
-                                            // Use new API to get department with enriched users
-                                            const enrichedDept = await departmentService.getDepartmentWithUsers(dept.id);
-                                            if (enrichedDept && enrichedDept.users) {
-                                                const enrichedUsers = enrichedDept.users.map(deptUser => ({
-                                                    id: deptUser.id,
-                                                    departmentId: deptUser.departmentId,
-                                                    userId: deptUser.userId,
-                                                    role: deptUser.role,
-                                                    joinedAt: deptUser.joinedAt,
-                                                    leftAt: deptUser.leftAt,
-                                                    isActive: deptUser.isActive,
-                                                    // User details from User Service
-                                                    firstName: deptUser.userDetails?.firstName,
-                                                    lastName: deptUser.userDetails?.lastName,
-                                                    email: deptUser.userDetails?.email,
-                                                    phone: deptUser.userDetails?.phone,
-                                                    dob: deptUser.userDetails?.dob,
-                                                    gender: deptUser.userDetails?.gender,
-                                                    address: deptUser.userDetails?.address,
-                                                    personalID: deptUser.userDetails?.personalID,
-                                                    image: deptUser.userDetails?.image,
-                                                    bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
-                                                    bankName: deptUser.userDetails?.bankName,
-                                                    contractType: deptUser.userDetails?.contractType,
-                                                    startDate: deptUser.userDetails?.startDate,
-                                                    avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
-                                                }));
-                                                return { ...dept, members: enrichedUsers };
-                                            }
-                                        } catch (err) {
-                                            console.warn(`Failed to fetch enriched users for department ${dept.id}:`, err);
-                                        }
-                                    }
-                                    return dept;
-                                })
-                            );
-
-                            setDepartments(enrichedDepartments);
+                // IMPORTANT: to avoid making one /departments/{id}/users request per department
+                // (which creates many user-service calls), we only use the /departments response
+                // and rely on `totalUsers` for counts. Detailed members are loaded on demand
+                // (e.g., in DepartmentDetail) to reduce network traffic.
+                setDepartments(Array.isArray(list) ? list : []);
             } catch (e) {
                 if (!mounted) return;
                 setError(e?.message || "Không tải được phòng ban");
@@ -71,6 +40,22 @@ export default function Teams() {
         })();
         return () => { mounted = false; };
     }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const users = await userService.getAllUserBasicInfos();
+                const normalized = (users || []).map(u => ({
+                    id: u.id || u.userId,
+                    fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim(),
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                    email: u.email
+                }));
+                setUserOptions(normalized);
+            } catch (_e) {}
+        })();
+    }, []);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -79,8 +64,10 @@ export default function Teams() {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        color: "bg-blue-500"
+        color: "bg-blue-500",
+        managerId: null
     });
+    const [userOptions, setUserOptions] = useState([]);
 
     const totalMembers = useMemo(() => {
         if (!Array.isArray(departments)) return 0;
@@ -93,7 +80,16 @@ export default function Teams() {
         setFormData({
             name: "",
             description: "",
-            color: "bg-blue-500"
+            color: "bg-blue-500",
+            managerId: null
+        });
+    };
+
+    const saveDepartmentColor = (deptId, color) => {
+        setDepartmentColors(prev => {
+            const next = { ...(prev || {}), [deptId]: color };
+            try { localStorage.setItem("iems.departmentColors", JSON.stringify(next)); } catch {}
+            return next;
         });
     };
 
@@ -103,10 +99,11 @@ export default function Teams() {
         try {
             const created = await departmentService.createDepartment({
                 departmentName: formData.name,
-            description: formData.description,
-                managerId: null,
+                description: formData.description,
+                managerId: formData.managerId || null,
             });
             setDepartments(prev => Array.isArray(prev) ? [created, ...prev] : [created]);
+            if (created?.id) saveDepartmentColor(created.id, formData.color);
         setIsAddModalOpen(false);
         resetFormData();
         } catch (e) {
@@ -126,6 +123,7 @@ export default function Teams() {
             setDepartments(prev => Array.isArray(prev)
                 ? prev.map(d => d.id === updated.id ? updated : d)
                 : prev);
+            if (editingDepartment?.id) saveDepartmentColor(editingDepartment.id, formData.color);
             setIsEditModalOpen(false);
             setEditingDepartment(null);
             resetFormData();
@@ -155,7 +153,8 @@ export default function Teams() {
         setFormData({
             name: department.departmentName || department.name,
             description: department.description,
-            color: department.color || "bg-blue-500"
+            color: department.color || "bg-blue-500",
+            managerId: department.managerId || null
         });
         setIsEditModalOpen(true);
     };
@@ -243,7 +242,7 @@ export default function Teams() {
                                     name: dept.departmentName || dept.name,
                                     description: dept.description,
                                     memberCount: dept.totalUsers || 0,
-                                    color: "bg-blue-500",
+                                    color: departmentColors?.[dept.id] || "bg-blue-500",
                                     members: dept.users || [],
                                 }}
                                 onEdit={openEditModal}
@@ -263,7 +262,7 @@ export default function Teams() {
                 }}
                 title="Thêm phòng ban mới"
             >
-                <DepartmentForm formData={formData} setFormData={setFormData} />
+                <DepartmentForm formData={formData} setFormData={setFormData} userOptions={userOptions} />
                 <div className="flex justify-end gap-3 mt-6">
                     <Button
                         variant="secondary"
@@ -290,7 +289,7 @@ export default function Teams() {
                 }}
                 title="Sửa phòng ban"
             >
-                <DepartmentForm formData={formData} setFormData={setFormData} isEdit={true} />
+                <DepartmentForm formData={formData} setFormData={setFormData} isEdit={true} userOptions={userOptions} />
                 <div className="flex justify-end gap-3 mt-6">
                     <Button
                         variant="secondary"
