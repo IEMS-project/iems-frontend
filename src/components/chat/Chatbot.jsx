@@ -56,14 +56,14 @@ export default function Chatbot() {
 	}
 
 	return (
-		<div className="flex h-full flex-col">
-			<div className="flex-1 overflow-auto">
+		<div className="flex h-full flex-col p-4">
+			<div className="flex-1 overflow-auto pr-1">
 				<div className="flex min-h-full flex-col justify-end">
 					<div className="space-y-3">
 						{messages.map((m, i) => (
 							<div key={i} className={`${m.role === 'user' ? 'text-right' : 'text-left'}`}>
 								{m.file ? (
-									<div className="inline-block max-w-[80%] rounded-xl bg-blue-50 p-2 text-left text-sm text-blue-900">
+									<div className="inline-block max-w-[80%] rounded-2xl bg-blue-50 p-3 text-left text-sm text-blue-900 shadow-sm">
 										<div className="font-medium">{m.file.name}</div>
 										{m.file.isImage ? (
 											<img src={m.file.url} alt={m.file.name} className="mt-2 max-h-48 rounded-md object-contain" />
@@ -72,7 +72,7 @@ export default function Chatbot() {
 										)}
 									</div>
 								) : (
-									<span className={`inline-block max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'}`}>
+									<span className={`inline-block max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'}`}>
 										{m.text}
 									</span>
 								)}
@@ -83,10 +83,6 @@ export default function Chatbot() {
 				</div>
 			</div>
 			<div className="mt-3 flex items-end gap-2">
-				<div>
-					<input ref={fileRef} type="file" className="hidden" onChange={onFileChange} />
-					<Button variant="secondary" onClick={onPickFile}>Tải tệp</Button>
-				</div>
 				<div className="flex-1">
 					<Input
 						placeholder="Nhập tin nhắn..."
@@ -95,7 +91,7 @@ export default function Chatbot() {
 						onKeyDown={onKeyDown}
 					/>
 				</div>
-				<Button onClick={send}>Gửi</Button>
+				<Button aria-label="Gửi tin nhắn" onClick={send}>Gửi</Button>
 			</div>
 		</div>
 	);

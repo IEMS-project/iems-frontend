@@ -13,8 +13,16 @@ function addMonths(date, count) {
 
 const weekdays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
-export default function Calendar({ initialDate = new Date() }) {
-	const [current, setCurrent] = useState(startOfMonth(initialDate));
+// Sample tasks data - in real app this would come from props or context
+const sampleTasks = [
+    { id: "T-101", title: "Thiết kế kiến trúc", dueDate: "2024-10-15", priority: "Cao" },
+    { id: "T-102", title: "API xác thực", dueDate: "2024-10-20", priority: "Trung bình" },
+    { id: "T-103", title: "UI Dashboard", dueDate: "2024-11-01", priority: "Thấp" },
+    { id: "T-104", title: "Database Schema", dueDate: "2024-10-25", priority: "Cao" },
+];
+
+export default function Calendar({ tasks = sampleTasks, onDateClick }) {
+	const [current, setCurrent] = useState(startOfMonth(new Date()));
 	const today = new Date();
 
 	const grid = useMemo(() => {
@@ -31,6 +39,27 @@ export default function Calendar({ initialDate = new Date() }) {
 	}, [current]);
 
 	const monthLabel = current.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+
+	const getTasksForDate = (date) => {
+		if (!date) return [];
+		const dateStr = date.toISOString().split('T')[0];
+		return tasks.filter(task => task.dueDate === dateStr);
+	};
+
+	const getPriorityColor = (priority) => {
+		switch (priority) {
+			case "Cao": return "bg-red-500";
+			case "Trung bình": return "bg-yellow-500";
+			case "Thấp": return "bg-green-500";
+			default: return "bg-blue-500";
+		}
+	};
+
+	const handleDateClick = (date) => {
+		if (date && onDateClick) {
+			onDateClick(date);
+		}
+	};
 
 	return (
 		<div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -62,9 +91,30 @@ export default function Calendar({ initialDate = new Date() }) {
 				{grid.map((d, idx) => {
 					const isToday = d && today.toDateString() === d.toDateString();
 					const isWeekend = d ? d.getDay() === 0 || d.getDay() === 6 : false;
+					const dayTasks = getTasksForDate(d);
+					
 					return (
-						<div key={idx} className={`min-h-[44px] bg-white p-1.5 text-right text-xs dark:bg-gray-900 ${isWeekend ? 'bg-gray-50 dark:bg-gray-900/60' : ''} ${isToday ? 'outline outline-2 outline-blue-500 -outline-offset-1' : ''}`}>
-							{d ? d.getDate() : ''}
+						<div 
+							key={idx} 
+							className={`min-h-[60px] bg-white p-1.5 text-right text-xs dark:bg-gray-900 ${isWeekend ? 'bg-gray-50 dark:bg-gray-900/60' : ''} ${isToday ? 'outline outline-2 outline-blue-500 -outline-offset-1' : ''} ${d ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+							onClick={() => handleDateClick(d)}
+						>
+							<div className="text-right">{d ? d.getDate() : ''}</div>
+							{/* Task indicators */}
+							<div className="mt-1 space-y-1">
+								{dayTasks.slice(0, 3).map((task, taskIdx) => (
+									<div
+										key={task.id}
+										className={`h-1.5 w-full rounded-full ${getPriorityColor(task.priority)}`}
+										title={`${task.title} (${task.priority})`}
+									/>
+								))}
+								{dayTasks.length > 3 && (
+									<div className="text-center text-[10px] text-gray-500">
+										+{dayTasks.length - 3}
+									</div>
+								)}
+							</div>
 						</div>
 					);
 				})}
