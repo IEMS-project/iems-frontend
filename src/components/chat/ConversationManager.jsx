@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaComments, FaCog, FaBrain, FaHistory, FaPlus, FaSpinner, FaChevronLeft, FaBars, FaSearch } from 'react-icons/fa';
+import { FaComments, FaCog, FaBrain, FaPlus, FaBars } from 'react-icons/fa';
 import ConversationList from './ConversationList';
 import MemoryPanel from './MemoryPanel';
 import ChatbotSettings from './ChatbotSettings';
 import chatbotService from '../../services/chatbotService';
+import Skeleton from '../ui/Skeleton';
 
 const ConversationManager = ({
   activeConversationId,
@@ -83,12 +84,21 @@ const ConversationManager = ({
 
   if (loading) {
     return (
-      <div className={`flex flex-col h-full ${className}`}>
-        <div className="flex items-center justify-center h-full">
-          <div className="flex items-center gap-2 text-gray-500">
-            <FaSpinner className="w-4 h-4 animate-spin" />
-            <span>Đang tải...</span>
+      <div className={`flex flex-col h-full bg-white dark:bg-gray-800 p-4 space-y-4 ${className}`}>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
           </div>
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-700">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="mt-2 h-3 w-1/2" />
+            </div>
+          ))}
         </div>
       </div>
     );

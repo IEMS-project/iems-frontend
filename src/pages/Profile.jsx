@@ -8,6 +8,7 @@ import { Card } from "../components/ui/Card";
 import PageHeader from "../components/common/PageHeader";
 import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
+import Skeleton from "../components/ui/Skeleton";
 
 export default function Profile() {
 	const [isEditing, setIsEditing] = useState(false);
@@ -113,6 +114,31 @@ export default function Profile() {
 	};
 
 	const fullName = `${formData.firstName || ""} ${formData.lastName || ""}`.trim() || "Người dùng";
+	const showSkeleton = loading && !profile;
+
+	if (showSkeleton) {
+		return (
+			<div className="space-y-6">
+				<Skeleton className="h-10 w-1/3" />
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+					{Array.from({ length: 4 }).map((_, idx) => (
+						<Skeleton key={idx} className="h-32 w-full rounded-xl" />
+					))}
+				</div>
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+					<div className="lg:col-span-4 space-y-4">
+						<Skeleton className="h-64 w-full rounded-xl" />
+					</div>
+					<div className="lg:col-span-8 space-y-4">
+						<Skeleton className="h-12 w-1/3" />
+						{Array.from({ length: 6 }).map((_, idx) => (
+							<Skeleton key={idx} className="h-16 w-full rounded-lg" />
+						))}
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">

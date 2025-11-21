@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaBrain, FaTrash, FaEye, FaEyeSlash, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
+import Skeleton from '../ui/Skeleton';
 
 const MemoryPanel = ({ className = "" }) => {
   const [memory, setMemory] = useState(null);
@@ -67,10 +68,12 @@ const MemoryPanel = ({ className = "" }) => {
           <FaBrain className="w-5 h-5 text-purple-600" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Memory AI</h3>
         </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="flex items-center gap-2 text-gray-500">
-            <FaSpinner className="w-4 h-4 animate-spin" />
-            <span>Đang tải...</span>
+        <div className="space-y-4">
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
       </div>

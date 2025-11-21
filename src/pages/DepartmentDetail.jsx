@@ -11,9 +11,9 @@ import AddExistingUsersModal from "../components/departments/AddExistingUsersMod
 import PageHeader from "../components/common/PageHeader";
 import UserAvatar from "../components/ui/UserAvatar";
 import Pagination from "../components/ui/Pagination";
+import Skeleton from "../components/ui/Skeleton";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
-import { api } from "../lib/api";
 
 
 export default function DepartmentDetail() {
@@ -214,7 +214,7 @@ export default function DepartmentDetail() {
                 setLoading(true);
 
                 // Gọi API remove user from department
-                await api.removeUserFromDepartment(departmentId, member.userId);
+                await departmentService.removeUserFromDepartment(departmentId, member.userId);
 
                 // Refresh department data để cập nhật danh sách
                 const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
@@ -288,13 +288,13 @@ export default function DepartmentDetail() {
                 };
 
                 // Gọi API tạo user
-                const newUser = await api.createUser(userData);
+                const newUser = await userService.createUser(userData);
 
                 // Đảm bảo user vừa tạo được thêm vào phòng ban ngay lập tức nếu backend không tự gán
                 try {
                     const newUserId = newUser?.userId || newUser?.id;
                     if (newUserId) {
-                        await api.addUsersToDepartment(departmentId, { userIds: [newUserId] });
+                        await departmentService.addUsersToDepartment(departmentId, [newUserId]);
                     }
                 } catch (_e) {
                     // không chặn luồng nếu API thêm vào phòng ban thất bại; sẽ fallback bằng refresh
@@ -389,7 +389,7 @@ export default function DepartmentDetail() {
                 };
 
                 // Gọi API update user
-                await api.updateUser(editingMember.userId, userData);
+                await userService.updateUser(editingMember.userId, userData);
 
                 // Refresh department data để lấy user đã cập nhật
                 const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
@@ -458,12 +458,45 @@ export default function DepartmentDetail() {
     if (loading) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Đang tải thông tin phòng ban...</p>
-                    </div>
+                <Skeleton className="h-8 w-1/3" />
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                        <Card key={idx}>
+                            <CardContent className="p-6 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-12 w-12 rounded-lg" />
+                                    <div className="space-y-2 flex-1">
+                                        <Skeleton className="h-3 w-1/2" />
+                                        <Skeleton className="h-5 w-1/3" />
+                                    </div>
+                                </div>
+                                {idx === 2 && <Skeleton className="h-10 w-full" />}
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
+                <Card>
+                    <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <Skeleton className="h-6 w-1/4" />
+                        <Skeleton className="h-10 w-full md:w-56" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                                <div key={idx} className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-800">
+                                    <div className="flex items-center gap-4">
+                                        <Skeleton className="h-12 w-12 rounded-full" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-32" />
+                                            <Skeleton className="h-3 w-24" />
+                                        </div>
+                                    </div>
+                                    <Skeleton className="h-8 w-20" />
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         );
     }

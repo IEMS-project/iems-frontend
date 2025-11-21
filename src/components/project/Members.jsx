@@ -9,6 +9,8 @@ import Select from "../ui/Select";
 import UserSelect from "./UserSelect";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
+import { userService } from "../../services/userService";
+import Skeleton from "../ui/Skeleton";
 
 const membersData = [];
 
@@ -26,6 +28,7 @@ export default function Members() {
     });
     const [assignableUsers, setAssignableUsers] = useState([]);
     const [projectRoles, setProjectRoles] = useState([]);
+    const listSkeletons = useMemo(() => Array.from({ length: 4 }), []);
 
     useEffect(() => {
         const load = async () => {
@@ -46,7 +49,7 @@ export default function Members() {
                 // Load assignable users and project roles in parallel
                 const [users, roles] = await Promise.all([
                     (async () => {
-                        try { return await import("../../lib/api").then(m => m.api.getAssignableUsers()); } catch { return []; }
+                        try { return await userService.getAssignableUsers(); } catch { return []; }
                     })(),
                     (async () => {
                         try { return await projectService.getProjectRoles(projectId); } catch { return []; }
@@ -153,7 +156,18 @@ export default function Members() {
                     <div className="max-h-44 overflow-y-auto">
                         <ul className="space-y-3">
                             {loading ? (
-                                <li className="text-center text-gray-500 py-4">Đang tải...</li>
+                                listSkeletons.map((_, idx) => (
+                                    <li key={idx} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 w-full">
+                                            <Skeleton className="h-10 w-10 rounded-full" />
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="h-3 w-1/2" />
+                                                <Skeleton className="h-3 w-1/3" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="h-6 w-12" />
+                                    </li>
+                                ))
                             ) : members.length === 0 ? (
                                 <li className="text-center text-gray-500 py-4">Chưa có thành viên</li>
                             ) : (

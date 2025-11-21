@@ -13,6 +13,69 @@ import RenameModal from "../components/documents/RenameModal";
 import PermissionModal from "../components/documents/PermissionModal";
 import SharedUsersModal from "../components/documents/SharedUsersModal";
 import MoveModal from "../components/documents/MoveModal";
+import Skeleton from "../components/ui/Skeleton";
+
+function DocumentGridSkeleton() {
+	const placeholders = Array.from({ length: 8 });
+	return (
+		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+			{placeholders.map((_, idx) => (
+				<div key={idx} className="rounded border border-dashed border-gray-200 p-3 dark:border-gray-800">
+					<Skeleton className="mb-3 h-12 w-16" />
+					<Skeleton className="mb-2 h-4 w-3/4" />
+					<Skeleton className="h-3 w-1/2" />
+					<div className="mt-4 flex items-center justify-end gap-2">
+						<Skeleton className="h-6 w-6 rounded-full" />
+						<Skeleton className="h-6 w-6 rounded-full" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+}
+
+function DocumentListSkeleton() {
+	const placeholders = Array.from({ length: 6 });
+	return (
+		<div className="w-full overflow-x-auto">
+			<table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+				<thead>
+					<tr className="text-left text-gray-500 dark:text-gray-400">
+						<th className="px-4 py-2 font-medium">Tên</th>
+						<th className="px-4 py-2 font-medium">Loại</th>
+						<th className="px-4 py-2 font-medium">Kích thước</th>
+						<th className="px-4 py-2 font-medium">Ngày tạo</th>
+						<th className="px-4 py-2 font-medium text-right">Hành động</th>
+					</tr>
+				</thead>
+				<tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+					{placeholders.map((_, idx) => (
+						<tr key={idx} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40">
+							<td className="px-4 py-3">
+								<Skeleton className="h-4 w-48" />
+							</td>
+							<td className="px-4 py-3">
+								<Skeleton className="h-4 w-24" />
+							</td>
+							<td className="px-4 py-3">
+								<Skeleton className="h-4 w-16" />
+							</td>
+							<td className="px-4 py-3">
+								<Skeleton className="h-4 w-32" />
+							</td>
+							<td className="px-4 py-3">
+								<div className="flex items-center justify-end gap-2">
+									<Skeleton className="h-6 w-6 rounded-full" />
+									<Skeleton className="h-6 w-6 rounded-full" />
+								</div>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	);
+}
 
 export default function Documents() {
 	// `folders` is the current visible folder list (children of current folder)
@@ -333,12 +396,9 @@ export default function Documents() {
 					/>
 				</CardHeader>
 				<CardContent>
-					{loading && (
-						<div className="flex items-center justify-center py-8">
-							<div className="text-gray-500">Đang tải...</div>
-								</div>
-					)}
-					{!loading && (
+					{loading ? (
+						viewMode === "grid" ? <DocumentGridSkeleton /> : <DocumentListSkeleton />
+					) : (
 						<div
 							onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
 							onDragLeave={() => setIsDragging(false)}

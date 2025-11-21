@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import KanbanColumn from "../components/tasks/KanbanColumn";
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/ui/Button";
+import Skeleton from "../components/ui/Skeleton";
 import { taskService } from "../services/taskService";
 
 const initialTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
@@ -17,6 +18,9 @@ export default function Tasks() {
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [savedTasks, setSavedTasks] = useState(initialTasks);
+    const [loading, setLoading] = useState(true);
+    const skeletonColumns = useMemo(() => ["Chờ", "Đang làm", "Hoàn thành"], []);
+    const skeletonCards = useMemo(() => Array.from({ length: 3 }), []);
 
 
     const handleDragStart = (e, task, status) => {
@@ -128,6 +132,8 @@ export default function Tasks() {
                 setSavedTasks(group);
             } catch (e) {
                 console.error('Error loading my tasks:', e);
+            } finally {
+                setLoading(false);
             }
         };
         load();
@@ -227,20 +233,46 @@ export default function Tasks() {
 
                 {/* Tab Content */}
                 <div>
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        {Object.entries(tasks).map(([status, statusTasks]) => (
-                            <KanbanColumn
-                                key={status}
-                                status={status}
-                                tasks={statusTasks}
-                                onDragOver={handleDragOver}
-                                onDrop={handleDrop}
-                                onDragStart={handleDragStart}
-                                onTaskClick={handleTaskClick}
-                                selectedIds={selectedIds}
-                            />
-                        ))}
-                    </div>
+                    {loading ? (
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {skeletonColumns.map((status) => (
+                                <Card key={status}>
+                                    <CardHeader className="pb-3">
+                                        <CardTitle className="flex items-center justify-between text-base">
+                                            <span>{status}</span>
+                                            <Skeleton className="h-5 w-12 rounded-full" />
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-0">
+                                        <div className="min-h-[350px] space-y-3 mt-1">
+                                            {skeletonCards.map((_, idx) => (
+                                                <div key={idx} className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 p-4 space-y-3">
+                                                    <Skeleton className="h-4 w-3/4" />
+                                                    <Skeleton className="h-3 w-1/2" />
+                                                    <Skeleton className="h-3 w-1/3" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            {Object.entries(tasks).map(([status, statusTasks]) => (
+                                <KanbanColumn
+                                    key={status}
+                                    status={status}
+                                    tasks={statusTasks}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                    onDragStart={handleDragStart}
+                                    onTaskClick={handleTaskClick}
+                                    selectedIds={selectedIds}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

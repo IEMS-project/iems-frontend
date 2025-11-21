@@ -9,6 +9,7 @@ import Textarea from "../components/ui/Textarea";
 import PageHeader from "../components/common/PageHeader";
 import { projectService } from "../services/projectService";
 import UserAvatar from "../components/ui/UserAvatar";
+import Skeleton from "../components/ui/Skeleton";
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -104,6 +105,8 @@ export default function Projects() {
         ).values()
     );
 
+    const tableSkeletonRows = Array.from({ length: 5 });
+
     return (
         <>
             <div className="space-y-6">
@@ -116,8 +119,52 @@ export default function Projects() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <div className="flex justify-center items-center py-8">
-                                <div className="text-gray-500">Đang tải dữ liệu...</div>
+                            <div className="space-y-3">
+                               
+                                <Table>
+                                    <THead>
+                                        <TR>
+                                            <TH>Tên</TH>
+                                            <TH>Mô tả</TH>
+                                            <TH>Trạng thái</TH>
+                                            <TH>Ngày bắt đầu</TH>
+                                            <TH>Ngày kết thúc</TH>
+                                            <TH>Quản lý</TH>
+                                            <TH></TH>
+                                        </TR>
+                                    </THead>
+                                    <TBody>
+                                        {tableSkeletonRows.map((_, idx) => (
+                                            <TR key={idx}>
+                                                <TD>
+                                                    <Skeleton className="h-4 w-48" />
+                                                </TD>
+                                                <TD>
+                                                    <Skeleton className="h-4 w-56" />
+                                                </TD>
+                                                <TD>
+                                                    <Skeleton className="h-4 w-24" />
+                                                </TD>
+                                                <TD>
+                                                    <Skeleton className="h-4 w-28" />
+                                                </TD>
+                                                <TD>
+                                                    <Skeleton className="h-4 w-28" />
+                                                </TD>
+                                                <TD>
+                                                    <div className="flex items-center gap-2">
+                                                        <Skeleton className="h-8 w-8 rounded-full" />
+                                                        <div className="flex-1 space-y-2">
+                                                            <Skeleton className="h-3 w-32" />
+                                                            <Skeleton className="h-3 w-24" />
+                                                        </div>
+                                                    </div>
+                                                </TD>
+                                              
+                                            </TR>
+                                        ))}
+                                    </TBody>
+                                </Table>
                             </div>
                         ) : (
                             <Table>

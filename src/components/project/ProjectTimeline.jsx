@@ -4,8 +4,9 @@ import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import { useParams } from "react-router-dom";
 import TaskDetailModal from "./TaskDetailModal";
+import Skeleton from "../ui/Skeleton";
 
-export default function ProjectTimeline({ tasks = [] }) {
+export default function ProjectTimeline({ tasks = [], loading = false }) {
     const { projectId } = useParams();
     const [zoom, setZoom] = useState("months"); // weeks | months | quarters
     const [anchorDate, setAnchorDate] = useState(new Date());
@@ -100,6 +101,9 @@ export default function ProjectTimeline({ tasks = [] }) {
     const handleBarClick = (task) => setSelectedTask(task);
     const closeModal = () => setSelectedTask(null);
 
+    const skeletonTicks = Array.from({ length: 6 });
+    const skeletonRows = Array.from({ length: 4 });
+
     return (
         <Card>
             <CardHeader>
@@ -118,56 +122,79 @@ export default function ProjectTimeline({ tasks = [] }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
-                    <div className="min-w-[800px] relative">
-                        {/* Continuous Today marker across header + rows */}
-                        {todayPercent >= 0 && todayPercent <= 100 && (
-                            <div className="pointer-events-none absolute top-0 bottom-0 z-20" style={{ left: `calc(240px + (100% - 240px) * ${todayPercent} / 100)` }}>
-                                <div className="h-full w-0.5 bg-blue-500/70" />
-                            </div>
-                        )}
-
-                        {/* Header scale */}
-                        <div className="grid" style={{ gridTemplateColumns: `240px repeat(${timelineTicks.length}, minmax(100px, 1fr))` }}>
-                            <div className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-b py-2 px-3 text-xs font-semibold text-gray-600">Tasks</div>
-                            {timelineTicks.map((t) => (
-                                <div key={t.key} className="border-b py-2 text-center text-xs text-gray-500">
-                                    {t.label}
+                {loading ? (
+                    <div className="space-y-4">
+                        <div className="grid" style={{ gridTemplateColumns: `240px repeat(${skeletonTicks.length}, minmax(100px, 1fr))` }}>
+                            <Skeleton className="sticky left-0 h-6 w-full bg-gray-200" />
+                            {skeletonTicks.map((_, idx) => (
+                                <Skeleton key={idx} className="h-6 w-full" />
+                            ))}
+                        </div>
+                        <div className="space-y-3">
+                            {skeletonRows.map((_, idx) => (
+                                <div key={idx} className="grid" style={{ gridTemplateColumns: `240px 1fr` }}>
+                                    <div className="sticky left-0 bg-white dark:bg-gray-900 border-b py-3 px-3">
+                                        <Skeleton className="h-4 w-3/4" />
+                                    </div>
+                                    <div className="relative border-b py-3">
+                                        <Skeleton className="h-8 w-1/2 rounded-md" />
+                                    </div>
                                 </div>
                             ))}
                         </div>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <div className="min-w-[800px] relative">
+                            {/* Continuous Today marker across header + rows */}
+                            {todayPercent >= 0 && todayPercent <= 100 && (
+                                <div className="pointer-events-none absolute top-0 bottom-0 z-20" style={{ left: `calc(240px + (100% - 240px) * ${todayPercent} / 100)` }}>
+                                    <div className="h-full w-0.5 bg-blue-500/70" />
+                                </div>
+                            )}
 
-                        {/* Rows */}
-                        <div>
-                            {tasks && tasks.length ? tasks.map((task) => {
-                                const pos = positionForTask(task);
-                                const s = new Date(task.startDate || task.dueDate || task.start);
-                                const e = new Date(task.endDate || task.dueDate || task.startDate || s);
-                                const name = task.name || task.title;
-                                return (
-                                    <div key={task.id || task.taskId} className="grid" style={{ gridTemplateColumns: `240px 1fr` }}>
-                                        {/* Left: task name */}
-                                        <div className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-b py-3 px-3 text-sm text-gray-800 dark:text-gray-100">
-                                            <div className="flex items-center gap-2 h-6">
-                                                <span className="truncate" title={name}>{name}</span>
+                            {/* Header scale */}
+                            <div className="grid" style={{ gridTemplateColumns: `240px repeat(${timelineTicks.length}, minmax(100px, 1fr))` }}>
+                                <div className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-b py-2 px-3 text-xs font-semibold text-gray-600">Tasks</div>
+                                {timelineTicks.map((t) => (
+                                    <div key={t.key} className="border-b py-2 text-center text-xs text-gray-500">
+                                        {t.label}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Rows */}
+                            <div>
+                                {tasks && tasks.length ? tasks.map((task) => {
+                                    const pos = positionForTask(task);
+                                    const s = new Date(task.startDate || task.dueDate || task.start);
+                                    const e = new Date(task.endDate || task.dueDate || task.startDate || s);
+                                    const name = task.name || task.title;
+                                    return (
+                                        <div key={task.id || task.taskId} className="grid" style={{ gridTemplateColumns: `240px 1fr` }}>
+                                            {/* Left: task name */}
+                                            <div className="sticky left-0 z-10 bg-white dark:bg-gray-900 border-b py-3 px-3 text-sm text-gray-800 dark:text-gray-100">
+                                                <div className="flex items-center gap-2 h-6">
+                                                    <span className="truncate" title={name}>{name}</span>
+                                                </div>
+                                            </div>
+                                            {/* Right: timeline cell */}
+                                            <div className="relative border-b py-3">
+                                                {/* Bar */}
+                                                <button className={`group absolute top-2 h-8 rounded-md ${priorityColor(task.priority)} hover:brightness-110 transition focus:outline-none`} style={{ left: `${pos.left}%`, width: `${pos.width}%` }}
+                                                    title={`${new Date(task.startDate || task.start).toLocaleDateString("vi-VN")} → ${new Date(task.endDate || task.dueDate || task.startDate).toLocaleDateString("vi-VN")}`}
+                                                    onClick={() => handleBarClick(task)}
+                                                />
                                             </div>
                                         </div>
-                                        {/* Right: timeline cell */}
-                                        <div className="relative border-b py-3">
-                                            {/* Bar */}
-                                            <button className={`group absolute top-2 h-8 rounded-md ${priorityColor(task.priority)} hover:brightness-110 transition focus:outline-none`} style={{ left: `${pos.left}%`, width: `${pos.width}%` }}
-                                                title={`${new Date(task.startDate || task.start).toLocaleDateString("vi-VN")} → ${new Date(task.endDate || task.dueDate || task.startDate).toLocaleDateString("vi-VN")}`}
-                                                onClick={() => handleBarClick(task)}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            }) : (
-                                <div className="py-6 text-center text-sm text-gray-500">Không có task nào</div>
-                            )}
+                                    );
+                                }) : (
+                                    <div className="py-6 text-center text-sm text-gray-500">Không có task nào</div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
                 <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-600">
                     <div className="flex items-center gap-2"><span className="h-3 w-3 rounded bg-red-600"></span> Critical</div>
                     <div className="flex items-center gap-2"><span className="h-3 w-3 rounded bg-orange-500"></span> High</div>

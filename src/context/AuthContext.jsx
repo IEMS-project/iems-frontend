@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, getStoredTokens } from "../lib/api";
+import { getStoredTokens } from "../lib/api";
+import { authService } from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -15,14 +16,14 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated]);
 
   const login = useCallback(async (usernameOrEmail, password) => {
-    const payload = await api.login(usernameOrEmail, password);
+    const payload = await authService.login(usernameOrEmail, password);
     setSession(payload);
     navigate("/dashboard", { replace: true });
     return payload;
   }, [navigate]);
 
   const logout = useCallback(() => {
-    api.logout();
+    authService.logout();
     setSession(null);
     navigate("/login", { replace: true });
   }, [navigate]);
