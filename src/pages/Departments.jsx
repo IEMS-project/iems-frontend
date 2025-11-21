@@ -7,6 +7,7 @@ import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
+import Skeleton from "../components/ui/Skeleton";
 
 export default function Teams() {
     const [departments, setDepartments] = useState([]);
@@ -165,6 +166,8 @@ export default function Teams() {
         setIsDeleteModalOpen(true);
     };
 
+    const skeletonCards = Array.from({ length: 4 });
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -175,14 +178,22 @@ export default function Teams() {
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
+                            <div className="p-2 bg-blue-100 rounded-lg flex items-center justify-center">
+                                {loading ? (
+                                    <Skeleton className="h-6 w-6 bg-blue-200/80" />
+                                ) : (
+                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                )}
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Tổng thành viên</p>
-                                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{totalMembers}</p>
+                                {loading ? (
+                                    <Skeleton className="mt-2 h-6 w-24" />
+                                ) : (
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{totalMembers}</p>
+                                )}
                             </div>
                         </div>
                     </CardContent>
@@ -191,14 +202,22 @@ export default function Teams() {
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                            <div className="p-2 bg-purple-100 rounded-lg flex items-center justify-center">
+                                {loading ? (
+                                    <Skeleton className="h-6 w-6 bg-purple-200/80" />
+                                ) : (
+                                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                )}
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Phòng ban</p>
-                                <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{totalDepartments}</p>
+                                {loading ? (
+                                    <Skeleton className="mt-2 h-6 w-16" />
+                                ) : (
+                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{totalDepartments}</p>
+                                )}
                             </div>
                         </div>
                     </CardContent>
@@ -231,25 +250,43 @@ export default function Teams() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {loading && <div className="text-sm text-gray-500">Đang tải...</div>}
-                        {error && <div className="text-sm text-red-600">{error}</div>}
-                        {!loading && !error && Array.isArray(departments) && departments.map((dept) => (
-                            <DepartmentCard
-                                key={dept.id}
-                                department={{
-                                    id: dept.id,
-                                    name: dept.departmentName || dept.name,
-                                    description: dept.description,
-                                    memberCount: dept.totalUsers || 0,
-                                    color: departmentColors?.[dept.id] || "bg-blue-500",
-                                    members: dept.users || [],
-                                }}
-                                onEdit={openEditModal}
-                                onDelete={openDeleteModal}
-                            />
-                        ))}
-                    </div>
+                    {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
+                    {loading ? (
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            {skeletonCards.map((_, idx) => (
+                                <div key={idx} className="rounded-xl border border-dashed border-gray-200 p-5 dark:border-gray-800">
+                                    <div className="flex items-center justify-between">
+                                        <Skeleton className="h-8 w-24" />
+                                        <Skeleton className="h-6 w-6 rounded-full" />
+                                    </div>
+                                    <Skeleton className="mt-4 h-3 w-full" />
+                                    <Skeleton className="mt-2 h-3 w-4/5" />
+                                    <div className="mt-5 flex items-center justify-between">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-8 w-20" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            {!error && Array.isArray(departments) && departments.map((dept) => (
+                                <DepartmentCard
+                                    key={dept.id}
+                                    department={{
+                                        id: dept.id,
+                                        name: dept.departmentName || dept.name,
+                                        description: dept.description,
+                                        memberCount: dept.totalUsers || 0,
+                                        color: departmentColors?.[dept.id] || "bg-blue-500",
+                                        members: dept.users || [],
+                                    }}
+                                    onEdit={openEditModal}
+                                    onDelete={openDeleteModal}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

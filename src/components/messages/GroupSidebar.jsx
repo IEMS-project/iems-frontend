@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "../ui/Avatar";
-import { api } from "../../lib/api";
+import { documentService } from "../../services/documentService";
 import { chatService } from "../../services/chatService";
+import Skeleton from "../ui/Skeleton";
 import { FaTimes, FaCamera, FaEdit, FaBell, FaBellSlash, FaTrash, FaThumbtack, FaChevronDown, FaImage, FaFileAlt, FaLink } from "react-icons/fa";
 import MediaPreviewModal from "./MediaPreviewModal";
 
@@ -58,7 +59,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     setUploading(true);
     try {
       // Upload to DocumentService; it will call Chat-Service via Feign to update avatar
-      await api.uploadGroupAvatar(conversation.id, file);
+      await documentService.uploadGroupAvatar(conversation.id, file);
       // Fetch latest group to update UI immediately
       const updated = await chatService.getGroup(conversation.id);
       onConversationUpdated && onConversationUpdated(updated);
@@ -318,24 +319,32 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             </button>
             {openImages && (
               <div className="mt-3 max-h-60 overflow-auto pr-1">
-                <div className="grid grid-cols-4 gap-2">
-                  {mediaItems.map(im => (
-                    im.type === 'VIDEO' ? (
-                      <button key={im.id} className="w-full aspect-square overflow-hidden rounded bg-black" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'VIDEO', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
-                        <video className="w-full h-full object-cover" preload="metadata" muted>
-                          <source src={im.url} />
-                        </video>
-                      </button>
-                    ) : (
-                      <button key={im.id} className="w-full aspect-square overflow-hidden rounded" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'IMAGE', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
-                        <img src={im.url} alt="img" loading="lazy" className="w-full h-full object-cover" />
-                      </button>
-                    )
-                  ))}
-                  {mediaItems.length === 0 && !loadingMedia && (
-                    <div className="col-span-4 text-center text-xs text-gray-500">Chưa có ảnh/video</div>
-                  )}
-                </div>
+                {loadingMedia ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: 8 }).map((_, idx) => (
+                      <Skeleton key={idx} className="aspect-square w-full rounded" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    {mediaItems.map(im => (
+                      im.type === 'VIDEO' ? (
+                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded bg-black" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'VIDEO', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
+                          <video className="w-full h-full object-cover" preload="metadata" muted>
+                            <source src={im.url} />
+                          </video>
+                        </button>
+                      ) : (
+                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'IMAGE', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
+                          <img src={im.url} alt="img" loading="lazy" className="w-full h-full object-cover" />
+                        </button>
+                      )
+                    ))}
+                    {mediaItems.length === 0 && (
+                      <div className="col-span-4 text-center text-xs text-gray-500">Chưa có ảnh/video</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-3">
@@ -353,17 +362,31 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             </button>
             {openFiles && (
               <div className="mt-3 space-y-2 max-h-48 overflow-auto pr-1">
-                {fileItems.map(f => (
-                  <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <FaFileAlt className="w-5 h-5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{f.name}</div>
-                      <div className="text-xs text-gray-500 truncate">{new Date(f.sentAt).toLocaleString('vi-VN')}</div>
+                {loadingFiles ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-2 rounded border border-dashed border-gray-200 dark:border-gray-800">
+                      <Skeleton className="h-6 w-6 rounded" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
                     </div>
-                  </a>
-                ))}
-                {fileItems.length === 0 && !loadingFiles && (
-                  <div className="text-center text-xs text-gray-500">Chưa có tệp</div>
+                  ))
+                ) : (
+                  <>
+                    {fileItems.map(f => (
+                      <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <FaFileAlt className="w-5 h-5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate">{f.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{new Date(f.sentAt).toLocaleString('vi-VN')}</div>
+                        </div>
+                      </a>
+                    ))}
+                    {fileItems.length === 0 && (
+                      <div className="text-center text-xs text-gray-500">Chưa có tệp</div>
+                    )}
+                  </>
                 )}
               </div>
             )}

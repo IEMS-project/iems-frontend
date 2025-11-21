@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
-import { api } from "../../lib/api";
+import { documentService } from "../../services/documentService";
 import UserAvatar from "../ui/UserAvatar";
+import Skeleton from "../ui/Skeleton";
 
 export default function SharedUsersModal({ 
 	isOpen, 
@@ -24,7 +25,7 @@ export default function SharedUsersModal({
 		try {
 			setLoading(true);
 			if (!item?.id) return;
-		const users = await api.getSharedUsers(item.id, item.type.toUpperCase());
+		const users = await documentService.getSharedUsers(item.id, item.type.toUpperCase());
 			setSharedUsers(users || []);
 		} catch (error) {
 			console.error('Error loading shared users:', error);
@@ -37,7 +38,7 @@ export default function SharedUsersModal({
 	async function updatePermission(shareId, newPermission) {
 		try {
 			setActionLoading(shareId);
-			await api.updateSharePermission(shareId, newPermission);
+			await documentService.updateSharePermission(shareId, newPermission);
 			loadSharedUsers(); // Reload to get updated data
 		} catch (error) {
 			console.error('Error updating permission:', error);
@@ -50,7 +51,7 @@ export default function SharedUsersModal({
 	async function removeShare(shareId) {
 		try {
 			setActionLoading(shareId);
-			await api.removeShare(shareId);
+			await documentService.removeShare(shareId);
 			loadSharedUsers(); // Reload to get updated data
 		} catch (error) {
 			console.error('Error removing share:', error);
@@ -82,8 +83,22 @@ export default function SharedUsersModal({
 				)}
 				
 				{loading ? (
-					<div className="text-center py-8 text-gray-500">
-						Đang tải danh sách người dùng...
+					<div className="space-y-2">
+						{Array.from({ length: 3 }).map((_, idx) => (
+							<div key={idx} className="flex items-center justify-between rounded-md border border-dashed border-gray-200 p-3 dark:border-gray-700">
+								<div className="flex items-center gap-3">
+									<Skeleton className="h-10 w-10 rounded-full" />
+									<div className="space-y-2">
+										<Skeleton className="h-3 w-32" />
+										<Skeleton className="h-3 w-24" />
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<Skeleton className="h-8 w-28" />
+									<Skeleton className="h-8 w-16" />
+								</div>
+							</div>
+						))}
 					</div>
 				) : sharedUsers.length === 0 ? (
 					<div className="text-center py-8 text-gray-500">

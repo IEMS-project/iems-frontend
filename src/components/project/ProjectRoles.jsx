@@ -7,6 +7,7 @@ import Select from "../ui/Select";
 import { userService } from "../../services/userService";
 import { useParams } from "react-router-dom";
 import { projectService } from "../../services/projectService";
+import Skeleton from "../ui/Skeleton";
 
 export default function ProjectRoles() {
     const { projectId } = useParams();
@@ -72,7 +73,17 @@ export default function ProjectRoles() {
                 <CardContent>
                     <div className="max-h-44 overflow-y-auto">
                         {loading ? (
-                            <div className="text-center text-gray-500 py-4">Đang tải...</div>
+                            <ul className="space-y-2">
+                                {Array.from({ length: 4 }).map((_, idx) => (
+                                    <li key={idx} className="flex items-center justify-between">
+                                        <Skeleton className="h-4 w-32" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-10" />
+                                            <Skeleton className="h-4 w-10" />
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
                         ) : roles.length === 0 ? (
                             <div className="text-center text-gray-500 py-4">Chưa có vai trò</div>
                         ) : (

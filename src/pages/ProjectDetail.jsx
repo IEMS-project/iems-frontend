@@ -12,14 +12,18 @@ import { taskService } from "../services/taskService";
 export default function Project() {
     const { projectId } = useParams();
     const [tasks, setTasks] = useState([]);
+    const [tasksLoading, setTasksLoading] = useState(true);
 
     useEffect(() => {
         const load = async () => {
             try {
+                setTasksLoading(true);
                 const data = await taskService.getTasksByProject(projectId);
                 setTasks(Array.isArray(data) ? data : []);
             } catch (_e) {
                 setTasks([]);
+            } finally {
+                setTasksLoading(false);
             }
         };
         if (projectId) load();
@@ -36,8 +40,8 @@ export default function Project() {
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="space-y-6 xl:col-span-2">
                     <ProjectDetails />
-                    <ProjectTimeline tasks={tasks} />
-                    <Tasks tasks={tasks} onTasksChange={setTasks} />
+                    <ProjectTimeline tasks={tasks} loading={tasksLoading} />
+                    <Tasks tasks={tasks} tasksLoading={tasksLoading} onTasksChange={setTasks} />
 
 
                 </div>

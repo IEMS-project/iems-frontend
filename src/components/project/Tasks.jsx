@@ -12,7 +12,8 @@ import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
 import UserAvatar from "../ui/UserAvatar";
 import TaskDetailModal from "./TaskDetailModal";
-export default function Tasks({ tasks: tasksProp, onTasksChange }) {
+import Skeleton from "../ui/Skeleton";
+export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -211,6 +212,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
         }
     };
 
+    const skeletonRows = Array.from({ length: 5 });
+    const showLoading = loading || tasksLoading;
+
     const handleClose = () => {
         setShowModal(false);
         setFormData({
@@ -252,8 +256,38 @@ export default function Tasks({ tasks: tasksProp, onTasksChange }) {
                                 </TR>
                             </THead>
                             <TBody>
-                                {loading ? (
-                                    <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Đang tải...</TD></TR>
+                                {showLoading ? (
+                                    skeletonRows.map((_, idx) => (
+                                        <TR key={idx}>
+                                            <TD className="min-w-[180px]">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="mt-2 h-3 w-1/2" />
+                                            </TD>
+                                            <TD>
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <Skeleton className="h-3 w-32" />
+                                                        <Skeleton className="h-3 w-24" />
+                                                    </div>
+                                                </div>
+                                            </TD>
+                                            <TD><Skeleton className="h-6 w-20" /></TD>
+                                            <TD><Skeleton className="h-4 w-16" /></TD>
+                                            <TD><Skeleton className="h-4 w-20" /></TD>
+                                            <TD><Skeleton className="h-4 w-20" /></TD>
+                                            <TD>
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                                    <div className="flex-1 space-y-2">
+                                                        <Skeleton className="h-3 w-32" />
+                                                        <Skeleton className="h-3 w-24" />
+                                                    </div>
+                                                </div>
+                                            </TD>
+                                            <TD><Skeleton className="h-4 w-16 ml-auto" /></TD>
+                                        </TR>
+                                    ))
                                 ) : tasksData.length === 0 ? (
                                     <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
                                 ) : (

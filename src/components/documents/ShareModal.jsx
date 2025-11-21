@@ -3,7 +3,8 @@ import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import UserAvatar from "../ui/UserAvatar";
-import { api } from "../../lib/api";
+import { userService } from "../../services/userService";
+import Skeleton from "../ui/Skeleton";
 
 export default function ShareModal({ 
 	isOpen, 
@@ -28,7 +29,7 @@ export default function ShareModal({
 	async function loadUsers() {
 		try {
 			setLoading(true);
-			const userData = await api.getUsersForSharing();
+			const userData = await userService.getUsersForSharing();
 			setUsers(userData || []);
 		} catch (error) {
 			console.error('Error loading users:', error);
@@ -150,8 +151,17 @@ export default function ShareModal({
 						{/* Danh sách bên trái */}
 						<div className="w-3/5 border rounded-md max-h-[36rem] overflow-auto divide-y divide-gray-100 dark:divide-gray-800">
 							{loading ? (
-								<div className="p-6 text-center text-gray-500 dark:text-gray-400">
-									Đang tải danh sách người dùng...
+								<div className="space-y-3 p-4">
+									{Array.from({ length: 6 }).map((_, idx) => (
+										<div key={idx} className="flex items-center gap-3 py-2">
+											<Skeleton className="h-4 w-4 rounded" />
+											<Skeleton className="h-10 w-10 rounded-full" />
+											<div className="flex-1 space-y-2">
+												<Skeleton className="h-4 w-3/4" />
+												<Skeleton className="h-3 w-2/3" />
+											</div>
+										</div>
+									))}
 								</div>
 							) : (
 								<>

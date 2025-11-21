@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Avatar from "../../components/ui/Avatar";
+import Skeleton from "../ui/Skeleton";
 import { FaPlus, FaThumbtack, FaEllipsisV, FaBell, FaBellSlash, FaTrash } from "react-icons/fa";
 import { chatService } from "../../services/chatService";
 
@@ -23,9 +24,11 @@ export default function ConversationList({
   getUserName,
   getUserImage,
   onConversationUpdate,
+  loadingConversations = false,
 }) {
   const [hoveredConversation, setHoveredConversation] = useState(null);
   const [contextMenu, setContextMenu] = useState({ show: false, conversationId: null, x: 0, y: 0 });
+  const skeletonItems = useMemo(() => Array.from({ length: 6 }), []);
 
   const filteredConversations = useMemo(() => {
     const q = (searchQuery || '').toLowerCase();
@@ -50,6 +53,7 @@ export default function ConversationList({
       return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
   }, [searchQuery, conversations, currentUserId, getConversationDisplayName, lastMessagesByConv, uiTick]);
+  const showSkeletons = loadingConversations && filteredConversations.length === 0;
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
@@ -222,7 +226,22 @@ export default function ConversationList({
       </div>
       <div className="px-3 py-2 text-xs text-gray-500">Cuộc trò chuyện</div>
       <div className="flex-1 overflow-y-auto">
-        {filteredConversations.map(c => {
+        {showSkeletons ? (
+          <div className="divide-y divide-gray-50 dark:divide-gray-800">
+            {skeletonItems.map((_, idx) => (
+              <div
+                key={idx}
+                className="flex gap-3 px-3 py-3 bg-white dark:bg-gray-900"
+              >
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredConversations.length > 0 ? filteredConversations.map(c => {
           const dn = getConversationDisplayName(c, currentUserId);
           const isDir = isDirect(c);
           const peerId = isDir ? getPeerId(c) : null;
@@ -321,7 +340,11 @@ export default function ConversationList({
               </div>
             </div>
           );
-        })}
+        }) : (
+          <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+            Không có cuộc trò chuyện
+          </div>
+        )}
       </div>
 
       {/* Context Menu */}

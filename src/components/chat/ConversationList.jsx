@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSearch, FaHistory, FaSpinner } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaHistory } from 'react-icons/fa';
 import ConversationItem from './ConversationItem';
 import chatbotService from '../../services/chatbotService';
+import Skeleton from '../ui/Skeleton';
 
 const ConversationList = ({ 
   activeConversationId, 
@@ -180,6 +181,20 @@ const ConversationList = ({
                 >
                   Thử lại
                 </button>
+              </div>
+            ) : loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-700">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="text-center py-8">

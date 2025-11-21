@@ -1,67 +1,164 @@
-import { api } from "../lib/api";
+import { request } from "../lib/api";
 
 export const documentService = {
   async getAllFolders() {
-    return api.getAllFolders();
+    const data = await request("/document-service/api/folders");
+    return data?.data || data || [];
   },
 
   async getAllFiles() {
-    return api.getAllFiles();
+    const data = await request("/document-service/api/files");
+    return data?.data || data || [];
   },
 
   async getFolderContents(folderId) {
-    return api.getFolderContents(folderId);
+    const data = await request(`/document-service/api/folders/${folderId}/contents`);
+    return data?.data || data || [];
   },
 
-  async createFolder(name, parentId) {
-    return api.createFolder(name, parentId);
+  async createFolder(name, parentId = null) {
+    const data = await request("/document-service/api/folders", {
+      method: "POST",
+      body: { name, parentId },
+    });
+    return data?.data || data;
   },
 
   async uploadFile(folderId, file) {
-    return api.uploadFile(folderId, file);
+    const formData = new FormData();
+    formData.append("file", file);
+    const data = await request(`/document-service/api/files/upload?folderId=${folderId || ""}`, {
+      method: "POST",
+      body: formData,
+    });
+    return data?.data || data;
+  },
+
+  async uploadGroupAvatar(groupId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const data = await request(`/document-service/api/documents/upload/group-avatar?groupId=${encodeURIComponent(groupId)}`, {
+      method: "POST",
+      body: formData,
+    });
+    return data?.data || data;
   },
 
   async toggleFavorite(id, type) {
-    return api.toggleFavorite(id, type);
+    const data = await request(`/document-service/api/favorites?id=${id}&type=${type}`, {
+      method: "POST",
+    });
+    const result = data?.data !== undefined ? data.data : data;
+    return Boolean(result);
+  },
+
+  async getFavorites() {
+    const data = await request("/document-service/api/favorites");
+    return data?.data || data || [];
   },
 
   async deleteFolder(id) {
-    return api.deleteFolder(id);
+    const data = await request(`/document-service/api/folders/${id}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
 
   async deleteFile(id) {
-    return api.deleteFile(id);
+    const data = await request(`/document-service/api/files/${id}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
 
-  async shareItem(id, type, userIds, permission) {
-    return api.shareItem(id, type, userIds, permission);
+  async shareItem(id, type, userIds, permission = "VIEWER") {
+    const data = await request(`/document-service/api/items/${id}/share?type=${type}`, {
+      method: "POST",
+      body: { userIds, permission },
+    });
+    return data?.data || data;
+  },
+
+  async unshareItem(id, type, userIds) {
+    const data = await request(`/document-service/api/items/${id}/unshare?type=${type}`, {
+      method: "POST",
+      body: { userIds },
+    });
+    return data?.data || data;
   },
 
   async getSharedUsers(id, type) {
-    return api.getSharedUsers(id, type);
+    const data = await request(`/document-service/api/items/${id}/shared-users?type=${type}`);
+    return data?.data || data || [];
+  },
+
+  async updateSharePermission(shareId, permission) {
+    const data = await request(`/document-service/api/shares/${shareId}/permission`, {
+      method: "PATCH",
+      body: { permission },
+    });
+    return data?.data || data;
+  },
+
+  async removeShare(shareId) {
+    const data = await request(`/document-service/api/shares/${shareId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
 
   async renameFolder(id, newName) {
-    return api.renameFolder(id, newName);
+    const data = await request(`/document-service/api/folders/${id}/rename`, {
+      method: "PATCH",
+      body: { name: newName },
+    });
+    return data?.data || data;
   },
 
   async renameFile(id, newName) {
-    return api.renameFile(id, newName);
+    const data = await request(`/document-service/api/files/${id}/rename`, {
+      method: "PATCH",
+      body: { name: newName },
+    });
+    return data?.data || data;
   },
 
   async updateFolderPermission(id, permission) {
-    return api.updateFolderPermission(id, permission);
+    const data = await request(`/document-service/api/folders/${id}/permission?permission=${permission}`, {
+      method: "PATCH",
+    });
+    return data?.data || data;
   },
 
   async updateFilePermission(id, permission) {
-    return api.updateFilePermission(id, permission);
+    const data = await request(`/document-service/api/files/${id}/permission?permission=${permission}`, {
+      method: "PATCH",
+    });
+    return data?.data || data;
   },
 
   async moveFolder(folderId, newParentId) {
-    return api.moveFolder(folderId, newParentId);
+    const params = new URLSearchParams();
+    if (newParentId) params.append("parentId", newParentId);
+    const query = params.toString();
+    const data = await request(`/document-service/api/folders/${folderId}/move${query ? `?${query}` : ""}`, {
+      method: "PATCH",
+    });
+    return data?.data || data;
   },
 
   async moveFile(fileId, newFolderId) {
-    return api.moveFile(fileId, newFolderId);
-  }
+    const params = new URLSearchParams();
+    if (newFolderId) params.append("folderId", newFolderId);
+    const query = params.toString();
+    const data = await request(`/document-service/api/files/${fileId}/move${query ? `?${query}` : ""}`, {
+      method: "PATCH",
+    });
+    return data?.data || data;
+  },
+
+  async searchDocuments(query) {
+    const data = await request(`/document-service/api/search?q=${encodeURIComponent(query)}`);
+    return data?.data || data || [];
+  },
 };

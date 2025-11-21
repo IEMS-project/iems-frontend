@@ -43,6 +43,7 @@ function Messages() {
     const lastMessagesByConvRef = useRef({});
     const [openCreateGroup, setOpenCreateGroup] = useState(false);
     const [uiTick, setUiTick] = useState(0);
+    const [loadingConversations, setLoadingConversations] = useState(true);
     const selectedConversationIdRef = useRef(null);
     // local fallback state for backwards compatibility (mostly unused now)
     const [unreadByConv, setUnreadByConv] = useState({});
@@ -619,6 +620,11 @@ function Messages() {
     }
 
     async function loadConversations(userId) {
+        if (!userId) {
+            setLoadingConversations(false);
+            return;
+        }
+        setLoadingConversations(true);
         try {
             const data = await chatService.getConversationsByUser();
             const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
@@ -649,6 +655,8 @@ function Messages() {
             setUiTick(t => t + 1);
         } catch (_e) {
             console.error('Error loading conversations:', _e);
+        } finally {
+            setLoadingConversations(false);
         }
     }
 
@@ -1663,6 +1671,7 @@ function Messages() {
                         getUserName={getUserName}
                         getUserImage={getUserImage}
                         onConversationUpdate={() => loadConversations(currentUserId)}
+                        loadingConversations={loadingConversations}
                     />
                     {(selectedConversationId || pendingDirect) ? (
                         <ChatArea

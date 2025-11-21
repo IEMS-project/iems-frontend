@@ -1,7 +1,8 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "../../services/chatService";
 import Avatar from "../ui/Avatar";
-import { FaThumbtack, FaTimes, FaSpinner, FaBookmark } from "react-icons/fa";
+import Skeleton from "../ui/Skeleton";
+import { FaThumbtack, FaTimes, FaBookmark } from "react-icons/fa";
 
 const PinnedMessages = forwardRef(function PinnedMessages({ 
     conversationId, 
@@ -99,9 +100,20 @@ const PinnedMessages = forwardRef(function PinnedMessages({
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
-                        <div className="text-center py-8">
-                            <FaSpinner className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
-                            <p className="text-gray-500 mt-2">Đang tải...</p>
+                        <div className="space-y-3">
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                                <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-600">
+                                    <div className="flex items-start gap-3">
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-1/3" />
+                                            <Skeleton className="h-3 w-1/5" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-3 w-2/3" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : pinnedMessages.length === 0 ? (
                         <div className="text-center py-8">

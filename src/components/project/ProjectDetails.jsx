@@ -9,6 +9,7 @@ import Select from "../ui/Select";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
+import Skeleton from "../ui/Skeleton";
 
 export default function ProjectDetails() {
     const { projectId } = useParams();
@@ -139,37 +140,56 @@ export default function ProjectDetails() {
         <>
             <Card>
                 <CardHeader>
-                    <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold">Dự án: {projectData?.name || '-'}</h1>
-                            <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                                <span>Quản lý: {projectData?.managerName || projectData?.managerEmail || projectData?.managerId || '-'}</span>
-                                <span>•</span>
-                                <Badge variant="blue">{projectData?.status || 'Chưa xác định'}</Badge>
+                    {loading ? (
+                        <div className="w-full space-y-3">
+                            <Skeleton className="h-6 w-1/3" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <div className="flex gap-2">
+                                <Skeleton className="h-9 w-24" />
+                                <Skeleton className="h-9 w-32" />
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="secondary">Chia sẻ</Button>
-                            <Button onClick={handleEditProject}>Chỉnh sửa dự án</Button>
+                    ) : (
+                        <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+                            <div>
+                                <h1 className="text-2xl font-bold">Dự án: {projectData?.name || '-'}</h1>
+                                <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                                    <span>Quản lý: {projectData?.managerName || projectData?.managerEmail || projectData?.managerId || '-'}</span>
+                                    <span>•</span>
+                                    <Badge variant="blue">{projectData?.status || 'Chưa xác định'}</Badge>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="secondary">Chia sẻ</Button>
+                                <Button onClick={handleEditProject}>Chỉnh sửa dự án</Button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {loading ? (
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Skeleton className="h-16 w-full sm:col-span-1" />
+                            <Skeleton className="h-16 w-full sm:col-span-1" />
+                            <Skeleton className="h-24 w-full sm:col-span-2" />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
        
-                        <div>
-                            <div className="text-xs uppercase text-gray-500">Ngày bắt đầu</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData?.startDate ? new Date(projectData.startDate).toLocaleDateString('vi-VN') : '-'}</div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Ngày bắt đầu</div>
+                                <div className="text-gray-800 dark:text-gray-100">{projectData?.startDate ? new Date(projectData.startDate).toLocaleDateString('vi-VN') : '-'}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
+                                <div className="text-gray-800 dark:text-gray-100">{projectData?.endDate ? new Date(projectData.endDate).toLocaleDateString('vi-VN') : '-'}</div>
+                            </div>
+                            <div className="sm:col-span-2">
+                                <div className="text-xs uppercase text-gray-500">Mô tả</div>
+                                <div className="text-gray-800 dark:text-gray-100">{projectData?.description || '-'}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData?.endDate ? new Date(projectData.endDate).toLocaleDateString('vi-VN') : '-'}</div>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <div className="text-xs uppercase text-gray-500">Mô tả</div>
-                            <div className="text-gray-800 dark:text-gray-100">{projectData?.description || '-'}</div>
-                        </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 

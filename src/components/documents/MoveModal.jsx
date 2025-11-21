@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { documentService } from "../../services/documentService";
+import Skeleton from "../ui/Skeleton";
 
 export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }) {
   const [folders, setFolders] = useState([]);
@@ -161,16 +162,6 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Loading overlay */}
-          {loading && (
-            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Đang tải...</p>
-              </div>
-            </div>
-          )}
-
           {/* Error message */}
           {error && (
             <div className="p-4 bg-red-50 border-l-4 border-red-400">
@@ -180,44 +171,57 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
           {/* Folders grid */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-              {folders.map((folder) => (
-                <button
-                  key={folder.id}
-                  onClick={() => handleFolderClick(folder)}
-                  className="group flex flex-col items-center p-4 rounded-lg hover:bg-gray-50 transition-all duration-200 hover:scale-105"
-                  disabled={loading}
-                >
-                  <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center mb-2 group-hover:bg-yellow-500 transition-colors">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="currentColor" 
-                      className="w-8 h-8 text-yellow-900"
-                    >
-                      <path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path>
-                      <path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path>
-                    </svg>
+            {loading ? (
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-4 text-center dark:border-gray-700">
+                    <Skeleton className="mx-auto mb-2 h-12 w-12 rounded-lg" />
+                    <Skeleton className="h-3 w-16 mx-auto" />
                   </div>
-                  <span className="text-xs text-center text-gray-700 font-medium">
-                    {folder.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Empty state */}
-            {!loading && folders.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-gray-400">
-                    <path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path>
-                    <path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path>
-                  </svg>
-                </div>
-                <p className="text-gray-500">Không có thư mục con nào</p>
-                <p className="text-sm text-gray-400">Chọn "Move to here" để di chuyển vào thư mục này</p>
+                ))}
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                  {folders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      onClick={() => handleFolderClick(folder)}
+                      className="group flex flex-col items-center p-4 rounded-lg hover:bg-gray-50 transition-all duration-200 hover:scale-105"
+                      disabled={loading}
+                    >
+                      <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center mb-2 group-hover:bg-yellow-500 transition-colors">
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          viewBox="0 0 24 24" 
+                          fill="currentColor" 
+                          className="w-8 h-8 text-yellow-900"
+                        >
+                          <path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path>
+                          <path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path>
+                        </svg>
+                      </div>
+                      <span className="text-xs text-center text-gray-700 font-medium">
+                        {folder.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Empty state */}
+                {folders.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-gray-400">
+                        <path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path>
+                        <path d="M2 9h22v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9z"></path>
+                      </svg>
+                    </div>
+                    <p className="text-gray-500">Không có thư mục con nào</p>
+                    <p className="text-sm text-gray-400">Chọn "Move to here" để di chuyển vào thư mục này</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

@@ -1,35 +1,70 @@
-import { api } from "../lib/api";
+import { request } from "../lib/api";
 
 export const projectService = {
   async getProjectsTable() {
-    return api.getProjectsTable();
+    const data = await request("/project-service/projects/table");
+    return data?.data || data || [];
   },
+
   async createProject(projectData) {
-    return api.createProject(projectData);
+    const data = await request("/project-service/projects", {
+      method: "POST",
+      body: projectData,
+    });
+    return data?.data || data;
   },
+
   async getProjectById(projectId) {
-    return api.getProjectById(projectId);
+    const data = await request(`/project-service/projects/${projectId}`);
+    return data?.data || data || null;
   },
-  async getProjectMembers(projectId) {
-    return api.getProjectMembers(projectId);
-  },
-  async getProjectRoles(projectId) {
-    return api.getProjectRoles(projectId);
-  },
-  async addProjectRole(projectId, payload) {
-    return api.addProjectRole(projectId, payload);
-  },
-  async deleteProjectRole(projectId, roleId) {
-    return api.deleteProjectRole(projectId, roleId);
-  },
+
   async updateProject(projectId, projectData) {
-    return api.updateProject(projectId, projectData);
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "PATCH",
+      body: projectData,
+    });
+    return data?.data || data;
   },
+
   async deleteProject(projectId) {
-    return api.deleteProject(projectId);
+    const data = await request(`/project-service/projects/${projectId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
+
+  async getProjectMembers(projectId) {
+    const data = await request(`/project-service/api/projects/${projectId}/members`);
+    return data?.data || data || [];
+  },
+
   async addProjectMember(projectId, memberData) {
-    return api.addProjectMember(projectId, memberData);
+    const data = await request(`/project-service/api/projects/${projectId}/members`, {
+      method: "POST",
+      body: memberData,
+    });
+    return data?.data || data;
+  },
+
+  async getProjectRoles(projectId) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles`);
+    return data?.data || data || [];
+  },
+
+  async addProjectRole(projectId, payload) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles`, {
+      method: "POST",
+      body: payload,
+    });
+    return data?.data || data;
+  },
+
+  async deleteProjectRole(projectId, roleId) {
+    const data = await request(`/project-service/api/projects/${projectId}/roles/${roleId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
   },
 };
 
