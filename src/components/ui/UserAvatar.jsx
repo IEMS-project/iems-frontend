@@ -52,8 +52,16 @@ export default function UserAvatar({ user, size = "md", className = "" }) {
     };
 
     return (
-        <div className={`${getSizeClasses(size)} ${getColorClasses(user)} rounded-full flex items-center justify-center font-semibold ${className}`}>
-            {getInitials(user)}
+        <div className={`${getSizeClasses(size)} ${getColorClasses(user)} rounded-full flex items-center justify-center font-semibold overflow-hidden ${className}`}>
+            {user?.avatar || user?.image ? (
+                <img 
+                    src={user.avatar || user.image} 
+                    alt={user?.name || user?.firstName || 'User'} 
+                    className="h-full w-full object-cover"
+                />
+            ) : (
+                getInitials(user)
+            )}
         </div>
     );
 }

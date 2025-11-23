@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
 import { FaSearch, FaTimes, FaSpinner } from "react-icons/fa";
 

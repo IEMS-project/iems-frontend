@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
-import Avatar from "../../components/ui/Avatar";
+import Avatar from "../../components/ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
 import { FaPlus, FaThumbtack, FaEllipsisV, FaBell, FaBellSlash, FaTrash } from "react-icons/fa";
 import { chatService } from "../../services/chatService";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function ConversationList({
   conversations,
@@ -27,9 +28,10 @@ export default function ConversationList({
   onConversationUpdate,
   loadingConversations = false,
 }) {
-  const { toast } = useToast();
   const [hoveredConversation, setHoveredConversation] = useState(null);
   const [contextMenu, setContextMenu] = useState({ show: false, conversationId: null, x: 0, y: 0 });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState(null);
   const skeletonItems = useMemo(() => Array.from({ length: 6 }), []);
 
   const filteredConversations = useMemo(() => {
@@ -119,7 +121,7 @@ export default function ConversationList({
     }
   };
   
-  const handleDeleteGroup = async (conversationId) => {
+  const handleDeleteGroup = (conversationId) => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (!conversation) return;
 
@@ -129,24 +131,27 @@ export default function ConversationList({
       return;
     }
 
-    // Confirm deletion
-    const confirmMessage = `Bạn có chắc chắn muốn xóa nhóm "${conversation.name || 'Nhóm này'}"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.`;
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
+    // Set conversation to delete and open dialog
+    setConversationToDelete(conversationId);
+    setDeleteDialogOpen(true);
+    setContextMenu({ show: false, conversationId: null, x: 0, y: 0 });
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!conversationToDelete) return;
 
     try {
-      await chatService.deleteGroupConversation(conversationId);
+      await chatService.deleteGroupConversation(conversationToDelete);
       // Trigger conversation list refresh
       if (onConversationUpdate) {
         onConversationUpdate();
       }
-      // Close context menu
-      setContextMenu({ show: false, conversationId: null, x: 0, y: 0 });
       toast.success('Nhóm đã được xóa thành công');
+      setConversationToDelete(null);
     } catch (error) {
       console.error('Error deleting group:', error);
       toast.error(error?.message || 'Không thể xóa nhóm. Vui lòng thử lại.');
+      setConversationToDelete(null);
     }
   };
 
@@ -407,6 +412,22 @@ export default function ConversationList({
           })()}
         </div>
       )}
+
+      {/* Delete Group Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDeleteGroup}
+        title="Xác nhận xóa nhóm"
+        description={
+          conversationToDelete
+            ? `Bạn có chắc chắn muốn xóa nhóm "${conversations.find(c => c.id === conversationToDelete)?.name || 'Nhóm này'}"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+            : ""
+        }
+        confirmText="Xóa nhóm"
+        cancelText="Hủy"
+        variant="destructive"
+      />
     </div>
   );
 }

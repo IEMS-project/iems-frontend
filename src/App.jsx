@@ -2,7 +2,11 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import ProjectDetail from "./pages/ProjectDetail";
+import ProjectDetailLayout from "./components/project/ProjectDetailLayout";
+import ProjectOverviewPage from "./pages/project/ProjectOverviewPage";
+import ProjectTimelinePage from "./pages/project/ProjectTimelinePage";
+import ProjectTasksPage from "./pages/project/ProjectTasksPage";
+import ProjectMembersPage from "./pages/project/ProjectMembersPage";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import Departments from "./pages/Departments";
@@ -17,7 +21,6 @@ import PermissionDenied from "./pages/PermissionDenied";
 import Chatbot from "./pages/Chatbot";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
-import ToastContainer from "./components/ui/ToastContainer";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function Protected({ children }) {
@@ -32,7 +35,6 @@ function Protected({ children }) {
 export default function App() {
     return (
         <>
-            <ToastContainer />
             <Routes>
                 {/* Login page - standalone, no layout */}
                 <Route path="/login" element={<Login />} />
@@ -44,7 +46,13 @@ export default function App() {
                             <Routes>
                                 <Route path="/dashboard" element={<Dashboard />} />
                                 <Route path="/projects" element={<Projects />} />
-                                <Route path="/projects/:projectId" element={<ProjectDetail />} />
+                                <Route path="/projects/:projectId" element={<ProjectDetailLayout />}>
+                                    <Route index element={<Navigate to="overview" replace />} />
+                                    <Route path="overview" element={<ProjectOverviewPage />} />
+                                    <Route path="timeline" element={<ProjectTimelinePage />} />
+                                    <Route path="tasks" element={<ProjectTasksPage />} />
+                                    <Route path="members" element={<ProjectMembersPage />} />
+                                </Route>
                                 <Route path="/tasks" element={<Tasks />} />
                                 <Route path="/departments" element={<Departments />} />
                                 <Route path="/departments/:departmentId" element={<DepartmentDetail />} />

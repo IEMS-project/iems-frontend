@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import Avatar from '../ui/Avatar';
+import Avatar from '../ui/Avatar.jsx';
 
 export default function UserSelect({ assignableUsers = [], value = '', onChange }) {
   const [open, setOpen] = useState(false);

@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import DepartmentCard from "../components/departments/DepartmentCard";
 import DepartmentForm from "../components/departments/DepartmentForm";
-import PageHeader from "../components/common/PageHeader";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
@@ -170,9 +170,6 @@ export default function Teams() {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
-            <PageHeader title="Phòng ban" breadcrumbs={[{ label: "Phòng ban", to: "/teams" }]} />
-
             {/* Stats Cards */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -344,47 +341,28 @@ export default function Teams() {
                 </div>
             </Modal>
 
-            {/* Delete Department Modal */}
-            <Modal
+            {/* Delete Department Confirmation Dialog */}
+            <ConfirmDialog
                 open={isDeleteModalOpen}
-                onClose={() => {
-                    setIsDeleteModalOpen(false);
-                    setDeletingDepartment(null);
+                onOpenChange={(open) => {
+                    setIsDeleteModalOpen(open);
+                    if (!open) setDeletingDepartment(null);
                 }}
+                onConfirm={handleDeleteDepartment}
                 title="Xác nhận xóa phòng ban"
-            >
-                <div className="space-y-4">
-                    <p className="text-gray-600 dark:text-gray-300">
-                        Bạn có chắc chắn muốn xóa phòng ban <strong>{deletingDepartment?.departmentName || deletingDepartment?.name}</strong>?
-                    </p>
-                    {(deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0 && (
-                        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                ⚠️ Phòng ban này có {deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. 
-                                Tất cả thành viên sẽ bị xóa khỏi phòng ban này.
-                            </p>
-                        </div>
-                    )}
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                    <Button
-                        variant="secondary"
-                        onClick={() => {
-                            setIsDeleteModalOpen(false);
-                            setDeletingDepartment(null);
-                        }}
-                    >
-                        Hủy
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        onClick={handleDeleteDepartment}
-                        className="text-red-600 hover:text-red-700"
-                    >
-                        Xóa phòng ban
-                    </Button>
-                </div>
-            </Modal>
+                description={
+                    deletingDepartment
+                        ? `Bạn có chắc chắn muốn xóa phòng ban "${deletingDepartment?.departmentName || deletingDepartment?.name}"?${
+                              (deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0
+                                  ? `\n\n⚠️ Phòng ban này có ${deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. Tất cả thành viên sẽ bị xóa khỏi phòng ban này.`
+                                  : ""
+                          }`
+                        : ""
+                }
+                confirmText="Xóa phòng ban"
+                cancelText="Hủy"
+                variant="destructive"
+            />
         </div>
     );
 }

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBuilding, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaProjectDiagram, FaTasks, FaTrophy, FaChartLine, FaClock, FaUsers } from "react-icons/fa";
-import Avatar from "../components/ui/Avatar";
+import Avatar from "../components/ui/Avatar.jsx";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
 import { Card } from "../components/ui/Card";
-import PageHeader from "../components/common/PageHeader";
 import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
@@ -142,11 +141,6 @@ export default function Profile() {
 
 	return (
 		<div className="space-y-6">
-			<PageHeader
-				title="Hồ sơ cá nhân"
-				subtitle="Quản lý thông tin tài khoản của bạn"
-			/>
-
 			{/* Statistics Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard

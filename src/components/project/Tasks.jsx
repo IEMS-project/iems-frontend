@@ -1,47 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
-import { Table, THead, TBody, TR, TH, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
-import UserAvatar from "../ui/UserAvatar";
 import TaskDetailModal from "./TaskDetailModal";
-import Skeleton from "../ui/Skeleton";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
+import { taskColumns } from "./tasks-columns";
+import { TasksDataTable } from "./tasks-data-table";
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
     const [assignableUsers, setAssignableUsers] = useState([]);
 
     // Danh sách thành viên trong dự án để chọn làm người phụ trách
     // Tải từ API dự án
-
-    function statusVariant(status) {
-        switch (status) {
-            case "Hoàn thành": return "green";
-            case "Đang làm": return "blue";
-            case "Chờ": return "yellow";
-            default: return "gray";
-        }
-    }
-
-    function priorityVariant(priority) {
-        switch (priority) {
-            case "Cao": return "red";
-            case "Trung bình": return "yellow";
-            case "Thấp": return "blue";
-            default: return "gray";
-        }
-    }
 
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
@@ -225,7 +205,6 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         }
     };
 
-    const skeletonRows = Array.from({ length: 5 });
     const showLoading = loading || tasksLoading;
 
     const handleClose = () => {
@@ -242,6 +221,11 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         });
     };
 
+    const handleRowClick = (task) => {
+        setDetailTask(task);
+        setShowDetail(true);
+    };
+
     return (
         <>
             <Card>
@@ -252,101 +236,12 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table className="min-w-full">
-                            <THead>
-                                <TR>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Nhiệm vụ</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người thực hiện</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Trạng thái</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Độ ưu tiên</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Bắt đầu</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Kết thúc</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người tạo</TH>
-                                </TR>
-                            </THead>
-                            <TBody>
-                                {showLoading ? (
-                                    skeletonRows.map((_, idx) => (
-                                        <TR key={idx}>
-                                            <TD className="min-w-[200px]">
-                                                <Skeleton className="h-4 w-3/4" />
-                                            </TD>
-                                            <TD className="min-w-[180px]">
-                                                <div className="flex items-center gap-2">
-                                                    <Skeleton className="h-9 w-9 rounded-full" />
-                                                    <div className="flex-1 space-y-2">
-                                                        <Skeleton className="h-3 w-32" />
-                                                        <Skeleton className="h-3 w-24" />
-                                                    </div>
-                                                </div>
-                                            </TD>
-                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
-                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
-                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
-                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
-                                            <TD className="min-w-[180px]">
-                                                <div className="flex items-center gap-2">
-                                                    <Skeleton className="h-9 w-9 rounded-full" />
-                                                    <div className="flex-1 space-y-2">
-                                                        <Skeleton className="h-3 w-32" />
-                                                        <Skeleton className="h-3 w-24" />
-                                                    </div>
-                                                </div>
-                                            </TD>
-                                        </TR>
-                                    ))
-                                ) : tasksData.length === 0 ? (
-                                    <TR><TD colSpan="7" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
-                                ) : (
-                                    tasksData.map(t => {
-                                        const assignedName = t.assignedToName || t.assignedTo?.name || t.assignedToEmail || '';
-                                        const assignedEmail = t.assignedToEmail || '';
-                                        const createdName = t.createdByName || t.createdBy?.name || t.createdByEmail || '';
-                                        const createdEmail = t.createdByEmail || '';
-                                        return (
-                                            <TR 
-                                                key={t.id}
-                                                onClick={() => {
-                                                    setDetailTask(t); 
-                                                    setShowDetail(true);
-                                                }}
-                                                className="cursor-pointer transition-colors select-none"
-                                            >
-                                                <TD className="min-w-[200px] whitespace-nowrap">{t.title}</TD>
-                                                <TD className="min-w-[180px] whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <UserAvatar user={{ firstName: assignedName, email: assignedEmail }} size="xs" />
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="font-medium truncate">{assignedName}</span>
-                                                            <span className="text-sm text-gray-500 truncate">{assignedEmail}</span>
-                                                        </div>
-                                                    </div>
-                                                </TD>
-                                                <TD className="min-w-[120px] whitespace-nowrap">
-                                                    <Badge variant={statusVariant(t.status)}>{t.status}</Badge>
-                                                </TD>
-                                                <TD className="min-w-[120px] whitespace-nowrap">
-                                                    <Badge variant={priorityVariant(t.priority)}>{t.priority}</Badge>
-                                                </TD>
-                                                <TD className="min-w-[110px] whitespace-nowrap">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="min-w-[110px] whitespace-nowrap">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="min-w-[180px] whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <UserAvatar user={{ firstName: createdName, email: createdEmail }} size="xs" />
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="font-medium truncate">{createdName}</span>
-                                                            <span className="text-sm text-gray-500 truncate">{createdEmail}</span>
-                                                        </div>
-                                                    </div>
-                                                </TD>
-                                            </TR>
-                                        );
-                                    })
-                                )}
-                            </TBody>
-                        </Table>
-                    </div>
+                    <TasksDataTable 
+                        columns={taskColumns} 
+                        data={tasksData} 
+                        loading={showLoading}
+                        onRowClick={handleRowClick}
+                    />
                 </CardContent>
             </Card>
 

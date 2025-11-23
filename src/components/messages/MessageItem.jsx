@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import MediaPreviewModal from "./MediaPreviewModal";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import { chatService, chatWs } from "../../services/chatService";
 import {
     FaRegCopy,

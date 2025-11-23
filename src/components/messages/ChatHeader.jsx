@@ -1,5 +1,5 @@
 import React from "react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import { FaSearch, FaUsers, FaInfoCircle } from "react-icons/fa";
 
 export default function ChatHeader({

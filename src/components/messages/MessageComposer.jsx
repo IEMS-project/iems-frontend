@@ -8,7 +8,7 @@ import {
   FaStickyNote
 } from "react-icons/fa";
 import ReplyInput from "../messages/ReplyInput";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
 
 export default function MessageComposer({
   content,
@@ -20,7 +20,6 @@ export default function MessageComposer({
   onCancelReply,
   getUserName,
 }) {
-  const { toast } = useToast();
   const textareaRef = React.useRef(null);
 
   React.useEffect(() => {

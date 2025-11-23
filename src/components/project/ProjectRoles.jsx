@@ -3,11 +3,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import { userService } from "../../services/userService";
 import { useParams } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import Skeleton from "../ui/Skeleton";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function ProjectRoles() {
     const { projectId } = useParams();
@@ -17,6 +18,8 @@ export default function ProjectRoles() {
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ roleId: "", roleName: "" });
     const [allRoles, setAllRoles] = useState([]);
+    const [deleteRoleDialogOpen, setDeleteRoleDialogOpen] = useState(false);
+    const [roleToDelete, setRoleToDelete] = useState(null);
 
     const load = async () => {
         try {
@@ -53,12 +56,22 @@ export default function ProjectRoles() {
             await load();
         } catch (_e) {}
     };
-    const onDelete = async (r) => {
-        if (!window.confirm("Xóa vai trò này?")) return;
+    const onDelete = (r) => {
+        setRoleToDelete(r);
+        setDeleteRoleDialogOpen(true);
+    };
+
+    const confirmDeleteRole = async () => {
+        if (!roleToDelete) return;
         try {
-            await projectService.deleteProjectRole(projectId, r.id);
+            await projectService.deleteProjectRole(projectId, roleToDelete.id);
             await load();
-        } catch (_e) {}
+            setDeleteRoleDialogOpen(false);
+            setRoleToDelete(null);
+        } catch (_e) {
+            setDeleteRoleDialogOpen(false);
+            setRoleToDelete(null);
+        }
     };
 
     return (
@@ -135,6 +148,21 @@ export default function ProjectRoles() {
                     </div>
                 </div>
             </Modal>
+
+            {/* Delete Role Confirmation Dialog */}
+            <ConfirmDialog
+                open={deleteRoleDialogOpen}
+                onOpenChange={(open) => {
+                    setDeleteRoleDialogOpen(open);
+                    if (!open) setRoleToDelete(null);
+                }}
+                onConfirm={confirmDeleteRole}
+                title="Xác nhận xóa vai trò"
+                description="Bạn có chắc chắn muốn xóa vai trò này?"
+                confirmText="Xóa"
+                cancelText="Hủy"
+                variant="destructive"
+            />
         </>
     );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
 import { FaThumbtack, FaTimes, FaBookmark } from "react-icons/fa";
 

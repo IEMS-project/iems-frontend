@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import { documentService } from "../../services/documentService";
 import { chatService } from "../../services/chatService";
 import Skeleton from "../ui/Skeleton";
 import { FaTimes, FaCamera, FaEdit, FaBell, FaBellSlash, FaTrash, FaThumbtack, FaChevronDown, FaImage, FaFileAlt, FaLink } from "react-icons/fa";
 import MediaPreviewModal from "./MediaPreviewModal";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, onConversationUpdated, onClose, onReplyMessage, onReply }) {
-  const { toast } = useToast();
   const isOwner = conversation?.createdBy === currentUserId;
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(conversation?.name || "");
@@ -80,8 +80,11 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     } catch (e) { console.error(e); }
   };
 
-  const handleClearMyMessages = async () => {
-    if (!window.confirm('Xóa toàn bộ tin nhắn của cuộc trò chuyện này trên máy bạn?')) return;
+  const handleClearMyMessages = () => {
+    setClearMessagesDialogOpen(true);
+  };
+
+  const confirmClearMyMessages = async () => {
     try {
       // Iteratively fetch and delete messages for current user
       let before = null;
@@ -101,9 +104,11 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       // Notify parent to refresh if needed
       onConversationUpdated && onConversationUpdated(conversation);
       toast.success(`Đã xóa ${totalDeleted} tin nhắn trên máy bạn`);
+      setClearMessagesDialogOpen(false);
     } catch (e) {
       console.error(e);
       toast.error('Không thể xóa lịch sử ngay lúc này');
+      setClearMessagesDialogOpen(false);
     }
   };
 
@@ -465,6 +470,18 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
           }
         }}
         onClose={() => setPreviewMedia({ isOpen: false })}
+      />
+
+      {/* Clear Messages Confirmation Dialog */}
+      <ConfirmDialog
+        open={clearMessagesDialogOpen}
+        onOpenChange={setClearMessagesDialogOpen}
+        onConfirm={confirmClearMyMessages}
+        title="Xác nhận xóa tin nhắn"
+        description="Xóa toàn bộ tin nhắn của cuộc trò chuyện này trên máy bạn?"
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="destructive"
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
 
 export default function ConversationMembersModal({ open, onClose, conversationId }) {

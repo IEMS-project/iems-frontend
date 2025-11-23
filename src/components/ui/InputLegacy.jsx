@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Input({ label, error, className = "", ...props }) {
+function Input({ label, error, className = "", ...props }) {
 	// Normalize null/undefined values to empty string to keep inputs controlled
 	const { value, ...restProps } = props;
 	const safeValue = value === null || value === undefined ? "" : value;
@@ -16,3 +16,7 @@ export default function Input({ label, error, className = "", ...props }) {
 		</label>
 	);
 }
+
+// Export both default and named for compatibility
+export default Input;
+export { Input };

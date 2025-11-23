@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import PageHeader from "../components/common/PageHeader";
 import { userService } from "../services/userService";
 import { chatService, chatWs } from "../services/chatService";
 import { UnreadCountsProvider, useUnreadCounts } from "../context/UnreadCountsContext";
@@ -12,7 +11,7 @@ import GroupMembersModal from "../components/messages/GroupMembersModal";
 import EmptyChat from "../components/messages/EmptyChat";
 import ConversationList from "../components/messages/ConversationList";
 import ChatArea from "../components/messages/ChatArea";
-import { useToast } from "../context/ToastContext";
+import { toast } from "sonner";
 
 
 // Utility function to generate unique message keys
@@ -30,7 +29,6 @@ function generateLocalId() {
 }
 
 function Messages() {
-    const { toast } = useToast();
     const [allUsers, setAllUsers] = useState([]);
     const [currentUserId, setCurrentUserId] = useState("");
     const [conversations, setConversations] = useState([]);
@@ -1651,7 +1649,6 @@ function Messages() {
     return (
         <>
             <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
-                <PageHeader breadcrumbs={[{ label: "Tin nhắn", to: "/messages" }]} />
                 <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <ConversationList
                         conversations={conversations}

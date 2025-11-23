@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import PageHeader from "../components/common/PageHeader";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -181,7 +180,6 @@ export default function CalendarPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader breadcrumbs={[{ label: "Lịch", to: "/calendar" }]} />
             <Card>
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

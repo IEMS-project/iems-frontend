@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
-import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
-import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
-import PageHeader from "../components/common/PageHeader";
 import { projectService } from "../services/projectService";
-import UserAvatar from "../components/ui/UserAvatar";
-import Skeleton from "../components/ui/Skeleton";
-import { useToast } from "../context/ToastContext";
+import { toast } from "sonner";
+import { columns } from "./projects-columns";
+import { ProjectsDataTable } from "./projects-data-table";
 
 export default function Projects() {
-    const { toast } = useToast();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -108,129 +104,16 @@ export default function Projects() {
         ).values()
     );
 
-    const tableSkeletonRows = Array.from({ length: 5 });
-
     return (
         <>
             <div className="space-y-6">
-                <PageHeader breadcrumbs={[{ label: "Dự án", to: "/projects" }]} />
-
                 <Card>
                     <CardHeader className="flex items-center justify-between">
                         <CardTitle>Danh sách dự án</CardTitle>
                         <Button onClick={handleCreateProject}>Tạo dự án</Button>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <div className="space-y-3">
-                               
-                                <Table>
-                                    <THead>
-                                        <TR>
-                                            <TH>Tên</TH>
-                                            <TH>Mô tả</TH>
-                                            <TH>Trạng thái</TH>
-                                            <TH>Ngày bắt đầu</TH>
-                                            <TH>Ngày kết thúc</TH>
-                                            <TH>Quản lý</TH>
-                                            <TH></TH>
-                                        </TR>
-                                    </THead>
-                                    <TBody>
-                                        {tableSkeletonRows.map((_, idx) => (
-                                            <TR key={idx}>
-                                                <TD>
-                                                    <Skeleton className="h-4 w-48" />
-                                                </TD>
-                                                <TD>
-                                                    <Skeleton className="h-4 w-56" />
-                                                </TD>
-                                                <TD>
-                                                    <Skeleton className="h-4 w-24" />
-                                                </TD>
-                                                <TD>
-                                                    <Skeleton className="h-4 w-28" />
-                                                </TD>
-                                                <TD>
-                                                    <Skeleton className="h-4 w-28" />
-                                                </TD>
-                                                <TD>
-                                                    <div className="flex items-center gap-2">
-                                                        <Skeleton className="h-8 w-8 rounded-full" />
-                                                        <div className="flex-1 space-y-2">
-                                                            <Skeleton className="h-3 w-32" />
-                                                            <Skeleton className="h-3 w-24" />
-                                                        </div>
-                                                    </div>
-                                                </TD>
-                                              
-                                            </TR>
-                                        ))}
-                                    </TBody>
-                                </Table>
-                            </div>
-                        ) : (
-                            <Table>
-                                <THead>
-                                    <TR>
-                                        <TH>Tên</TH>
-                                        <TH>Mô tả</TH>
-                                        <TH>Trạng thái</TH>
-                                        <TH>Ngày bắt đầu</TH>
-                                        <TH>Ngày kết thúc</TH>
-                                        <TH>Quản lý</TH>
-                                        <TH></TH>
-                                    </TR>
-                                </THead>
-                                <TBody>
-                                    {projects.length === 0 ? (
-                                        <TR>
-                                            <TD colSpan="7" className="text-center py-8 text-gray-500">
-                                                Chưa có dự án nào
-                                            </TD>
-                                        </TR>
-                                    ) : (
-                                        projects.map(project => (
-                                            <TR key={project.id}>
-
-                                                <TD className="max-w-sm">
-                                                    <Link
-                                                        to={`/projects/${project.id}`}
-                                                        className="font-bold text-dark hover:underline"
-                                                    >
-                                                        {project.name}
-                                                    </Link>
-                                                </TD>
-                                                <TD className="max-w-xs truncate">{project.description}</TD>
-                                                <TD>{project.status || "Chưa xác định"}</TD>
-                                                <TD>
-                                                    {project.startDate
-                                                        ? new Date(project.startDate).toLocaleDateString("vi-VN")
-                                                        : "-"}
-                                                </TD>
-                                                <TD>
-                                                    {project.endDate
-                                                        ? new Date(project.endDate).toLocaleDateString("vi-VN")
-                                                        : "-"}
-                                                </TD>
-                                                <TD className="flex items-center gap-2">
-                                                    <UserAvatar user={project} size="xs" />
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="font-medium truncate">
-                                                            {project.managerName || project.managerEmail || project.managerId}
-                                                        </span>
-                                                        <span className="text-sm text-gray-500 truncate">
-                                                            {project.managerEmail}
-                                                        </span>
-                                                    </div>
-                                                </TD>
-                                                <TD></TD>
-                                            </TR>
-                                        ))
-                                    )}
-                                </TBody>
-                            </Table>
-                        )}
+                        <ProjectsDataTable columns={columns} data={projects} loading={loading} />
                     </CardContent>
                 </Card>
             </div>

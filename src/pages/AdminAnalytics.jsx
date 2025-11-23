@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import PowerBIEmbed from "../components/analytics/PowerBIEmbed";
-import PageHeader from "../components/common/PageHeader";
 
 function Kpi({ label, value, delta }) {
     return (
@@ -79,8 +78,6 @@ export default function AdminAnalytics() {
 
     return (
         <div className="space-y-6">
-
-            <PageHeader breadcrumbs={[{ label: "Quản trị - Phân tích", to: "/admin" }]} />
             <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                     {kpis.map(k => (

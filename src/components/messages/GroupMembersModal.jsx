@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
 import { chatService } from "../../services/chatService";
 

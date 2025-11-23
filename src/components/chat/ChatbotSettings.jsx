@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FaCog, FaSave, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
-import { useToast } from '../../context/ToastContext';
+import { toast } from 'sonner';
 
 const ChatbotSettings = ({ className = "" }) => {
-  const { toast } = useToast();
   const [settings, setSettings] = useState({
     model: 'qwen2.5',
     temperature: 0.7,

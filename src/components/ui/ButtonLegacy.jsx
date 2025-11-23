@@ -16,7 +16,7 @@ const sizes = {
 	lg: "h-12 px-6 text-base"
 };
 
-export default function Button({
+function Button({
 	type = "button",
 	variant = "primary",
 	size = "md",
@@ -30,3 +30,7 @@ export default function Button({
 		</button>
 	);
 }
+
+// Export both default and named for compatibility
+export default Button;
+export { Button };

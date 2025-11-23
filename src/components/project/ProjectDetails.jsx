@@ -5,18 +5,17 @@ import Badge from "../ui/Badge";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
 
 export default function ProjectDetails() {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { handleError } = useErrorHandler();
-    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [projectData, setProjectData] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -163,7 +162,6 @@ export default function ProjectDetails() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="secondary">Chia sẻ</Button>
                                 <Button onClick={handleEditProject}>Chỉnh sửa dự án</Button>
                             </div>
                         </div>

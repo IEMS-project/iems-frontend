@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import PageHeader from '../components/common/PageHeader';
 import ChatMessage from '../components/chat/ChatMessage';
 import ChatInput from '../components/chat/ChatInput';
 import ConversationManager from '../components/chat/ConversationManager';
@@ -245,8 +244,6 @@ const Chatbot = () => {
 
   return (
     <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
-      <PageHeader breadcrumbs={[{ label: "AI Assistant", to: "/chatbot" }]} />
-
       <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         {/* Sidebar */}
         <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col hidden md:flex`}>

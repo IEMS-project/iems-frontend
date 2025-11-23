@@ -1,24 +1,23 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import UserSelect from "./UserSelect";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { userService } from "../../services/userService";
 import Skeleton from "../ui/Skeleton";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
 
 const membersData = [];
 
 export default function Members() {
     const { projectId } = useParams();
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [members, setMembers] = useState([]);
     const [showModal, setShowModal] = useState(false);

@@ -1,6 +1,16 @@
 import React from "react";
-import Button from "./Button";
-import Select from "./Select";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+    Pagination as ShadcnPagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationPrevious,
+    PaginationNext,
+    PaginationEllipsis,
+} from "./pagination";
+import Select from "./Select.jsx";
+import { cn } from "@/lib/utils";
 
 const Pagination = ({
     currentPage,
@@ -43,8 +53,51 @@ const Pagination = ({
         onPageSizeChange(newPageSize);
     };
 
+    // Generate page numbers to display
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        
+        if (totalPages <= maxVisible) {
+            // Show all pages if total is small
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Always show first page
+            pages.push(1);
+            
+            if (currentPage <= 3) {
+                // Near the start
+                for (let i = 2; i <= 4; i++) {
+                    pages.push(i);
+                }
+                pages.push("ellipsis");
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                // Near the end
+                pages.push("ellipsis");
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                // In the middle
+                pages.push("ellipsis");
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    pages.push(i);
+                }
+                pages.push("ellipsis");
+                pages.push(totalPages);
+            }
+        }
+        
+        return pages;
+    };
+
+    const pageNumbers = getPageNumbers();
+
     return (
-        <div className={`flex items-center justify-between ${className}`}>
+        <div className={cn("flex items-center justify-between", className)}>
             {/* Số dòng trên trang - bên trái */}
             {showPageSizeSelector && (
                 <div className="flex items-center gap-2">
@@ -70,52 +123,98 @@ const Pagination = ({
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                     Trang {currentPage} / {totalPages} • Tổng {totalItems}
                 </span>
-                <div className="flex items-center gap-1">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleFirstPage}
-                        disabled={currentPage <= 1}
-                        title="Trang đầu"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handlePreviousPage}
-                        disabled={currentPage <= 1}
-                        title="Trang trước"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleNextPage}
-                        disabled={currentPage >= totalPages}
-                        title="Trang sau"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleLastPage}
-                        disabled={currentPage >= totalPages}
-                        title="Trang cuối"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg>
-                    </Button>
-                </div>
+                
+                <ShadcnPagination>
+                    <PaginationContent>
+                        {/* First page button */}
+                        <PaginationItem>
+                            <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleFirstPage();
+                                }}
+                                className={cn(
+                                    currentPage <= 1 && "pointer-events-none opacity-50"
+                                )}
+                                aria-label="Trang đầu"
+                            >
+                                <ChevronsLeft className="h-4 w-4" />
+                            </PaginationLink>
+                        </PaginationItem>
+
+                        {/* Previous page button */}
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handlePreviousPage();
+                                }}
+                                className={cn(
+                                    currentPage <= 1 && "pointer-events-none opacity-50"
+                                )}
+                            />
+                        </PaginationItem>
+
+                        {/* Page numbers */}
+                        {pageNumbers.map((page, index) => {
+                            if (page === "ellipsis") {
+                                return (
+                                    <PaginationItem key={`ellipsis-${index}`}>
+                                        <PaginationEllipsis />
+                                    </PaginationItem>
+                                );
+                            }
+                            
+                            return (
+                                <PaginationItem key={page}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onPageChange(page);
+                                        }}
+                                        isActive={currentPage === page}
+                                    >
+                                        {page}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            );
+                        })}
+
+                        {/* Next page button */}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleNextPage();
+                                }}
+                                className={cn(
+                                    currentPage >= totalPages && "pointer-events-none opacity-50"
+                                )}
+                            />
+                        </PaginationItem>
+
+                        {/* Last page button */}
+                        <PaginationItem>
+                            <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleLastPage();
+                                }}
+                                className={cn(
+                                    currentPage >= totalPages && "pointer-events-none opacity-50"
+                                )}
+                                aria-label="Trang cuối"
+                            >
+                                <ChevronsRight className="h-4 w-4" />
+                            </PaginationLink>
+                        </PaginationItem>
+                    </PaginationContent>
+                </ShadcnPagination>
             </div>
         </div>
     );

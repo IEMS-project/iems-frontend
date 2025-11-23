@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaBrain, FaTrash, FaEye, FaEyeSlash, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
-import { useToast } from '../../context/ToastContext';
+import { toast } from 'sonner';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const MemoryPanel = ({ className = "" }) => {
-  const { toast } = useToast();
   const [memory, setMemory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
@@ -30,11 +30,13 @@ const MemoryPanel = ({ className = "" }) => {
     }
   };
 
-  const handleClearMemory = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ memory? Hành động này không thể hoàn tác.')) {
-      return;
-    }
+  const [clearMemoryDialogOpen, setClearMemoryDialogOpen] = useState(false);
 
+  const handleClearMemory = () => {
+    setClearMemoryDialogOpen(true);
+  };
+
+  const confirmClearMemory = async () => {
     try {
       setClearing(true);
       await chatbotService.clearMemory();
@@ -45,6 +47,7 @@ const MemoryPanel = ({ className = "" }) => {
       toast.error(error?.message || 'Không thể xóa memory');
     } finally {
       setClearing(false);
+      setClearMemoryDialogOpen(false);
     }
   };
 
@@ -203,6 +206,18 @@ const MemoryPanel = ({ className = "" }) => {
           </button>
         </div>
       )}
+
+      {/* Clear Memory Confirmation Dialog */}
+      <ConfirmDialog
+        open={clearMemoryDialogOpen}
+        onOpenChange={setClearMemoryDialogOpen}
+        onConfirm={confirmClearMemory}
+        title="Xác nhận xóa memory"
+        description="Bạn có chắc chắn muốn xóa toàn bộ memory? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="destructive"
+      />
     </div>
   );
 };

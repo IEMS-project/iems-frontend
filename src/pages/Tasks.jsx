@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
-import KanbanColumn from "../components/tasks/KanbanColumn";
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
-import PageHeader from "../components/common/PageHeader";
 import Button from "../components/ui/Button";
 import Skeleton from "../components/ui/Skeleton";
-import Select from "../components/ui/Select";
+import Select from "../components/ui/Select.jsx";
 import Input from "../components/ui/Input";
 import Checkbox from "../components/ui/Checkbox";
 import { taskService } from "../services/taskService";
 import { projectService } from "../services/projectService";
+import {
+    KanbanProvider,
+    KanbanBoard,
+    KanbanHeader,
+    KanbanCards,
+    KanbanCard,
+} from "../components/ui/shadcn-io/kanban";
+import Badge from "../components/ui/Badge";
 
 const initialTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
 
@@ -17,7 +23,6 @@ export default function Tasks() {
     const [tasks, setTasks] = useState(initialTasks);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
-    const [draggedTask, setDraggedTask] = useState(null);
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +48,27 @@ export default function Tasks() {
     const statusOptions = ["Chờ", "Đang làm", "Hoàn thành"];
     const priorityOptions = ["Cao", "Trung bình", "Thấp"];
 
+    // Transform tasks object to kanban format
+    const kanbanColumns = useMemo(() => 
+        statusOptions.map(status => ({ id: status, name: status })),
+        []
+    );
+
+    const kanbanData = useMemo(() => {
+        const data = [];
+        Object.entries(tasks).forEach(([status, statusTasks]) => {
+            statusTasks.forEach(task => {
+                data.push({
+                    id: task.id,
+                    name: task.title,
+                    column: status,
+                    ...task, // Include all task properties
+                });
+            });
+        });
+        return data;
+    }, [tasks]);
+
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -61,81 +87,126 @@ export default function Tasks() {
     }, []);
 
 
-    const handleDragStart = (e, task, status) => {
-        // Nếu task đang nằm trong nhóm đã chọn, kéo cả nhóm; ngược lại kéo một task
-        const isMulti = selectedIds.has(task.id) && selectedIds.size > 1;
-        if (isMulti) {
-            setDraggedTask({ ids: Array.from(selectedIds), sourceStatus: status });
-        } else {
-            setDraggedTask({ id: task.id, sourceStatus: status });
-        }
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-    };
-
-    const handleDrop = async (e, targetStatus) => {
-        e.preventDefault();
-        if (!draggedTask || draggedTask.sourceStatus === targetStatus) return;
-
-        const mapStatusToEnum = (s) => {
-            if (s === "Chờ") return "TO_DO";
-            if (s === "Đang làm") return "IN_PROGRESS";
-            if (s === "Hoàn thành") return "COMPLETED";
-            return undefined;
-        };
-        const backendStatus = mapStatusToEnum(targetStatus);
-        if (!backendStatus) return;
-
-        const newTasks = { ...tasks };
-
-        try {
-            if (draggedTask.ids && Array.isArray(draggedTask.ids)) {
-                // Queue locally only; save button will persist
-
-                // Remove from source columns and add to target
-                const idSet = new Set(draggedTask.ids);
-                Object.keys(newTasks).forEach(col => {
-                    newTasks[col] = newTasks[col].filter(t => !idSet.has(t.id));
-                });
-                const moved = [];
-                idSet.forEach(id => {
-                    const original = findTaskById(tasks, id);
-                    if (original) moved.push({ ...original, status: targetStatus });
-                });
-                newTasks[targetStatus] = [...newTasks[targetStatus], ...moved];
-
-                // Clear selection after move
-                setSelectedIds(new Set());
-            } else if (draggedTask.id) {
-                // Remove from source
-                newTasks[draggedTask.sourceStatus] = newTasks[draggedTask.sourceStatus].filter(
-                    t => t.id !== draggedTask.id
-                );
-                // Add to target with original object
-                const original = findTaskById(tasks, draggedTask.id);
-                newTasks[targetStatus] = [...newTasks[targetStatus], { ...(original || {}), id: draggedTask.id, status: targetStatus }];
+    // Handle kanban data change (drag and drop)
+    const handleKanbanDataChange = (newData) => {
+        // Transform kanban data back to tasks object
+        const newTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
+        newData.forEach(item => {
+            const task = {
+                id: item.id,
+                title: item.name || item.title,
+                project: item.project,
+                startDate: item.startDate,
+                dueDate: item.dueDate,
+                description: item.description,
+                priority: item.priority,
+            };
+            if (newTasks[item.column]) {
+                newTasks[item.column].push(task);
             }
-
-            setTasks(newTasks);
-            setHasUnsavedChanges(true);
-        } finally {
-            setDraggedTask(null);
-        }
+        });
+        setTasks(newTasks);
+        setHasUnsavedChanges(true);
     };
 
     const handleTaskClick = (task) => {
-        // Toggle multi-select; click lần nữa để bỏ chọn
+        // Always open detail modal when clicking a task
+        setSelectedTask(task);
+        setShowDetailModal(true);
+        
+        // Also update selection
         const next = new Set(selectedIds);
-        if (next.has(task.id)) next.delete(task.id); else next.add(task.id);
-        setSelectedIds(next);
-
-        // Mở chi tiết khi chỉ chọn một
-        if (next.size === 1 && next.has(task.id)) {
-            setSelectedTask(task);
-            setShowDetailModal(true);
+        if (next.has(task.id)) {
+            next.delete(task.id);
+        } else {
+            next.add(task.id);
         }
+        setSelectedIds(next);
+    };
+
+    // Helper functions for task card rendering
+    const getTimeRemaining = (dueDate) => {
+        if (!dueDate) return null;
+        const today = new Date();
+        const due = new Date(dueDate);
+        const diffTime = due - today;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (diffTime < 0) {
+            return `Quá hạn ${Math.abs(diffDays)}d`;
+        } else if (diffDays === 0 && diffHours === 0) {
+            return `Còn ${diffMinutes}m`;
+        } else if (diffDays === 0) {
+            return `Còn ${diffHours}h`;
+        } else {
+            return `Còn ${diffDays}d`;
+        }
+    };
+
+    const getPriorityVariant = (priority) => {
+        if (!priority) return "gray";
+        const priorityUpper = priority.toString().toUpperCase();
+        if (["CAO", "HIGH"].includes(priorityUpper)) return "red";
+        if (["TRUNG BÌNH", "TRUNG BINH", "MEDIUM"].includes(priorityUpper)) return "yellow";
+        if (["THẤP", "THAP", "LOW"].includes(priorityUpper)) return "green";
+        return "gray";
+    };
+
+    const formatPriority = (priority) => {
+        if (!priority) return "N/A";
+        const priorityUpper = priority.toString().toUpperCase();
+        if (["HIGH", "CAO"].includes(priorityUpper)) return "Cao";
+        if (["MEDIUM", "TRUNG BÌNH", "TRUNG BINH"].includes(priorityUpper)) return "Trung bình";
+        if (["LOW", "THẤP", "THAP"].includes(priorityUpper)) return "Thấp";
+        return priority;
+    };
+
+    // Format date range: "01/10 - 15/10, 2026"
+    const formatDateRange = (startDate, dueDate) => {
+        if (!startDate && !dueDate) return null;
+        
+        const formatDate = (dateString) => {
+            if (!dateString) return null;
+            try {
+                const date = new Date(dateString);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                return { day, month, year: date.getFullYear() };
+            } catch {
+                return null;
+            }
+        };
+
+        const start = formatDate(startDate);
+        const end = formatDate(dueDate);
+
+        if (!start && !end) return null;
+        
+        if (start && end) {
+            // Same year: "01/10 - 15/10, 2026"
+            if (start.year === end.year) {
+                if (start.month === end.month) {
+                    // Same month: "01 - 15/10, 2026"
+                    return `${start.day} - ${end.day}/${end.month}, ${end.year}`;
+                } else {
+                    // Different months: "01/10 - 15/11, 2026"
+                    return `${start.day}/${start.month} - ${end.day}/${end.month}, ${end.year}`;
+                }
+            } else {
+                // Different years: "01/10/2025 - 15/01/2026"
+                return `${start.day}/${start.month}/${start.year} - ${end.day}/${end.month}/${end.year}`;
+            }
+        } else if (start) {
+            // Only start date: "Bắt đầu: 01/10, 2026"
+            return `Bắt đầu: ${start.day}/${start.month}, ${start.year}`;
+        } else if (end) {
+            // Only due date: "Kết thúc: 15/10, 2026"
+            return `Kết thúc: ${end.day}/${end.month}, ${end.year}`;
+        }
+        
+        return null;
     };
 
     const findTaskById = (data, id) => {
@@ -233,6 +304,7 @@ export default function Tasks() {
                         id: t.id,
                         title: t.title,
                         project: t.projectName || t.projectId,
+                        startDate: t.startDate,
                         dueDate: t.dueDate,
                         description: t.description,
                         priority: t.priority,
@@ -298,8 +370,6 @@ export default function Tasks() {
     return (
         <>
             <div className="space-y-6">
-                <PageHeader breadcrumbs={[{ label: "Nhiệm vụ", to: "/tasks" }]} />
-
                 {/* Filters and Save Controls - Same Row */}
                 <div className="flex items-end justify-between gap-4 flex-wrap">
                     {/* Filters - Left Side */}
@@ -521,20 +591,74 @@ export default function Tasks() {
                             ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            {Object.entries(tasks).map(([status, statusTasks]) => (
-                                <KanbanColumn
-                                    key={status}
-                                    status={status}
-                                    tasks={statusTasks}
-                                    onDragOver={handleDragOver}
-                                    onDrop={handleDrop}
-                                    onDragStart={handleDragStart}
-                                    onTaskClick={handleTaskClick}
-                                    selectedIds={selectedIds}
-                                />
-                            ))}
-                        </div>
+                        <KanbanProvider
+                            columns={kanbanColumns}
+                            data={kanbanData}
+                            onDataChange={handleKanbanDataChange}
+                        >
+                            {(column) => (
+                                <KanbanBoard key={column.id} id={column.id} className="min-h-[500px]">
+                                    <KanbanHeader className="flex items-center justify-between p-4 border-b">
+                                        <span className="font-semibold">{column.name}</span>
+                                        <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full dark:bg-gray-800 dark:text-gray-300">
+                                            {kanbanData.filter(item => item.column === column.id).length}
+                                        </span>
+                                    </KanbanHeader>
+                                    <KanbanCards id={column.id} className="min-h-[400px]">
+                                        {(item) => {
+                                            const timeRemaining = getTimeRemaining(item.dueDate);
+                                            const isOverdue = timeRemaining && timeRemaining.includes("Quá hạn");
+                                            const isSelected = selectedIds.has(item.id);
+                                            const dateRange = formatDateRange(item.startDate, item.dueDate);
+                                            
+                                            return (
+                                                <KanbanCard
+                                                    key={item.id}
+                                                    id={item.id}
+                                                    name={item.name}
+                                                    column={item.column}
+                                                    className={isSelected ? "border-blue-500 bg-blue-50 dark:bg-blue-950 cursor-pointer" : "cursor-pointer"}
+                                                >
+                                                    <div 
+                                                        className="space-y-2"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleTaskClick(item);
+                                                        }}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <h4 className="font-medium text-sm leading-tight flex-1 text-gray-900 dark:text-gray-100">
+                                                                {item.title || item.name}
+                                                            </h4>
+                                                            {item.priority && (
+                                                                <Badge variant={getPriorityVariant(item.priority)} className="flex-shrink-0">
+                                                                    {formatPriority(item.priority)}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        {dateRange && (
+                                                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                                                                {dateRange}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                                                                {item.project}
+                                                            </div>
+                                                            {timeRemaining && (
+                                                                <span className={`text-xs flex-shrink-0 ${isOverdue ? "text-red-500" : "text-green-500"}`}>
+                                                                    {timeRemaining}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </KanbanCard>
+                                            );
+                                        }}
+                                    </KanbanCards>
+                                </KanbanBoard>
+                            )}
+                        </KanbanProvider>
                     )}
                 </div>
             </div>
