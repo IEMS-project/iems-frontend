@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import KanbanColumn from "../components/tasks/KanbanColumn";
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/ui/Button";
 import Skeleton from "../components/ui/Skeleton";
+import Select from "../components/ui/Select";
+import Input from "../components/ui/Input";
+import Checkbox from "../components/ui/Checkbox";
 import { taskService } from "../services/taskService";
+import { projectService } from "../services/projectService";
 
 const initialTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
 
@@ -19,8 +23,42 @@ export default function Tasks() {
     const [isSaving, setIsSaving] = useState(false);
     const [savedTasks, setSavedTasks] = useState(initialTasks);
     const [loading, setLoading] = useState(true);
+    const [projects, setProjects] = useState([]);
+    const [filters, setFilters] = useState({
+        projectId: [],
+        status: [],
+        priority: [],
+        dateFrom: "",
+        dateTo: "",
+    });
+    const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+    const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+    const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+    const projectDropdownRef = useRef(null);
+    const statusDropdownRef = useRef(null);
+    const priorityDropdownRef = useRef(null);
     const skeletonColumns = useMemo(() => ["Chờ", "Đang làm", "Hoàn thành"], []);
     const skeletonCards = useMemo(() => Array.from({ length: 3 }), []);
+
+    const statusOptions = ["Chờ", "Đang làm", "Hoàn thành"];
+    const priorityOptions = ["Cao", "Trung bình", "Thấp"];
+
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target)) {
+                setShowProjectDropdown(false);
+            }
+            if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+                setShowStatusDropdown(false);
+            }
+            if (priorityDropdownRef.current && !priorityDropdownRef.current.contains(event.target)) {
+                setShowPriorityDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
 
     const handleDragStart = (e, task, status) => {
@@ -108,24 +146,96 @@ export default function Tasks() {
         return null;
     };
 
+    // Load projects for filter
+    useEffect(() => {
+        const loadProjects = async () => {
+            try {
+                const list = await projectService.getMyProjects();
+                setProjects(Array.isArray(list) ? list : []);
+            } catch (e) {
+                console.error('Error loading projects:', e);
+            }
+        };
+        loadProjects();
+    }, []);
+
     // Load tasks from backend: my-tasks across all projects
     useEffect(() => {
         const load = async () => {
             try {
+                setLoading(true);
                 const list = await taskService.getMyTasks();
                 // list is TaskResponseDto (flat); group into Kanban columns by status display name
+                let filtered = Array.isArray(list) ? list : [];
+                
+                // Apply filters
+                if (filters.projectId && filters.projectId.length > 0) {
+                    filtered = filtered.filter(t => filters.projectId.includes(t.projectId));
+                }
+                if (filters.status && filters.status.length > 0) {
+                    filtered = filtered.filter(t => {
+                        const taskStatus = (t.status || '').toLowerCase();
+                        return filters.status.some(selectedStatus => {
+                            const statusLower = selectedStatus.toLowerCase();
+                            if (statusLower === 'chờ') {
+                                return taskStatus.includes('to do') || taskStatus.includes('chờ');
+                            } else if (statusLower === 'đang làm') {
+                                return taskStatus.includes('progress') || taskStatus.includes('làm');
+                            } else if (statusLower === 'hoàn thành') {
+                                return taskStatus.includes('completed') || taskStatus.includes('hoàn thành');
+                            }
+                            return false;
+                        });
+                    });
+                }
+                if (filters.priority && filters.priority.length > 0) {
+                    filtered = filtered.filter(t => {
+                        const taskPriority = (t.priority || '').toString().toLowerCase();
+                        return filters.priority.some(selectedPriority => {
+                            const priorityLower = selectedPriority.toLowerCase();
+                            if (priorityLower === 'cao') {
+                                return taskPriority.includes('high') || taskPriority.includes('cao');
+                            } else if (priorityLower === 'trung bình') {
+                                return taskPriority.includes('medium') || taskPriority.includes('trung bình') || taskPriority.includes('trung bin');
+                            } else if (priorityLower === 'thấp') {
+                                return taskPriority.includes('low') || taskPriority.includes('thấp') || taskPriority.includes('thap');
+                            }
+                            return false;
+                        });
+                    });
+                }
+                // Filter by date range (dueDate)
+                if (filters.dateFrom || filters.dateTo) {
+                    filtered = filtered.filter(t => {
+                        if (!t.dueDate) return false;
+                        const taskDate = new Date(t.dueDate);
+                        if (filters.dateFrom) {
+                            const fromDate = new Date(filters.dateFrom);
+                            fromDate.setHours(0, 0, 0, 0);
+                            if (taskDate < fromDate) return false;
+                        }
+                        if (filters.dateTo) {
+                            const toDate = new Date(filters.dateTo);
+                            toDate.setHours(23, 59, 59, 999);
+                            if (taskDate > toDate) return false;
+                        }
+                        return true;
+                    });
+                }
+                
                 const group = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
-                for (const t of Array.isArray(list) ? list : []) {
+                for (const t of filtered) {
                     const status = (t.status || '').toLowerCase();
                     const uiStatus = status.includes('to do') || status.includes('chờ') ? 'Chờ'
                         : status.includes('progress') || status.includes('làm') ? 'Đang làm'
-                        : 'Hoàn thành';
+                            : 'Hoàn thành';
                     group[uiStatus].push({
                         id: t.id,
                         title: t.title,
                         project: t.projectName || t.projectId,
                         dueDate: t.dueDate,
                         description: t.description,
+                        priority: t.priority,
                     });
                 }
                 setTasks(group);
@@ -137,10 +247,12 @@ export default function Tasks() {
             }
         };
         load();
-    }, []);
+    }, [filters]);
 
     // Save tasks: no-op (state reflects backend already via bulk update)
     const handleSave = async () => {
+        setIsSaving(true);
+        try {
         // Persist all moves since last save: compare savedTasks vs tasks
         const toUpdate = [];
         Object.entries(tasks).forEach(([status, list]) => {
@@ -168,6 +280,11 @@ export default function Tasks() {
 
         setSavedTasks(tasks);
         setHasUnsavedChanges(false);
+        } catch (error) {
+            console.error('Error saving tasks:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Reset to last saved state
@@ -181,10 +298,155 @@ export default function Tasks() {
     return (
         <>
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <PageHeader breadcrumbs={[{ label: "Nhiệm vụ", to: "/tasks" }]} />
-                    
-                    {/* Save/Reset Controls */}
+                <PageHeader breadcrumbs={[{ label: "Nhiệm vụ", to: "/tasks" }]} />
+
+                {/* Filters and Save Controls - Same Row */}
+                <div className="flex items-end justify-between gap-4 flex-wrap">
+                    {/* Filters - Left Side */}
+                    <div className="flex items-end gap-4 flex-1 flex-wrap">
+                        {/* Multi-select Project Filter */}
+                        <div className="relative" ref={projectDropdownRef}>
+                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Dự án
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                            >
+                                {filters.projectId.length === 0
+                                    ? "Tất cả dự án"
+                                    : filters.projectId.length === 1
+                                    ? projects.find(p => p.id === filters.projectId[0])?.name || "Dự án"
+                                    : `${filters.projectId.length} dự án`}
+                                <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {showProjectDropdown && (
+                                <div className="absolute z-10 mt-1 w-48 max-h-60 overflow-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="p-2 space-y-1">
+                                        {projects.length === 0 ? (
+                                            <div className="p-2 text-sm text-gray-500 dark:text-gray-400">Không có dự án</div>
+                                        ) : (
+                                            projects.map((project) => (
+                                                <Checkbox
+                                                    key={project.id}
+                                                    label={project.name}
+                                                    checked={filters.projectId.includes(project.id)}
+                                                    onChange={(e) => {
+                                                        const newProjectIds = e.target.checked
+                                                            ? [...filters.projectId, project.id]
+                                                            : filters.projectId.filter(id => id !== project.id);
+                                                        setFilters({ ...filters, projectId: newProjectIds });
+                                                    }}
+                                                    className="w-full"
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Multi-select Status Filter */}
+                        <div className="relative" ref={statusDropdownRef}>
+                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Trạng thái
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                            >
+                                {filters.status.length === 0
+                                    ? "Tất cả trạng thái"
+                                    : filters.status.length === 1
+                                    ? filters.status[0]
+                                    : `${filters.status.length} trạng thái`}
+                                <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {showStatusDropdown && (
+                                <div className="absolute z-10 mt-1 w-48 rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="p-2 space-y-1">
+                                        {statusOptions.map((option) => (
+                                            <Checkbox
+                                                key={option}
+                                                label={option}
+                                                checked={filters.status.includes(option)}
+                                                onChange={(e) => {
+                                                    const newStatus = e.target.checked
+                                                        ? [...filters.status, option]
+                                                        : filters.status.filter(s => s !== option);
+                                                    setFilters({ ...filters, status: newStatus });
+                                                }}
+                                                className="w-full"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Multi-select Priority Filter */}
+                        <div className="relative" ref={priorityDropdownRef}>
+                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                                Độ ưu tiên
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                            >
+                                {filters.priority.length === 0
+                                    ? "Tất cả độ ưu tiên"
+                                    : filters.priority.length === 1
+                                    ? filters.priority[0]
+                                    : `${filters.priority.length} độ ưu tiên`}
+                                <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {showPriorityDropdown && (
+                                <div className="absolute z-10 mt-1 w-48 rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="p-2 space-y-1">
+                                        {priorityOptions.map((option) => (
+                                            <Checkbox
+                                                key={option}
+                                                label={option}
+                                                checked={filters.priority.includes(option)}
+                                                onChange={(e) => {
+                                                    const newPriority = e.target.checked
+                                                        ? [...filters.priority, option]
+                                                        : filters.priority.filter(p => p !== option);
+                                                    setFilters({ ...filters, priority: newPriority });
+                                                }}
+                                                className="w-full"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <Input
+                            label="Từ ngày"
+                            type="date"
+                            value={filters.dateFrom}
+                            onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                            className="w-40"
+                        />
+                        <Input
+                            label="Đến ngày"
+                            type="date"
+                            value={filters.dateTo}
+                            onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                            className="w-40"
+                        />
+                    </div>
+
+                    {/* Save/Reset Controls - Right Side */}
                     <div className="flex items-center gap-3">
                         {hasUnsavedChanges && (
                             <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
@@ -194,7 +456,7 @@ export default function Tasks() {
                                 Có thay đổi chưa lưu
                             </span>
                         )}
-                        
+
                         <div className="flex gap-2">
                             <Button
                                 variant="secondary"
@@ -234,6 +496,7 @@ export default function Tasks() {
                 {/* Tab Content */}
                 <div>
                     {loading ? (
+
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             {skeletonColumns.map((status) => (
                                 <Card key={status}>
@@ -277,9 +540,10 @@ export default function Tasks() {
             </div>
 
             {/* Task Detail Modal */}
-            <TaskDetailModal
+            < TaskDetailModal
                 open={showDetailModal}
-                onClose={() => setShowDetailModal(false)}
+                onClose={() => setShowDetailModal(false)
+                }
                 task={selectedTask}
             />
         </>

@@ -5,8 +5,10 @@ import { chatService } from "../../services/chatService";
 import Skeleton from "../ui/Skeleton";
 import { FaTimes, FaCamera, FaEdit, FaBell, FaBellSlash, FaTrash, FaThumbtack, FaChevronDown, FaImage, FaFileAlt, FaLink } from "react-icons/fa";
 import MediaPreviewModal from "./MediaPreviewModal";
+import { useToast } from "../../context/ToastContext";
 
 export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, onConversationUpdated, onClose, onReplyMessage, onReply }) {
+  const { toast } = useToast();
   const isOwner = conversation?.createdBy === currentUserId;
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(conversation?.name || "");
@@ -98,10 +100,10 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       }
       // Notify parent to refresh if needed
       onConversationUpdated && onConversationUpdated(conversation);
-      alert(`Đã xóa ${totalDeleted} tin nhắn trên máy bạn`);
+      toast.success(`Đã xóa ${totalDeleted} tin nhắn trên máy bạn`);
     } catch (e) {
       console.error(e);
-      alert('Không thể xóa lịch sử ngay lúc này');
+      toast.error('Không thể xóa lịch sử ngay lúc này');
     }
   };
 

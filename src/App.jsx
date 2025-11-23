@@ -17,6 +17,7 @@ import PermissionDenied from "./pages/PermissionDenied";
 import Chatbot from "./pages/Chatbot";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
+import ToastContainer from "./components/ui/ToastContainer";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function Protected({ children }) {
@@ -30,34 +31,37 @@ function Protected({ children }) {
 
 export default function App() {
     return (
-        <Routes>
-            {/* Login page - standalone, no layout */}
-            <Route path="/login" element={<Login />} />
+        <>
+            <ToastContainer />
+            <Routes>
+                {/* Login page - standalone, no layout */}
+                <Route path="/login" element={<Login />} />
 
-            {/* All other pages - with MainLayout */}
-            <Route path="/*" element={
-                <Protected>
-                    <MainLayout>
-                        <Routes>
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/projects" element={<Projects />} />
-                            <Route path="/projects/:projectId" element={<ProjectDetail />} />
-                            <Route path="/tasks" element={<Tasks />} />
-                            <Route path="/departments" element={<Departments />} />
-                            <Route path="/departments/:departmentId" element={<DepartmentDetail />} />
-                            <Route path="/messages" element={<Messages />} />
-                            <Route path="/documents" element={<Documents />} />
-                            <Route path="/chatbot" element={<Chatbot />} />
-                            <Route path="/calendar" element={<Calendar />} />
-                            <Route path="/notifications" element={<Notifications />} />
-                            <Route path="/profile" element={<Profile />} />
-                            <Route path="/admin" element={<AdminAnalytics />} />
-                            <Route path="/permission-denied" element={<PermissionDenied />} />
-                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                        </Routes>
-                    </MainLayout>
-                </Protected>
-            } />
-        </Routes>
+                {/* All other pages - with MainLayout */}
+                <Route path="/*" element={
+                    <Protected>
+                        <MainLayout>
+                            <Routes>
+                                <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/projects" element={<Projects />} />
+                                <Route path="/projects/:projectId" element={<ProjectDetail />} />
+                                <Route path="/tasks" element={<Tasks />} />
+                                <Route path="/departments" element={<Departments />} />
+                                <Route path="/departments/:departmentId" element={<DepartmentDetail />} />
+                                <Route path="/messages" element={<Messages />} />
+                                <Route path="/documents" element={<Documents />} />
+                                <Route path="/chatbot" element={<Chatbot />} />
+                                <Route path="/calendar" element={<Calendar />} />
+                                <Route path="/notifications" element={<Notifications />} />
+                                <Route path="/profile" element={<Profile />} />
+                                <Route path="/admin" element={<AdminAnalytics />} />
+                                <Route path="/permission-denied" element={<PermissionDenied />} />
+                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                            </Routes>
+                        </MainLayout>
+                    </Protected>
+                } />
+            </Routes>
+        </>
     );
 }

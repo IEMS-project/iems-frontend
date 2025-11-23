@@ -1,6 +1,11 @@
-import { request } from "../lib/api";
+import { request, baseRequest } from "../lib/api";
 
 export const projectService = {
+  async getMyProjects() {
+    const data = await baseRequest("/project-service/projects/my-projects");
+    return data?.data || data || [];
+  },
+
   async getProjectsTable() {
     const data = await request("/project-service/projects/table");
     return data?.data || data || [];

@@ -8,6 +8,7 @@ import {
   FaStickyNote
 } from "react-icons/fa";
 import ReplyInput from "../messages/ReplyInput";
+import { useToast } from "../../context/ToastContext";
 
 export default function MessageComposer({
   content,
@@ -19,6 +20,7 @@ export default function MessageComposer({
   onCancelReply,
   getUserName,
 }) {
+  const { toast } = useToast();
   const textareaRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -84,7 +86,7 @@ export default function MessageComposer({
                 return sizeMB <= 20;
               });
               if (valid.length < files.length) {
-                alert('Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).');
+                toast.warning('Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).');
               }
               handlePickFiles(valid);
               e.target.value = '';

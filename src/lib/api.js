@@ -180,6 +180,7 @@ export {
   CHATBOT_BASE_URL,
   getStoredTokens,
   setStoredTokens,
+  baseRequest,
   request,
   requestNoAuth,
   chatbotRequest,

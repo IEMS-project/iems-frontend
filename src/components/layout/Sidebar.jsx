@@ -29,10 +29,10 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 			{ icon: <FaCalendarAlt className="h-5 w-5" />, label: "Lịch", to: "/calendar" },
 			{ icon: <FaComments className="h-5 w-5" />, label: "Tin nhắn", to: "/messages" },
 			{ icon: <FaRobot className="h-5 w-5" />, label: "AI Assistant", to: "/chatbot" },
-			{ icon: <FaBell className="h-5 w-5" />, label: "Thông báo", to: "/notifications" },
+			// { icon: <FaBell className="h-5 w-5" />, label: "Thông báo", to: "/notifications" },
 			{ icon: <FaFileAlt className="h-5 w-5" />, label: "Tài liệu", to: "/documents" },
 			{ icon: <FaUsers className="h-5 w-5" />, label: "Phòng ban", to: "/departments" },
-			{ icon: <FaUserShield className="h-5 w-5" />, label: "Quản trị", to: "/admin" },
+			// { icon: <FaUserShield className="h-5 w-5" />, label: "Quản trị", to: "/admin" },
 		],
 	};
 	return (

@@ -3,12 +3,21 @@ import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 
-export default function TaskDetailModal({ open, onClose, task }) {
+export default function TaskDetailModal({ open, onClose, task, onEdit }) {
     const statusVariant = (status) => {
         switch (status) {
             case "Hoàn thành": return "green";
             case "Đang làm": return "blue";
             case "Chờ": return "yellow";
+            default: return "gray";
+        }
+    };
+
+    const priorityVariant = (priority) => {
+        switch (priority) {
+            case "Cao": return "red";
+            case "Trung bình": return "yellow";
+            case "Thấp": return "blue";
             default: return "gray";
         }
     };
@@ -20,6 +29,11 @@ export default function TaskDetailModal({ open, onClose, task }) {
             title="Chi tiết task"
             footer={
                 <div className="flex justify-end gap-2">
+                    {onEdit && (
+                        <Button variant="secondary" onClick={() => onEdit(task)}>
+                            Chỉnh sửa
+                        </Button>
+                    )}
                     <Button variant="secondary" onClick={onClose}>Đóng</Button>
                 </div>
             }
@@ -37,7 +51,9 @@ export default function TaskDetailModal({ open, onClose, task }) {
                         </div>
                         <div>
                             <div className="text-xs uppercase text-gray-500">Ưu tiên</div>
-                            <div className="text-gray-800">{task.priority}</div>
+                            <div className="text-gray-800">
+                                <Badge variant={priorityVariant(task.priority)}>{task.priority}</Badge>
+                            </div>
                         </div>
                         <div>
                             <div className="text-xs uppercase text-gray-500">Người thực hiện</div>

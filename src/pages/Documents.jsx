@@ -14,6 +14,7 @@ import PermissionModal from "../components/documents/PermissionModal";
 import SharedUsersModal from "../components/documents/SharedUsersModal";
 import MoveModal from "../components/documents/MoveModal";
 import Skeleton from "../components/ui/Skeleton";
+import { useToast } from "../context/ToastContext";
 
 function DocumentGridSkeleton() {
 	const placeholders = Array.from({ length: 8 });
@@ -78,6 +79,7 @@ function DocumentListSkeleton() {
 }
 
 export default function Documents() {
+	const { toast } = useToast();
 	// `folders` is the current visible folder list (children of current folder)
 	// `allFolders` keeps the full list fetched for parent lookups and breadcrumb building
 	const [folders, setFolders] = useState([]);
@@ -209,9 +211,10 @@ export default function Documents() {
 			setNewFolderName("");
 			setIsCreateOpen(false);
 			loadFolderContents();
+			toast.success("Thư mục đã được tạo thành công");
 		} catch (error) {
 			console.error('Error creating folder:', error);
-			alert('Lỗi khi tạo thư mục');
+			toast.error(error?.message || 'Lỗi khi tạo thư mục');
 		}
 	}
 
@@ -223,9 +226,10 @@ export default function Documents() {
 				await documentService.uploadFile(currentFolderId, file);
 			}
 			loadFolderContents();
+			toast.success(`Đã tải lên ${fileList.length} tệp thành công`);
 		} catch (error) {
 			console.error('Error uploading files:', error);
-			alert('Lỗi khi tải tệp lên');
+			toast.error(error?.message || 'Lỗi khi tải tệp lên');
 		}
 	}
 
@@ -253,10 +257,10 @@ export default function Documents() {
 			// Show success notification
 			const action = result ? 'thêm' : 'xóa';
 			const itemType = type === 'folder' ? 'thư mục' : 'tệp';
-			alert(`Đã ${action} ${itemType} '${item.name}' ${result ? 'vào' : 'khỏi'} mục yêu thích.`);
+			toast.success(`Đã ${action} ${itemType} '${item.name}' ${result ? 'vào' : 'khỏi'} mục yêu thích`);
 		} catch (error) {
 			console.error('Error toggling favorite:', error);
-			alert('Lỗi khi cập nhật yêu thích');
+			toast.error(error?.message || 'Lỗi khi cập nhật yêu thích');
 		}
 	}
 
@@ -283,9 +287,10 @@ export default function Documents() {
 			}
 			loadFolderContents();
 			setDeleteItem(null);
+			toast.success("Đã xóa thành công");
 		} catch (error) {
 			console.error('Error deleting item:', error);
-			alert('Lỗi khi xóa');
+			toast.error(error?.message || 'Lỗi khi xóa');
 		}
 	}
 
@@ -310,10 +315,10 @@ export default function Documents() {
 				permission
 			);
 			setShareItem(null);
-			alert('Chia sẻ thành công');
+			toast.success('Chia sẻ thành công');
 		} catch (error) {
 			console.error('Error sharing:', error);
-			alert('Lỗi khi chia sẻ');
+			toast.error(error?.message || 'Lỗi khi chia sẻ');
 		}
 	}
 
