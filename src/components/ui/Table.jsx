@@ -22,8 +22,16 @@ export function TBody({ children }) {
 	return <tbody className="divide-y divide-gray-200 dark:divide-gray-800">{children}</tbody>;
 }
 
-export function TR({ children }) {
-	return <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40">{children}</tr>;
+export function TR({ children, className = "", onClick, ...props }) {
+	return (
+		<tr 
+			className={`hover:bg-gray-50/50 dark:hover:bg-gray-800/40 ${className}`}
+			onClick={onClick}
+			{...props}
+		>
+			{children}
+		</tr>
+	);
 }
 
 export function TH({ children, className = "" }) {

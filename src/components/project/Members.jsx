@@ -11,12 +11,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { userService } from "../../services/userService";
 import Skeleton from "../ui/Skeleton";
+import { useToast } from "../../context/ToastContext";
 
 const membersData = [];
 
 export default function Members() {
     const { projectId } = useParams();
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [members, setMembers] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -108,12 +110,12 @@ export default function Members() {
             setLoading(true);
             // If editingMember exists, update flow would go here (not implemented yet)
             if (!formData.userId) {
-                alert("Vui lòng chọn người dùng");
+                toast.warning("Vui lòng chọn người dùng");
                 return;
             }
             
             if (!formData.roleId) {
-                alert("Vui lòng chọn vai trò");
+                toast.warning("Vui lòng chọn vai trò");
                 return;
             }
 
@@ -130,9 +132,12 @@ export default function Members() {
 
             setShowModal(false);
             setFormData({ name: "", role: "", status: "Hoạt động" });
+            toast.success("Thêm thành viên thành công");
         } catch (e) {
             console.error("Error adding project member:", e);
-            alert(e?.message || "Có lỗi khi thêm thành viên dự án");
+            // Show error message with appropriate variant
+            const errorMessage = e?.message || "Có lỗi khi thêm thành viên dự án";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

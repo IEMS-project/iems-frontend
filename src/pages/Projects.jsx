@@ -10,8 +10,10 @@ import PageHeader from "../components/common/PageHeader";
 import { projectService } from "../services/projectService";
 import UserAvatar from "../components/ui/UserAvatar";
 import Skeleton from "../components/ui/Skeleton";
+import { useToast } from "../context/ToastContext";
 
 export default function Projects() {
+    const { toast } = useToast();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -52,11 +54,11 @@ export default function Projects() {
 
     const handleSubmit = async () => {
         if (!formData.name.trim()) {
-            alert("Vui lòng nhập tên dự án");
+            toast.warning("Vui lòng nhập tên dự án");
             return;
         }
         if (!formData.managerId) {
-            alert("Vui lòng chọn quản lý dự án");
+            toast.warning("Vui lòng chọn quản lý dự án");
             return;
         }
 
@@ -81,9 +83,10 @@ export default function Projects() {
                 endDate: "",
                 managerId: ""
             });
+            toast.success("Dự án đã được tạo thành công");
         } catch (error) {
             console.error("Error creating project:", error);
-            alert("Có lỗi xảy ra khi tạo dự án. Vui lòng thử lại.");
+            toast.error(error?.message || "Có lỗi xảy ra khi tạo dự án. Vui lòng thử lại.");
         }
     };
 

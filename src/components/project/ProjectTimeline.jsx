@@ -124,12 +124,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
             <CardContent>
                 {loading ? (
                     <div className="space-y-4">
-                        <div className="grid" style={{ gridTemplateColumns: `240px repeat(${skeletonTicks.length}, minmax(100px, 1fr))` }}>
-                            <Skeleton className="sticky left-0 h-6 w-full bg-gray-200" />
-                            {skeletonTicks.map((_, idx) => (
-                                <Skeleton key={idx} className="h-6 w-full" />
-                            ))}
-                        </div>
+                        
                         <div className="space-y-3">
                             {skeletonRows.map((_, idx) => (
                                 <div key={idx} className="grid" style={{ gridTemplateColumns: `240px 1fr` }}>

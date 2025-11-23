@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
+import { useToast } from "../../context/ToastContext";
 
 export default function PermissionModal({ 
 	isOpen, 
@@ -8,6 +9,7 @@ export default function PermissionModal({
 	item, 
 	onConfirm 
 }) {
+	const { toast } = useToast();
 	const [permission, setPermission] = useState(item?.permission || "PUBLIC");
 	const [loading, setLoading] = useState(false);
 
@@ -16,9 +18,10 @@ export default function PermissionModal({
 		try {
 			await onConfirm(permission);
 			onClose();
+			toast.success("Quyền đã được cập nhật thành công");
 		} catch (error) {
 			console.error('Error updating permission:', error);
-			alert('Lỗi khi cập nhật quyền');
+			toast.error(error?.message || 'Lỗi khi cập nhật quyền');
 		} finally {
 			setLoading(false);
 		}

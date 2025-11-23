@@ -6,14 +6,19 @@ import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function UserProfile({ collapsed = false }) {
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const { logout } = useAuth();
+	const { logout, userProfile, loadingProfile } = useAuth();
 	
-	// Mock user data - trong thực tế sẽ lấy từ context hoặc API
-	const user = {
-		name: "Nguyễn Văn A",
-		email: "nguyenvana@example.com",
-		role: "Quản lý dự án",
-		avatar: null, // URL ảnh đại diện nếu có
+	// Format user data from API response
+	const user = userProfile ? {
+		name: `${userProfile.firstName || ''}${userProfile.lastName || ''}`.trim() || 'User',
+		email: userProfile.email || '',
+		role: userProfile.role || '',
+		avatar: userProfile.image || null,
+	} : {
+		name: "User",
+		email: "",
+		role: "",
+		avatar: null,
 	};
 
 	const handleLogout = () => {
@@ -100,19 +105,7 @@ export default function UserProfile({ collapsed = false }) {
 						onClick={() => setIsDropdownOpen(false)}
 					/>
 					<div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-20">
-						<div className="p-4 border-b border-gray-200 dark:border-gray-700">
-							<div className="flex items-center gap-3">
-								<Avatar src={user.avatar} name={user.name} size={12} />
-								<div className="flex-1 min-w-0">
-									<p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-										{user.name}
-									</p>
-									<p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-										{user.email}
-									</p>
-								</div>
-							</div>
-						</div>
+						
 						<div className="p-2">
 							<Link
 								to="/profile"

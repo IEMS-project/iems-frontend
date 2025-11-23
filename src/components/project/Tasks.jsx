@@ -13,9 +13,11 @@ import UserSelect from "./UserSelect";
 import UserAvatar from "../ui/UserAvatar";
 import TaskDetailModal from "./TaskDetailModal";
 import Skeleton from "../ui/Skeleton";
+import { useToast } from "../../context/ToastContext";
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
     const [assignableUsers, setAssignableUsers] = useState([]);
@@ -28,6 +30,15 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             case "Hoàn thành": return "green";
             case "Đang làm": return "blue";
             case "Chờ": return "yellow";
+            default: return "gray";
+        }
+    }
+
+    function priorityVariant(priority) {
+        switch (priority) {
+            case "Cao": return "red";
+            case "Trung bình": return "yellow";
+            case "Thấp": return "blue";
             default: return "gray";
         }
     }
@@ -146,15 +157,15 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         try {
             setLoading(true);
             if (!formData.title.trim()) {
-                alert("Vui lòng nhập tiêu đề");
+                toast.warning("Vui lòng nhập tiêu đề");
                 return;
             }
             if (!formData.assignee) {
-                alert("Vui lòng chọn người phụ trách trong dự án");
+                toast.warning("Vui lòng chọn người phụ trách trong dự án");
                 return;
             }
             if (!formData.dueDate) {
-                alert("Vui lòng chọn hạn hoàn thành");
+                toast.warning("Vui lòng chọn hạn hoàn thành");
                 return;
             }
 
@@ -173,8 +184,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
             if (editingTask?.id) {
                 await taskService.updateTask(editingTask.id, payload);
+                toast.success("Task đã được cập nhật thành công");
             } else {
                 await taskService.createTask(payload);
+                toast.success("Task đã được tạo thành công");
             }
 
             const refreshed = await taskService.getTasksByProject(projectId);
@@ -205,7 +218,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 navigate("/permission-denied");
                 return;
             } else {
-                alert(e?.message || "Có lỗi xảy ra khi lưu task");
+                toast.error(e?.message || "Có lỗi xảy ra khi lưu task");
             }
         } finally {
             setLoading(false);
@@ -239,31 +252,27 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="overflow-x-auto">
                         <Table className="min-w-full">
                             <THead>
                                 <TR>
-                                    <TH className="sticky top-0 bg-white z-10">Nhiệm vụ</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Người thực hiện</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Trạng thái</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Độ ưu tiên</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Bắt đầu</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Kết thúc</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Người tạo</TH>
-                                    <TH className="sticky top-0 bg-white z-10">Hành động</TH>
-
-
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Nhiệm vụ</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người thực hiện</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Trạng thái</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Độ ưu tiên</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Bắt đầu</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Kết thúc</TH>
+                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người tạo</TH>
                                 </TR>
                             </THead>
                             <TBody>
                                 {showLoading ? (
                                     skeletonRows.map((_, idx) => (
                                         <TR key={idx}>
-                                            <TD className="min-w-[180px]">
+                                            <TD className="min-w-[200px]">
                                                 <Skeleton className="h-4 w-3/4" />
-                                                <Skeleton className="mt-2 h-3 w-1/2" />
                                             </TD>
-                                            <TD>
+                                            <TD className="min-w-[180px]">
                                                 <div className="flex items-center gap-2">
                                                     <Skeleton className="h-9 w-9 rounded-full" />
                                                     <div className="flex-1 space-y-2">
@@ -272,11 +281,11 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                                     </div>
                                                 </div>
                                             </TD>
-                                            <TD><Skeleton className="h-6 w-20" /></TD>
-                                            <TD><Skeleton className="h-4 w-16" /></TD>
-                                            <TD><Skeleton className="h-4 w-20" /></TD>
-                                            <TD><Skeleton className="h-4 w-20" /></TD>
-                                            <TD>
+                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
+                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
+                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
+                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
+                                            <TD className="min-w-[180px]">
                                                 <div className="flex items-center gap-2">
                                                     <Skeleton className="h-9 w-9 rounded-full" />
                                                     <div className="flex-1 space-y-2">
@@ -285,11 +294,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                                     </div>
                                                 </div>
                                             </TD>
-                                            <TD><Skeleton className="h-4 w-16 ml-auto" /></TD>
                                         </TR>
                                     ))
                                 ) : tasksData.length === 0 ? (
-                                    <TR><TD colSpan="8" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
+                                    <TR><TD colSpan="7" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
                                 ) : (
                                     tasksData.map(t => {
                                         const assignedName = t.assignedToName || t.assignedTo?.name || t.assignedToEmail || '';
@@ -297,41 +305,40 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                         const createdName = t.createdByName || t.createdBy?.name || t.createdByEmail || '';
                                         const createdEmail = t.createdByEmail || '';
                                         return (
-                                            <TR key={t.id}>
-                                                <TD className="min-w-[180px]">{t.title}</TD>
-                                                <TD className="flex items-center gap-2 min-w-[180px]">
-                                                    <UserAvatar user={{ firstName: assignedName, email: assignedEmail }} size="xs" />
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="font-medium">{assignedName}</span>
-                                                        <span className="text-sm text-gray-500">{assignedEmail}</span>
+                                            <TR 
+                                                key={t.id}
+                                                onClick={() => {
+                                                    setDetailTask(t); 
+                                                    setShowDetail(true);
+                                                }}
+                                                className="cursor-pointer transition-colors select-none"
+                                            >
+                                                <TD className="min-w-[200px] whitespace-nowrap">{t.title}</TD>
+                                                <TD className="min-w-[180px] whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <UserAvatar user={{ firstName: assignedName, email: assignedEmail }} size="xs" />
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="font-medium truncate">{assignedName}</span>
+                                                            <span className="text-sm text-gray-500 truncate">{assignedEmail}</span>
+                                                        </div>
                                                     </div>
                                                 </TD>
-
-                                                <TD className="min-w-[100px]"><Badge variant={statusVariant(t.status)}>{t.status}</Badge></TD>
-                                                <TD className="min-w-[100px]">{t.priority}</TD>
-                                                <TD className="min-w-[100px]">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="min-w-[100px]">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="flex items-center gap-2 min-w-[180px]">
-                                                    <UserAvatar user={{ firstName: createdName, email: createdEmail }} size="xs" />
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="font-medium">{createdName}</span>
-                                                        <span className="text-sm text-gray-500">{createdEmail}</span>
-                                                    </div>
+                                                <TD className="min-w-[120px] whitespace-nowrap">
+                                                    <Badge variant={statusVariant(t.status)}>{t.status}</Badge>
                                                 </TD>
-                                                <TD>
-                                                    <button
-                                                        onClick={() => handleEditTask(t)}
-                                                        className="text-xs text-blue-600 hover:underline"
-                                                    >
-                                                        Sửa
-                                                    </button>
-                                                    <span className="mx-1 text-gray-300">|</span>
-                                                    <button
-                                                        onClick={() => { setDetailTask(t); setShowDetail(true); }}
-                                                        className="text-xs text-gray-700 hover:underline"
-                                                    >
-                                                        Xem
-                                                    </button>
+                                                <TD className="min-w-[120px] whitespace-nowrap">
+                                                    <Badge variant={priorityVariant(t.priority)}>{t.priority}</Badge>
+                                                </TD>
+                                                <TD className="min-w-[110px] whitespace-nowrap">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                                <TD className="min-w-[110px] whitespace-nowrap">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
+                                                <TD className="min-w-[180px] whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <UserAvatar user={{ firstName: createdName, email: createdEmail }} size="xs" />
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="font-medium truncate">{createdName}</span>
+                                                            <span className="text-sm text-gray-500 truncate">{createdEmail}</span>
+                                                        </div>
+                                                    </div>
                                                 </TD>
                                             </TR>
                                         );
@@ -463,7 +470,15 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 </div>
             </Modal>
 
-            <TaskDetailModal open={showDetail} onClose={() => { setShowDetail(false); setDetailTask(null); }} task={detailTask} />
+            <TaskDetailModal 
+                open={showDetail} 
+                onClose={() => { setShowDetail(false); setDetailTask(null); }} 
+                task={detailTask}
+                onEdit={(task) => {
+                    setShowDetail(false);
+                    handleEditTask(task);
+                }}
+            />
 
 
 

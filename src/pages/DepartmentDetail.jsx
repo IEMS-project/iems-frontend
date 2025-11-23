@@ -524,11 +524,10 @@ export default function DepartmentDetail() {
         <>
             <div className="space-y-6">
                 {/* Page Header */}
-                <div className="flex items-center justify-between">
-                    <PageHeader
-                        breadcrumbs={[{ label: "Phòng ban", to: "/departments" }, { label: department.departmentName || department.name }]}
-                    />
-                </div>
+
+                <PageHeader
+                    breadcrumbs={[{ label: "Phòng ban", to: "/departments" }, { label: department.departmentName || department.name }]}
+                />
 
                 {/* Department Stats */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">

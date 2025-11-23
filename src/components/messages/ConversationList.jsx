@@ -3,6 +3,7 @@ import Avatar from "../../components/ui/Avatar";
 import Skeleton from "../ui/Skeleton";
 import { FaPlus, FaThumbtack, FaEllipsisV, FaBell, FaBellSlash, FaTrash } from "react-icons/fa";
 import { chatService } from "../../services/chatService";
+import { useToast } from "../../context/ToastContext";
 
 export default function ConversationList({
   conversations,
@@ -26,6 +27,7 @@ export default function ConversationList({
   onConversationUpdate,
   loadingConversations = false,
 }) {
+  const { toast } = useToast();
   const [hoveredConversation, setHoveredConversation] = useState(null);
   const [contextMenu, setContextMenu] = useState({ show: false, conversationId: null, x: 0, y: 0 });
   const skeletonItems = useMemo(() => Array.from({ length: 6 }), []);
@@ -116,14 +118,14 @@ export default function ConversationList({
       console.error('Error toggling notification settings:', error);
     }
   };
-
+  
   const handleDeleteGroup = async (conversationId) => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (!conversation) return;
 
     // Check if user is the creator
     if (conversation.createdBy !== currentUserId) {
-      alert('Chỉ người tạo nhóm mới có thể xóa nhóm này');
+      toast.warning('Chỉ người tạo nhóm mới có thể xóa nhóm này');
       return;
     }
 
@@ -141,10 +143,10 @@ export default function ConversationList({
       }
       // Close context menu
       setContextMenu({ show: false, conversationId: null, x: 0, y: 0 });
-      alert('Nhóm đã được xóa thành công');
+      toast.success('Nhóm đã được xóa thành công');
     } catch (error) {
       console.error('Error deleting group:', error);
-      alert('Không thể xóa nhóm. Vui lòng thử lại.');
+      toast.error(error?.message || 'Không thể xóa nhóm. Vui lòng thử lại.');
     }
   };
 

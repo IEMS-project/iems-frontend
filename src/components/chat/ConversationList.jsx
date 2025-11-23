@@ -3,6 +3,7 @@ import { FaPlus, FaSearch, FaHistory } from 'react-icons/fa';
 import ConversationItem from './ConversationItem';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
+import { useToast } from '../../context/ToastContext';
 
 const ConversationList = ({ 
   activeConversationId, 
@@ -13,6 +14,7 @@ const ConversationList = ({
   refreshTrigger,
   className = "" 
 }) => {
+  const { toast } = useToast();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,7 +86,7 @@ const ConversationList = ({
       }
     } catch (error) {
       console.error('Error deleting conversation:', error);
-      alert('Không thể xóa cuộc trò chuyện');
+      toast.error(error?.message || 'Không thể xóa cuộc trò chuyện');
     }
   };
 
@@ -101,7 +103,7 @@ const ConversationList = ({
         ));
       } catch (error) {
         console.error('Error renaming conversation:', error);
-        alert('Không thể đổi tên cuộc trò chuyện');
+        toast.error(error?.message || 'Không thể đổi tên cuộc trò chuyện');
       }
     }
   };

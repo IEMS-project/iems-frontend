@@ -10,11 +10,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
+import { useToast } from "../../context/ToastContext";
 
 export default function ProjectDetails() {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { handleError } = useErrorHandler();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [projectData, setProjectData] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -98,7 +100,7 @@ export default function ProjectDetails() {
             
             // Basic validation
             if (!formData.name.trim()) {
-                alert("Vui lòng nhập tên dự án");
+                toast.warning("Vui lòng nhập tên dự án");
                 return;
             }
             
@@ -123,10 +125,11 @@ export default function ProjectDetails() {
             // Close modal
             setShowEditModal(false);
             
+            toast.success("Dự án đã được cập nhật thành công");
             console.log("Project updated successfully:", updatedProject);
         } catch (error) {
             console.error("Error updating project:", error);
-            handleError(error);
+            toast.error(error?.message || "Có lỗi xảy ra khi cập nhật dự án");
         } finally {
             setLoading(false);
         }

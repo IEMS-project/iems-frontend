@@ -4,12 +4,14 @@ import Button from "../ui/Button";
 import { documentService } from "../../services/documentService";
 import UserAvatar from "../ui/UserAvatar";
 import Skeleton from "../ui/Skeleton";
+import { useToast } from "../../context/ToastContext";
 
 export default function SharedUsersModal({ 
 	isOpen, 
 	onClose, 
 	item 
 }) {
+	const { toast } = useToast();
 	console.log('SharedUsersModal item:', item);
 	const [sharedUsers, setSharedUsers] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -40,9 +42,10 @@ export default function SharedUsersModal({
 			setActionLoading(shareId);
 			await documentService.updateSharePermission(shareId, newPermission);
 			loadSharedUsers(); // Reload to get updated data
+			toast.success("Quyền đã được cập nhật");
 		} catch (error) {
 			console.error('Error updating permission:', error);
-			alert('Lỗi khi cập nhật quyền');
+			toast.error(error?.message || 'Lỗi khi cập nhật quyền');
 		} finally {
 			setActionLoading(null);
 		}
@@ -53,9 +56,10 @@ export default function SharedUsersModal({
 			setActionLoading(shareId);
 			await documentService.removeShare(shareId);
 			loadSharedUsers(); // Reload to get updated data
+			toast.success("Đã xóa quyền chia sẻ");
 		} catch (error) {
 			console.error('Error removing share:', error);
-			alert('Lỗi khi xóa quyền');
+			toast.error(error?.message || 'Lỗi khi xóa quyền');
 		} finally {
 			setActionLoading(null);
 		}

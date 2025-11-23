@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
+import { useToast } from "../../context/ToastContext";
 
 export default function RenameModal({ 
 	isOpen, 
@@ -9,6 +10,7 @@ export default function RenameModal({
 	item, 
 	onConfirm 
 }) {
+	const { toast } = useToast();
 	const [newName, setNewName] = useState(item?.name || "");
 	const [loading, setLoading] = useState(false);
 
@@ -20,9 +22,10 @@ export default function RenameModal({
 			await onConfirm(newName.trim());
 			onClose();
 			setNewName("");
+			toast.success("Đã đổi tên thành công");
 		} catch (error) {
 			console.error('Error renaming:', error);
-			alert('Lỗi khi đổi tên');
+			toast.error(error?.message || 'Lỗi khi đổi tên');
 		} finally {
 			setLoading(false);
 		}

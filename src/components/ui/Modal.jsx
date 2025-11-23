@@ -21,33 +21,21 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
     
 	return (
 		<div 
-			className="fixed z-[9999] flex items-center justify-center" 
+			className="fixed inset-0 z-[9999] flex items-center justify-center m-0 p-0"
 			style={{ 
-				top: 0, 
-				left: 0, 
-				right: 0, 
-				bottom: 0,
-				width: '100vw',
-				height: '100vh',
-				minHeight: '100vh',
-				position: 'fixed'
+				margin: 0,
+				padding: 0
 			}}
 		>
 			<div 
-				className="absolute bg-black/50" 
+				className="absolute inset-0 bg-black/50 m-0 p-0" 
 				onClick={onClose}
-				style={{ 
-					top: 0, 
-					left: 0, 
-					right: 0, 
-					bottom: 0,
-					width: '100vw',
-					height: '100vh',
-					minHeight: '100vh',
-					position: 'absolute'
+				style={{
+					margin: 0,
+					padding: 0
 				}}
 			/>
-			<div className={`relative z-10 w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 ${className}`}>
+			<div className={`relative z-10 w-full max-w-lg mx-4 my-auto overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 ${className}`}>
 				{title && (
 					<div className="border-b border-gray-200 px-4 py-3 text-base font-semibold dark:border-gray-800">
 						{title}

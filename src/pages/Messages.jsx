@@ -12,6 +12,7 @@ import GroupMembersModal from "../components/messages/GroupMembersModal";
 import EmptyChat from "../components/messages/EmptyChat";
 import ConversationList from "../components/messages/ConversationList";
 import ChatArea from "../components/messages/ChatArea";
+import { useToast } from "../context/ToastContext";
 
 
 // Utility function to generate unique message keys
@@ -29,6 +30,7 @@ function generateLocalId() {
 }
 
 function Messages() {
+    const { toast } = useToast();
     const [allUsers, setAllUsers] = useState([]);
     const [currentUserId, setCurrentUserId] = useState("");
     const [conversations, setConversations] = useState([]);
@@ -1453,7 +1455,7 @@ function Messages() {
 
             if (!result || !result.targetMessage) {
                 console.log('❌ Message not found or deleted');
-                alert('Tin nhắn gốc đã bị xóa');
+                toast.warning('Tin nhắn gốc đã bị xóa');
                 return;
             }
 
@@ -1471,7 +1473,7 @@ function Messages() {
                     return;
                 } else {
                     console.log('❌ Target conversation not found');
-                    alert('Cuộc trò chuyện không tồn tại');
+                    toast.warning('Cuộc trò chuyện không tồn tại');
                     return;
                 }
             }
@@ -1506,7 +1508,7 @@ function Messages() {
 
         } catch (error) {
             console.error('❌ Error loading message with neighbors:', error);
-            alert('Không thể tải tin nhắn. Tin nhắn gốc có thể đã bị xóa.');
+            toast.error(error?.message || 'Không thể tải tin nhắn. Tin nhắn gốc có thể đã bị xóa.');
         }
     }
 
@@ -1642,7 +1644,7 @@ function Messages() {
             await chatService.sendMedia({ conversationId: selectedConversationId, senderId: currentUserId, files });
         } catch (e) {
             console.error('❌ Error sending media:', e);
-            alert('Gửi tệp thất bại. Vui lòng thử lại.');
+            toast.error(e?.message || 'Gửi tệp thất bại. Vui lòng thử lại.');
         }
     };
 

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaCog, FaSave, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
+import { useToast } from '../../context/ToastContext';
 
 const ChatbotSettings = ({ className = "" }) => {
+  const { toast } = useToast();
   const [settings, setSettings] = useState({
     model: 'qwen2.5',
     temperature: 0.7,
@@ -56,7 +58,7 @@ const ChatbotSettings = ({ className = "" }) => {
       // Simulate save
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      alert('Cài đặt đã được lưu thành công');
+      toast.success('Cài đặt đã được lưu thành công');
     } catch (error) {
       console.error('Error saving settings:', error);
       setError('Không thể lưu cài đặt');

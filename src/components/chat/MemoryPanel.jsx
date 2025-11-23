@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaBrain, FaTrash, FaEye, FaEyeSlash, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
+import { useToast } from '../../context/ToastContext';
 
 const MemoryPanel = ({ className = "" }) => {
+  const { toast } = useToast();
   const [memory, setMemory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clearing, setClearing] = useState(false);
@@ -37,10 +39,10 @@ const MemoryPanel = ({ className = "" }) => {
       setClearing(true);
       await chatbotService.clearMemory();
       setMemory(null);
-      alert('Memory đã được xóa thành công');
+      toast.success('Memory đã được xóa thành công');
     } catch (error) {
       console.error('Error clearing memory:', error);
-      alert('Không thể xóa memory');
+      toast.error(error?.message || 'Không thể xóa memory');
     } finally {
       setClearing(false);
     }
