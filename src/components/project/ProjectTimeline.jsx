@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Select from "../ui/Select.jsx";
 import { useParams } from "react-router-dom";
-import TaskDetailModal from "./TaskDetailModal";
+import TaskDetailModal from "../tasks/TaskDetailModal";
 import Skeleton from "../ui/Skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/shadcn-avatar";
 import {

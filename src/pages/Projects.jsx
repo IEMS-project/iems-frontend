@@ -6,8 +6,8 @@ import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
 import { projectService } from "../services/projectService";
 import { toast } from "sonner";
-import { columns } from "./projects-columns";
-import { ProjectsDataTable } from "./projects-data-table";
+import { columns } from "../components/project/projects-columns";
+import { ProjectsDataTable } from "../components/project/projects-data-table";
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);

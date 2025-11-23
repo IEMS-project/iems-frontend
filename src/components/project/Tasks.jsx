@@ -9,7 +9,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
-import TaskDetailModal from "./TaskDetailModal";
+import TaskDetailModal from "../tasks/TaskDetailModal";
 import { toast } from "sonner";
 import { taskColumns } from "./tasks-columns";
 import { TasksDataTable } from "./tasks-data-table";
