@@ -136,7 +136,7 @@ export function ProjectsDataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border border-border bg-card/70">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -177,7 +177,7 @@ export function ProjectsDataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-gray-500 dark:text-gray-400"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   Chưa có dự án nào
                 </TableCell>
@@ -187,7 +187,7 @@ export function ProjectsDataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground dark:text-gray-400">
+        <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} dự án
         </div>
         <div className="space-x-2">
@@ -212,4 +212,6 @@ export function ProjectsDataTable<TData, TValue>({
     </div>
   )
 }
+
+
 

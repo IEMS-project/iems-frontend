@@ -64,13 +64,13 @@ export default function MessageList({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 relative"
+      className="flex-1 overflow-y-auto bg-background relative"
     >
       {isJumpMode && (
         <button
           onClick={onReturnToLatest}
           title="Trở về hiện tại"
-          className="fixed right-4 bottom-4 z-50 w-10 h-10 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          className="fixed right-4 bottom-4 z-50 w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center"
           aria-label="Trở về hiện tại"
         >
           <FaChevronDown className="w-5 h-5" />
@@ -78,10 +78,10 @@ export default function MessageList({
       )}
 
       {loadingOlderMessages && (
-        <div className="flex justify-center py-4 bg-blue-50 dark:bg-blue-900/20">
+        <div className="flex justify-center py-4 bg-muted/50">
           <div className="flex items-center gap-2">
-            <FaSpinner className="animate-spin h-5 w-5 text-blue-600" />
-            <span className="text-sm text-blue-600 dark:text-blue-400">Đang tải tin nhắn cũ hơn...</span>
+            <FaSpinner className="animate-spin h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Đang tải tin nhắn cũ hơn...</span>
           </div>
         </div>
       )}
@@ -102,10 +102,10 @@ export default function MessageList({
       ))}
 
       {loadingNewerMessages && (
-        <div className="flex justify-center py-4 bg-green-50 dark:bg-green-900/20">
+        <div className="flex justify-center py-4 bg-muted/50">
           <div className="flex items-center gap-2">
-            <FaSpinner className="animate-spin h-5 w-5 text-green-600" />
-            <span className="text-sm text-green-600 dark:text-green-400">Đang tải tin nhắn mới hơn...</span>
+            <FaSpinner className="animate-spin h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Đang tải tin nhắn mới hơn...</span>
           </div>
         </div>
       )}

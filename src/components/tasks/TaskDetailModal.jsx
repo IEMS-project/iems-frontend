@@ -2,26 +2,9 @@ import React from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
+import { getPriorityVariant, getStatusVariant, translatePriority, translateStatus } from "../../lib/i18n";
 
 export default function TaskDetailModal({ open, onClose, task, onEdit }) {
-    const statusVariant = (status) => {
-        switch (status) {
-            case "Hoàn thành": return "green";
-            case "Đang làm": return "blue";
-            case "Chờ": return "yellow";
-            default: return "gray";
-        }
-    };
-
-    const priorityVariant = (priority) => {
-        switch (priority) {
-            case "Cao": return "red";
-            case "Trung bình": return "yellow";
-            case "Thấp": return "blue";
-            default: return "gray";
-        }
-    };
-
     const getTimeRemaining = (dueDate) => {
         if (!dueDate) return null;
         const today = new Date();
@@ -32,13 +15,13 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
 
         if (diffTime < 0) {
-            return `Quá hạn ${Math.abs(diffDays)}d ${Math.abs(diffHours)}h ${Math.abs(diffMinutes)}m`;
+            return `Quá hạn ${Math.abs(diffDays)} ngày ${Math.abs(diffHours)} giờ ${Math.abs(diffMinutes)} phút`;
         } else if (diffDays === 0 && diffHours === 0) {
-            return `Còn ${diffMinutes}m`;
+            return `Còn ${diffMinutes} phút`;
         } else if (diffDays === 0) {
-            return `Còn ${diffHours}h ${diffMinutes}m`;
+            return `Còn ${diffHours} giờ ${diffMinutes} phút`;
         } else {
-            return `Còn ${diffDays}d ${diffHours}h ${diffMinutes}m`;
+            return `Còn ${diffDays} ngày ${diffHours} giờ ${diffMinutes} phút`;
         }
     };
 
@@ -60,7 +43,7 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         <Modal
             open={open}
             onClose={onClose}
-            title={task.title || "Chi tiết task"}
+            title={task.title || "Chi tiết nhiệm vụ"}
             footer={
                 <div className="flex justify-end gap-2">
                     {onEdit && (
@@ -90,7 +73,9 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                         <div>
                             <div className="text-xs uppercase text-gray-500 dark:text-gray-400">Trạng thái</div>
                             <div className="text-sm text-gray-900 dark:text-gray-100">
-                                <Badge variant={statusVariant(task.status)}>{task.status}</Badge>
+                                <Badge variant={getStatusVariant(task.status)}>
+                                    {translateStatus(task.status)}
+                                </Badge>
                             </div>
                         </div>
                     )}
@@ -98,7 +83,9 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                         <div>
                             <div className="text-xs uppercase text-gray-500 dark:text-gray-400">Ưu tiên</div>
                             <div className="text-sm text-gray-900 dark:text-gray-100">
-                                <Badge variant={priorityVariant(task.priority)}>{task.priority}</Badge>
+                                <Badge variant={getPriorityVariant(task.priority)}>
+                                    {translatePriority(task.priority)}
+                                </Badge>
                             </div>
                         </div>
                     )}

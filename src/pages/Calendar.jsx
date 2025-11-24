@@ -8,6 +8,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import { useSearchParams } from "react-router-dom";
 import { taskService } from "../services/taskService";
+import { translatePriority } from "../lib/i18n";
 
 const initialEvents = [
     { id: "1", title: "Quarterly Budget Review", start: "2025-09-05", backgroundColor: "#fde68a", borderColor: "#f59e0b" },
@@ -101,7 +102,7 @@ export default function CalendarPage() {
     function handleAddQuickEvent() {
         const api = calendarRef.current?.getApi();
         const dateStr = api?.getDate()?.toISOString().slice(0, 10);
-        const newEvent = { id: String(Date.now()), title: "New event", start: dateStr, allDay: true };
+        const newEvent = { id: String(Date.now()), title: "Sự kiện mới", start: dateStr, allDay: true };
         setEvents(prev => [...prev, newEvent]);
     }
 
@@ -148,12 +149,17 @@ export default function CalendarPage() {
     }
 
     function computeEventColors(projectId, priority) {
+        const priorityLabel = translatePriority(priority);
         const isDark = getIsDarkMode();
         const hue = hueFromString(projectId || "default");
         const lightnessBase = isDark ? 22 : 85; // background lightness
         const borderLightness = isDark ? 40 : 60;
         const satBase = isDark ? 60 : 70;
-        const priorityDelta = priority === "High" ? (isDark ? 8 : -12) : priority === "Medium" ? 0 : (isDark ? -8 : 8);
+        const priorityDelta = ["Cao", "Cao nhất"].includes(priorityLabel)
+            ? (isDark ? 8 : -12)
+            : priorityLabel === "Trung bình"
+                ? 0
+                : (isDark ? -8 : 8);
         const bg = `hsl(${hue}, ${satBase}%, ${Math.max(5, Math.min(95, lightnessBase + priorityDelta))}%)`;
         const bd = `hsl(${hue}, ${satBase + 10}%, ${borderLightness}%)`;
         const text = isDark ? "#e5e7eb" : "#111827";
@@ -172,9 +178,9 @@ export default function CalendarPage() {
 
     const Legend = useMemo(() => (
         <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }}></span>High</span>
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#f59e0b" }}></span>Medium</span>
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#10b981" }}></span>Low</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }}></span>Ưu tiên cao</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#f59e0b" }}></span>Ưu tiên trung bình</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#10b981" }}></span>Ưu tiên thấp</span>
         </div>
     ), []);
 
@@ -184,7 +190,7 @@ export default function CalendarPage() {
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div className="flex items-center gap-2">
-                            <Button variant="secondary" onClick={handleToday}>Today</Button>
+                            <Button variant="secondary" onClick={handleToday}>Hôm nay</Button>
                             <div className="inline-flex rounded-md shadow-sm">
                                 <button onClick={handlePrev} className="px-3 py-2 border border-gray-300 rounded-l-md text-sm hover:bg-gray-50 dark:border-gray-700">‹</button>
                                 <button onClick={handleNext} className="px-3 py-2 border-t border-b border-r border-gray-300 rounded-r-md text-sm hover:bg-gray-50 dark:border-gray-700">›</button>
@@ -193,13 +199,13 @@ export default function CalendarPage() {
                         <CardTitle className="text-center md:text-left">{title || "Lịch làm việc"}</CardTitle>
                         <div className="flex items-center gap-3">
                             <div className="inline-flex rounded-md border border-gray-300 overflow-hidden dark:border-gray-700">
-                                <button onClick={() => changeView("dayGridMonth")} className={`px-3 py-2 text-sm ${activeView === 'dayGridMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Month</button>
-                                <button onClick={() => changeView("timeGridWeek")} className={`px-3 py-2 text-sm ${activeView === 'timeGridWeek' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Week</button>
-                                <button onClick={() => changeView("timeGridDay")} className={`px-3 py-2 text-sm ${activeView === 'timeGridDay' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Day</button>
-                                <button onClick={() => changeView("listMonth")} className={`px-3 py-2 text-sm ${activeView === 'listMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Agenda</button>
+                                <button onClick={() => changeView("dayGridMonth")} className={`px-3 py-2 text-sm ${activeView === 'dayGridMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Tháng</button>
+                                <button onClick={() => changeView("timeGridWeek")} className={`px-3 py-2 text-sm ${activeView === 'timeGridWeek' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Tuần</button>
+                                <button onClick={() => changeView("timeGridDay")} className={`px-3 py-2 text-sm ${activeView === 'timeGridDay' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Ngày</button>
+                                <button onClick={() => changeView("listMonth")} className={`px-3 py-2 text-sm ${activeView === 'listMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Danh sách</button>
                             </div>
                             {Legend}
-                            <Button onClick={handleAddQuickEvent}>+ New event</Button>
+                            <Button onClick={handleAddQuickEvent}>+ Sự kiện mới</Button>
                         </div>
                     </div>
                 </CardHeader>
@@ -233,11 +239,11 @@ export default function CalendarPage() {
                                 eventDidMount={onEventDidMount}
                                 datesSet={(arg) => setTitle(arg.view.title)}
                                 buttonText={{
-                                    today: "Today",
-                                    month: "Month",
-                                    week: "Week",
-                                    day: "Day",
-                                    list: "Agenda"
+                                    today: "Hôm nay",
+                                    month: "Tháng",
+                                    week: "Tuần",
+                                    day: "Ngày",
+                                    list: "Danh sách"
                                 }}
                                 views={{
                                     timeGridWeek: { titleFormat: { year: "numeric", month: "long" } },

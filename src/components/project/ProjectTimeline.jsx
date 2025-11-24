@@ -2,7 +2,6 @@ import React, { useMemo, useState, useRef, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Select from "../ui/Select.jsx";
-import { useParams } from "react-router-dom";
 import TaskDetailModal from "../tasks/TaskDetailModal";
 import Skeleton from "../ui/Skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/shadcn-avatar";
@@ -21,6 +20,7 @@ import {
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { EyeIcon, TrashIcon } from "lucide-react";
 import { differenceInDays, differenceInMonths, startOfDay, startOfMonth, getDaysInMonth, getDate } from "date-fns";
+import { translateStatus } from "@/lib/i18n";
 
 // Simple groupBy utility
 const groupBy = (array, key) => {
@@ -35,9 +35,8 @@ const groupBy = (array, key) => {
 };
 
 export default function ProjectTimeline({ tasks = [], loading = false }) {
-    const { projectId } = useParams();
     const [range, setRange] = useState("monthly"); // "daily" | "monthly" | "quarterly"
-    const [zoom, setZoom] = useState(100);
+    const [zoom] = useState(100);
     const [selectedTask, setSelectedTask] = useState(null);
     const ganttContainerRef = useRef(null);
     const [filters, setFilters] = useState({
@@ -60,7 +59,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
     }, [tasks]);
 
     const statuses = useMemo(() => {
-        return [...new Set(tasks.map(t => t.status).filter(Boolean))];
+        return [...new Set(tasks.map(t => translateStatus(t.status)).filter(Boolean))];
     }, [tasks]);
 
     const tags = useMemo(() => {
@@ -83,7 +82,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                     return false;
                 }
             }
-            if (filters.status && task.status !== filters.status) {
+            if (filters.status && translateStatus(task.status) !== filters.status) {
                 return false;
             }
             if (filters.tag && (!task.tags || !task.tags.includes(filters.tag))) {
@@ -134,8 +133,6 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                 // monthly or quarterly
                 fullColumns = differenceInMonths(startOfMonth(today), startOfMonth(timelineStartDate));
                 // Calculate inner offset within the month
-                const startOfRange = startOfMonth(today);
-                const endOfRange = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                 const totalDaysInMonth = getDaysInMonth(today);
                 const dayOfMonth = getDate(today);
                 
@@ -164,24 +161,28 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
         const statusMap = new Map();
         
         tasks.forEach(task => {
-            const status = task.status || "Chưa xác định";
-            if (!statusMap.has(status)) {
+            const statusLabel = translateStatus(task.status) || "Chưa xác định";
+            if (!statusMap.has(statusLabel)) {
                 let color = "#6B7280"; // default gray
                 
                 // Map Vietnamese status names to colors
-                if (status === "Hoàn thành" || status === "Done" || status === "COMPLETED") {
+                if (statusLabel === "Hoàn thành") {
                     color = "#10B981"; // green
-                } else if (status === "Đang làm" || status === "In Progress" || status === "IN_PROGRESS") {
+                } else if (statusLabel === "Đang làm") {
                     color = "#3B82F6"; // blue
-                } else if (status === "Chờ" || status === "To Do" || status === "TO_DO") {
+                } else if (statusLabel === "Chờ") {
                     color = "#F59E0B"; // yellow/orange
-                } else if (status === "In Review") {
+                } else if (statusLabel === "Đang duyệt") {
                     color = "#8B5CF6"; // purple
+                } else if (statusLabel === "Bị chặn") {
+                    color = "#F97316";
+                } else if (statusLabel === "Đã hủy") {
+                    color = "#6B7280";
                 }
                 
-                statusMap.set(status, {
-                    id: status,
-                    name: status,
+                statusMap.set(statusLabel, {
+                    id: statusLabel,
+                    name: statusLabel,
                     color: color,
                 });
             }
@@ -194,7 +195,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
     const features = useMemo(() => {
         return filteredTasks.map((task) => {
             const taskId = task.id || task.taskId || `task-${Math.random()}`;
-            const taskName = task.name || task.title || "Untitled Task";
+            const taskName = task.name || task.title || "Nhiệm vụ chưa đặt tên";
             
             // Get dates - default to today if not provided
             const startDate = task.startDate 
@@ -210,7 +211,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                     : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // default 7 days
 
             // Get status
-            const taskStatus = task.status || "Chưa xác định";
+            const taskStatus = translateStatus(task.status) || "Chưa xác định";
             const status = statusColors.find(s => s.name === taskStatus) || statusColors[0] || {
                 id: taskStatus,
                 name: taskStatus,
@@ -275,7 +276,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
         <Card>
             <CardHeader>
                 <div className="flex items-center justify-between flex-wrap gap-4">
-                    <CardTitle>Timeline</CardTitle>
+                    <CardTitle>Dòng thời gian</CardTitle>
                     <div className="flex items-center gap-2 flex-wrap">
                         <Select
                             value={filters.assignee}
@@ -302,7 +303,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                             onChange={(e) => handleFilterChange("tag", e.target.value)}
                             className="w-auto min-w-[120px]"
                         >
-                            <option value="">Tag</option>
+                            <option value="">Nhãn</option>
                             {tags.map(tag => (
                                 <option key={tag} value={tag}>{tag}</option>
                             ))}
@@ -321,21 +322,21 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                 variant={range === "daily" ? "primary" : "secondary"} 
                                 onClick={() => setRange("daily")}
                             >
-                                Daily
+                                Theo ngày
                             </Button>
                             <Button 
                                 variant={range === "monthly" ? "primary" : "secondary"} 
                                 onClick={() => setRange("monthly")}
                             >
-                                Monthly
+                                Theo tháng
                             </Button>
                             <Button 
                                 variant={range === "quarterly" ? "primary" : "secondary"} 
                                 onClick={() => setRange("quarterly")}
                             >
-                                Quarterly
+                                Theo quý
                             </Button>
-                            <Button variant="secondary" onClick={scrollToToday}>Today</Button>
+                            <Button variant="secondary" onClick={scrollToToday}>Hôm nay</Button>
                         </div>
                     </div>
                 </div>
@@ -358,7 +359,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                     </div>
                 ) : features.length === 0 ? (
                     <div className="py-12 text-center text-sm text-gray-500 p-6">
-                        Không có task nào
+                        Không có nhiệm vụ nào
                     </div>
                 ) : (
                     <div className="h-[calc(100vh-280px)] max-h-[800px] min-h-[475px] w-full overflow-hidden" ref={ganttContainerRef}>

@@ -146,30 +146,34 @@ export default function Profile() {
 				<StatsCard
 					title="Dự án hoàn thành"
 					value={userStats.projectsCompleted}
-					icon={<FaProjectDiagram className="h-6 w-6" />}
+					icon={<FaProjectDiagram className="h-5 w-5" />}
 					trend="+12%"
 					trendUp={true}
+					accent="indigo"
 				/>
 				<StatsCard
 					title="Nhiệm vụ hoàn thành"
 					value={userStats.tasksCompleted}
-					icon={<FaTasks className="h-6 w-6" />}
+					icon={<FaTasks className="h-5 w-5" />}
 					trend="+8%"
 					trendUp={true}
+					accent="green"
 				/>
 				<StatsCard
 					title="Phòng ban tham gia"
 					value={userStats.departmentsJoined}
-					icon={<FaBuilding className="h-6 w-6" />}
+					icon={<FaBuilding className="h-5 w-5" />}
 					trend="+1"
 					trendUp={true}
+					accent="orange"
 				/>
 				<StatsCard
 					title="Giờ làm việc"
 					value={userStats.hoursWorked}
-					icon={<FaClock className="h-6 w-6" />}
+					icon={<FaClock className="h-5 w-5" />}
 					trend="+15%"
 					trendUp={true}
+					accent="purple"
 				/>
 			</div>
 

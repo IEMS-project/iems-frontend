@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select.jsx";
 import Tasks from "../../components/project/Tasks";
 import { taskService } from "../../services/taskService";
-import { projectService } from "../../services/projectService";
+import { translatePriority, translateStatus } from "../../lib/i18n";
 
 export default function ProjectTasksPage() {
     const { projectId } = useParams();
-    const navigate = useNavigate();
     const [tasks, setTasks] = useState([]);
     const [tasksLoading, setTasksLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -38,9 +37,9 @@ export default function ProjectTasksPage() {
     }, [projectId]);
 
     // Get unique values for filters
-    const statuses = [...new Set(tasks.map(t => t.status).filter(Boolean))];
+    const statuses = [...new Set(tasks.map(t => translateStatus(t.status)).filter(Boolean))];
     const assignees = [...new Set(tasks.map(t => t.assignedTo?.fullName || t.assignedTo?.email || "").filter(Boolean))];
-    const priorities = [...new Set(tasks.map(t => t.priority).filter(Boolean))];
+    const priorities = [...new Set(tasks.map(t => translatePriority(t.priority)).filter(Boolean))];
 
     // Filter and sort tasks
     const filteredAndSortedTasks = React.useMemo(() => {
@@ -57,7 +56,7 @@ export default function ProjectTasksPage() {
 
         // Status filter
         if (filters.status) {
-            result = result.filter(task => task.status === filters.status);
+            result = result.filter(task => translateStatus(task.status) === filters.status);
         }
 
         // Assignee filter
@@ -70,7 +69,7 @@ export default function ProjectTasksPage() {
 
         // Priority filter
         if (filters.priority) {
-            result = result.filter(task => task.priority === filters.priority);
+            result = result.filter(task => translatePriority(task.priority) === filters.priority);
         }
 
         // Sort
@@ -83,12 +82,12 @@ export default function ProjectTasksPage() {
                     bVal = b.title || "";
                     break;
                 case "status":
-                    aVal = a.status || "";
-                    bVal = b.status || "";
+                    aVal = translateStatus(a.status) || "";
+                    bVal = translateStatus(b.status) || "";
                     break;
                 case "priority":
-                    aVal = a.priority || "";
-                    bVal = b.priority || "";
+                    aVal = translatePriority(a.priority) || "";
+                    bVal = translatePriority(b.priority) || "";
                     break;
                 case "dueDate":
                     aVal = a.dueDate ? new Date(a.dueDate).getTime() : 0;

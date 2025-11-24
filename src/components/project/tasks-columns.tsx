@@ -1,10 +1,12 @@
 "use client"
 
+import * as React from "react"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, Minus, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Badge from "@/components/ui/Badge"
 import UserAvatar from "@/components/ui/UserAvatar"
+import { getStatusVariant, translatePriority, translateStatus } from "@/lib/i18n"
 
 export type Task = {
   id: string
@@ -27,30 +29,17 @@ export type Task = {
   createdBy?: { id: string; name: string; email: string } | null
 }
 
-function statusVariant(status: string) {
-  switch (status) {
-    case "Hoàn thành":
-      return "green"
-    case "Đang làm":
-      return "blue"
-    case "Chờ":
-      return "yellow"
-    default:
-      return "gray"
-  }
-}
-
-function priorityVariant(priority: string) {
-  switch (priority) {
-    case "Cao":
-      return "red"
-    case "Trung bình":
-      return "yellow"
-    case "Thấp":
-      return "blue"
-    default:
-      return "gray"
-  }
+const statusVariant = (status: string) => getStatusVariant(status)
+const priorityDisplayMap: Record<
+  string,
+  { icon: React.ComponentType<{ className?: string }>; label: string }
+> = {
+  "Cao nhất": { icon: ChevronsUp, label: "Cao nhất" },
+  "Cao": { icon: ChevronUp, label: "Cao" },
+  "Trung bình": { icon: Minus, label: "Trung bình" },
+  "Thấp": { icon: ChevronDown, label: "Thấp" },
+  "Thấp nhất": { icon: ChevronsDown, label: "Thấp nhất" },
+  "Không ưu tiên": { icon: Circle, label: "Không ưu tiên" },
 }
 
 export const taskColumns: ColumnDef<Task>[] = [
@@ -112,10 +101,10 @@ export const taskColumns: ColumnDef<Task>[] = [
     accessorKey: "status",
     header: "Trạng thái",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string
+      const status = translateStatus(row.getValue("status") as string)
       return (
         <div className="min-w-[120px] whitespace-nowrap">
-          <Badge variant={statusVariant(status)}>{status}</Badge>
+          <Badge variant={statusVariant(status)}>{status || "Chưa xác định"}</Badge>
         </div>
       )
     },
@@ -124,10 +113,13 @@ export const taskColumns: ColumnDef<Task>[] = [
     accessorKey: "priority",
     header: "Độ ưu tiên",
     cell: ({ row }) => {
-      const priority = row.getValue("priority") as string
+      const priority = translatePriority(row.getValue("priority") as string) || "Không ưu tiên"
+      const display = priorityDisplayMap[priority] || { icon: Circle, label: priority }
+      const Icon = display.icon || Circle
       return (
-        <div className="min-w-[120px] whitespace-nowrap">
-          <Badge variant={priorityVariant(priority)}>{priority}</Badge>
+        <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-gray-900 dark:text-gray-100">
+          <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <span>{display.label}</span>
         </div>
       )
     },

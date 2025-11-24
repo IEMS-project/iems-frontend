@@ -28,16 +28,16 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
 			}}
 		>
 			<div 
-				className="absolute inset-0 bg-black/50 m-0 p-0" 
+				className="absolute inset-0 bg-black/60 backdrop-blur-sm m-0 p-0" 
 				onClick={onClose}
 				style={{
 					margin: 0,
 					padding: 0
 				}}
 			/>
-			<div className={`relative z-10 w-full max-w-lg mx-4 my-auto overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 ${className}`}>
+			<div className={`relative z-10 w-full max-w-lg mx-4 my-auto overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-2xl ${className}`}>
 				{title && (
-					<div className="border-b border-gray-200 px-4 py-3 text-base font-semibold dark:border-gray-800">
+					<div className="border-b border-border px-4 py-3 text-base font-semibold">
 						{title}
 					</div>
 				)}
@@ -45,7 +45,7 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
 					{children}
 				</div>
 				{footer && (
-					<div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+					<div className="border-t border-border px-4 py-3">
 						{footer}
 					</div>
 				)}

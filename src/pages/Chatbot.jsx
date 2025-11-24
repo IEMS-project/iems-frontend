@@ -243,10 +243,10 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
-      <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex h-full flex-col gap-6 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
         {/* Sidebar */}
-        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col hidden md:flex`}>
+        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border flex flex-col hidden md:flex`}>
           <ConversationManager
             activeConversationId={activeConversationId}
             onConversationSelect={handleConversationSelect}
@@ -261,8 +261,8 @@ const Chatbot = () => {
         {/* Mobile Sidebar Overlay */}
         {showSidebar && (
           <div className="fixed inset-0 z-50 md:hidden">
-            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowSidebar(false)}></div>
-            <div className="absolute left-0 top-0 h-full w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowSidebar(false)}></div>
+            <div className="absolute left-0 top-0 h-full w-80 bg-card border-r border-border">
               <ConversationManager
                 activeConversationId={activeConversationId}
                 onConversationSelect={handleConversationSelect}
@@ -277,12 +277,12 @@ const Chatbot = () => {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+        <div className="flex-1 flex flex-col bg-background">
           {/* Mobile menu button - Only show on mobile */}
-          <div className="md:hidden p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="md:hidden p-4 border-b border-border bg-card/80">
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              className="p-2 text-muted-foreground hover:text-foreground"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -300,7 +300,7 @@ const Chatbot = () => {
                     <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                       <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400">Đang tải cuộc trò chuyện...</p>
+                    <p className="text-muted-foreground">Đang tải cuộc trò chuyện...</p>
                   </div>
                 </div>
               ) : (
@@ -311,7 +311,7 @@ const Chatbot = () => {
                     {(isCreatingNewConversation || (!activeConversationId && !isCreatingNewConversation)) && messages.length === 0 && (
                       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                         <div className="text-center mb-8">
-                          <h1 className="text-2xl md:text-3xl font-medium text-gray-900 dark:text-gray-100 mb-8">
+                          <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
                             Bạn dự định làm gì hôm nay?
                           </h1>
                         </div>
@@ -335,14 +335,14 @@ const Chatbot = () => {
                             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                           </div>
                         </div>
-                        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3">
+                        <div className="bg-muted/70 rounded-lg px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               AI đang suy nghĩ...
                             </p>
                           </div>
@@ -380,7 +380,7 @@ const Chatbot = () => {
                   {messages.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                       <div className="text-center mb-8">
-                        <h1 className="text-2xl md:text-3xl font-medium text-gray-900 dark:text-gray-100 mb-8">
+                        <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
                           Bạn dự định làm gì hôm nay?
                         </h1>
                       </div>
@@ -404,14 +404,14 @@ const Chatbot = () => {
                           <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                         </div>
                       </div>
-                      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3">
+                      <div className="bg-muted/70 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             AI đang suy nghĩ...
                           </p>
                         </div>

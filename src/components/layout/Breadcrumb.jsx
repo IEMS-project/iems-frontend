@@ -11,12 +11,33 @@ const routeMap = {
   "/tasks": "Nhiệm vụ",
   "/calendar": "Lịch",
   "/messages": "Tin nhắn",
-  "/chatbot": "AI Assistant",
+  "/chatbot": "Trợ lý AI",
   "/documents": "Tài liệu",
   "/departments": "Phòng ban",
   "/profile": "Hồ sơ",
   "/notifications": "Thông báo",
   "/admin": "Quản trị",
+  "/admin/access-control": "Phân quyền",
+  "/projects/overview": "Tổng quan",
+  "/projects/tasks": "Nhiệm vụ",
+  "/projects/timeline": "Tiến độ",
+  "/projects/members": "Thành viên",
+};
+
+const segmentMap = {
+  "overview": "Tổng quan",
+  "tasks": "Nhiệm vụ",
+  "timeline": "Tiến độ",
+  "members": "Thành viên",
+  "settings": "Cài đặt",
+  "documents": "Tài liệu",
+  "messages": "Tin nhắn",
+  "departments": "Phòng ban",
+  "profile": "Hồ sơ",
+  "notifications": "Thông báo",
+  "calendar": "Lịch",
+  "access-control": "Phân quyền",
+  "access": "Phân quyền",
 };
 
 export default function Breadcrumb() {
@@ -98,7 +119,7 @@ export default function Breadcrumb() {
         }
       } else {
         // Regular route segment - check routeMap first
-        const label = routeMap[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1);
+        const label = routeMap[currentPath] || segmentMap[segment.toLowerCase()] || segment.charAt(0).toUpperCase() + segment.slice(1);
         breadcrumbs.push({ 
           label, 
           to: isLast ? null : currentPath 

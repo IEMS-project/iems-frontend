@@ -12,8 +12,6 @@ import { ChevronDownIcon, LayoutGrid, List } from "lucide-react";
 export default function DocumentsHeader({
   search,
   setSearch,
-  sortBy,
-  sortDirection,
   onSortChange,
   getSortLabel,
   viewMode,
@@ -23,7 +21,7 @@ export default function DocumentsHeader({
     <div className="flex items-center gap-4">
       <Input
         type="text"
-        placeholder="Search files and folders..."
+        placeholder="Tìm kiếm tệp và thư mục..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
@@ -31,18 +29,18 @@ export default function DocumentsHeader({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            Sort: {getSortLabel()} <ChevronDownIcon className="ml-2 h-4 w-4" />
+            Sắp xếp: {getSortLabel()} <ChevronDownIcon className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onSortChange("name")}>
-            Name
+            Theo tên
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSortChange("date")}>
-            Date
+            Theo ngày
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSortChange("size")}>
-            Size
+            Theo dung lượng
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -68,4 +66,8 @@ export default function DocumentsHeader({
     </div>
   );
 }
+
+
+
+
 

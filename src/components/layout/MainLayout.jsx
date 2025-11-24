@@ -7,6 +7,7 @@ import Chatbot from "../chat/Chatbot";
 import { FaRobot } from "react-icons/fa";
 import { Toaster } from "@/components/ui/sonner";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
+import { UnreadCountsProvider } from "@/context/UnreadCountsContext";
 
 export default function MainLayout({ children }) {
 	const [chatOpen, setChatOpen] = useState(false);
@@ -15,10 +16,14 @@ export default function MainLayout({ children }) {
 	
 	// Check if current path is a project detail page
 	const isProjectDetailPage = location.pathname.startsWith("/projects/") && location.pathname !== "/projects";
+	const isMessagesPage = location.pathname === "/messages";
+	const isChatPage = location.pathname === "/chatbot";
+	const isFullHeightPage = isProjectDetailPage || isMessagesPage || isChatPage;
 
 	return (
 		<BreadcrumbProvider>
-			<SidebarProvider>
+			<UnreadCountsProvider>
+				<SidebarProvider>
 				<Toaster />
 				<AppSidebar />
 				<SidebarInset className="flex flex-col h-screen overflow-hidden">
@@ -26,8 +31,8 @@ export default function MainLayout({ children }) {
 						<SidebarTrigger className="-ml-1" />
 						<Breadcrumb />
 					</header>
-				<div className="flex-1 overflow-y-auto">
-					{isProjectDetailPage ? (
+				<div className={`flex-1 ${isFullHeightPage ? "overflow-hidden" : "overflow-y-auto"}`}>
+					{isFullHeightPage ? (
 						children
 					) : (
 						<div className="flex flex-col gap-4 p-4">
@@ -52,7 +57,7 @@ export default function MainLayout({ children }) {
 				>
 					☰
 				</button>
-			</SidebarInset>
+				</SidebarInset>
 
 			{/* Chat overlay drawer (all breakpoints) */}
 			{chatOpen && (
@@ -97,11 +102,13 @@ export default function MainLayout({ children }) {
 							<Link to="/messages" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">💬 <span>Tin nhắn</span></Link>
 							<Link to="/teams" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">👥 <span>Đội nhóm</span></Link>
 							<Link to="/admin" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">🛠️ <span>Quản trị</span></Link>
+							<Link to="/admin/access-control" onClick={() => setMobileNavOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/10">🛡️ <span>Phân quyền</span></Link>
 						</nav>
 					</div>
 				</div>
 			)}
-		</SidebarProvider>
+			</SidebarProvider>
+		</UnreadCountsProvider>
 		</BreadcrumbProvider>
 	);
 }

@@ -13,6 +13,7 @@ import TaskDetailModal from "../tasks/TaskDetailModal";
 import { toast } from "sonner";
 import { taskColumns } from "./tasks-columns";
 import { TasksDataTable } from "./tasks-data-table";
+import { translatePriority, translateStatus } from "../../lib/i18n";
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
@@ -96,15 +97,14 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const handleEditTask = (task) => {
         setEditingTask(task);
         const assignedId = task.assignedTo?.id || task.assignedTo || "";
-        const currentStatus = (task.status || '').toString();
-        const statusForSelect = currentStatus.includes('In Progress') ? 'Đang làm' : (currentStatus.includes('Hoàn thành') || currentStatus.includes('Completed')) ? 'Hoàn thành' : 'Chờ';
+        const statusForSelect = translateStatus(task.status) || 'Chờ';
         setFormData({
             id: task.id,
             title: task.title,
             description: task.description || "",
             assignee: assignedId,
             status: statusForSelect,
-            priority: task.priority,
+            priority: translatePriority(task.priority) || "Trung bình",
             taskType: (task.taskType || '').toString().toUpperCase().includes('EPIC') ? 'EPIC'
                 : (task.taskType || '').toString().toUpperCase().includes('STORY') ? 'STORY'
                 : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
@@ -164,10 +164,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
             if (editingTask?.id) {
                 await taskService.updateTask(editingTask.id, payload);
-                toast.success("Task đã được cập nhật thành công");
+                toast.success("Nhiệm vụ đã được cập nhật thành công");
             } else {
                 await taskService.createTask(payload);
-                toast.success("Task đã được tạo thành công");
+                toast.success("Nhiệm vụ đã được tạo thành công");
             }
 
             const refreshed = await taskService.getTasksByProject(projectId);
@@ -198,7 +198,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 navigate("/permission-denied");
                 return;
             } else {
-                toast.error(e?.message || "Có lỗi xảy ra khi lưu task");
+                toast.error(e?.message || "Có lỗi xảy ra khi lưu nhiệm vụ");
             }
         } finally {
             setLoading(false);
@@ -232,7 +232,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Nhiệm vụ</CardTitle>
-                        <Button size="sm" onClick={handleAddTask}>+ Thêm task</Button>
+                        <Button size="sm" onClick={handleAddTask}>+ Thêm nhiệm vụ</Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -248,7 +248,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             <Modal
                 open={showModal}
                 onClose={handleClose}
-                title={editingTask ? 'Chỉnh sửa task' : 'Thêm task mới'}
+                title={editingTask ? 'Chỉnh sửa nhiệm vụ' : 'Thêm nhiệm vụ mới'}
                 footer={
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={handleClose}>Hủy</Button>
@@ -282,9 +282,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="EPIC">Epic</option>
-                            <option value="TASK">Task</option>
-                            <option value="STORY">Story</option>
-                            <option value="BUG">Bug</option>
+                            <option value="TASK">Nhiệm vụ</option>
+                            <option value="STORY">User story</option>
+                            <option value="BUG">Lỗi</option>
                         </Select>
                     </div>
                     <div className="sm:col-span-2">
@@ -294,7 +294,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={5}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mô tả chi tiết cho task"
+                            placeholder="Nhập mô tả chi tiết cho nhiệm vụ"
                         />
                     </div>
                     <div>

@@ -8,10 +8,12 @@ import { taskService } from "../../services/taskService";
 import Skeleton from "../../components/ui/Skeleton";
 import StatsCard from "../../components/ui/StatsCard";
 import Progress from "../../components/ui/Progress";
+import { CheckCircle2, RefreshCw, ClipboardList, AlarmClock } from "lucide-react";
+import { translatePriority, translateStatus, translateWorkType } from "../../lib/i18n";
 
 export default function ProjectOverviewPage() {
     const { projectId } = useParams();
-    const { projectData, loading: projectLoading } = useOutletContext();
+    const { projectData } = useOutletContext();
     const [tasks, setTasks] = useState([]);
     const [tasksLoading, setTasksLoading] = useState(true);
 
@@ -21,7 +23,7 @@ export default function ProjectOverviewPage() {
                 setTasksLoading(true);
                 const data = await taskService.getTasksByProject(projectId);
                 setTasks(Array.isArray(data) ? data : []);
-            } catch (_e) {
+            } catch {
                 setTasks([]);
             } finally {
                 setTasksLoading(false);
@@ -33,18 +35,21 @@ export default function ProjectOverviewPage() {
     // Calculate statistics
     const stats = useMemo(() => {
         const total = tasks.length;
-        const completed = tasks.filter(t => 
-            t.status?.toUpperCase().includes("COMPLETED") || 
-            t.status?.toUpperCase().includes("HOÀN THÀNH")
-        ).length;
-        const inProgress = tasks.filter(t => 
-            t.status?.toUpperCase().includes("IN PROGRESS") || 
-            t.status?.toUpperCase().includes("ĐANG LÀM")
-        ).length;
-        const todo = tasks.filter(t => 
-            t.status?.toUpperCase().includes("TODO") || 
-            t.status?.toUpperCase().includes("CHỜ")
-        ).length;
+        let completed = 0;
+        let inProgress = 0;
+        let todo = 0;
+
+        tasks.forEach((task) => {
+            const status = translateStatus(task.status);
+            if (status === "Hoàn thành") {
+                completed += 1;
+            } else if (status === "Đang làm" || status === "Đang duyệt") {
+                inProgress += 1;
+            } else {
+                todo += 1;
+            }
+        });
+
         const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         return { total, completed, inProgress, todo, progress };
@@ -52,84 +57,57 @@ export default function ProjectOverviewPage() {
 
     // Status breakdown for donut chart
     const statusBreakdown = useMemo(() => {
-        const breakdown = {
-            "To Do": 0,
-            "In Progress": 0,
-            "In Review": 0,
-            "Done": 0,
-        };
-
-        tasks.forEach(task => {
-            const status = (task.status || "").toUpperCase();
-            if (status.includes("COMPLETED") || status.includes("HOÀN THÀNH") || status.includes("DONE")) {
-                breakdown["Done"]++;
-            } else if (status.includes("IN PROGRESS") || status.includes("ĐANG LÀM")) {
-                breakdown["In Progress"]++;
-            } else if (status.includes("REVIEW") || status.includes("KIỂM TRA")) {
-                breakdown["In Review"]++;
-            } else {
-                breakdown["To Do"]++;
+        const counts = {};
+        tasks.forEach((task) => {
+            const label = translateStatus(task.status) || "Chưa xác định";
+            counts[label] = (counts[label] || 0) + 1;
+        });
+        const preferredOrder = ["Chờ", "Đang làm", "Đang duyệt", "Hoàn thành", "Bị chặn", "Tạm hoãn", "Đã hủy", "Chưa xác định"];
+        const ordered = {};
+        preferredOrder.forEach((status) => {
+            if (counts[status] !== undefined) {
+                ordered[status] = counts[status];
             }
         });
-
-        return breakdown;
+        Object.entries(counts).forEach(([status, value]) => {
+            if (ordered[status] === undefined) {
+                ordered[status] = value;
+            }
+        });
+        return ordered;
     }, [tasks]);
 
     // Priority breakdown
     const priorityBreakdown = useMemo(() => {
-        const breakdown = {
-            "Highest": 0,
-            "High": 0,
-            "Medium": 0,
-            "Low": 0,
-            "Lowest": 0,
-            "None": 0,
-        };
-
-        tasks.forEach(task => {
-            const priority = (task.priority || "").toUpperCase();
-            if (priority.includes("CRITICAL") || priority.includes("CAO NHẤT")) {
-                breakdown["Highest"]++;
-            } else if (priority.includes("HIGH") || priority.includes("CAO")) {
-                breakdown["High"]++;
-            } else if (priority.includes("MEDIUM") || priority.includes("TRUNG BÌNH")) {
-                breakdown["Medium"]++;
-            } else if (priority.includes("LOW") || priority.includes("THẤP")) {
-                breakdown["Low"]++;
-            } else if (priority.includes("LOWEST") || priority.includes("THẤP NHẤT")) {
-                breakdown["Lowest"]++;
-            } else {
-                breakdown["None"]++;
+        const counts = {};
+        tasks.forEach((task) => {
+            const label = translatePriority(task.priority) || "Không ưu tiên";
+            counts[label] = (counts[label] || 0) + 1;
+        });
+        const preferredOrder = ["Cao nhất", "Cao", "Trung bình", "Thấp", "Thấp nhất", "Không ưu tiên"];
+        const ordered = {};
+        preferredOrder.forEach((priority) => {
+            if (counts[priority] !== undefined) {
+                ordered[priority] = counts[priority];
             }
         });
-
-        return breakdown;
+        Object.entries(counts).forEach(([priority, value]) => {
+            if (ordered[priority] === undefined) {
+                ordered[priority] = value;
+            }
+        });
+        return ordered;
     }, [tasks]);
 
     // Work types breakdown
     const workTypesBreakdown = useMemo(() => {
-        const breakdown = {
-            "Epic": 0,
-            "Task": 0,
-            "Bug": 0,
-            "Subtask": 0,
-        };
-
-        tasks.forEach(task => {
-            const type = (task.taskType || "").toUpperCase();
-            if (type.includes("EPIC")) {
-                breakdown["Epic"]++;
-            } else if (type.includes("BUG")) {
-                breakdown["Bug"]++;
-            } else if (type.includes("SUBTASK") || type.includes("SUB")) {
-                breakdown["Subtask"]++;
-            } else {
-                breakdown["Task"]++;
-            }
+        const counts = {};
+        tasks.forEach((task) => {
+            const label = translateWorkType(task.taskType) || "Nhiệm vụ";
+            counts[label] = (counts[label] || 0) + 1;
         });
-
         const total = tasks.length;
-        return Object.entries(breakdown).map(([type, count]) => ({
+        return Object.entries(counts).map(([type, count]) => ({
             type,
             count,
             percentage: total > 0 ? Math.round((count / total) * 100) : 0,
@@ -184,22 +162,30 @@ export default function ProjectOverviewPage() {
                         <StatsCard
                             title="Hoàn thành"
                             value={stats.completed}
-                            change={`trong ${stats.total} nhiệm vụ`}
+                            helper={`trong ${stats.total} nhiệm vụ`}
+                            icon={<CheckCircle2 className="h-5 w-5" />}
+                            accent="green"
                         />
                         <StatsCard
-                            title="Đã cập nhật"
+                            title="Đang thực hiện"
                             value={stats.inProgress}
-                            change="đang thực hiện"
+                            helper="đang xử lý"
+                            icon={<RefreshCw className="h-5 w-5" />}
+                            accent="purple"
                         />
                         <StatsCard
-                            title="Đã tạo"
+                            title="Tổng nhiệm vụ"
                             value={stats.total}
-                            change="tổng số nhiệm vụ"
+                            helper="đã tạo"
+                            icon={<ClipboardList className="h-5 w-5" />}
+                            accent="blue"
                         />
                         <StatsCard
                             title="Sắp đến hạn"
                             value={0}
-                            change="trong 7 ngày tới"
+                            helper="trong 7 ngày tới"
+                            icon={<AlarmClock className="h-5 w-5" />}
+                            accent="orange"
                         />
                     </>
                 )}
@@ -258,10 +244,13 @@ export default function ProjectOverviewPage() {
                                                         }, 0);
                                                     
                                                     const colors = {
-                                                        "To Do": "#3b82f6",
-                                                        "In Progress": "#8b5cf6",
-                                                        "In Review": "#06b6d4",
-                                                        "Done": "#10b981",
+                                                        "Chờ": "#3b82f6",
+                                                        "Đang làm": "#8b5cf6",
+                                                        "Đang duyệt": "#06b6d4",
+                                                        "Hoàn thành": "#10b981",
+                                                        "Bị chặn": "#f97316",
+                                                        "Tạm hoãn": "#facc15",
+                                                        "Đã hủy": "#6b7280",
                                                     };
                                                     
                                                     return (
@@ -271,7 +260,7 @@ export default function ProjectOverviewPage() {
                                                             cy="96"
                                                             r="80"
                                                             fill="none"
-                                                            stroke={colors[status] || "#gray"}
+                                                            stroke={colors[status] || "#9ca3af"}
                                                             strokeWidth="16"
                                                             strokeDasharray={`${(percentage / 100) * 502.4} 502.4`}
                                                             strokeDashoffset={-offset}
@@ -290,10 +279,13 @@ export default function ProjectOverviewPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         {Object.entries(statusBreakdown).map(([status, count]) => {
                                             const colors = {
-                                                "To Do": "bg-blue-500",
-                                                "In Progress": "bg-purple-500",
-                                                "In Review": "bg-cyan-500",
-                                                "Done": "bg-green-500",
+                                                "Chờ": "bg-blue-500",
+                                                "Đang làm": "bg-purple-500",
+                                                "Đang duyệt": "bg-cyan-500",
+                                                "Hoàn thành": "bg-green-500",
+                                                "Bị chặn": "bg-orange-500",
+                                                "Tạm hoãn": "bg-amber-400",
+                                                "Đã hủy": "bg-gray-500",
                                             };
                                             return (
                                                 <div key={status} className="flex items-center gap-2">
@@ -346,7 +338,9 @@ export default function ProjectOverviewPage() {
                                         <div key={type}>
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-sm font-medium">{type}</span>
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">{percentage}%</span>
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                    {percentage}% • {count}
+                                                </span>
                                             </div>
                                             <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                                 <div 

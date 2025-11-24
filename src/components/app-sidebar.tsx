@@ -11,6 +11,7 @@ import {
   Users,
   Moon,
   Sun,
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import Toggle from "@/components/ui/Toggle";
 import UserProfile from "@/components/layout/UserProfile";
 import { projectService } from "@/services/projectService";
+import { useUnreadCounts } from "@/context/UnreadCountsContext";
 
 // Menu items (excluding Projects as it's handled separately)
 const items = [
@@ -57,7 +59,7 @@ const items = [
     icon: MessageSquare,
   },
   {
-    title: "AI Assistant",
+    title: "Trợ lý ảo",
     url: "/chatbot",
     icon: Bot,
   },
@@ -71,6 +73,11 @@ const items = [
     url: "/departments",
     icon: Users,
   },
+  {
+    title: "Phân quyền",
+    url: "/admin/access-control",
+    icon: Shield,
+  },
 ];
 
 export function AppSidebar() {
@@ -80,6 +87,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const { getTotal } = useUnreadCounts();
+  const totalUnread = getTotal();
+  const formattedUnread = totalUnread > 99 ? "99+" : totalUnread;
 
   // Load projects
   useEffect(() => {
@@ -129,7 +139,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Chức năng chính</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Projects - Always open with submenu */}
@@ -191,6 +201,7 @@ export function AppSidebar() {
               {/* Other menu items */}
               {items.map((item) => {
                 const isActive = location.pathname === item.url;
+                const showUnreadBadge = item.url === "/messages" && totalUnread > 0;
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -198,9 +209,14 @@ export function AppSidebar() {
                       tooltip={item.title}
                       isActive={isActive}
                     >
-                      <NavLink to={item.url}>
+                      <NavLink to={item.url} className="flex items-center gap-2">
                         <item.icon />
                         <span>{item.title}</span>
+                        {showUnreadBadge && (
+                          <span className="ml-auto text-xs font-semibold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-destructive text-destructive-foreground">
+                            {formattedUnread}
+                          </span>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

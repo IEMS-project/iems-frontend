@@ -7,11 +7,12 @@ import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
+import { translateStatus } from "../../lib/i18n";
 
 const tabs = [
     { id: "overview", label: "Tổng quan", path: "overview" },
-    { id: "timeline", label: "Timeline", path: "timeline" },
-    { id: "tasks", label: "Danh sách", path: "tasks" },
+    { id: "timeline", label: "Tiến độ", path: "timeline" },
+    { id: "tasks", label: "Nhiệm vụ", path: "tasks" },
     { id: "members", label: "Thành viên", path: "members" },
 ];
 
@@ -38,17 +39,17 @@ export default function ProjectDetailLayout() {
             try {
                 setLoading(true);
                 const data = await projectService.getProjectById(projectId);
-                
-                if (data && data.status === "error" && 
-                    (data.message?.includes("Permission denied") || 
-                     data.message?.includes("PERMISSION_DENIED"))) {
+
+                if (data && data.status === "error" &&
+                    (data.message?.includes("Permission denied") ||
+                        data.message?.includes("PERMISSION_DENIED"))) {
                     navigate("/permission-denied");
                     return;
                 }
-                
+
                 setProjectData(data);
             } catch (e) {
-                if (e.status === 403 || 
+                if (e.status === 403 ||
                     e.message?.includes("PERMISSION_DENIED") ||
                     e.message?.includes("permission") ||
                     e.message?.includes("quyền") ||
@@ -89,7 +90,9 @@ export default function ProjectDetailLayout() {
                                 <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
                                     <span className="truncate">{projectData?.managerName || projectData?.managerEmail || projectData?.managerId || '-'}</span>
                                     <span>•</span>
-                                    <Badge variant="blue" className="whitespace-nowrap">{projectData?.status || 'Chưa xác định'}</Badge>
+                                    <Badge variant="blue" className="whitespace-nowrap">
+                                        {translateStatus(projectData?.status) || 'Chưa xác định'}
+                                    </Badge>
                                 </div>
                             </>
                         )}
@@ -105,10 +108,9 @@ export default function ProjectDetailLayout() {
                                     onClick={() => handleTabClick(tab.path)}
                                     className={`
                                         whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors
-                                        ${
-                                            isActive
-                                                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                                                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                                        ${isActive
+                                            ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                                            : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                                         }
                                     `}
                                 >

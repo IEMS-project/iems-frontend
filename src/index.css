@@ -116,4 +116,14 @@ html, body, #root {
   body {
     @apply bg-background text-foreground;
   }
+  table {
+    @apply text-foreground;
+  }
+  th,
+  td {
+    @apply text-foreground border-border;
+  }
+  select {
+    @apply text-foreground;
+  }
 }

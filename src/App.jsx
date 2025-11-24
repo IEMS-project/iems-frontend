@@ -14,6 +14,7 @@ import DepartmentDetail from "./pages/DepartmentDetail";
 import Messages from "./pages/Messages.jsx";
 import Documents from "./pages/Documents";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminAccessControl from "./pages/AdminAccessControl";
 import Calendar from "./pages/Calendar";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
@@ -63,6 +64,7 @@ export default function App() {
                                 <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/profile" element={<Profile />} />
                                 <Route path="/admin" element={<AdminAnalytics />} />
+                                <Route path="/admin/access-control" element={<AdminAccessControl />} />
                                 <Route path="/permission-denied" element={<PermissionDenied />} />
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                             </Routes>

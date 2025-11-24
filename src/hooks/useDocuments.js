@@ -212,11 +212,13 @@ export function useDocuments() {
     const directionIcon = sortDirection === "asc" ? "↑" : "↓";
     switch (sortBy) {
       case "name":
-        return `Name ${directionIcon}`;
+        return `Tên ${directionIcon}`;
       case "date":
-        return `Date ${directionIcon}`;
+        return `Ngày ${directionIcon}`;
       case "size":
-        return `Size ${directionIcon}`;
+        return `Dung lượng ${directionIcon}`;
+      default:
+        return directionIcon;
     }
   };
 
@@ -492,4 +494,8 @@ export function useDocuments() {
     goUpOneLevel,
   };
 }
+
+
+
+
 

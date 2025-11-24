@@ -196,7 +196,7 @@ export function TasksDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center text-gray-500 dark:text-gray-400"
                 >
-                  Chưa có task
+                  Chưa có nhiệm vụ
                 </TableCell>
               </TableRow>
               )}
@@ -206,7 +206,7 @@ export function TasksDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground dark:text-gray-400">
-          {table.getFilteredRowModel().rows.length} task
+          {table.getFilteredRowModel().rows.length} nhiệm vụ
         </div>
         <div className="space-x-2">
           <Button
