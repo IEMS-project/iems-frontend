@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Input from "../ui/Input";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import { userService } from "../../services/userService";
 
 export default function MemberForm({ formData, setFormData, isEdit = false }) {

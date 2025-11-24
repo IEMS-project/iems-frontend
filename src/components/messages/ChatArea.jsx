@@ -44,8 +44,16 @@ export default function ChatArea({
   onConversationMetaUpdated,
 }) {
   const [showSidebar, setShowSidebar] = useState(false);
+  const [openSearchInSidebar, setOpenSearchInSidebar] = useState(false);
   const [localConversation, setLocalConversation] = useState(null);
-  const handleToggleSidebar = () => setShowSidebar(s => !s);
+  const handleToggleSidebar = () => {
+    setShowSidebar(s => !s);
+    setOpenSearchInSidebar(false);
+  };
+  const handleShowMessageSearch = () => {
+    setShowSidebar(true);
+    setOpenSearchInSidebar(true);
+  };
   const effectiveConversation = useMemo(() => localConversation || selectedConversation, [localConversation, selectedConversation]);
 
   // Reset local overrides when switching to a different conversation
@@ -62,7 +70,7 @@ export default function ChatArea({
         getUserImage={getUserImage}
         pendingDirect={pendingDirect}
         selectedPeerId={selectedPeerId}
-        onShowMessageSearch={onShowMessageSearch}
+        onShowMessageSearch={handleShowMessageSearch}
         onShowGroupMembers={onShowGroupMembers}
         isDirect={isDirect}
         getPeerId={getPeerId}
@@ -127,7 +135,13 @@ export default function ChatArea({
             setLocalConversation(updated);
             try { onConversationMetaUpdated && onConversationMetaUpdated(updated); } catch (_) { }
           }}
-          onClose={() => setShowSidebar(false)}
+          onClose={() => {
+            setShowSidebar(false);
+            setOpenSearchInSidebar(false);
+          }}
+          onMessageClick={(message) => onJumpToMessage(selectedConversationId, message.id || message._id)}
+          openSearch={openSearchInSidebar}
+          onSearchOpened={() => setOpenSearchInSidebar(false)}
         />
       )}
     </div>

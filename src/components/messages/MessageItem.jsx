@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import MediaPreviewModal from "./MediaPreviewModal";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import { chatService, chatWs } from "../../services/chatService";
 import {
-    FaRegCopy,
-    FaRegTrashAlt,
-    FaUndo,
-    FaThumbtack,
-    FaHeart,
-    FaReply,
-    FaEllipsisV,
-    FaTimes,
-    FaCheck
-} from "react-icons/fa";
+    Copy,
+    Trash2,
+    Undo2,
+    Pin,
+    Heart,
+    Reply,
+    MoreVertical,
+    X,
+    Check
+} from "lucide-react";
 
 // Simple in-memory cache for file sizes keyed by URL
 const fileSizeCache = new Map();
@@ -313,20 +313,20 @@ export default function MessageItem({
     const renderReplyPreview = () => {
         const content = message.replyToContent || '';
         const type = (message.replyToType || '').toUpperCase();
-        if (type === 'IMAGE') return <span className="text-gray-600 dark:text-gray-300">[Ảnh]</span>;
-        if (type === 'VIDEO') return <span className="text-gray-600 dark:text-gray-300">[Video]</span>;
+        if (type === 'IMAGE') return <span className="text-muted-foreground">[Ảnh]</span>;
+        if (type === 'VIDEO') return <span className="text-muted-foreground">[Video]</span>;
         if (type === 'FILE') {
             const name = stripTsPrefixFromUrl(content);
-            return <span className="text-gray-600 dark:text-gray-300">[Tệp] {name}</span>;
+            return <span className="text-muted-foreground">[Tệp] {name}</span>;
         }
         if (/^https?:\/\//i.test(content)) {
             const name = stripTsPrefixFromUrl(content);
             const ext = (name.split('.').pop() || '').toLowerCase();
-            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-gray-600 dark:text-gray-300">[Ảnh]</span>;
-            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-gray-600 dark:text-gray-300">[Video]</span>;
-            return <span className="text-gray-600 dark:text-gray-300">[Tệp] {name}</span>;
+            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-muted-foreground">[Ảnh]</span>;
+            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-muted-foreground">[Video]</span>;
+            return <span className="text-muted-foreground">[Tệp] {name}</span>;
         }
-        return <span className="text-gray-600 dark:text-gray-300">{content}</span>;
+        return <span className="text-muted-foreground">{content}</span>;
     };
 
     // When any floating UI for this message is open, elevate the whole message
@@ -381,7 +381,7 @@ export default function MessageItem({
         {/* System log render */}
         {isSystemLog && !invalidSender && (
             <div className="my-2 px-4">
-                <div className="text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <div className="text-center text-xs font-semibold text-muted-foreground">
                     {(() => {
                         const raw = message?.content;
                         if (!raw || typeof raw !== 'string') return raw;
@@ -411,14 +411,14 @@ export default function MessageItem({
                     {message.replyToMessageId && !isRecalled && (
                         <div className={`text-xs mb-1 ${isMe ? 'text-right' : 'text-left'}`}>
                             <div
-                                className="bg-gray-100 dark:bg-gray-700 rounded-lg p-2 border-l-2 border-blue-500 max-w-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="bg-muted rounded-lg p-2 border-l-2 border-border max-w-xs cursor-pointer hover:bg-muted/80 transition-colors"
                                 onClick={() => onJumpToMessage?.(message.replyToMessageId)}
                                 title="Nhấn để xem tin nhắn gốc"
                             >
-                                <div className="text-blue-600 dark:text-blue-400 font-medium text-xs">
+                                <div className="text-foreground font-medium text-xs">
                                     {getUserName(message.replyToSenderId)}
                                 </div>
-                                <div className="text-gray-600 dark:text-gray-300 text-xs truncate">
+                                <div className="text-muted-foreground text-xs truncate">
                                     {renderReplyPreview()}
                                 </div>
                             </div>
@@ -441,13 +441,13 @@ export default function MessageItem({
                             ? 'px-3 py-2 max-w-xs break-words'
                             : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())
                                 ? 'p-1 max-w-sm'
-                                : 'px-3 py-2 max-w-xs break-words')} rounded-2xl ${isRecalled
+                                : 'px-3 py-2 max-w-xs break-words')} rounded-lg ${isRecalled
                             ? isMe
-                                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 italic border border-dashed border-blue-300 dark:border-blue-600"
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic border border-dashed"
+                                ? "bg-muted text-muted-foreground italic border border-dashed border-border"
+                                : "bg-muted text-muted-foreground italic border border-dashed border-border"
                             : isMe
-                                ? (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-blue-500 text-white')
-                                : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600')
+                                ? (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-foreground text-background')
+                                : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-muted text-foreground')
                             }`}>
                             {isRecalled ? (
                                 <span className="text-sm">Tin nhắn đã được thu hồi</span>
@@ -455,7 +455,7 @@ export default function MessageItem({
                                 <>
                                     {/* Sender name inside message bubble for others */}
                                     {!isMe && (
-                                        <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">
+                                        <div className="text-xs font-medium mb-1 text-foreground">
                                             {senderName}
                                         </div>
                                     )}
@@ -464,7 +464,7 @@ export default function MessageItem({
                                             const t = (message.type || '').toUpperCase();
                                             if (t === 'IMAGE') {
                                                 return (
-                                                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-black/5">
+                                                    <div className="overflow-hidden rounded-xl border border-border bg-muted/50">
                                                         <img
                                                             src={message.content}
                                                             alt="image"
@@ -477,7 +477,7 @@ export default function MessageItem({
                                             }
                                             if (t === 'VIDEO') {
                                                 return (
-                                                    <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-black">
+                                                    <div className="overflow-hidden rounded-xl border border-border bg-black">
                                                         <video
                                                             className="max-w-xs cursor-pointer"
                                                             onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'VIDEO' })}
@@ -502,14 +502,14 @@ export default function MessageItem({
                                                         name = /^\d{10,17}$/.test(leading) ? (lastSegment.substring(hyphenIdx + 1) || lastSegment) : (lastSegment || 'Tệp đính kèm');
                                                     }
                                                 } catch(_) { }
-                                                const linkCls = isMe ? 'text-white hover:underline' : 'text-blue-600 dark:text-blue-400 underline';
+                                                const linkCls = isMe ? 'text-background hover:underline' : 'text-foreground underline';
                                                 return (
                                                     <div className={`flex items-start gap-3`}>
-                                                        <span className="inline-flex w-8 h-8 items-center justify-center rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs">FILE</span>
+                                                        <span className="inline-flex w-8 h-8 items-center justify-center rounded bg-muted text-muted-foreground text-xs">FILE</span>
                                                         <div className="flex flex-col min-w-0">
                                                             <a href={url} target="_blank" rel="noreferrer" className={`truncate ${linkCls}`} title={name}>{name}</a>
                                                             {fileSizeText && (
-                                                                <span className={`text-xs ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-300'}`}>{fileSizeText}</span>
+                                                                <span className={`text-xs ${isMe ? 'text-background/70' : 'text-muted-foreground'}`}>{fileSizeText}</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -524,12 +524,10 @@ export default function MessageItem({
                                     {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
                                     {!(isMe && ['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())) && (
                                         <div className={`text-xs mt-1 ${isRecalled
-                                            ? isMe
-                                                ? 'text-blue-500 dark:text-blue-400'
-                                                : 'text-gray-500 dark:text-gray-400'
+                                            ? 'text-muted-foreground'
                                             : isMe
-                                                ? 'text-gray-100'
-                                                : 'text-gray-500 dark:text-gray-400'
+                                                ? 'text-background/70'
+                                                : 'text-muted-foreground'
                                             }`}>
                                             {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                             {message.pinned && (
@@ -562,19 +560,19 @@ export default function MessageItem({
                                 }}
                             >
                                 <button
-                                    className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700"
+                                    className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded-full bg-card shadow-md border border-border"
                                     title="Thả cảm xúc"
                                     style={{
                                         [isMe ? 'right' : 'right']: '12px'
                                     }}
                                 >
-                                    <FaHeart className="w-4 h-4 text-red-500" />
+                                    <Heart className="w-4 h-4 text-destructive" />
                                 </button>
 
                                 {/* Emoji picker - appears on hover over heart */}
                                 {showEmojiPicker && (
                                     <div
-                                        className={`absolute z-30 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 px-3 ${emojiOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${isMe ? 'right-0' : 'left-0'}`}
+                                        className={`absolute z-30 bg-card rounded-2xl shadow-xl border border-border py-2 px-3 ${emojiOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${isMe ? 'right-0' : 'left-0'}`}
                                         style={{
                                             [isMe ? 'right' : 'left']: '-12px'
                                         }}
@@ -584,7 +582,7 @@ export default function MessageItem({
                                                 <button
                                                     key={emoji}
                                                     onClick={() => handleReaction(emoji)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl transition-colors"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-xl transition-colors"
                                                     title={`Thả cảm xúc ${emoji}`}
                                                 >
                                                     {emoji}
@@ -606,10 +604,10 @@ export default function MessageItem({
                                         onReply?.(message);
                                         setShowMenu(false);
                                     }}
-                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full"
+                                    className="p-1 hover:bg-muted rounded-full"
                                     title="Trả lời"
                                 >
-                                    <FaReply className="w-4 h-4 text-gray-500" />
+                                    <Reply className="w-4 h-4 text-muted-foreground" />
                                 </button>
 
                                 {/* Three dots menu button with relative wrapper */}
@@ -619,49 +617,49 @@ export default function MessageItem({
                                             if (!showMenu) setOpenMenuUp(computeOpenUp(bubbleRef, 220));
                                             setShowMenu(!showMenu);
                                         }}
-                                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full"
+                                        className="p-1 hover:bg-muted rounded-full"
                                     >
-                                        <FaEllipsisV className="w-4 h-4 text-gray-500" />
+                                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
                                     </button>
 
                                     {/* Menu dropdown - positioned next to 3 dots button */}
                                     {showMenu && (
                                         <div
                                             ref={menuRef}
-                                            className={`absolute right-0 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[200px] ${openMenuUp ? 'bottom-full mb-2' : 'mt-2'}`}
+                                            className={`absolute right-0 z-20 bg-card rounded-lg shadow-lg border border-border py-1 min-w-[200px] ${openMenuUp ? 'bottom-full mb-2' : 'mt-2'}`}
                                         >
                                             {/* Copy */}
                                             <button
                                                 onClick={handleCopy}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                                             >
-                                                <FaRegCopy className="w-4 h-4" />
+                                                <Copy className="w-4 h-4" />
                                                 Copy tin nhắn
                                             </button>
 
                                             {/* Pin */}
                                             <button
                                                 onClick={handlePin}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                                             >
-                                                <FaThumbtack className="w-4 h-4" />
+                                                <Pin className="w-4 h-4" />
                                                 {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
                                             </button>
                                             {/* Delete for me (red) */}
                                             <button
                                                 onClick={handleDeleteForMe}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600"
+                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
                                             >
-                                                <FaRegTrashAlt className="w-4 h-4" />
+                                                <Trash2 className="w-4 h-4" />
                                                 Xóa chỉ ở phía tôi
                                             </button>
 
                                             {isMe && (
                                                 <button
                                                     onClick={handleRecall}
-                                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-red-600"
+                                                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
                                                 >
-                                                    <FaUndo className="w-4 h-4" />
+                                                    <Undo2 className="w-4 h-4" />
                                                     Thu hồi tin nhắn
                                                 </button>
                                             )}
@@ -677,7 +675,7 @@ export default function MessageItem({
                         {reactions.length > 0 && (
                             <button
                                 onClick={() => setShowReactionModal(true)}
-                                className="flex items-center px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                                className="flex items-center px-2 py-0.5 rounded-full bg-muted border border-border shadow-sm hover:bg-muted/80 transition-colors cursor-pointer"
                             >
                                 {/* Hiển thị tối đa 3 emoji khác nhau */}
                                 {reactions.slice(0, 3).map(({ emoji }) => (
@@ -686,7 +684,7 @@ export default function MessageItem({
                                     </span>
                                 ))}
                                 {/* Tổng số reaction */}
-                                <span className="text-xs font-medium">
+                                <span className="text-xs font-medium text-foreground">
                                     {reactions.reduce((sum, r) => sum + r.count, 0)}
                                 </span>
                             </button>
@@ -698,16 +696,16 @@ export default function MessageItem({
 
             {/* Reaction Details Modal */}
             {showReactionModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-border">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Biểu cảm</h3>
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <h3 className="text-lg font-semibold text-foreground">Biểu cảm</h3>
                             <button
                                 onClick={() => setShowReactionModal(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                className="text-muted-foreground hover:text-foreground"
                             >
-                                <FaTimes className="w-6 h-6" />
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
 
@@ -719,15 +717,15 @@ export default function MessageItem({
                             {/* Danh sách tất cả users đã react */}
                             {getAllReactingUsers().map((user) => (
                                 <div key={user.id} className={`flex items-center justify-between mb-2 p-2 rounded-lg ${user.id === currentUserId
-                                    ? 'bg-blue-50 dark:bg-blue-900/20'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'bg-muted'
+                                    : 'hover:bg-muted/50'
                                     }`}>
                                     <div className="flex items-center">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3 ${user.id === currentUserId ? 'bg-blue-500' : 'bg-gray-500'
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium mr-3 ${user.id === currentUserId ? 'bg-primary' : 'bg-muted-foreground'
                                             }`}>
                                             {user.name.charAt(0)}
                                         </div>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                        <span className="text-sm font-medium text-foreground">
                                             {user.name}
                                         </span>
                                     </div>
@@ -742,10 +740,10 @@ export default function MessageItem({
 
                         {/* Footer */}
                         {reactions.some(r => r.hasReacted) && (
-                            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                            <div className="border-t border-border p-4">
                                 <button
                                     onClick={handleRemoveAllMyReactions}
-                                    className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                                    className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
                                 >
                                     Hủy tất cả biểu cảm của tôi
                                 </button>

@@ -4,16 +4,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card"
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
-import Select from "../components/ui/Select";
+import Select from "../components/ui/Select.jsx";
 import MemberCard from "../components/departments/MemberCard";
 import MemberForm from "../components/departments/MemberForm";
 import AddExistingUsersModal from "../components/departments/AddExistingUsersModal";
-import PageHeader from "../components/common/PageHeader";
 import UserAvatar from "../components/ui/UserAvatar";
-import Pagination from "../components/ui/Pagination";
+import Pagination from "../components/ui/Pagination.jsx";
 import Skeleton from "../components/ui/Skeleton";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 
 export default function DepartmentDetail() {
@@ -32,6 +32,8 @@ export default function DepartmentDetail() {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(7);
+    const [deleteMemberDialogOpen, setDeleteMemberDialogOpen] = useState(false);
+    const [memberToDelete, setMemberToDelete] = useState(null);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -208,13 +210,18 @@ export default function DepartmentDetail() {
         setShowEditModal(true);
     };
 
-    const handleDeleteMember = async (member) => {
-        if (department && window.confirm("Bạn có chắc muốn xóa thành viên này?")) {
-            try {
-                setLoading(true);
+    const handleDeleteMember = (member) => {
+        setMemberToDelete(member);
+        setDeleteMemberDialogOpen(true);
+    };
 
-                // Gọi API remove user from department
-                await departmentService.removeUserFromDepartment(departmentId, member.userId);
+    const confirmDeleteMember = async () => {
+        if (!department || !memberToDelete) return;
+        try {
+            setLoading(true);
+
+            // Gọi API remove user from department
+            await departmentService.removeUserFromDepartment(departmentId, memberToDelete.userId);
 
                 // Refresh department data để cập nhật danh sách
                 const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
@@ -255,8 +262,9 @@ export default function DepartmentDetail() {
                 setError(error?.message || "Có lỗi xảy ra khi xóa thành viên");
             } finally {
                 setLoading(false);
+                setDeleteMemberDialogOpen(false);
+                setMemberToDelete(null);
             }
-        }
     };
 
     const handleSubmitAddMember = async () => {
@@ -523,12 +531,6 @@ export default function DepartmentDetail() {
     return (
         <>
             <div className="space-y-6">
-                {/* Page Header */}
-
-                <PageHeader
-                    breadcrumbs={[{ label: "Phòng ban", to: "/departments" }, { label: department.departmentName || department.name }]}
-                />
-
                 {/* Department Stats */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                     <Card>
@@ -924,6 +926,21 @@ export default function DepartmentDetail() {
                     </div>
                 )}
             </Modal>
+
+            {/* Delete Member Confirmation Dialog */}
+            <ConfirmDialog
+                open={deleteMemberDialogOpen}
+                onOpenChange={(open) => {
+                    setDeleteMemberDialogOpen(open);
+                    if (!open) setMemberToDelete(null);
+                }}
+                onConfirm={confirmDeleteMember}
+                title="Xác nhận xóa thành viên"
+                description="Bạn có chắc muốn xóa thành viên này khỏi phòng ban?"
+                confirmText="Xóa"
+                cancelText="Hủy"
+                variant="destructive"
+            />
         </>
     );
 }

@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
-import PageHeader from "../components/common/PageHeader";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
-import Select from "../components/ui/Select";
+import Select from "../components/ui/Select.jsx";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import { Card, CardContent } from "../components/ui/Card";
@@ -64,8 +63,6 @@ export default function Notifications() {
 
   return (
     <div className="space-y-4">
-      <PageHeader breadcrumbs={[{ label: "Thông báo" }]} />
-
       <div className="flex justify-end">
         <Button onClick={() => setOpen(true)} className="px-4">Tạo thông báo</Button>
       </div>

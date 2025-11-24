@@ -1,47 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
-import { Table, THead, TBody, TR, TH, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
-import UserAvatar from "../ui/UserAvatar";
-import TaskDetailModal from "./TaskDetailModal";
-import Skeleton from "../ui/Skeleton";
-import { useToast } from "../../context/ToastContext";
+import TaskDetailModal from "../tasks/TaskDetailModal";
+import { toast } from "sonner";
+import { taskColumns } from "./tasks-columns";
+import { TasksDataTable } from "./tasks-data-table";
+import { translatePriority, translateStatus } from "../../lib/i18n";
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
     const [assignableUsers, setAssignableUsers] = useState([]);
 
     // Danh sách thành viên trong dự án để chọn làm người phụ trách
     // Tải từ API dự án
-
-    function statusVariant(status) {
-        switch (status) {
-            case "Hoàn thành": return "green";
-            case "Đang làm": return "blue";
-            case "Chờ": return "yellow";
-            default: return "gray";
-        }
-    }
-
-    function priorityVariant(priority) {
-        switch (priority) {
-            case "Cao": return "red";
-            case "Trung bình": return "yellow";
-            case "Thấp": return "blue";
-            default: return "gray";
-        }
-    }
 
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
@@ -116,15 +97,14 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const handleEditTask = (task) => {
         setEditingTask(task);
         const assignedId = task.assignedTo?.id || task.assignedTo || "";
-        const currentStatus = (task.status || '').toString();
-        const statusForSelect = currentStatus.includes('In Progress') ? 'Đang làm' : (currentStatus.includes('Hoàn thành') || currentStatus.includes('Completed')) ? 'Hoàn thành' : 'Chờ';
+        const statusForSelect = translateStatus(task.status) || 'Chờ';
         setFormData({
             id: task.id,
             title: task.title,
             description: task.description || "",
             assignee: assignedId,
             status: statusForSelect,
-            priority: task.priority,
+            priority: translatePriority(task.priority) || "Trung bình",
             taskType: (task.taskType || '').toString().toUpperCase().includes('EPIC') ? 'EPIC'
                 : (task.taskType || '').toString().toUpperCase().includes('STORY') ? 'STORY'
                 : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
@@ -184,10 +164,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
             if (editingTask?.id) {
                 await taskService.updateTask(editingTask.id, payload);
-                toast.success("Task đã được cập nhật thành công");
+                toast.success("Nhiệm vụ đã được cập nhật thành công");
             } else {
                 await taskService.createTask(payload);
-                toast.success("Task đã được tạo thành công");
+                toast.success("Nhiệm vụ đã được tạo thành công");
             }
 
             const refreshed = await taskService.getTasksByProject(projectId);
@@ -218,14 +198,13 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 navigate("/permission-denied");
                 return;
             } else {
-                toast.error(e?.message || "Có lỗi xảy ra khi lưu task");
+                toast.error(e?.message || "Có lỗi xảy ra khi lưu nhiệm vụ");
             }
         } finally {
             setLoading(false);
         }
     };
 
-    const skeletonRows = Array.from({ length: 5 });
     const showLoading = loading || tasksLoading;
 
     const handleClose = () => {
@@ -242,118 +221,34 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         });
     };
 
+    const handleRowClick = (task) => {
+        setDetailTask(task);
+        setShowDetail(true);
+    };
+
     return (
         <>
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Nhiệm vụ</CardTitle>
-                        <Button size="sm" onClick={handleAddTask}>+ Thêm task</Button>
+                        <Button size="sm" onClick={handleAddTask}>+ Thêm nhiệm vụ</Button>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table className="min-w-full">
-                            <THead>
-                                <TR>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Nhiệm vụ</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người thực hiện</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Trạng thái</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Độ ưu tiên</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Bắt đầu</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Kết thúc</TH>
-                                    <TH className="sticky top-0 bg-white z-10 whitespace-nowrap">Người tạo</TH>
-                                </TR>
-                            </THead>
-                            <TBody>
-                                {showLoading ? (
-                                    skeletonRows.map((_, idx) => (
-                                        <TR key={idx}>
-                                            <TD className="min-w-[200px]">
-                                                <Skeleton className="h-4 w-3/4" />
-                                            </TD>
-                                            <TD className="min-w-[180px]">
-                                                <div className="flex items-center gap-2">
-                                                    <Skeleton className="h-9 w-9 rounded-full" />
-                                                    <div className="flex-1 space-y-2">
-                                                        <Skeleton className="h-3 w-32" />
-                                                        <Skeleton className="h-3 w-24" />
-                                                    </div>
-                                                </div>
-                                            </TD>
-                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
-                                            <TD className="min-w-[120px]"><Skeleton className="h-6 w-20" /></TD>
-                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
-                                            <TD className="min-w-[110px]"><Skeleton className="h-4 w-20" /></TD>
-                                            <TD className="min-w-[180px]">
-                                                <div className="flex items-center gap-2">
-                                                    <Skeleton className="h-9 w-9 rounded-full" />
-                                                    <div className="flex-1 space-y-2">
-                                                        <Skeleton className="h-3 w-32" />
-                                                        <Skeleton className="h-3 w-24" />
-                                                    </div>
-                                                </div>
-                                            </TD>
-                                        </TR>
-                                    ))
-                                ) : tasksData.length === 0 ? (
-                                    <TR><TD colSpan="7" className="py-6 text-center text-gray-500">Chưa có task</TD></TR>
-                                ) : (
-                                    tasksData.map(t => {
-                                        const assignedName = t.assignedToName || t.assignedTo?.name || t.assignedToEmail || '';
-                                        const assignedEmail = t.assignedToEmail || '';
-                                        const createdName = t.createdByName || t.createdBy?.name || t.createdByEmail || '';
-                                        const createdEmail = t.createdByEmail || '';
-                                        return (
-                                            <TR 
-                                                key={t.id}
-                                                onClick={() => {
-                                                    setDetailTask(t); 
-                                                    setShowDetail(true);
-                                                }}
-                                                className="cursor-pointer transition-colors select-none"
-                                            >
-                                                <TD className="min-w-[200px] whitespace-nowrap">{t.title}</TD>
-                                                <TD className="min-w-[180px] whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <UserAvatar user={{ firstName: assignedName, email: assignedEmail }} size="xs" />
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="font-medium truncate">{assignedName}</span>
-                                                            <span className="text-sm text-gray-500 truncate">{assignedEmail}</span>
-                                                        </div>
-                                                    </div>
-                                                </TD>
-                                                <TD className="min-w-[120px] whitespace-nowrap">
-                                                    <Badge variant={statusVariant(t.status)}>{t.status}</Badge>
-                                                </TD>
-                                                <TD className="min-w-[120px] whitespace-nowrap">
-                                                    <Badge variant={priorityVariant(t.priority)}>{t.priority}</Badge>
-                                                </TD>
-                                                <TD className="min-w-[110px] whitespace-nowrap">{t.startDate ? new Date(t.startDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="min-w-[110px] whitespace-nowrap">{t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '-'}</TD>
-                                                <TD className="min-w-[180px] whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <UserAvatar user={{ firstName: createdName, email: createdEmail }} size="xs" />
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="font-medium truncate">{createdName}</span>
-                                                            <span className="text-sm text-gray-500 truncate">{createdEmail}</span>
-                                                        </div>
-                                                    </div>
-                                                </TD>
-                                            </TR>
-                                        );
-                                    })
-                                )}
-                            </TBody>
-                        </Table>
-                    </div>
+                    <TasksDataTable 
+                        columns={taskColumns} 
+                        data={tasksData} 
+                        loading={showLoading}
+                        onRowClick={handleRowClick}
+                    />
                 </CardContent>
             </Card>
 
             <Modal
                 open={showModal}
                 onClose={handleClose}
-                title={editingTask ? 'Chỉnh sửa task' : 'Thêm task mới'}
+                title={editingTask ? 'Chỉnh sửa nhiệm vụ' : 'Thêm nhiệm vụ mới'}
                 footer={
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={handleClose}>Hủy</Button>
@@ -387,9 +282,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="EPIC">Epic</option>
-                            <option value="TASK">Task</option>
-                            <option value="STORY">Story</option>
-                            <option value="BUG">Bug</option>
+                            <option value="TASK">Nhiệm vụ</option>
+                            <option value="STORY">User story</option>
+                            <option value="BUG">Lỗi</option>
                         </Select>
                     </div>
                     <div className="sm:col-span-2">
@@ -399,7 +294,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={5}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mô tả chi tiết cho task"
+                            placeholder="Nhập mô tả chi tiết cho nhiệm vụ"
                         />
                     </div>
                     <div>

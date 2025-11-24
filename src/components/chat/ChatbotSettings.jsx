@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FaCog, FaSave, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
-import { useToast } from '../../context/ToastContext';
+import { toast } from 'sonner';
 
 const ChatbotSettings = ({ className = "" }) => {
-  const { toast } = useToast();
   const [settings, setSettings] = useState({
     model: 'qwen2.5',
     temperature: 0.7,
@@ -161,7 +160,7 @@ const ChatbotSettings = ({ className = "" }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Temperature: {settings.temperature}
+                Nhiệt độ: {settings.temperature}
               </label>
               <input
                 type="range"
@@ -173,15 +172,15 @@ const ChatbotSettings = ({ className = "" }) => {
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Conservative (0)</span>
-                <span>Balanced (1)</span>
-                <span>Creative (2)</span>
+                <span>Ổn định (0)</span>
+                <span>Cân bằng (1)</span>
+                <span>Sáng tạo (2)</span>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Max Tokens: {settings.maxTokens}
+                Số token tối đa: {settings.maxTokens}
               </label>
               <input
                 type="range"
@@ -193,9 +192,9 @@ const ChatbotSettings = ({ className = "" }) => {
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Short (512)</span>
-                <span>Medium (2048)</span>
-                <span>Long (4096)</span>
+                <span>Ngắn (512)</span>
+                <span>Trung bình (2048)</span>
+                <span>Dài (4096)</span>
               </div>
             </div>
           </div>
@@ -223,7 +222,7 @@ const ChatbotSettings = ({ className = "" }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Streaming Response</div>
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Phản hồi dạng streaming</div>
                 <div className="text-xs text-gray-500">Hiển thị phản hồi theo thời gian thực</div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">

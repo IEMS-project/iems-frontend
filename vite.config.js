@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
+  },
   define: {
     global: 'window'  // <-- thêm dòng này để fix lỗi sockjs-client
   },

@@ -1,5 +1,5 @@
 import React from "react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Button from "../ui/Button";
 
 function MemberCard({ member, onEdit, onDelete }) {

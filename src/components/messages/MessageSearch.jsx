@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Skeleton from "../ui/Skeleton";
-import { FaSearch, FaTimes, FaSpinner } from "react-icons/fa";
+import { Search, X, Loader2 } from "lucide-react";
 
 export default function MessageSearch({ 
     conversationId, 
@@ -88,51 +88,51 @@ export default function MessageSearch({
     const highlightKeyword = (text, keyword) => {
         if (!keyword) return text;
         const regex = new RegExp(`(${keyword})`, 'gi');
-        return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>');
+        return text.replace(regex, '<mark class="bg-muted text-foreground font-medium">$1</mark>');
     };
 
     if (!isVisible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col border border-border">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b border-border">
                     <div className="flex items-center gap-2">
-                        <FaSearch className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <Search className="w-5 h-5 text-foreground" />
+                        <h3 className="text-lg font-semibold text-foreground">
                             Tìm kiếm tin nhắn
                         </h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        className="p-1 hover:bg-muted rounded"
                     >
-                        <FaTimes className="w-5 h-5" />
+                        <X className="w-5 h-5 text-muted-foreground" />
                     </button>
                 </div>
 
                 {/* Search Input */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="p-4 border-b border-border">
                     <form onSubmit={handleSearchSubmit} className="flex gap-2">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Nhập từ khóa tìm kiếm..."
-                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            className="flex-1 px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
                             autoFocus
                         />
                         <button
                             type="submit"
                             disabled={!searchQuery.trim() || loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {loading ? (
-                                <FaSpinner className="animate-spin h-4 w-4" />
+                                <Loader2 className="animate-spin h-4 w-4" />
                             ) : (
                                 <>
-                                    <FaSearch className="h-4 w-4" />
+                                    <Search className="h-4 w-4" />
                                     Tìm kiếm
                                 </>
                             )}
@@ -145,7 +145,7 @@ export default function MessageSearch({
                     {loading && searchResults.length === 0 ? (
                         <div className="space-y-3">
                             {Array.from({ length: 5 }).map((_, idx) => (
-                                <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-600">
+                                <div key={idx} className="rounded-lg border border-dashed border-border p-3">
                                     <div className="flex items-start gap-3">
                                         <Skeleton className="h-10 w-10 rounded-full" />
                                         <div className="flex-1 space-y-2">
@@ -159,19 +159,19 @@ export default function MessageSearch({
                         </div>
                     ) : searchResults.length === 0 && searchQuery ? (
                         <div className="text-center py-8">
-                            <FaSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500">Không tìm thấy tin nhắn nào</p>
+                            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground">Không tìm thấy tin nhắn nào</p>
                         </div>
                     ) : searchResults.length > 0 ? (
                         <div className="space-y-3">
-                            <div className="text-sm text-gray-500 mb-4">
+                            <div className="text-sm text-muted-foreground mb-4">
                                 Tìm thấy {total} kết quả
                             </div>
                             
                             {searchResults.map((result) => (
                                 <div
                                     key={result.id}
-                                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                                    className="bg-muted rounded-lg p-3 hover:bg-muted/80 transition-colors cursor-pointer"
                                     onClick={() => onMessageClick?.(result)}
                                 >
                                     <div className="flex items-start gap-3">
@@ -185,17 +185,17 @@ export default function MessageSearch({
                                         <div className="flex-1 min-w-0">
                                             {/* Header with sender name and time */}
                                             <div className="flex items-center justify-between mb-1">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                <div className="text-sm font-medium text-foreground">
                                                     {getUserName(result.senderId)}
                                                 </div>
-                                                <div className="text-xs text-gray-500">
+                                                <div className="text-xs text-muted-foreground">
                                                     {formatTime(result.sentAt)}
                                                 </div>
                                             </div>
                                             
                                             {/* Message content with highlighted keyword */}
                                             <div 
-                                                className="text-sm text-gray-700 dark:text-gray-300"
+                                                className="text-sm text-foreground"
                                                 dangerouslySetInnerHTML={{
                                                     __html: highlightKeyword(result.snippet, searchQuery)
                                                 }}
@@ -211,17 +211,24 @@ export default function MessageSearch({
                                     <button
                                         onClick={handleLoadMore}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 disabled:opacity-50"
+                                        className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 disabled:opacity-50 border border-border"
                                     >
-                                        {loading ? 'Đang tải...' : 'Tải thêm'}
+                                        {loading ? (
+                                            <span className="flex items-center gap-2">
+                                                <Loader2 className="animate-spin h-4 w-4" />
+                                                Đang tải...
+                                            </span>
+                                        ) : (
+                                            'Tải thêm'
+                                        )}
                                     </button>
                                 </div>
                             )}
                         </div>
                     ) : (
                         <div className="text-center py-8">
-                            <FaSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500">Nhập từ khóa để tìm kiếm tin nhắn</p>
+                            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground">Nhập từ khóa để tìm kiếm tin nhắn</p>
                         </div>
                     )}
                 </div>

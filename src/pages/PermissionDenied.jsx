@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import PageHeader from "../components/common/PageHeader";
 
 export default function PermissionDenied() {
     const navigate = useNavigate();
@@ -12,12 +11,6 @@ export default function PermissionDenied() {
 
     return (
         <div className="p-6">
-            <PageHeader
-                breadcrumbs={[
-                    { label: "Lỗi", to: "/dashboard" },
-                    { label: "Không có quyền truy cập" },
-                ]}
-            />
 
             <Card className="text-center mt-6">
                 <div className="p-8">

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
     const [name, setName] = useState("");

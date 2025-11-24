@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
 
 export default function PermissionModal({ 
 	isOpen, 
@@ -9,7 +9,6 @@ export default function PermissionModal({
 	item, 
 	onConfirm 
 }) {
-	const { toast } = useToast();
 	const [permission, setPermission] = useState(item?.permission || "PUBLIC");
 	const [loading, setLoading] = useState(false);
 

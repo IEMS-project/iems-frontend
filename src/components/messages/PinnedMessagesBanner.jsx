@@ -1,6 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "../../services/chatService";
-import { FaThumbtack, FaTimes, FaChevronDown, FaChevronUp, FaEllipsisV } from "react-icons/fa";
+import { FaTimes, FaChevronDown, FaChevronUp, FaEllipsisV } from "react-icons/fa";
+import { Pin } from "lucide-react";
 
 const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
     conversationId,
@@ -56,17 +57,17 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
     }
 
     return (
-        <div className="border-b border-gray-200 dark:border-gray-800">
+        <div className="border-b border-border">
             {/* Header */}
             {!isCollapsed && (
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-900/40">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <div className="flex items-center justify-between px-4 py-2 bg-muted">
+                    <div className="text-sm font-medium text-foreground">
                         Danh sách ghim ({pinnedMessages.length})
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsCollapsed(c => !c)}
-                            className="flex items-center gap-1 font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                            className="flex items-center gap-1 font-medium text-sm text-muted-foreground hover:text-foreground"
                             title={isCollapsed ? "Mở rộng" : "Thu gọn"}
                         >
                             {isCollapsed ? 'Mở rộng' : 'Thu gọn'}
@@ -74,10 +75,10 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                         </button>
                         <button
                             onClick={closeBanner}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                            className="p-1 hover:bg-muted/80 rounded"
                             title="Đóng"
                         >
-                            <FaTimes className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                            <FaTimes className="w-4 h-4 text-muted-foreground" />
                         </button>
                     </div>
                 </div>
@@ -85,7 +86,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
 
             {/* Collapsed compact view */}
             {isCollapsed && pinnedMessages.length > 0 && (
-                <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+                <div className="px-4 py-3 border-t border-border">
                     {(() => {
                         const m = pinnedMessages[0];
                         const key = m.id || m._id;
@@ -94,20 +95,20 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                         return (
                             <div className="flex items-center gap-3">
                                 <div className="flex-shrink-0">
-                                    <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                                        <FaThumbtack className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                                        <Pin className="w-4 h-4 text-foreground" />
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-0" onClick={() => onMessageClick?.(m)}>
-                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Tin nhắn</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    <div className="text-sm font-medium text-foreground">Tin nhắn</div>
+                                    <div className="text-sm text-muted-foreground truncate">
                                         {getUserName?.(m.senderId)}: {preview}
                                     </div>
                                 </div>
                                 {extra > 0 && (
                                     <button
                                         onClick={() => setIsCollapsed(false)}
-                                        className="text-sm font-semibold px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        className="text-sm font-semibold px-3 py-1 rounded border border-border text-foreground hover:bg-muted"
                                         title="Mở danh sách ghim"
                                     >
                                         +{extra} ghim
@@ -117,15 +118,15 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                 <div className="relative">
                                     <button
                                         onClick={() => setOpenMenuId(openMenuId === key ? null : key)}
-                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                                        className="p-1 hover:bg-muted rounded"
                                         title="Tùy chọn"
                                     >
-                                        <FaEllipsisV className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                                        <FaEllipsisV className="w-5 h-5 text-muted-foreground" />
                                     </button>
                                     {openMenuId === key && (
-                                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
+                                        <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-md shadow-lg z-10">
                                             <button
-                                                className="w-full text-left px-3 py-2 text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+                                                className="w-full text-left px-3 py-2 text-destructive hover:bg-muted rounded"
                                                 onClick={async () => {
                                                     try { await chatService.unpinMessage(conversationId, key); } catch (e) { /* ignore */ }
                                                     setOpenMenuId(null);
@@ -145,26 +146,26 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
 
             {/* Expanded list */}
             {!isCollapsed && (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="divide-y divide-border">
                     {pinnedMessages.map((m) => {
                         const key = m.id || m._id;
                         const preview = m.recalled ? 'Tin nhắn đã được thu hồi' : (m.content || '');
                         return (
                             <div
                                 key={key}
-                                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/40"
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50"
                             >
                                 {/* Left icon */}
                                 <div className="flex-shrink-0">
-                                    <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                                        <FaThumbtack className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                                        <Pin className="w-4 h-4 text-foreground" />
                                     </div>
                                 </div>
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onMessageClick?.(m)}>
-                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Tin nhắn</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    <div className="text-sm font-medium text-foreground">Tin nhắn</div>
+                                    <div className="text-sm text-muted-foreground truncate">
                                         {getUserName?.(m.senderId)}: {preview}
                                     </div>
                                 </div>
@@ -173,15 +174,15 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                 <div className="relative">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === key ? null : key); }}
-                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                                        className="p-1 hover:bg-muted rounded"
                                         title="Tùy chọn"
                                     >
-                                        <FaEllipsisV className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                                        <FaEllipsisV className="w-5 h-5 text-muted-foreground" />
                                     </button>
                                     {openMenuId === key && (
-                                        <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
+                                        <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-md shadow-lg z-10">
                                             <button
-                                                className="w-full text-left px-3 py-2 text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded"
+                                                className="w-full text-left px-3 py-2 text-destructive hover:bg-muted rounded"
                                                 onClick={async () => {
                                                     try {
                                                         if (typeof onUnpinMessage === 'function') {

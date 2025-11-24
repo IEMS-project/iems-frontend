@@ -6,7 +6,7 @@ export default function ActivityPanel() {
 		items: [
 			{ title: "Trần B bình luận trong nhiệm vụ \"API integration\"", time: "2 giờ trước" },
 			{ title: "Cuộc họp mới: Sprint Planning — Ngày mai 09:00", time: "Hôm nay" },
-			{ title: "Nhiệm vụ \"Create repo\" chuyển sang Done", time: "Hôm qua" },
+			{ title: "Nhiệm vụ \"Create repo\" chuyển sang Hoàn thành", time: "Hôm qua" },
 			{ title: "Nguyễn A đính kèm tệp thiết kế vào \"UI Review\"", time: "3 giờ trước" },
 			{ title: "Tạo nhánh mới feature/auth-flow", time: "Hôm nay" },
 			{ title: "Triển khai staging thành công", time: "2 ngày trước" },

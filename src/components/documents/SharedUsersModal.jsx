@@ -4,14 +4,13 @@ import Button from "../ui/Button";
 import { documentService } from "../../services/documentService";
 import UserAvatar from "../ui/UserAvatar";
 import Skeleton from "../ui/Skeleton";
-import { useToast } from "../../context/ToastContext";
+import { toast } from "sonner";
 
 export default function SharedUsersModal({ 
 	isOpen, 
 	onClose, 
 	item 
 }) {
-	const { toast } = useToast();
 	console.log('SharedUsersModal item:', item);
 	const [sharedUsers, setSharedUsers] = useState([]);
 	const [loading, setLoading] = useState(false);

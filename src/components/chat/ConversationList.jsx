@@ -3,7 +3,8 @@ import { FaPlus, FaSearch, FaHistory } from 'react-icons/fa';
 import ConversationItem from './ConversationItem';
 import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
-import { useToast } from '../../context/ToastContext';
+import { toast } from 'sonner';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const ConversationList = ({ 
   activeConversationId, 
@@ -14,11 +15,12 @@ const ConversationList = ({
   refreshTrigger,
   className = "" 
 }) => {
-  const { toast } = useToast();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState(null);
 
   useEffect(() => {
     loadConversations();
@@ -66,27 +68,32 @@ const ConversationList = ({
     }
   };
 
-  const handleDeleteConversation = async (conversationId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?')) {
-      return;
-    }
+  const handleDeleteConversation = (conversationId) => {
+    setConversationToDelete(conversationId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteConversation = async () => {
+    if (!conversationToDelete) return;
 
     try {
-      await chatbotService.deleteConversation(conversationId);
-      setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+      await chatbotService.deleteConversation(conversationToDelete);
+      setConversations(prev => prev.filter(conv => conv.id !== conversationToDelete));
 
       // Nếu đang xóa cuộc trò chuyện đang active, chuyển về cuộc trò chuyện đầu tiên
-      if (activeConversationId === conversationId) {
-        const remainingConversations = (Array.isArray(conversations) ? conversations : []).filter(conv => conv.id !== conversationId);
+      if (activeConversationId === conversationToDelete) {
+        const remainingConversations = (Array.isArray(conversations) ? conversations : []).filter(conv => conv.id !== conversationToDelete);
         if (remainingConversations.length > 0) {
           onConversationSelect(remainingConversations[0].id);
         } else {
           onNewConversation();
         }
       }
+      setConversationToDelete(null);
     } catch (error) {
       console.error('Error deleting conversation:', error);
       toast.error(error?.message || 'Không thể xóa cuộc trò chuyện');
+      setConversationToDelete(null);
     }
   };
 
@@ -222,6 +229,18 @@ const ConversationList = ({
           </div>
         </div>
       )}
+
+      {/* Delete Conversation Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDeleteConversation}
+        title="Xác nhận xóa cuộc trò chuyện"
+        description="Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác."
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="destructive"
+      />
     </div>
   );
 };

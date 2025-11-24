@@ -50,7 +50,7 @@ export default function ProjectOverview() {
 
 	const handleProjectClick = (projectId) => {
 		if (projectId) {
-			navigate(`/projects/${projectId}`);
+			navigate(`/projects/${projectId}/overview`);
 		}
 	};
 

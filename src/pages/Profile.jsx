@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBuilding, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaProjectDiagram, FaTasks, FaTrophy, FaChartLine, FaClock, FaUsers } from "react-icons/fa";
-import Avatar from "../components/ui/Avatar";
+import Avatar from "../components/ui/Avatar.jsx";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
 import { Card } from "../components/ui/Card";
-import PageHeader from "../components/common/PageHeader";
 import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
@@ -142,40 +141,39 @@ export default function Profile() {
 
 	return (
 		<div className="space-y-6">
-			<PageHeader
-				title="Hồ sơ cá nhân"
-				subtitle="Quản lý thông tin tài khoản của bạn"
-			/>
-
 			{/* Statistics Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Dự án hoàn thành"
 					value={userStats.projectsCompleted}
-					icon={<FaProjectDiagram className="h-6 w-6" />}
+					icon={<FaProjectDiagram className="h-5 w-5" />}
 					trend="+12%"
 					trendUp={true}
+					accent="indigo"
 				/>
 				<StatsCard
 					title="Nhiệm vụ hoàn thành"
 					value={userStats.tasksCompleted}
-					icon={<FaTasks className="h-6 w-6" />}
+					icon={<FaTasks className="h-5 w-5" />}
 					trend="+8%"
 					trendUp={true}
+					accent="green"
 				/>
 				<StatsCard
 					title="Phòng ban tham gia"
 					value={userStats.departmentsJoined}
-					icon={<FaBuilding className="h-6 w-6" />}
+					icon={<FaBuilding className="h-5 w-5" />}
 					trend="+1"
 					trendUp={true}
+					accent="orange"
 				/>
 				<StatsCard
 					title="Giờ làm việc"
 					value={userStats.hoursWorked}
-					icon={<FaClock className="h-6 w-6" />}
+					icon={<FaClock className="h-5 w-5" />}
 					trend="+15%"
 					trendUp={true}
+					accent="purple"
 				/>
 			</div>
 

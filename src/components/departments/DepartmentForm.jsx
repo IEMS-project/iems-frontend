@@ -1,7 +1,7 @@
 import React from "react";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
-import Select from "../ui/Select";
+import Select from "../ui/Select.jsx";
 
 const colorOptions = [
     { value: "bg-blue-500", label: "Xanh dương", color: "bg-blue-500" },
