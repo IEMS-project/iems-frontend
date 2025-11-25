@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import Select from "../../components/ui/Select.jsx";
+import Select from "../../components/ui/select";
 import Tasks from "../../components/project/Tasks";
 import { taskService } from "../../services/taskService";
 import { translatePriority, translateStatus } from "../../lib/i18n";
@@ -48,7 +48,7 @@ export default function ProjectTasksPage() {
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(task => 
+            result = result.filter(task =>
                 task.title?.toLowerCase().includes(query) ||
                 task.description?.toLowerCase().includes(query)
             );
@@ -61,8 +61,8 @@ export default function ProjectTasksPage() {
 
         // Assignee filter
         if (filters.assignee) {
-            result = result.filter(task => 
-                task.assignedTo?.fullName === filters.assignee || 
+            result = result.filter(task =>
+                task.assignedTo?.fullName === filters.assignee ||
                 task.assignedTo?.email === filters.assignee
             );
         }
@@ -75,7 +75,7 @@ export default function ProjectTasksPage() {
         // Sort
         result.sort((a, b) => {
             let aVal, bVal;
-            
+
             switch (sortBy) {
                 case "title":
                     aVal = a.title || "";
@@ -99,7 +99,7 @@ export default function ProjectTasksPage() {
             }
 
             if (typeof aVal === "string") {
-                return sortOrder === "asc" 
+                return sortOrder === "asc"
                     ? aVal.localeCompare(bVal)
                     : bVal.localeCompare(aVal);
             } else {
@@ -183,8 +183,8 @@ export default function ProjectTasksPage() {
                     <option value="desc">↓ Giảm</option>
                 </Select>
                 {hasActiveFilters && (
-                    <Button 
-                        variant="secondary" 
+                    <Button
+                        variant="secondary"
                         size="sm"
                         onClick={clearFilters}
                     >
@@ -197,10 +197,10 @@ export default function ProjectTasksPage() {
             </div>
 
             {/* Tasks Table */}
-            <Tasks 
-                tasks={filteredAndSortedTasks} 
-                tasksLoading={tasksLoading} 
-                onTasksChange={setTasks} 
+            <Tasks
+                tasks={filteredAndSortedTasks}
+                tasksLoading={tasksLoading}
+                onTasksChange={setTasks}
             />
         </div>
     );

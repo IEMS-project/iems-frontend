@@ -38,10 +38,10 @@ export default function Calendar({ onDateClick, projectId }) {
 			try {
 				setLoading(true);
 				// Nếu có projectId thì chỉ load task của project đó, nếu không thì load tất cả task
-				const data = projectId 
+				const data = projectId
 					? await taskService.getTasksByProject(projectId)
 					: await taskService.getMyTasks();
-				// Lọc các task đang chờ (status không phải COMPLETED)
+				// Lọc các task đang Đang chờ (status không phải COMPLETED)
 				const pendingTasks = (Array.isArray(data) ? data : []).filter(
 					(task) => task.status?.toUpperCase() !== "COMPLETED"
 				);
@@ -62,38 +62,38 @@ export default function Calendar({ onDateClick, projectId }) {
 	// Hàm lấy tất cả các ngày trong khoảng từ startDate đến endDate
 	const getDatesInRange = (startDateStr, endDateStr) => {
 		if (!startDateStr && !endDateStr) return [];
-		
+
 		const start = startDateStr ? new Date(startDateStr.split("T")[0]) : null;
 		const end = endDateStr ? new Date(endDateStr.split("T")[0]) : null;
-		
+
 		// Nếu chỉ có startDate, chỉ tính ngày đó
 		if (start && !end) {
 			return [start.toISOString().split("T")[0]];
 		}
-		
+
 		// Nếu chỉ có endDate/dueDate, chỉ tính ngày đó
 		if (!start && end) {
 			return [end.toISOString().split("T")[0]];
 		}
-		
+
 		// Nếu có cả hai, tính tất cả ngày trong khoảng
 		if (start && end) {
 			const dates = [];
 			const current = new Date(start);
 			const endDate = new Date(end);
-			
+
 			// Đảm bảo start <= end
 			if (current > endDate) {
 				return [end.toISOString().split("T")[0]];
 			}
-			
+
 			while (current <= endDate) {
 				dates.push(current.toISOString().split("T")[0]);
 				current.setDate(current.getDate() + 1);
 			}
 			return dates;
 		}
-		
+
 		return [];
 	};
 
@@ -103,10 +103,10 @@ export default function Calendar({ onDateClick, projectId }) {
 		tasks.forEach((task) => {
 			const startDate = task.startDate;
 			const endDate = task.endDate || task.dueDate;
-			
+
 			// Lấy tất cả các ngày trong khoảng
 			const dateStrings = getDatesInRange(startDate, endDate);
-			
+
 			if (dateStrings.length === 0) return;
 
 			const priority = task.priority?.toString().toUpperCase() || "";
@@ -118,7 +118,7 @@ export default function Calendar({ onDateClick, projectId }) {
 			} else if (["LOW", "THẤP", "THAP"].includes(priority)) {
 				priorityType = "low";
 			}
-			
+
 			if (!priorityType) return;
 
 			// Đếm task cho tất cả các ngày trong khoảng
@@ -162,9 +162,9 @@ export default function Calendar({ onDateClick, projectId }) {
 	// Lấy màu heatmap dựa trên intensity với nhiều mức độ màu hơn
 	const getHeatmapColor = (intensity) => {
 		if (intensity === 0) return "";
-		
+
 		const normalized = intensity / maxIntensity;
-		
+
 		// Nhiều mức độ màu từ nhạt đến đậm
 		if (normalized >= 0.9) return "bg-red-700 dark:bg-red-800"; // Đỏ rất đậm
 		if (normalized >= 0.8) return "bg-red-600 dark:bg-red-700"; // Đỏ đậm
@@ -218,24 +218,22 @@ export default function Calendar({ onDateClick, projectId }) {
 					const isWeekend = d ? d.getDay() === 0 || d.getDay() === 6 : false;
 					const intensity = getHeatmapIntensity(d);
 					const heatmapColor = getHeatmapColor(intensity);
-					
+
 					return (
-						<div 
-							key={idx} 
-							className={`min-h-[60px] p-1.5 text-right text-xs transition-colors ${
-								loading 
-									? 'bg-background animate-pulse' 
+						<div
+							key={idx}
+							className={`min-h-[60px] p-1.5 text-right text-xs transition-colors ${loading
+									? 'bg-background animate-pulse'
 									: heatmapColor || (isWeekend ? 'bg-muted/50' : 'bg-background')
-							} ${isToday ? 'outline outline-2 outline-blue-500 -outline-offset-1' : ''} ${d ? 'cursor-pointer hover:opacity-80' : ''}`}
+								} ${isToday ? 'outline outline-2 outline-blue-500 -outline-offset-1' : ''} ${d ? 'cursor-pointer hover:opacity-80' : ''}`}
 							onClick={() => handleDateClick(d)}
 						>
-							<div className={`text-right ${
-								isToday 
-									? 'font-bold text-blue-500 dark:text-blue-400' 
-									: intensity > 0 
+							<div className={`text-right ${isToday
+									? 'font-bold text-blue-500 dark:text-blue-400'
+									: intensity > 0
 										? (intensity / maxIntensity >= 0.15 ? 'text-white' : 'text-foreground')
 										: ''
-							}`}>
+								}`}>
 								{d ? d.getDate() : ''}
 							</div>
 						</div>

@@ -44,6 +44,7 @@ export default function DocumentsGrid({
   selectedItems,
   selectedItem,
   onItemClick,
+  onItemDoubleClick,
   onToggleItemSelection,
   onToggleFavorite,
   onRename,
@@ -116,25 +117,25 @@ export default function DocumentsGrid({
                       <>
                         <DropdownMenuItem onClick={() => onRename(item, item.type)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Rename
+                          Đổi tên
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
                           <Lock className="mr-2 h-4 w-4" />
-                          Permissions
+                          Phân quyền
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onShare(item, item.type)}>
                           <Share2 className="mr-2 h-4 w-4" />
-                          Share
+                          Chia sẻ
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
                           <Users className="mr-2 h-4 w-4" />
-                          Shared Users
+                          Người được chia sẻ
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onMove(item, item.type)}>
                           <Move className="mr-2 h-4 w-4" />
-                          Move
+                          Di chuyển
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -142,13 +143,13 @@ export default function DocumentsGrid({
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          Xóa
                         </DropdownMenuItem>
                       </>
                     )}
                     {!itemIsOwner && (
                       <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        No edit permissions
+                        Không có quyền chỉnh sửa
                       </div>
                     )}
                   </DropdownMenuContent>
@@ -158,6 +159,7 @@ export default function DocumentsGrid({
             <div
               className="cursor-pointer"
               onClick={() => onItemClick(item)}
+              onDoubleClick={() => onItemDoubleClick(item)}
             >
               <div className="truncate text-sm font-medium flex items-center gap-1">
                 <span>{item.name}</span>
@@ -172,7 +174,7 @@ export default function DocumentsGrid({
                 )}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {item.type === "folder" ? "Folder" : humanSize(item.size)}
+                {item.type === "folder" ? "Thư mục" : humanSize(item.size)}
               </div>
               <div className="text-xs text-muted-foreground">
                 {formatDate(item.date)}

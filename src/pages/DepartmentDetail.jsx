@@ -4,12 +4,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card"
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
-import Select from "../components/ui/Select.jsx";
+import Select from "../components/ui/select";
 import MemberCard from "../components/departments/MemberCard";
 import MemberForm from "../components/departments/MemberForm";
 import AddExistingUsersModal from "../components/departments/AddExistingUsersModal";
-import UserAvatar from "../components/ui/UserAvatar";
-import Pagination from "../components/ui/Pagination.jsx";
+import Avatar from "../components/ui/Avatar";
+import Pagination from "../components/ui/pagination";
 import Skeleton from "../components/ui/Skeleton";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
@@ -223,48 +223,48 @@ export default function DepartmentDetail() {
             // Gọi API remove user from department
             await departmentService.removeUserFromDepartment(departmentId, memberToDelete.userId);
 
-                // Refresh department data để cập nhật danh sách
-                const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
-                if (updatedDept) {
-                    // Map the enriched users to the expected format
-                    if (updatedDept.users && updatedDept.users.length > 0) {
-                        const enrichedUsers = updatedDept.users.map(deptUser => ({
-                            id: deptUser.id,
-                            departmentId: deptUser.departmentId,
-                            userId: deptUser.userId,
+            // Refresh department data để cập nhật danh sách
+            const updatedDept = await departmentService.getDepartmentWithUsers(departmentId);
+            if (updatedDept) {
+                // Map the enriched users to the expected format
+                if (updatedDept.users && updatedDept.users.length > 0) {
+                    const enrichedUsers = updatedDept.users.map(deptUser => ({
+                        id: deptUser.id,
+                        departmentId: deptUser.departmentId,
+                        userId: deptUser.userId,
 
-                            joinedAt: deptUser.joinedAt,
-                            leftAt: deptUser.leftAt,
-                            isActive: deptUser.isActive,
-                            // User details from User Service
-                            firstName: deptUser.userDetails?.firstName,
-                            lastName: deptUser.userDetails?.lastName,
-                            email: deptUser.userDetails?.email,
-                            phone: deptUser.userDetails?.phone,
-                            dob: deptUser.userDetails?.dob,
-                            gender: deptUser.userDetails?.gender,
-                            address: deptUser.userDetails?.address,
-                            personalID: deptUser.userDetails?.personalID,
-                            image: deptUser.userDetails?.image,
-                            role: deptUser.userDetails?.role,
-                            bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
-                            bankName: deptUser.userDetails?.bankName,
-                            contractType: deptUser.userDetails?.contractType,
-                            startDate: deptUser.userDetails?.startDate,
-                            avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
-                        }));
-                        updatedDept.users = enrichedUsers;
-                    }
-                    setDepartment(updatedDept);
+                        joinedAt: deptUser.joinedAt,
+                        leftAt: deptUser.leftAt,
+                        isActive: deptUser.isActive,
+                        // User details from User Service
+                        firstName: deptUser.userDetails?.firstName,
+                        lastName: deptUser.userDetails?.lastName,
+                        email: deptUser.userDetails?.email,
+                        phone: deptUser.userDetails?.phone,
+                        dob: deptUser.userDetails?.dob,
+                        gender: deptUser.userDetails?.gender,
+                        address: deptUser.userDetails?.address,
+                        personalID: deptUser.userDetails?.personalID,
+                        image: deptUser.userDetails?.image,
+                        role: deptUser.userDetails?.role,
+                        bankAccountNumber: deptUser.userDetails?.bankAccountNumber,
+                        bankName: deptUser.userDetails?.bankName,
+                        contractType: deptUser.userDetails?.contractType,
+                        startDate: deptUser.userDetails?.startDate,
+                        avatar: deptUser.userDetails?.firstName?.charAt(0) || 'U'
+                    }));
+                    updatedDept.users = enrichedUsers;
                 }
-            } catch (error) {
-                console.error("Error deleting user:", error);
-                setError(error?.message || "Có lỗi xảy ra khi xóa thành viên");
-            } finally {
-                setLoading(false);
-                setDeleteMemberDialogOpen(false);
-                setMemberToDelete(null);
+                setDepartment(updatedDept);
             }
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            setError(error?.message || "Có lỗi xảy ra khi xóa thành viên");
+        } finally {
+            setLoading(false);
+            setDeleteMemberDialogOpen(false);
+            setMemberToDelete(null);
+        }
     };
 
     const handleSubmitAddMember = async () => {
@@ -651,7 +651,7 @@ export default function DepartmentDetail() {
                                         <tr key={member.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <UserAvatar user={member} size="sm" />
+                                                    <Avatar user={member} size="sm" />
                                                     <div>
                                                         <div className="font-medium text-gray-900 dark:text-gray-100">
                                                             {member.firstName && member.lastName
@@ -850,7 +850,7 @@ export default function DepartmentDetail() {
                     <div className="space-y-6">
                         {/* Avatar and Basic Info */}
                         <div className="flex items-center gap-4">
-                            <UserAvatar user={viewingMember} size="2xl" />
+                            <Avatar user={viewingMember} size="2xl" />
                             <div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                     {viewingMember.firstName && viewingMember.lastName

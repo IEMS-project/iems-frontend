@@ -261,10 +261,10 @@ export default function AdminAccessControl() {
           setSelectedRoleDetail((detail) =>
             detail
               ? {
-                  ...detail,
-                  roleName: trimmedName,
-                  description: roleForm.description?.trim() || "",
-                }
+                ...detail,
+                roleName: trimmedName,
+                description: roleForm.description?.trim() || "",
+              }
               : detail
           );
         }
@@ -363,9 +363,9 @@ export default function AdminAccessControl() {
         (Array.isArray(prev) ? prev : []).map((role) =>
           role.permissions?.includes(permission.code)
             ? {
-                ...role,
-                permissions: role.permissions.filter((code) => code !== permission.code),
-              }
+              ...role,
+              permissions: role.permissions.filter((code) => code !== permission.code),
+            }
             : role
         )
       );
@@ -373,9 +373,9 @@ export default function AdminAccessControl() {
         setSelectedRoleDetail((detail) =>
           detail
             ? {
-                ...detail,
-                permissions: detail.permissions.filter((code) => code !== permission.code),
-              }
+              ...detail,
+              permissions: detail.permissions.filter((code) => code !== permission.code),
+            }
             : detail
         );
       }
@@ -420,9 +420,9 @@ export default function AdminAccessControl() {
       setSelectedRoleDetail((detail) =>
         detail
           ? {
-              ...detail,
-              permissions: updated.permissions,
-            }
+            ...detail,
+            permissions: updated.permissions,
+          }
           : detail
       );
       setAssignmentSuccess("Đã cập nhật permission cho role");
@@ -539,6 +539,7 @@ export default function AdminAccessControl() {
                                 icon={PencilLine}
                                 label="Chỉnh sửa role"
                                 variant="edit"
+                                className="text-black dark:text-white"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   openRoleModal("edit", role);
@@ -620,6 +621,7 @@ export default function AdminAccessControl() {
                               icon={PencilLine}
                               label="Chỉnh sửa permission"
                               variant="edit"
+                              className="text-black dark:text-white"
                               onClick={() => openPermissionModal("edit", permission)}
                             />
                             <IconActionButton

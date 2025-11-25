@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card"
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
 import Button from "../components/ui/Button";
 import Skeleton from "../components/ui/Skeleton";
-import Select from "../components/ui/Select.jsx";
+import Select from "../components/ui/select";
 import Input from "../components/ui/Input";
 import Checkbox from "../components/ui/Checkbox";
 import { taskService } from "../services/taskService";
@@ -16,8 +16,10 @@ import {
     KanbanCard,
 } from "../components/ui/shadcn-io/kanban";
 import Badge from "../components/ui/Badge";
+import { getTaskTypeIcon, getTaskTypeColor } from "../lib/taskTypeUtils";
+import { ChevronUp, ChevronDown, Equal } from 'lucide-react';
 
-const initialTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
+const initialTasks = { "Đang chờ": [], "Đang thực hiện": [], "Hoàn thành": [] };
 
 export default function Tasks() {
     const [tasks, setTasks] = useState(initialTasks);
@@ -42,14 +44,14 @@ export default function Tasks() {
     const projectDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
     const priorityDropdownRef = useRef(null);
-    const skeletonColumns = useMemo(() => ["Chờ", "Đang làm", "Hoàn thành"], []);
+    const skeletonColumns = useMemo(() => ["Đang chờ", "Đang thực hiện", "Hoàn thành"], []);
     const skeletonCards = useMemo(() => Array.from({ length: 3 }), []);
 
-    const statusOptions = ["Chờ", "Đang làm", "Hoàn thành"];
+    const statusOptions = ["Đang chờ", "Đang thực hiện", "Hoàn thành"];
     const priorityOptions = ["Cao", "Trung bình", "Thấp"];
 
     // Transform tasks object to kanban format
-    const kanbanColumns = useMemo(() => 
+    const kanbanColumns = useMemo(() =>
         statusOptions.map(status => ({ id: status, name: status })),
         []
     );
@@ -90,7 +92,7 @@ export default function Tasks() {
     // Handle kanban data change (drag and drop)
     const handleKanbanDataChange = (newData) => {
         // Transform kanban data back to tasks object
-        const newTasks = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
+        const newTasks = { "Đang chờ": [], "Đang thực hiện": [], "Hoàn thành": [] };
         newData.forEach(item => {
             const task = {
                 id: item.id,
@@ -100,6 +102,7 @@ export default function Tasks() {
                 dueDate: item.dueDate,
                 description: item.description,
                 priority: item.priority,
+                type: item.type || item.taskType,
             };
             if (newTasks[item.column]) {
                 newTasks[item.column].push(task);
@@ -110,18 +113,9 @@ export default function Tasks() {
     };
 
     const handleTaskClick = (task) => {
-        // Always open detail modal when clicking a task
+        // Open detail modal when clicking a task
         setSelectedTask(task);
         setShowDetailModal(true);
-        
-        // Also update selection
-        const next = new Set(selectedIds);
-        if (next.has(task.id)) {
-            next.delete(task.id);
-        } else {
-            next.add(task.id);
-        }
-        setSelectedIds(next);
     };
 
     // Helper functions for task card rendering
@@ -163,50 +157,39 @@ export default function Tasks() {
         return priority;
     };
 
-    // Format date range: "01/10 - 15/10, 2026"
-    const formatDateRange = (startDate, dueDate) => {
-        if (!startDate && !dueDate) return null;
-        
-        const formatDate = (dateString) => {
-            if (!dateString) return null;
-            try {
-                const date = new Date(dateString);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                return { day, month, year: date.getFullYear() };
-            } catch {
-                return null;
-            }
-        };
-
-        const start = formatDate(startDate);
-        const end = formatDate(dueDate);
-
-        if (!start && !end) return null;
-        
-        if (start && end) {
-            // Same year: "01/10 - 15/10, 2026"
-            if (start.year === end.year) {
-                if (start.month === end.month) {
-                    // Same month: "01 - 15/10, 2026"
-                    return `${start.day} - ${end.day}/${end.month}, ${end.year}`;
-                } else {
-                    // Different months: "01/10 - 15/11, 2026"
-                    return `${start.day}/${start.month} - ${end.day}/${end.month}, ${end.year}`;
-                }
-            } else {
-                // Different years: "01/10/2025 - 15/01/2026"
-                return `${start.day}/${start.month}/${start.year} - ${end.day}/${end.month}/${end.year}`;
-            }
-        } else if (start) {
-            // Only start date: "Bắt đầu: 01/10, 2026"
-            return `Bắt đầu: ${start.day}/${start.month}, ${start.year}`;
-        } else if (end) {
-            // Only due date: "Kết thúc: 15/10, 2026"
-            return `Kết thúc: ${end.day}/${end.month}, ${end.year}`;
+    // Jira-style date badge component: calendar icon for normal dates,
+    // warning triangle + red styling only when overdue.
+    const JiraDateBadge = ({ date, overdue }) => {
+        if (!date) return null;
+        let formatted = "";
+        try {
+            const d = new Date(date);
+            formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch {
+            formatted = date;
         }
-        
-        return null;
+
+        const baseClass = 'inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium select-none';
+        const normalClass = `${baseClass} border border-gray-300 bg-white text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100`;
+        const overdueClass = `${baseClass} border border-red-400 bg-red-50 text-red-600`;
+
+        return (
+            <span className={overdue ? overdueClass : normalClass}>
+                {overdue ? (
+                    <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M12 9v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M12 17h.01" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                ) : (
+                    <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
+                        <path d="M16 2v4M8 2v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                )}
+                <span>{formatted}</span>
+            </span>
+        );
     };
 
     const findTaskById = (data, id) => {
@@ -236,9 +219,15 @@ export default function Tasks() {
             try {
                 setLoading(true);
                 const list = await taskService.getMyTasks();
+                // Debug: Check if tasks have type field
+                console.log('Tasks from backend:', list);
+                if (list && list.length > 0) {
+                    console.log('First task fields:', Object.keys(list[0]));
+                    console.log('First task type:', list[0].type || list[0].taskType);
+                }
                 // list is TaskResponseDto (flat); group into Kanban columns by status display name
                 let filtered = Array.isArray(list) ? list : [];
-                
+
                 // Apply filters
                 if (filters.projectId && filters.projectId.length > 0) {
                     filtered = filtered.filter(t => filters.projectId.includes(t.projectId));
@@ -248,9 +237,9 @@ export default function Tasks() {
                         const taskStatus = (t.status || '').toLowerCase();
                         return filters.status.some(selectedStatus => {
                             const statusLower = selectedStatus.toLowerCase();
-                            if (statusLower === 'chờ') {
-                                return taskStatus.includes('to do') || taskStatus.includes('chờ');
-                            } else if (statusLower === 'đang làm') {
+                            if (statusLower === 'Đang chờ') {
+                                return taskStatus.includes('to do') || taskStatus.includes('Đang chờ');
+                            } else if (statusLower === 'Đang thực hiện') {
                                 return taskStatus.includes('progress') || taskStatus.includes('làm');
                             } else if (statusLower === 'hoàn thành') {
                                 return taskStatus.includes('completed') || taskStatus.includes('hoàn thành');
@@ -293,12 +282,12 @@ export default function Tasks() {
                         return true;
                     });
                 }
-                
-                const group = { "Chờ": [], "Đang làm": [], "Hoàn thành": [] };
+
+                const group = { "Đang chờ": [], "Đang thực hiện": [], "Hoàn thành": [] };
                 for (const t of filtered) {
                     const status = (t.status || '').toLowerCase();
-                    const uiStatus = status.includes('to do') || status.includes('chờ') ? 'Chờ'
-                        : status.includes('progress') || status.includes('làm') ? 'Đang làm'
+                    const uiStatus = status.includes('to do') || status.includes('Đang chờ') ? 'Đang chờ'
+                        : status.includes('progress') || status.includes('làm') ? 'Đang thực hiện'
                             : 'Hoàn thành';
                     group[uiStatus].push({
                         id: t.id,
@@ -308,6 +297,7 @@ export default function Tasks() {
                         dueDate: t.dueDate,
                         description: t.description,
                         priority: t.priority,
+                        type: t.taskType || t.type || 'TASK',
                     });
                 }
                 setTasks(group);
@@ -325,33 +315,33 @@ export default function Tasks() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-        // Persist all moves since last save: compare savedTasks vs tasks
-        const toUpdate = [];
-        Object.entries(tasks).forEach(([status, list]) => {
-            list.forEach(t => {
-                const prev = findTaskById(savedTasks, t.id);
-                if (prev && prev.status !== status) {
-                    // map UI status to enum
-                    const map = s => s === 'Chờ' ? 'TO_DO' : s === 'Đang làm' ? 'IN_PROGRESS' : 'COMPLETED';
-                    toUpdate.push({ id: t.id, newStatus: map(status) });
-                }
+            // Persist all moves since last save: compare savedTasks vs tasks
+            const toUpdate = [];
+            Object.entries(tasks).forEach(([status, list]) => {
+                list.forEach(t => {
+                    const prev = findTaskById(savedTasks, t.id);
+                    if (prev && prev.status !== status) {
+                        // map UI status to enum
+                        const map = s => s === 'Đang chờ' ? 'TO_DO' : s === 'Đang thực hiện' ? 'IN_PROGRESS' : 'COMPLETED';
+                        toUpdate.push({ id: t.id, newStatus: map(status) });
+                    }
+                });
             });
-        });
 
-        if (toUpdate.length > 0) {
-            const idsByStatus = toUpdate.reduce((acc, cur) => {
-                acc[cur.newStatus] = acc[cur.newStatus] || [];
-                acc[cur.newStatus].push(cur.id);
-                return acc;
-            }, {});
-            // Call bulk API per status group
-            for (const [newStatus, ids] of Object.entries(idsByStatus)) {
-                await taskService.bulkUpdateStatus(ids, newStatus);
+            if (toUpdate.length > 0) {
+                const idsByStatus = toUpdate.reduce((acc, cur) => {
+                    acc[cur.newStatus] = acc[cur.newStatus] || [];
+                    acc[cur.newStatus].push(cur.id);
+                    return acc;
+                }, {});
+                // Call bulk API per status group
+                for (const [newStatus, ids] of Object.entries(idsByStatus)) {
+                    await taskService.bulkUpdateStatus(ids, newStatus);
+                }
             }
-        }
 
-        setSavedTasks(tasks);
-        setHasUnsavedChanges(false);
+            setSavedTasks(tasks);
+            setHasUnsavedChanges(false);
         } catch (error) {
             console.error('Error saving tasks:', error);
         } finally {
@@ -387,8 +377,8 @@ export default function Tasks() {
                                 {filters.projectId.length === 0
                                     ? "Tất cả dự án"
                                     : filters.projectId.length === 1
-                                    ? projects.find(p => p.id === filters.projectId[0])?.name || "Dự án"
-                                    : `${filters.projectId.length} dự án`}
+                                        ? projects.find(p => p.id === filters.projectId[0])?.name || "Dự án"
+                                        : `${filters.projectId.length} dự án`}
                                 <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -432,8 +422,8 @@ export default function Tasks() {
                                 {filters.status.length === 0
                                     ? "Tất cả trạng thái"
                                     : filters.status.length === 1
-                                    ? filters.status[0]
-                                    : `${filters.status.length} trạng thái`}
+                                        ? filters.status[0]
+                                        : `${filters.status.length} trạng thái`}
                                 <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -473,8 +463,8 @@ export default function Tasks() {
                                 {filters.priority.length === 0
                                     ? "Tất cả độ ưu tiên"
                                     : filters.priority.length === 1
-                                    ? filters.priority[0]
-                                    : `${filters.priority.length} độ ưu tiên`}
+                                        ? filters.priority[0]
+                                        : `${filters.priority.length} độ ưu tiên`}
                                 <svg className="float-right mt-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -518,47 +508,49 @@ export default function Tasks() {
 
                     {/* Save/Reset Controls - Right Side */}
                     <div className="flex items-center gap-3">
-                        {hasUnsavedChanges && (
-                            <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                Có thay đổi chưa lưu
-                            </span>
-                        )}
+                        <div className="flex flex-col items-end">
+                            {hasUnsavedChanges && (
+                                <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    Có thay đổi chưa lưu
+                                </span>
+                            )}
 
-                        <div className="flex gap-2">
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={handleReset}
-                                disabled={!hasUnsavedChanges || isSaving}
-                            >
-                                Khôi phục
-                            </Button>
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={handleSave}
-                                disabled={!hasUnsavedChanges || isSaving}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Đang lưu...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                        </svg>
-                                        Lưu thay đổi
-                                    </>
-                                )}
-                            </Button>
+                            <div className="flex gap-2 mt-1">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={handleReset}
+                                    disabled={!hasUnsavedChanges || isSaving}
+                                >
+                                    Khôi phục
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={!hasUnsavedChanges || isSaving}
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Đang lưu...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                            </svg>
+                                            Lưu thay đổi
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -609,8 +601,7 @@ export default function Tasks() {
                                             const timeRemaining = getTimeRemaining(item.dueDate);
                                             const isOverdue = timeRemaining && timeRemaining.includes("Quá hạn");
                                             const isSelected = selectedIds.has(item.id);
-                                            const dateRange = formatDateRange(item.startDate, item.dueDate);
-                                            
+
                                             return (
                                                 <KanbanCard
                                                     key={item.id}
@@ -619,36 +610,74 @@ export default function Tasks() {
                                                     column={item.column}
                                                     className={isSelected ? "border-blue-500 bg-blue-50 dark:bg-blue-950 cursor-pointer" : "cursor-pointer"}
                                                 >
-                                                    <div 
+                                                    <div
                                                         className="space-y-2"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleTaskClick(item);
+                                                        onPointerDown={(e) => {
+                                                            e.currentTarget.dataset.startX = e.clientX;
+                                                            e.currentTarget.dataset.startY = e.clientY;
+                                                            e.currentTarget.dataset.isDragging = 'false';
+                                                        }}
+                                                        onPointerMove={(e) => {
+                                                            const startX = parseFloat(e.currentTarget.dataset.startX || 0);
+                                                            const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                                                            // If mouse moved more than 5px, consider it a drag
+                                                            if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
+                                                                e.currentTarget.dataset.isDragging = 'true';
+                                                            }
+                                                        }}
+                                                        onPointerUp={(e) => {
+                                                            const isDragging = e.currentTarget.dataset.isDragging === 'true';
+
+                                                            if (e.button === 0 && !isDragging) {
+                                                                // Ctrl+Click to toggle selection
+                                                                if (e.ctrlKey || e.metaKey) {
+                                                                    const next = new Set(selectedIds);
+                                                                    if (next.has(item.id)) {
+                                                                        next.delete(item.id);
+                                                                    } else {
+                                                                        next.add(item.id);
+                                                                    }
+                                                                    setSelectedIds(next);
+                                                                } else {
+                                                                    // Normal click - open detail modal
+                                                                    handleTaskClick(item);
+                                                                }
+                                                            }
                                                         }}
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
-                                                            <h4 className="font-medium text-sm leading-tight flex-1 text-gray-900 dark:text-gray-100">
-                                                                {item.title || item.name}
-                                                            </h4>
-                                                            {item.priority && (
-                                                                <Badge variant={getPriorityVariant(item.priority)} className="flex-shrink-0">
-                                                                    {formatPriority(item.priority)}
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        {dateRange && (
-                                                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                                                                {dateRange}
-                                                            </div>
-                                                        )}
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <div className="text-xs text-gray-600 dark:text-gray-300 truncate">
-                                                                {item.project}
+                                                            <div className="flex items-start gap-2 flex-1">
+                                                                {React.createElement(getTaskTypeIcon(item.type), {
+                                                                    className: `w-4 h-4 flex-shrink-0 mt-0.5 ${getTaskTypeColor(item.type)}`
+                                                                })}
+                                                                <h4 className="font-medium text-sm leading-tight flex-1 text-gray-900 dark:text-gray-100">
+                                                                    {item.title || item.name}
+                                                                </h4>
                                                             </div>
                                                             {timeRemaining && (
                                                                 <span className={`text-xs flex-shrink-0 ${isOverdue ? "text-red-500" : "text-green-500"}`}>
                                                                     {timeRemaining}
                                                                 </span>
+                                                            )}
+                                                        </div>
+                                                        {item.dueDate && (
+                                                            <div className="pt-1">
+                                                                <JiraDateBadge date={item.dueDate} overdue={isOverdue} />
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            {item.project && (
+                                                                <Badge variant="black" className="text-xs font-normal truncate flex-shrink-0">
+                                                                    {item.project}
+                                                                </Badge>
+                                                            )}
+                                                            {item.priority && (
+                                                                <div className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm">
+                                                                    {formatPriority(item.priority) === 'Cao' && <ChevronUp className="w-4 h-4 text-red-600 dark:text-red-400" />}
+                                                                    {formatPriority(item.priority) === 'Trung bình' && <Equal className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />}
+                                                                    {formatPriority(item.priority) === 'Thấp' && <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                                                                    <span className="text-gray-900 dark:text-gray-100">{formatPriority(item.priority)}</span>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
@@ -664,10 +693,9 @@ export default function Tasks() {
             </div>
 
             {/* Task Detail Modal */}
-            < TaskDetailModal
+            <TaskDetailModal
                 open={showDetailModal}
-                onClose={() => setShowDetailModal(false)
-                }
+                onClose={() => setShowDetailModal(false)}
                 task={selectedTask}
             />
         </>

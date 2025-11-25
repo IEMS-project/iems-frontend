@@ -36,12 +36,16 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   loading?: boolean
+  onEdit?: (data: TData) => void
+  onDelete?: (data: TData) => void
 }
 
 export function ProjectsDataTable<TData, TValue>({
   columns,
   data,
   loading = false,
+  onEdit,
+  onDelete,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -61,6 +65,10 @@ export function ProjectsDataTable<TData, TValue>({
       sorting,
       columnFilters,
       columnVisibility,
+    },
+    meta: {
+      onEdit,
+      onDelete,
     },
   })
 

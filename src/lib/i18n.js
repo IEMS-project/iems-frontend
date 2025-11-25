@@ -17,17 +17,17 @@ const createMap = (entries) => {
 };
 
 const STATUS_ENTRIES = [
-  ["Chờ", "Chờ"],
-  ["To Do", "Chờ"],
-  ["TODO", "Chờ"],
-  ["TO DO", "Chờ"],
-  ["Not Started", "Chờ"],
-  ["Pending", "Chờ"],
-  ["Backlog", "Chờ"],
-  ["Đang làm", "Đang làm"],
-  ["In Progress", "Đang làm"],
-  ["IN_PROGRESS", "Đang làm"],
-  ["Processing", "Đang làm"],
+  ["Đang chờ", "Đang chờ"],
+  ["To Do", "Đang chờ"],
+  ["TODO", "Đang chờ"],
+  ["TO DO", "Đang chờ"],
+  ["Not Started", "Đang chờ"],
+  ["Pending", "Đang chờ"],
+  ["Backlog", "Đang chờ"],
+  ["Đang thực hiện", "Đang thực hiện"],
+  ["In Progress", "Đang thực hiện"],
+  ["IN_PROGRESS", "Đang thực hiện"],
+  ["Processing", "Đang thực hiện"],
   ["Đang duyệt", "Đang duyệt"],
   ["In Review", "Đang duyệt"],
   ["Review", "Đang duyệt"],
@@ -41,8 +41,10 @@ const STATUS_ENTRIES = [
   ["Đã hủy", "Đã hủy"],
   ["Cancelled", "Đã hủy"],
   ["Canceled", "Đã hủy"],
-  ["Tạm hoãn", "Tạm hoãn"],
-  ["On Hold", "Tạm hoãn"],
+  ["Tạm ngừng", "Tạm ngừng"],
+  ["On Hold", "Tạm ngừng"],
+  ["PLANNING", "Đang chờ"],
+
   ["Bị chặn", "Bị chặn"],
   ["Blocked", "Bị chặn"],
   ["Chưa xác định", "Chưa xác định"],
@@ -82,13 +84,13 @@ const priorityMap = createMap(PRIORITY_ENTRIES);
 const workTypeMap = createMap(WORK_TYPE_ENTRIES);
 
 const STATUS_VARIANT = {
-  "Chờ": "yellow",
-  "Đang làm": "blue",
+  "Đang chờ": "yellow",
+  "Đang thực hiện": "blue",
   "Đang duyệt": "purple",
   "Hoàn thành": "green",
   "Bị chặn": "red",
   "Đã hủy": "gray",
-  "Tạm hoãn": "orange",
+  "Tạm ngừng": "orange",
 };
 
 const PRIORITY_VARIANT = {

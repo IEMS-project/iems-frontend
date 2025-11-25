@@ -5,8 +5,9 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, Minus, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Badge from "@/components/ui/Badge"
-import UserAvatar from "@/components/ui/UserAvatar"
+import Avatar from "@/components/ui/Avatar"
 import { getStatusVariant, translatePriority, translateStatus } from "@/lib/i18n"
+import { getTaskTypeIcon, getTaskTypeColor } from "@/lib/taskTypeUtils"
 
 export type Task = {
   id: string
@@ -32,14 +33,14 @@ export type Task = {
 const statusVariant = (status: string) => getStatusVariant(status)
 const priorityDisplayMap: Record<
   string,
-  { icon: React.ComponentType<{ className?: string }>; label: string }
+  { icon: React.ComponentType<{ className?: string }>; label: string; color: string }
 > = {
-  "Cao nhất": { icon: ChevronsUp, label: "Cao nhất" },
-  "Cao": { icon: ChevronUp, label: "Cao" },
-  "Trung bình": { icon: Minus, label: "Trung bình" },
-  "Thấp": { icon: ChevronDown, label: "Thấp" },
-  "Thấp nhất": { icon: ChevronsDown, label: "Thấp nhất" },
-  "Không ưu tiên": { icon: Circle, label: "Không ưu tiên" },
+  "Cao nhất": { icon: ChevronsUp, label: "Cao nhất", color: "text-red-700 dark:text-red-400" },
+  "Cao": { icon: ChevronUp, label: "Cao", color: "text-red-600 dark:text-red-400" },
+  "Trung bình": { icon: Minus, label: "Trung bình", color: "text-yellow-600 dark:text-yellow-400" },
+  "Thấp": { icon: ChevronDown, label: "Thấp", color: "text-blue-600 dark:text-blue-400" },
+  "Thấp nhất": { icon: ChevronsDown, label: "Thấp nhất", color: "text-blue-700 dark:text-blue-400" },
+  "Không ưu tiên": { icon: Circle, label: "Không ưu tiên", color: "text-gray-500 dark:text-gray-400" },
 }
 
 export const taskColumns: ColumnDef<Task>[] = [
@@ -57,7 +58,15 @@ export const taskColumns: ColumnDef<Task>[] = [
       )
     },
     cell: ({ row }) => {
-      return <div className="min-w-[200px] whitespace-nowrap text-gray-900 dark:text-gray-100">{row.getValue("title")}</div>
+      const task = row.original
+      const TaskIcon = getTaskTypeIcon(task.taskType)
+      const iconColor = getTaskTypeColor(task.taskType)
+      return (
+        <div className="min-w-[200px] whitespace-nowrap flex items-center gap-2">
+          <TaskIcon className={`w-4 h-4 flex-shrink-0 ${iconColor}`} />
+          <span className="text-gray-900 dark:text-gray-100">{row.getValue("title")}</span>
+        </div>
+      )
     },
   },
   {
@@ -82,8 +91,8 @@ export const taskColumns: ColumnDef<Task>[] = [
       return (
         <div className="min-w-[180px] whitespace-nowrap">
           <div className="flex items-center gap-2">
-            <UserAvatar
-              user={{ firstName: assignedName, email: assignedEmail }}
+            <Avatar
+              user={task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo : { firstName: assignedName, email: assignedEmail }}
               size="xs"
             />
             <div className="flex flex-col min-w-0">
@@ -114,11 +123,11 @@ export const taskColumns: ColumnDef<Task>[] = [
     header: "Độ ưu tiên",
     cell: ({ row }) => {
       const priority = translatePriority(row.getValue("priority") as string) || "Không ưu tiên"
-      const display = priorityDisplayMap[priority] || { icon: Circle, label: priority }
+      const display = priorityDisplayMap[priority] || { icon: Circle, label: priority, color: "text-gray-500 dark:text-gray-400" }
       const Icon = display.icon || Circle
       return (
         <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-gray-900 dark:text-gray-100">
-          <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <Icon className={`h-4 w-4 ${display.color}`} aria-hidden />
           <span>{display.label}</span>
         </div>
       )
@@ -166,8 +175,8 @@ export const taskColumns: ColumnDef<Task>[] = [
       return (
         <div className="min-w-[180px] whitespace-nowrap">
           <div className="flex items-center gap-2">
-            <UserAvatar
-              user={{ firstName: createdName, email: createdEmail }}
+            <Avatar
+              user={task.createdBy && typeof task.createdBy === 'object' ? task.createdBy : { firstName: createdName, email: createdEmail }}
               size="xs"
             />
             <div className="flex flex-col min-w-0">

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
-import Select from "../components/ui/Select.jsx";
+import Select from "../components/ui/select";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import { Card, CardContent } from "../components/ui/Card";

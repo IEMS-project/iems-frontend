@@ -63,11 +63,12 @@ export default function Documents() {
     setViewMode,
     sortedItems,
     currentPath,
-    
+
     // Handlers
     handleSortChange,
     getSortLabel,
     handleItemClick,
+    handleItemDoubleClick,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,
@@ -158,6 +159,7 @@ export default function Documents() {
                 selectedItems={selectedItems}
                 selectedItem={selectedItem}
                 onItemClick={handleItemClick}
+                onItemDoubleClick={handleItemDoubleClick}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
                 onRename={handleRename}
@@ -174,6 +176,7 @@ export default function Documents() {
                 selectedItems={selectedItems}
                 selectedItem={selectedItem}
                 onItemClick={handleItemClick}
+                onItemDoubleClick={handleItemDoubleClick}
                 onToggleSelectAll={toggleSelectAll}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
@@ -204,7 +207,7 @@ export default function Documents() {
         <Sheet open={showMobileDetails} onOpenChange={setShowMobileDetails}>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>File Details</SheetTitle>
+              <SheetTitle>Chi tiết tệp</SheetTitle>
             </SheetHeader>
             <FileDetailPanel
               selectedItem={selectedItem}

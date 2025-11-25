@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
-import Avatar from "../ui/Avatar.jsx";
+import UserSelectionPanel from "../ui/UserSelectionPanel";
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
     const [name, setName] = useState("");
@@ -20,25 +20,6 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
             setSelectedIds(init);
         }
     }, [open, currentUserId]);
-
-    const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        const list = allUsers || [];
-        return list.filter(u => {
-            const id = u.userId || u.id || "";
-            const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
-            return (!q
-                || (fullName && fullName.toLowerCase().includes(q))
-                || ((u.email || "").toLowerCase().includes(q))
-                || id.toLowerCase().includes(q));
-        });
-    }, [allUsers, query]);
-
-    const selectedList = useMemo(() => {
-        if (!selectedIds || selectedIds.size === 0) return [];
-        const idToUser = new Map((allUsers || []).map(u => [u.userId || u.id, u]));
-        return Array.from(selectedIds).map(id => idToUser.get(id)).filter(Boolean);
-    }, [selectedIds, allUsers]);
 
     function toggle(id) {
         if (!id) return;
@@ -94,61 +75,14 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
                     placeholder="Tìm kiếm thành viên..."
                     className="w-full"
                 />
-                <div className="flex gap-4">
-                    {/* Danh sách tất cả người dùng */}
-                    <div className="flex-1 border rounded-md max-h-80 overflow-auto divide-y divide-gray-100 dark:divide-gray-800">
-                        {(filtered || []).map((u) => {
-                            const id = u.userId || u.id;
-                            const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
-                            const isChecked = selectedIds.has(id);
-                            return (
-                                <div key={id} onClick={() => toggle(id)} className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                                    <input type="checkbox" checked={isChecked} readOnly className="h-4 w-4" />
-                                    <Avatar
-                                        src={u.image}
-                                        name={fullName || u.email || id}
-                                        size={8}
-                                        className="mr-2"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate">{fullName || u.email || id}</div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">{u.email}</div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {(filtered || []).length === 0 && (
-                            <div className="p-6 text-center text-gray-500 dark:text-gray-400">Không tìm thấy người dùng</div>
-                        )}
-                    </div>
-                    {/* Danh sách đã chọn */}
-                    <div className="w-64 border rounded-md p-2 bg-gray-50 dark:bg-gray-900 space-y-2 overflow-auto max-h-80">
-                        {selectedList.map((u) => {
-                            const id = u.userId || u.id;
-                            const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
-                            return (
-                                <div key={id} className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-md shadow-sm">
-                                    <Avatar
-                                        src={u.image}
-                                        name={fullName || u.email || id}
-                                        size={8}
-                                        className="mr-2"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate">{fullName || u.email || id}</div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">{u.email}</div>
-                                    </div>
-                                    {id !== currentUserId && (
-                                        <button onClick={() => toggle(id)} className="ml-1 hover:text-red-600" title="Bỏ chọn">×</button>
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {selectedList.length === 0 && (
-                            <div className="text-sm text-gray-500 text-center">Chưa chọn ai</div>
-                        )}
-                    </div>
-                </div>
+                <UserSelectionPanel
+                    users={allUsers}
+                    selectedIds={selectedIds}
+                    onToggle={toggle}
+                    query={query}
+                    currentUserId={currentUserId}
+                    maxHeight={24}
+                />
             </div>
         </Modal>
     );

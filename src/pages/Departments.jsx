@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import DepartmentCard from "../components/departments/DepartmentCard";
+import DepartmentListItem from "../components/departments/DepartmentListItem";
 import DepartmentForm from "../components/departments/DepartmentForm";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
@@ -54,7 +55,7 @@ export default function Teams() {
                     email: u.email
                 }));
                 setUserOptions(normalized);
-            } catch (_e) {}
+            } catch (_e) { }
         })();
     }, []);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -69,6 +70,7 @@ export default function Teams() {
         managerId: null
     });
     const [userOptions, setUserOptions] = useState([]);
+    const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
 
     const totalMembers = useMemo(() => {
         if (!Array.isArray(departments)) return 0;
@@ -89,7 +91,7 @@ export default function Teams() {
     const saveDepartmentColor = (deptId, color) => {
         setDepartmentColors(prev => {
             const next = { ...(prev || {}), [deptId]: color };
-            try { localStorage.setItem("iems.departmentColors", JSON.stringify(next)); } catch {}
+            try { localStorage.setItem("iems.departmentColors", JSON.stringify(next)); } catch { }
             return next;
         });
     };
@@ -105,8 +107,8 @@ export default function Teams() {
             });
             setDepartments(prev => Array.isArray(prev) ? [created, ...prev] : [created]);
             if (created?.id) saveDepartmentColor(created.id, formData.color);
-        setIsAddModalOpen(false);
-        resetFormData();
+            setIsAddModalOpen(false);
+            resetFormData();
         } catch (e) {
             setError(e?.message || "Không tạo được phòng ban");
         }
@@ -232,57 +234,125 @@ export default function Teams() {
                             </svg>
                             Tổng quan phòng ban
                         </CardTitle>
-                        <Button
-                            onClick={() => {
-                                resetFormData();
-                                setIsAddModalOpen(true);
-                            }}
-                            className="flex items-center gap-2"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Thêm phòng ban
-                        </Button>
+                        <div className="flex items-center gap-3">
+                            {/* view toggle */}
+                            <div className="inline-flex items-center rounded-md border bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 shadow-sm">
+                                <button
+                                    aria-pressed={viewMode === 'grid'}
+                                    title="Grid view"
+                                    onClick={() => setViewMode('grid')}
+                                    className={`px-2 py-2 ${viewMode === 'grid' ? 'bg-gray-100 dark:bg-slate-900' : ''}`}
+                                >
+                                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    aria-pressed={viewMode === 'list'}
+                                    title="List view"
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-2 py-2 ${viewMode === 'list' ? 'bg-gray-100 dark:bg-slate-900' : ''}`}
+                                >
+                                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <Button
+                                onClick={() => {
+                                    resetFormData();
+                                    setIsAddModalOpen(true);
+                                }}
+                                className="flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Thêm phòng ban
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>
                     {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
                     {loading ? (
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            {skeletonCards.map((_, idx) => (
-                                <div key={idx} className="rounded-xl border border-dashed border-gray-200 p-5 dark:border-gray-800">
-                                    <div className="flex items-center justify-between">
-                                        <Skeleton className="h-8 w-24" />
-                                        <Skeleton className="h-6 w-6 rounded-full" />
+                        viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                                {skeletonCards.map((_, idx) => (
+                                    <div key={idx} className="rounded-xl border border-dashed border-gray-200 p-5 dark:border-gray-800">
+                                        <div className="flex items-center justify-between">
+                                            <Skeleton className="h-8 w-24" />
+                                            <Skeleton className="h-6 w-6 rounded-full" />
+                                        </div>
+                                        <Skeleton className="mt-4 h-3 w-full" />
+                                        <Skeleton className="mt-2 h-3 w-4/5" />
+                                        <div className="mt-5 flex items-center justify-between">
+                                            <Skeleton className="h-4 w-16" />
+                                            <Skeleton className="h-8 w-20" />
+                                        </div>
                                     </div>
-                                    <Skeleton className="mt-4 h-3 w-full" />
-                                    <Skeleton className="mt-2 h-3 w-4/5" />
-                                    <div className="mt-5 flex items-center justify-between">
-                                        <Skeleton className="h-4 w-16" />
-                                        <Skeleton className="h-8 w-20" />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {skeletonCards.map((_, idx) => (
+                                    <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-800">
+                                        <div className="h-4 w-40 bg-gray-200 rounded mb-2" />
+                                        <div className="h-3 w-60 bg-gray-200 rounded" />
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )
                     ) : (
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            {!error && Array.isArray(departments) && departments.map((dept) => (
-                                <DepartmentCard
-                                    key={dept.id}
-                                    department={{
-                                        id: dept.id,
-                                        name: dept.departmentName || dept.name,
-                                        description: dept.description,
-                                        memberCount: dept.totalUsers || 0,
-                                        color: departmentColors?.[dept.id] || "bg-blue-500",
-                                        members: dept.users || [],
-                                    }}
-                                    onEdit={openEditModal}
-                                    onDelete={openDeleteModal}
-                                />
-                            ))}
-                        </div>
+                        viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                                {!error && Array.isArray(departments) && departments.map((dept) => (
+                                    <DepartmentCard
+                                        key={dept.id}
+                                        department={{
+                                            id: dept.id,
+                                            name: dept.departmentName || dept.name,
+                                            description: dept.description,
+                                            memberCount: dept.totalUsers || 0,
+                                            color: departmentColors?.[dept.id] || "bg-blue-500",
+                                            members: dept.users || [],
+                                        }}
+                                        onEdit={openEditModal}
+                                        onDelete={openDeleteModal}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                {/* header row */}
+                                <div className="hidden sm:flex items-center px-4 py-3 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                    <div className="flex-1">Phòng ban</div>
+                                    <div className="w-28 text-right">Thành viên</div>
+                                    <div className="w-36 text-right">Hành động</div>
+                                </div>
+
+                                {/* rows */}
+                                <div className="divide-y dark:divide-gray-800">
+                                    {!error && Array.isArray(departments) && departments.map((dept) => (
+                                        <DepartmentListItem
+                                            key={dept.id}
+                                            department={{
+                                                id: dept.id,
+                                                name: dept.departmentName || dept.name,
+                                                description: dept.description,
+                                                memberCount: dept.totalUsers || 0,
+                                                color: departmentColors?.[dept.id] || "bg-blue-500",
+                                                members: dept.users || [],
+                                            }}
+                                            onEdit={openEditModal}
+                                            onDelete={openDeleteModal}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )
                     )}
                 </CardContent>
             </Card>
@@ -352,11 +422,10 @@ export default function Teams() {
                 title="Xác nhận xóa phòng ban"
                 description={
                     deletingDepartment
-                        ? `Bạn có chắc chắn muốn xóa phòng ban "${deletingDepartment?.departmentName || deletingDepartment?.name}"?${
-                              (deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0
-                                  ? `\n\n⚠️ Phòng ban này có ${deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. Tất cả thành viên sẽ bị xóa khỏi phòng ban này.`
-                                  : ""
-                          }`
+                        ? `Bạn có chắc chắn muốn xóa phòng ban "${deletingDepartment?.departmentName || deletingDepartment?.name}"?${(deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0
+                            ? `\n\n⚠️ Phòng ban này có ${deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. Tất cả thành viên sẽ bị xóa khỏi phòng ban này.`
+                            : ""
+                        }`
                         : ""
                 }
                 confirmText="Xóa phòng ban"

@@ -43,7 +43,7 @@ export default function ProjectOverviewPage() {
             const status = translateStatus(task.status);
             if (status === "Hoàn thành") {
                 completed += 1;
-            } else if (status === "Đang làm" || status === "Đang duyệt") {
+            } else if (status === "Đang thực hiện" || status === "Đang duyệt") {
                 inProgress += 1;
             } else {
                 todo += 1;
@@ -62,7 +62,7 @@ export default function ProjectOverviewPage() {
             const label = translateStatus(task.status) || "Chưa xác định";
             counts[label] = (counts[label] || 0) + 1;
         });
-        const preferredOrder = ["Chờ", "Đang làm", "Đang duyệt", "Hoàn thành", "Bị chặn", "Tạm hoãn", "Đã hủy", "Chưa xác định"];
+        const preferredOrder = ["Đang chờ", "Đang thực hiện", "Đang duyệt", "Hoàn thành", "Bị chặn", "Tạm ngừng", "Đã hủy", "Chưa xác định"];
         const ordered = {};
         preferredOrder.forEach((status) => {
             if (counts[status] !== undefined) {
@@ -130,16 +130,16 @@ export default function ProjectOverviewPage() {
                             <div>
                                 <div className="text-xs uppercase text-gray-500">Ngày bắt đầu</div>
                                 <div className="text-gray-800 dark:text-gray-100">
-                                    {projectData.startDate 
-                                        ? new Date(projectData.startDate).toLocaleDateString('vi-VN') 
+                                    {projectData.startDate
+                                        ? new Date(projectData.startDate).toLocaleDateString('vi-VN')
                                         : '-'}
                                 </div>
                             </div>
                             <div>
                                 <div className="text-xs uppercase text-gray-500">Hạn hoàn thành</div>
                                 <div className="text-gray-800 dark:text-gray-100">
-                                    {projectData.endDate 
-                                        ? new Date(projectData.endDate).toLocaleDateString('vi-VN') 
+                                    {projectData.endDate
+                                        ? new Date(projectData.endDate).toLocaleDateString('vi-VN')
                                         : '-'}
                                 </div>
                             </div>
@@ -242,17 +242,17 @@ export default function ProjectOverviewPage() {
                                                             const p = total > 0 ? (c / total) * 100 : 0;
                                                             return sum + (p / 100) * 502.4;
                                                         }, 0);
-                                                    
+
                                                     const colors = {
-                                                        "Chờ": "#3b82f6",
-                                                        "Đang làm": "#8b5cf6",
+                                                        "Đang chờ": "#3b82f6",
+                                                        "Đang thực hiện": "#8b5cf6",
                                                         "Đang duyệt": "#06b6d4",
                                                         "Hoàn thành": "#10b981",
                                                         "Bị chặn": "#f97316",
-                                                        "Tạm hoãn": "#facc15",
+                                                        "Tạm ngừng": "#facc15",
                                                         "Đã hủy": "#6b7280",
                                                     };
-                                                    
+
                                                     return (
                                                         <circle
                                                             key={status}
@@ -279,12 +279,12 @@ export default function ProjectOverviewPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         {Object.entries(statusBreakdown).map(([status, count]) => {
                                             const colors = {
-                                                "Chờ": "bg-blue-500",
-                                                "Đang làm": "bg-purple-500",
+                                                "Đang chờ": "bg-blue-500",
+                                                "Đang thực hiện": "bg-purple-500",
                                                 "Đang duyệt": "bg-cyan-500",
                                                 "Hoàn thành": "bg-green-500",
                                                 "Bị chặn": "bg-orange-500",
-                                                "Tạm hoãn": "bg-amber-400",
+                                                "Tạm ngừng": "bg-amber-400",
                                                 "Đã hủy": "bg-gray-500",
                                             };
                                             return (
@@ -343,7 +343,7 @@ export default function ProjectOverviewPage() {
                                                 </span>
                                             </div>
                                             <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                                <div 
+                                                <div
                                                     className="h-full bg-blue-500 rounded-full transition-all"
                                                     style={{ width: `${percentage}%` }}
                                                 />
