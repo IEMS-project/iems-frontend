@@ -4,9 +4,11 @@ import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const Checkbox = React.forwardRef<
+type PrimitiveProps = React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+
+const PrimitiveCheckbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+  PrimitiveProps
 >(({ className, ...props }, ref) => (
   <CheckboxPrimitive.Root
     ref={ref}
@@ -23,7 +25,34 @@ const Checkbox = React.forwardRef<
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ))
-Checkbox.displayName = CheckboxPrimitive.Root.displayName
+PrimitiveCheckbox.displayName = CheckboxPrimitive.Root.displayName
+
+type CheckboxProps = PrimitiveProps & {
+  label?: React.ReactNode
+  // Accept traditional checked/onChange signature used across the codebase
+  checked?: boolean
+  onChange?: (e: { target: { checked: boolean } }) => void
+  className?: string
+}
+
+const Checkbox = ({ label, checked, onChange, className, ...rest }: CheckboxProps) => {
+  const handleCheckedChange = (value: boolean | "indeterminate") => {
+    if (typeof onChange === "function") {
+      onChange({ target: { checked: Boolean(value) } })
+    }
+  }
+
+  if (label) {
+    return (
+      <label className={cn("flex items-center gap-2 px-2 py-1 cursor-pointer w-full", className)}>
+        <PrimitiveCheckbox checked={checked} onCheckedChange={handleCheckedChange} {...rest} />
+        <span className="text-sm truncate">{label}</span>
+      </label>
+    )
+  }
+
+  return <PrimitiveCheckbox checked={checked} onCheckedChange={handleCheckedChange} className={className} {...rest} />
+}
 
 export { Checkbox }
 export default Checkbox

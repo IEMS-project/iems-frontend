@@ -65,19 +65,18 @@ export function FileUploadDialog({ onUpload }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <Button onClick={() => setOpen(true)}>
         <UploadIcon />
-        Upload
+        Tải lên
       </Button>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Upload Files</DialogTitle>
+          <DialogTitle>Tải lên tệp</DialogTitle>
           <DialogDescription>
-            Drag and drop files here or click to select files
+            Kéo và thả tệp vào đây hoặc nhấp để chọn tệp
           </DialogDescription>
         </DialogHeader>
         <div
-          className={`mt-2 flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 ${
-            dragActive ? "bg-muted" : ""
-          }`}
+          className={`mt-2 flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 ${dragActive ? "bg-muted" : ""
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -87,7 +86,7 @@ export function FileUploadDialog({ onUpload }) {
             <Upload className="mx-auto size-10 opacity-25" aria-hidden="true" />
             <div className="mt-4 flex text-sm leading-none">
               <Label htmlFor="file-upload" className="relative cursor-pointer">
-                <span>Upload a file</span>
+                <span>Tải lên tệp</span>
                 <Input
                   id="file-upload"
                   name="file-upload"
@@ -97,16 +96,16 @@ export function FileUploadDialog({ onUpload }) {
                   multiple
                 />
               </Label>
-              <p className="pl-1">or drag and drop</p>
+              <p className="pl-1">hoặc kéo và thả</p>
             </div>
             <p className="text-muted-foreground text-xs leading-5">
-              PNG, JPG, GIF up to 10MB
+              PNG, JPG, GIF tối đa 10MB
             </p>
           </div>
         </div>
         {files.length > 0 && (
           <div>
-            <h4 className="text-sm">Selected Files</h4>
+            <h4 className="text-sm">Các tệp đã chọn</h4>
             <ul className="divide mt-2 divide-y rounded-md border">
               {files.map((file, index) => (
                 <li
@@ -128,7 +127,7 @@ export function FileUploadDialog({ onUpload }) {
                       onClick={() => removeFile(index)}
                     >
                       <X />
-                      <span className="sr-only">Remove file</span>
+                      <span className="sr-only">Xóa tệp</span>
                     </Button>
                   </div>
                 </li>
@@ -138,10 +137,10 @@ export function FileUploadDialog({ onUpload }) {
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            Hủy
           </Button>
           <Button onClick={handleUpload} disabled={files.length === 0}>
-            Start Upload
+            Bắt đầu tải lên
           </Button>
         </DialogFooter>
       </DialogContent>

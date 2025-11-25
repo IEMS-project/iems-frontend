@@ -44,6 +44,7 @@ export default function DocumentsList({
   selectedItems,
   selectedItem,
   onItemClick,
+  onItemDoubleClick,
   onToggleSelectAll,
   onToggleItemSelection,
   onToggleFavorite,
@@ -85,6 +86,7 @@ export default function DocumentsList({
               selectedItem?.id === item.id && "bg-muted"
             )}
             onClick={() => onItemClick(item)}
+            onDoubleClick={() => onItemDoubleClick(item)}
           >
             <div className="flex min-w-0 items-center space-x-4 flex-1">
               <Checkbox
@@ -146,25 +148,25 @@ export default function DocumentsList({
                       <>
                         <DropdownMenuItem onClick={() => onRename(item, item.type)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Rename
+                          Đổi tên
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
                           <Lock className="mr-2 h-4 w-4" />
-                          Permissions
+                          Phân quyền
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onShare(item, item.type)}>
                           <Share2 className="mr-2 h-4 w-4" />
-                          Share
+                          Chia sẻ
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
                           <Users className="mr-2 h-4 w-4" />
-                          Shared Users
+                          Người được chia sẻ
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onMove(item, item.type)}>
                           <Move className="mr-2 h-4 w-4" />
-                          Move
+                          Di chuyển
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -172,13 +174,13 @@ export default function DocumentsList({
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          Xóa
                         </DropdownMenuItem>
                       </>
                     )}
                     {!itemIsOwner && (
                       <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        No edit permissions
+                        Không có quyền chỉnh sửa
                       </div>
                     )}
                   </DropdownMenuContent>

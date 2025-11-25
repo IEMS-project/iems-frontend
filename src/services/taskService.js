@@ -18,8 +18,8 @@ const mapTaskType = (type) => {
 const mapStatus = (status) => {
   if (!status) return undefined;
   const value = status.toString().trim().toUpperCase();
-  if (["CHỜ", "CHO", "TO DO", "TO_DO", "TODO"].includes(value)) return "TO_DO";
-  if (["ĐANG LÀM", "DANG LAM", "IN PROGRESS", "IN_PROGRESS"].includes(value)) return "IN_PROGRESS";
+  if (["Đang chờ", "CHO", "TO DO", "TO_DO", "TODO"].includes(value)) return "TO_DO";
+  if (["Đang thực hiện", "DANG LAM", "IN PROGRESS", "IN_PROGRESS"].includes(value)) return "IN_PROGRESS";
   if (["HOÀN THÀNH", "HOAN THANH", "COMPLETED", "COMPLETE"].includes(value)) return "COMPLETED";
   return value;
 };

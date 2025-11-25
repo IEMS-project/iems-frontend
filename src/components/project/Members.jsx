@@ -5,12 +5,14 @@ import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
-import Select from "../ui/Select.jsx";
+import Select from "../ui/select";
 import UserSelect from "./UserSelect";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import { userService } from "../../services/userService";
 import Skeleton from "../ui/Skeleton";
+import { PencilLine } from "lucide-react";
+import IconActionButton from "../ui/IconActionButton";
 import { toast } from "sonner";
 
 const membersData = [];
@@ -36,16 +38,16 @@ export default function Members() {
             try {
                 setLoading(true);
                 const data = await projectService.getProjectMembers(projectId);
-                
+
                 // Check if response indicates permission error
-                if (data && data.status === "error" && 
-                    (data.message?.includes("Permission denied") || 
-                     data.message?.includes("PERMISSION_DENIED"))) {
+                if (data && data.status === "error" &&
+                    (data.message?.includes("Permission denied") ||
+                        data.message?.includes("PERMISSION_DENIED"))) {
                     console.log("Permission error in Members response data, redirecting...");
                     navigate("/permission-denied");
                     return;
                 }
-                
+
                 setMembers(Array.isArray(data) ? data : []);
                 // Load assignable users and project roles in parallel
                 const [users, roles] = await Promise.all([
@@ -63,9 +65,9 @@ export default function Members() {
                 console.log("Error status:", e.status);
                 console.log("Error message:", e.message);
                 console.log("Error data:", e.data);
-                
+
                 // Check if it's a permission error
-                if (e.status === 403 || 
+                if (e.status === 403 ||
                     e.message?.includes("PERMISSION_DENIED") ||
                     e.message?.includes("permission") ||
                     e.message?.includes("quyền") ||
@@ -112,7 +114,7 @@ export default function Members() {
                 toast.warning("Vui lòng chọn người dùng");
                 return;
             }
-            
+
             if (!formData.roleId) {
                 toast.warning("Vui lòng chọn vai trò");
                 return;
@@ -178,7 +180,7 @@ export default function Members() {
                                 members.map(m => (
                                     <li key={m.id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <Avatar name={m.userName || m.userEmail} size={9} />
+                                            <Avatar user={m} size={9} />
                                             <div>
                                                 <div className="text-sm font-medium">{m.userName || m.userEmail}</div>
                                                 <div className="text-xs text-gray-500">{m.roleName || m.role || "N/A"}</div>
@@ -186,12 +188,13 @@ export default function Members() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Badge variant="gray">Hoạt động</Badge>
-                                            <button
-                                                onClick={() => handleEditMember(m)}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                Sửa
-                                            </button>
+                                            <IconActionButton
+                                                icon={PencilLine}
+                                                label="Chỉnh sửa thành viên"
+                                                variant="edit"
+                                                className="text-black dark:text-white"
+                                                onClick={(e) => { e.stopPropagation(); handleEditMember(m); }}
+                                            />
                                         </div>
                                     </li>
                                 ))
@@ -217,12 +220,22 @@ export default function Members() {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tên</label>
-                        {/* Custom searchable dropdown to show avatar + name (top) and email (bottom) */}
-                        <UserSelect
-                            assignableUsers={assignableUsers}
-                            value={formData.userId}
-                            onChange={(id) => setFormData({ ...formData, userId: id })}
-                        />
+                        {/* When editing, prevent changing the user: show static display instead of UserSelect */}
+                        {editingMember ? (
+                            <div className="w-full rounded-md border bg-background px-3 py-2 text-sm flex items-center gap-2 text-foreground">
+                                <Avatar user={assignableUsers.find(u => (u.userId || u.id) === formData.userId) || editingMember} size={8} />
+                                <div className="flex-1 min-w-0">
+                                    <div className="truncate font-medium text-foreground">{editingMember.userName || editingMember.userEmail}</div>
+                                    <div className="text-xs text-muted-foreground truncate">{editingMember.userEmail || ''}</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <UserSelect
+                                assignableUsers={assignableUsers}
+                                value={formData.userId}
+                                onChange={(id) => setFormData({ ...formData, userId: id })}
+                            />
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>

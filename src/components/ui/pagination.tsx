@@ -115,3 +115,162 @@ export {
   PaginationNext,
   PaginationEllipsis,
 }
+
+// Composite Pagination component (wraps primitives with page logic)
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import Select from "./select";
+
+type CompositeProps = {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  pageSizeOptions?: number[];
+  showPageSizeSelector?: boolean;
+  pageSizeLabel?: string;
+  className?: string;
+};
+
+export default function CompositePagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [5, 10, 20, 50],
+  showPageSizeSelector = true,
+  pageSizeLabel = "Số dòng trên trang:",
+  className = "",
+}: CompositeProps) {
+  const handleFirstPage = () => {
+    if (currentPage > 1) onPageChange(1);
+  };
+  const handlePreviousPage = () => {
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
+  };
+  const handleLastPage = () => {
+    if (currentPage < totalPages) onPageChange(totalPages);
+  };
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPageSize = Number(e.target.value);
+    onPageSizeChange(newPageSize);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    pages.push(1);
+    if (currentPage <= 3) {
+      for (let i = 2; i <= 4; i++) pages.push(i);
+      pages.push("ellipsis");
+      pages.push(totalPages);
+      return pages;
+    }
+    if (currentPage >= totalPages - 2) {
+      pages.push("ellipsis");
+      for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+    pages.push("ellipsis");
+    for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+    pages.push("ellipsis");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  return (
+    <div className={cn("flex items-center justify-between", className)}>
+      {showPageSizeSelector && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 dark:text-gray-400">{pageSizeLabel}</span>
+          <Select
+            className="h-8 rounded-md border border-gray-300 px-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={String(pageSize)}
+            onChange={handlePageSizeChange}
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-gray-600 dark:text-gray-400">Trang {currentPage} / {totalPages} • Tổng {totalItems}</span>
+
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationLink
+                href="#"
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); handleFirstPage(); }}
+                className={cn(currentPage <= 1 && "pointer-events-none opacity-50")}
+                aria-label="Trang đầu"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </PaginationLink>
+            </PaginationItem>
+
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); handlePreviousPage(); }}
+                className={cn(currentPage <= 1 && "pointer-events-none opacity-50")}
+              />
+            </PaginationItem>
+
+            {pageNumbers.map((page, index) => {
+              if (page === "ellipsis") return (
+                <PaginationItem key={`ellipsis-${index}`}><PaginationEllipsis /></PaginationItem>
+              );
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e: React.MouseEvent) => { e.preventDefault(); onPageChange(page as number); }}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); handleNextPage(); }}
+                className={cn(currentPage >= totalPages && "pointer-events-none opacity-50")}
+              />
+            </PaginationItem>
+
+            <PaginationItem>
+              <PaginationLink
+                href="#"
+                onClick={(e: React.MouseEvent) => { e.preventDefault(); handleLastPage(); }}
+                className={cn(currentPage >= totalPages && "pointer-events-none opacity-50")}
+                aria-label="Trang cuối"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </PaginationLink>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+  );
+}

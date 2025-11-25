@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import { taskService } from "../../services/taskService";
 import Skeleton from "../ui/Skeleton";
+import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
 
 export default function MyTasks() {
 	const [tasks, setTasks] = useState([]);
@@ -103,15 +104,19 @@ export default function MyTasks() {
 											{task.projectName || task.project?.name || "N/A"}
 										</div>
 										<div
-											className={`text-xs font-semibold ${
-												isOverdue ? "text-red-500" : "text-gray-600 dark:text-gray-400"
-											}`}
+											className={`text-xs font-semibold ${isOverdue ? "text-red-500" : "text-gray-600 dark:text-gray-400"
+												}`}
 										>
 											{dueText}
 										</div>
 									</div>
 									<div className="mt-1 flex items-center justify-between text-xs text-black dark:text-white">
-										<span>Nhiệm vụ: {task.title || "N/A"}</span>
+										<span className="flex items-center gap-1.5">
+											{React.createElement(getTaskTypeIcon(task.taskType || task.type), {
+												className: `w-3.5 h-3.5 ${getTaskTypeColor(task.taskType || task.type)}`
+											})}
+											{task.title || "N/A"}
+										</span>
 										<span
 											className={`rounded px-2 py-0.5 text-[10px] font-semibold ${priorityColor(
 												task.priority

@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useRef, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
-import Select from "../ui/Select.jsx";
+import Select from "../ui/select";
 import TaskDetailModal from "../tasks/TaskDetailModal";
 import Skeleton from "../ui/Skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/shadcn-avatar";
+import Avatar from "@/components/ui/Avatar";
 import {
     GanttProvider,
     GanttSidebar,
@@ -21,6 +21,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { EyeIcon, TrashIcon } from "lucide-react";
 import { differenceInDays, differenceInMonths, startOfDay, startOfMonth, getDaysInMonth, getDate } from "date-fns";
 import { translateStatus } from "@/lib/i18n";
+import { getTaskTypeIcon, getTaskTypeColor } from "@/lib/taskTypeUtils";
 
 // Simple groupBy utility
 const groupBy = (array, key) => {
@@ -47,12 +48,12 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
 
     // Get unique values for filters
     const assignees = useMemo(() => {
-        return [...new Set(tasks.map(t => 
-            t.assignedToName || 
-            t.assigneeName || 
+        return [...new Set(tasks.map(t =>
+            t.assignedToName ||
+            t.assigneeName ||
             t.userName ||
             (t.assignedTo && typeof t.assignedTo === 'object' ? t.assignedTo.name || t.assignedTo.fullName : null) ||
-            t.assignedToEmail || 
+            t.assignedToEmail ||
             t.assigneeEmail ||
             ""
         ).filter(Boolean))];
@@ -70,12 +71,12 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
     const filteredTasks = useMemo(() => {
         return tasks.filter(task => {
             if (filters.assignee) {
-                const assignedName = 
-                    task.assignedToName || 
-                    task.assigneeName || 
+                const assignedName =
+                    task.assignedToName ||
+                    task.assigneeName ||
                     task.userName ||
                     (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.name || task.assignedTo.fullName : null) ||
-                    task.assignedToEmail || 
+                    task.assignedToEmail ||
                     task.assigneeEmail ||
                     "";
                 if (assignedName !== filters.assignee && task.assignedToEmail !== filters.assignee && task.assigneeEmail !== filters.assignee) {
@@ -111,7 +112,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
         setTimeout(() => {
             const today = new Date();
             const timelineStartDate = new Date(today.getFullYear() - 1, 0, 1);
-            
+
             // Calculate column width based on range and zoom (same as GanttProvider)
             let columnWidth = 150;
             if (range === "daily") {
@@ -124,31 +125,31 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
             // Calculate offset using same logic as GanttToday component
             let fullColumns = 0;
             let innerOffset = 0;
-            
+
             if (range === "daily") {
                 fullColumns = differenceInDays(startOfDay(today), startOfDay(timelineStartDate));
                 // For daily, no inner offset needed
                 innerOffset = 0;
-        } else {
+            } else {
                 // monthly or quarterly
                 fullColumns = differenceInMonths(startOfMonth(today), startOfMonth(timelineStartDate));
                 // Calculate inner offset within the month
                 const totalDaysInMonth = getDaysInMonth(today);
                 const dayOfMonth = getDate(today);
-                
+
                 // Similar to calculateInnerOffset in gantt component
                 const totalRangeDays = range === "monthly" ? totalDaysInMonth : totalDaysInMonth;
                 innerOffset = (dayOfMonth / totalRangeDays) * parsedColumnWidth;
             }
-            
+
             // Total position of today marker
             const totalOffset = fullColumns * parsedColumnWidth + innerOffset;
             const sidebarWidth = 300;
             const visibleWidth = ganttElement.clientWidth - sidebarWidth;
-            
+
             // Center today marker in viewport: scroll so that today is at the center
             const targetScrollLeft = Math.max(0, totalOffset - visibleWidth / 2);
-            
+
             ganttElement.scrollTo({
                 left: targetScrollLeft,
                 behavior: 'smooth',
@@ -159,18 +160,18 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
     // Define status colors based on Vietnamese status names
     const statusColors = useMemo(() => {
         const statusMap = new Map();
-        
+
         tasks.forEach(task => {
             const statusLabel = translateStatus(task.status) || "Chưa xác định";
             if (!statusMap.has(statusLabel)) {
                 let color = "#6B7280"; // default gray
-                
+
                 // Map Vietnamese status names to colors
                 if (statusLabel === "Hoàn thành") {
                     color = "#10B981"; // green
-                } else if (statusLabel === "Đang làm") {
+                } else if (statusLabel === "Đang thực hiện") {
                     color = "#3B82F6"; // blue
-                } else if (statusLabel === "Chờ") {
+                } else if (statusLabel === "Đang chờ") {
                     color = "#F59E0B"; // yellow/orange
                 } else if (statusLabel === "Đang duyệt") {
                     color = "#8B5CF6"; // purple
@@ -179,7 +180,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                 } else if (statusLabel === "Đã hủy") {
                     color = "#6B7280";
                 }
-                
+
                 statusMap.set(statusLabel, {
                     id: statusLabel,
                     name: statusLabel,
@@ -187,7 +188,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                 });
             }
         });
-        
+
         return Array.from(statusMap.values());
     }, [tasks]);
 
@@ -196,17 +197,17 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
         return filteredTasks.map((task) => {
             const taskId = task.id || task.taskId || `task-${Math.random()}`;
             const taskName = task.name || task.title || "Nhiệm vụ chưa đặt tên";
-            
+
             // Get dates - default to today if not provided
-            const startDate = task.startDate 
+            const startDate = task.startDate
                 ? new Date(task.startDate)
-                : task.dueDate 
+                : task.dueDate
                     ? new Date(task.dueDate)
                     : new Date();
-            
-            const endDate = task.endDate 
+
+            const endDate = task.endDate
                 ? new Date(task.endDate)
-                : task.dueDate 
+                : task.dueDate
                     ? new Date(task.dueDate)
                     : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // default 7 days
 
@@ -253,18 +254,18 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
 
     // Get assigned user info for display
     const getAssignedUser = (task) => {
-        const assignedName = 
-            task.assignedToName || 
-            task.assigneeName || 
+        const assignedName =
+            task.assignedToName ||
+            task.assigneeName ||
             task.userName ||
             (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.name || task.assignedTo.fullName : null) ||
             "";
-        const assignedEmail = 
-            task.assignedToEmail || 
+        const assignedEmail =
+            task.assignedToEmail ||
             task.assigneeEmail ||
             (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.email : null) ||
             "";
-        const assignedImage = 
+        const assignedImage =
             task.assignedTo?.avatar ||
             task.assignedTo?.image ||
             null;
@@ -309,8 +310,8 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                             ))}
                         </Select>
                         {hasActiveFilters && (
-                            <Button 
-                                variant="secondary" 
+                            <Button
+                                variant="secondary"
                                 size="sm"
                                 onClick={clearFilters}
                             >
@@ -318,20 +319,20 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                             </Button>
                         )}
                         <div className="ml-2 flex items-center gap-2 border-l pl-2">
-                            <Button 
-                                variant={range === "daily" ? "primary" : "secondary"} 
+                            <Button
+                                variant={range === "daily" ? "primary" : "secondary"}
                                 onClick={() => setRange("daily")}
                             >
                                 Theo ngày
                             </Button>
-                            <Button 
-                                variant={range === "monthly" ? "primary" : "secondary"} 
+                            <Button
+                                variant={range === "monthly" ? "primary" : "secondary"}
                                 onClick={() => setRange("monthly")}
                             >
                                 Theo tháng
                             </Button>
-                            <Button 
-                                variant={range === "quarterly" ? "primary" : "secondary"} 
+                            <Button
+                                variant={range === "quarterly" ? "primary" : "secondary"}
                                 onClick={() => setRange("quarterly")}
                             >
                                 Theo quý
@@ -390,8 +391,8 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                             {statusFeatures.map((feature) => {
                                                 const task = filteredTasks.find(t => (t.id || t.taskId) === feature.id);
                                                 const assignedUser = task ? getAssignedUser(task) : null;
-                                    
-                                    return (
+
+                                                return (
                                                     <div className="flex" key={feature.id}>
                                                         <ContextMenu>
                                                             <ContextMenuTrigger asChild>
@@ -408,17 +409,10 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                                                             {feature.name}
                                                                         </p>
                                                                         {assignedUser && assignedUser.name && (
-                                                                            <Avatar className="h-4 w-4 shrink-0">
-                                                                                {assignedUser.image && (
-                                                                                    <AvatarImage src={assignedUser.image} />
-                                                                                )}
-                                                                                <AvatarFallback className="text-[8px]">
-                                                                                    {assignedUser.name.slice(0, 2).toUpperCase()}
-                                                                                </AvatarFallback>
-                                                                            </Avatar>
+                                                                            <Avatar src={assignedUser.image} name={assignedUser.name} className="h-4 w-4 shrink-0 text-[8px]" />
                                                                         )}
                                                                     </GanttFeatureItem>
-                                                </button>
+                                                                </button>
                                                             </ContextMenuTrigger>
                                                             <ContextMenuContent>
                                                                 <ContextMenuItem
@@ -430,8 +424,8 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                                                 </ContextMenuItem>
                                                             </ContextMenuContent>
                                                         </ContextMenu>
-                                        </div>
-                                    );
+                                                    </div>
+                                                );
                                             })}
                                         </GanttFeatureListGroup>
                                     ))}

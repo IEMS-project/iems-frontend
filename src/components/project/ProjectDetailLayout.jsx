@@ -88,8 +88,7 @@ export default function ProjectDetailLayout() {
                             <>
                                 <h1 className="text-xl font-bold truncate">{projectData?.name || '-'}</h1>
                                 <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
-                                    <span className="truncate">{projectData?.managerName || projectData?.managerEmail || projectData?.managerId || '-'}</span>
-                                    <span>•</span>
+                                    <span className=" text-xl font-bold ">-</span>
                                     <Badge variant="blue" className="whitespace-nowrap">
                                         {translateStatus(projectData?.status) || 'Chưa xác định'}
                                     </Badge>

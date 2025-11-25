@@ -4,7 +4,7 @@ import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/Select.jsx";
+import Select from "../ui/select";
 import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
@@ -14,12 +14,17 @@ import { toast } from "sonner";
 import { taskColumns } from "./tasks-columns";
 import { TasksDataTable } from "./tasks-data-table";
 import { translatePriority, translateStatus } from "../../lib/i18n";
+import RichTextEditor from "../ui/RichTextEditor";
+import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
+import { CheckSquare, Bug, BookOpen, Zap, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Equal } from 'lucide-react';
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
     const [assignableUsers, setAssignableUsers] = useState([]);
+    const [showTaskTypeDropdown, setShowTaskTypeDropdown] = useState(false);
+    const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
 
     // Danh sách thành viên trong dự án để chọn làm người phụ trách
     // Tải từ API dự án
@@ -28,12 +33,26 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const [editingTask, setEditingTask] = useState(null);
     const [showDetail, setShowDetail] = useState(false);
     const [detailTask, setDetailTask] = useState(null);
+
+    const taskTypeOptions = [
+        { value: 'EPIC', label: 'Epic', icon: Zap, color: getTaskTypeColor('EPIC') },
+        { value: 'TASK', label: 'Nhiệm vụ', icon: CheckSquare, color: getTaskTypeColor('TASK') },
+        { value: 'STORY', label: 'User story', icon: BookOpen, color: getTaskTypeColor('STORY') },
+        { value: 'BUG', label: 'Lỗi', icon: Bug, color: getTaskTypeColor('BUG') },
+    ];
+
+    const priorityOptions = [
+        { value: 'Cao', label: 'Cao', icon: ChevronUp, color: 'text-red-600 dark:text-red-400' },
+        { value: 'Trung bình', label: 'Trung bình', icon: Equal, color: 'text-yellow-600 dark:text-yellow-400' },
+        { value: 'Thấp', label: 'Thấp', icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' },
+    ];
+
     const [formData, setFormData] = useState({
         id: "",
         title: "",
         description: "",
         assignee: "",
-        status: "Chờ",
+        status: "Đang chờ",
         priority: "Trung bình",
         taskType: "TASK",
         parentTaskId: "",
@@ -63,9 +82,18 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 setTasksData(nextTasks);
                 if (onTasksChange && !tasksProp) onTasksChange(nextTasks);
                 const users = Array.isArray(members) ? members.map(m => ({
-                    id: m.userId,
+                    // preserve original fields and also normalize common keys
+                    id: m.userId || m.id,
+                    userId: m.userId || m.id,
+                    userName: m.userName || m.userName,
                     fullName: m.userName || m.userEmail,
-                    email: m.userEmail
+                    email: m.userEmail,
+                    // pass through possible image fields so Avatar can detect them
+                    userImage: m.userImage || m.image || m.avatar || null,
+                    image: m.userImage || m.image || m.avatar || null,
+                    avatar: m.userImage || m.image || m.avatar || null,
+                    // include original object for maximum flexibility
+                    __raw: m
                 })) : [];
                 setAssignableUsers(users);
             } catch (e) {
@@ -97,7 +125,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const handleEditTask = (task) => {
         setEditingTask(task);
         const assignedId = task.assignedTo?.id || task.assignedTo || "";
-        const statusForSelect = translateStatus(task.status) || 'Chờ';
+        const statusForSelect = translateStatus(task.status) || 'Đang chờ';
         setFormData({
             id: task.id,
             title: task.title,
@@ -107,8 +135,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             priority: translatePriority(task.priority) || "Trung bình",
             taskType: (task.taskType || '').toString().toUpperCase().includes('EPIC') ? 'EPIC'
                 : (task.taskType || '').toString().toUpperCase().includes('STORY') ? 'STORY'
-                : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
-                : 'TASK',
+                    : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
+                        : 'TASK',
             parentTaskId: task.parentTaskId || "",
             startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
@@ -123,7 +151,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             title: "",
             description: "",
             assignee: "",
-            status: "Chờ",
+            status: "Đang chờ",
             priority: "Trung bình",
             taskType: "TASK",
             parentTaskId: "",
@@ -181,7 +209,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 title: "",
                 description: "",
                 assignee: "",
-                status: "Chờ",
+                status: "Đang chờ",
                 priority: "Trung bình",
                 taskType: "TASK",
                 parentTaskId: "",
@@ -213,7 +241,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             id: "",
             title: "",
             assignee: "",
-            status: "Chờ",
+            status: "Đang chờ",
             priority: "Trung bình",
             taskType: "TASK",
             parentTaskId: "",
@@ -236,9 +264,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <TasksDataTable 
-                        columns={taskColumns} 
-                        data={tasksData} 
+                    <TasksDataTable
+                        columns={taskColumns}
+                        data={tasksData}
                         loading={showLoading}
                         onRowClick={handleRowClick}
                     />
@@ -258,116 +286,197 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     </div>
                 }
             >
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {editingTask && (
-                        <div className="sm:col-span-2">
-                            <div className="text-sm text-gray-600">Dự án: <span className="font-medium">{(editingTask.project && editingTask.project.name) || editingTask.projectName || '-'}</span></div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left side - Description */}
+                    <div className="lg:col-span-2 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-2 pl-2">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiêu đề</label>
+                            <Input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                className="w-full"
+                                placeholder="Nhập tiêu đề"
+                            />
                         </div>
-                    )}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề</label>
-                        <Input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tiêu đề"
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả</label>
+                            <RichTextEditor
+                                value={formData.description}
+                                onChange={(content) => setFormData({ ...formData, description: content })}
+                                placeholder="Nhập mô tả chi tiết cho nhiệm vụ"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Loại nhiệm vụ</label>
-                        <Select
-                            value={formData.taskType}
-                            onChange={(e) => setFormData({ ...formData, taskType: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="EPIC">Epic</option>
-                            <option value="TASK">Nhiệm vụ</option>
-                            <option value="STORY">User story</option>
-                            <option value="BUG">Lỗi</option>
-                        </Select>
-                    </div>
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                        <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            rows={5}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mô tả chi tiết cho nhiệm vụ"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Thuộc nhiệm vụ (Subtask của)</label>
-                        <Select
-                            value={formData.parentTaskId}
-                            onChange={(e) => setFormData({ ...formData, parentTaskId: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="">-- Không --</option>
-                            {tasksData
-                                .filter(t => !editingTask || t.id !== editingTask.id)
-                                .map(t => (
-                                    <option key={t.id} value={t.id}>{t.title}</option>
-                                ))}
-                        </Select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phụ trách</label>
-                        <UserSelect
-                            assignableUsers={assignableUsers}
-                            value={formData.assignee}
-                            onChange={(id) => setFormData({ ...formData, assignee: id })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                        <Select
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="Chờ">Chờ</option>
-                            <option value="Đang làm">Đang làm</option>
-                            <option value="Hoàn thành">Hoàn thành</option>
-                        </Select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ưu tiên</label>
-                        <Select
-                            value={formData.priority}
-                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="Thấp">Thấp</option>
-                            <option value="Trung bình">Trung bình</option>
-                            <option value="Cao">Cao</option>
-                        </Select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
-                        <Input
-                            type="date"
-                            value={formData.startDate}
-                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Hạn hoàn thành</label>
-                        <Input
-                            type="date"
-                            value={formData.dueDate}
-                            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        />
+
+                    {/* Right side - Details */}
+                    <div className="lg:col-span-1 overflow-y-auto max-h-[calc(90vh-200px)] space-y-4 pr-2 pl-2">
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Chi tiết</div>
+
+                        {editingTask && (
+                            <div>
+                                <div className="text-xs uppercase text-gray-500 dark:text-gray-400">Dự án</div>
+                                <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                                    {(editingTask.project && editingTask.project.name) || editingTask.projectName || '-'}
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại nhiệm vụ</label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTaskTypeDropdown(!showTaskTypeDropdown)}
+                                    className="w-full px-3 py-2 pl-9 text-left border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {taskTypeOptions.find(opt => opt.value === formData.taskType)?.label || 'Chọn loại'}
+                                    </span>
+                                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    {formData.taskType === 'EPIC' && <Zap className={`h-4 w-4 ${getTaskTypeColor('EPIC')}`} />}
+                                    {formData.taskType === 'TASK' && <CheckSquare className={`h-4 w-4 ${getTaskTypeColor('TASK')}`} />}
+                                    {formData.taskType === 'STORY' && <BookOpen className={`h-4 w-4 ${getTaskTypeColor('STORY')}`} />}
+                                    {formData.taskType === 'BUG' && <Bug className={`h-4 w-4 ${getTaskTypeColor('BUG')}`} />}
+                                </div>
+                                {showTaskTypeDropdown && (
+                                    <div className="absolute z-10 w-full mt-1 bg-background border border-input rounded-md shadow-lg">
+                                        {taskTypeOptions.map((option) => {
+                                            const Icon = option.icon;
+                                            return (
+                                                <button
+                                                    key={option.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, taskType: option.value });
+                                                        setShowTaskTypeDropdown(false);
+                                                    }}
+                                                    className={`w-full px-3 py-2 pl-9 text-left hover:bg-accent flex items-center gap-2 relative ${formData.taskType === option.value ? 'bg-accent' : ''
+                                                        }`}
+                                                >
+                                                    <Icon className={`h-4 w-4 ${option.color} absolute left-2.5`} />
+                                                    <span>{option.label}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thuộc nhiệm vụ</label>
+                            <Select
+                                value={formData.parentTaskId}
+                                onChange={(e) => setFormData({ ...formData, parentTaskId: e.target.value })}
+                                className="w-full"
+                            >
+                                <option value=""> </option>
+                                {tasksData
+                                    .filter(t => !editingTask || t.id !== editingTask.id)
+                                    .map(t => (
+                                        <option key={t.id} value={t.id}>{t.title}</option>
+                                    ))}
+                            </Select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phụ trách</label>
+                            <UserSelect
+                                assignableUsers={assignableUsers}
+                                value={formData.assignee}
+                                onChange={(id) => setFormData({ ...formData, assignee: id })}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
+                            <Select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="w-full"
+                            >
+                                <option value="Đang chờ">Đang chờ</option>
+                                <option value="Đang thực hiện">Đang thực hiện</option>
+                                <option value="Hoàn thành">Hoàn thành</option>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ưu tiên</label>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                                    className="w-full px-3 py-2 pl-9 text-left border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {priorityOptions.find(opt => opt.value === formData.priority)?.label || 'Chọn ưu tiên'}
+                                    </span>
+                                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    {formData.priority === 'Cao' && <ChevronUp className="h-4 w-4 text-red-600 dark:text-red-400" />}
+                                    {formData.priority === 'Trung bình' && <Equal className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />}
+                                    {formData.priority === 'Thấp' && <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
+                                </div>
+                                {showPriorityDropdown && (
+                                    <div className="absolute z-10 w-full mt-1 bg-background border border-input rounded-md shadow-lg">
+                                        {priorityOptions.map((option) => {
+                                            const Icon = option.icon;
+                                            return (
+                                                <button
+                                                    key={option.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, priority: option.value });
+                                                        setShowPriorityDropdown(false);
+                                                    }}
+                                                    className={`w-full px-3 py-2 pl-9 text-left hover:bg-accent flex items-center gap-2 relative ${formData.priority === option.value ? 'bg-accent' : ''
+                                                        }`}
+                                                >
+                                                    <Icon className={`h-4 w-4 ${option.color} absolute left-2.5`} />
+                                                    <span>{option.label}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày bắt đầu</label>
+                            <Input
+                                type="date"
+                                value={formData.startDate}
+                                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                                className="w-full"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hạn hoàn thành</label>
+                            <Input
+                                type="date"
+                                value={formData.dueDate}
+                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                className="w-full"
+                            />
+                        </div>
                     </div>
                 </div>
             </Modal>
 
-            <TaskDetailModal 
-                open={showDetail} 
-                onClose={() => { setShowDetail(false); setDetailTask(null); }} 
+            <TaskDetailModal
+                open={showDetail}
+                onClose={() => { setShowDetail(false); setDetailTask(null); }}
                 task={detailTask}
                 onEdit={(task) => {
                     setShowDetail(false);

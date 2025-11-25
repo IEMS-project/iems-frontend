@@ -1,7 +1,7 @@
 import React from "react";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
-import Select from "../ui/Select.jsx";
+import Select from "../ui/select";
 
 const colorOptions = [
     { value: "bg-blue-500", label: "Xanh dương", color: "bg-blue-500" },
@@ -57,11 +57,10 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false, 
                     {colorOptions.map((option) => (
                         <div
                             key={option.value}
-                            className={`w-8 h-8 rounded-full ${option.color} cursor-pointer border-2 ${
-                                formData.color === option.value 
-                                    ? 'border-gray-900 dark:border-white' 
+                            className={`w-8 h-8 rounded-full ${option.color} cursor-pointer border-2 ${formData.color === option.value
+                                    ? 'border-gray-900 dark:border-white'
                                     : 'border-gray-300 dark:border-gray-600'
-                            }`}
+                                }`}
                             onClick={() => setFormData({ ...formData, color: option.value })}
                             title={option.label}
                         />

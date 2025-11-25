@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import UserAvatar from "@/components/ui/UserAvatar"
+import Avatar from "@/components/ui/Avatar"
 import { translateStatus } from "@/lib/i18n"
 
 export type Project = {
@@ -102,7 +102,7 @@ export const columns: ColumnDef<Project>[] = [
       const project = row.original
       return (
         <div className="flex items-center gap-2">
-          <UserAvatar user={project} size="xs" />
+          <Avatar src={project.managerImage || project.manager_image} name={project.managerName || project.managerName} size="xs" />
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-medium truncate text-foreground">
               {project.managerName || project.managerEmail || project.managerId}
@@ -118,7 +118,7 @@ export const columns: ColumnDef<Project>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const project = row.original
 
       return (
@@ -139,6 +139,24 @@ export const columns: ColumnDef<Project>[] = [
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to={`/projects/${project.id}/overview`}>Xem dự án</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                const onEdit = (table.options.meta as any)?.onEdit
+                if (onEdit) onEdit(project)
+              }}
+            >
+              Sửa dự án
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                const onDelete = (table.options.meta as any)?.onDelete
+                if (onDelete) onDelete(project)
+              }}
+              className="text-red-600 focus:text-red-600"
+            >
+              Xóa dự án
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

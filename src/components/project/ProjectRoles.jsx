@@ -3,8 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/Select.jsx";
+import Select from "../ui/select";
 import { userService } from "../../services/userService";
+import { Trash2 } from "lucide-react";
+import IconActionButton from "../ui/IconActionButton";
 import { useParams } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import Skeleton from "../ui/Skeleton";
@@ -54,7 +56,7 @@ export default function ProjectRoles() {
             await projectService.addProjectRole(projectId, form);
             setShowModal(false);
             await load();
-        } catch (_e) {}
+        } catch (_e) { }
     };
     const onDelete = (r) => {
         setRoleToDelete(r);
@@ -107,8 +109,15 @@ export default function ProjectRoles() {
                                             <div className="text-sm font-medium">{r.roleName}</div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => openEdit(r)} className="text-xs text-blue-600 hover:underline">Sửa</button>
-                                            <button onClick={() => onDelete(r)} className="text-xs text-red-600 hover:underline">Xóa</button>
+                                            <IconActionButton
+                                                icon={Trash2}
+                                                label="Xóa vai trò"
+                                                variant="danger"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDelete(r);
+                                                }}
+                                            />
                                         </div>
                                     </li>
                                 ))}

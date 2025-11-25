@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import { documentService } from "../../services/documentService";
-import UserAvatar from "../ui/UserAvatar";
+import Avatar from "../ui/Avatar";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
 
-export default function SharedUsersModal({ 
-	isOpen, 
-	onClose, 
-	item 
+export default function SharedUsersModal({
+	isOpen,
+	onClose,
+	item
 }) {
 	console.log('SharedUsersModal item:', item);
 	const [sharedUsers, setSharedUsers] = useState([]);
@@ -26,7 +26,7 @@ export default function SharedUsersModal({
 		try {
 			setLoading(true);
 			if (!item?.id) return;
-		const users = await documentService.getSharedUsers(item.id, item.type.toUpperCase());
+			const users = await documentService.getSharedUsers(item.id, item.type.toUpperCase());
 			setSharedUsers(users || []);
 		} catch (error) {
 			console.error('Error loading shared users:', error);
@@ -65,9 +65,9 @@ export default function SharedUsersModal({
 	}
 
 	return (
-		<Modal 
-			isOpen={isOpen} 
-			onClose={onClose} 
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
 			title={`Người dùng đã chia sẻ`}
 			className="max-w-2xl"
 			footer={
@@ -84,7 +84,7 @@ export default function SharedUsersModal({
 						{item.type === 'folder' ? 'Thư mục' : 'Tệp'}: <span className="font-medium">{item.name}</span>
 					</div>
 				)}
-				
+
 				{loading ? (
 					<div className="space-y-2">
 						{Array.from({ length: 3 }).map((_, idx) => (
@@ -112,7 +112,7 @@ export default function SharedUsersModal({
 						{sharedUsers.map((user) => (
 							<div key={user.shareId} className="flex items-center justify-between p-3 border rounded-md">
 								<div className="flex items-center gap-3">
-									<UserAvatar user={user} size="sm" />
+									<Avatar user={user} size="sm" />
 									<div>
 										<div className="font-medium">
 											{user.firstName} {user.lastName}

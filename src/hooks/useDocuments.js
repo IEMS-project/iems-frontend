@@ -72,10 +72,10 @@ export function useDocuments() {
   // Build breadcrumb path
   const currentPath = useMemo(() => {
     if (!allFolders.length) return [];
-    
+
     const idToFolder = new Map(allFolders.map((f) => [f.id, f]));
     const path = [];
-    
+
     if (currentFolderId) {
       let cursor = idToFolder.get(currentFolderId);
       while (cursor) {
@@ -83,7 +83,7 @@ export function useDocuments() {
         cursor = cursor.parentId ? idToFolder.get(cursor.parentId) : null;
       }
     }
-    
+
     return path;
   }, [allFolders, currentFolderId]);
 
@@ -133,7 +133,7 @@ export function useDocuments() {
       ),
     [allFolders, folders, currentFolderId, search]
   );
-    
+
   const visibleFiles = useMemo(
     () =>
       files.filter(
@@ -180,7 +180,7 @@ export function useDocuments() {
     return [...items].sort((a, b) => {
       if (a.type === "folder" && b.type !== "folder") return -1;
       if (a.type !== "folder" && b.type === "folder") return 1;
-      
+
       let comparison = 0;
       switch (sortBy) {
         case "name":
@@ -233,6 +233,16 @@ export function useDocuments() {
     }
   };
 
+  const handleItemDoubleClick = (item) => {
+    if (item.type === "folder") {
+      setCurrentFolderId(item.id);
+    } else if (item.path) {
+      // Open file in new tab
+      const fileUrl = `http://localhost:9000/iems-storage/${item.path}`;
+      window.open(fileUrl, '_blank');
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectedItems.size === sortedItems.length) {
       setSelectedItems(new Set());
@@ -256,7 +266,7 @@ export function useDocuments() {
   async function onCreateFolderConfirmed() {
     const name = newFolderName.trim();
     if (!name) return;
-        
+
     try {
       await documentService.createFolder(name, currentFolderId);
       setNewFolderName("");
@@ -271,7 +281,7 @@ export function useDocuments() {
 
   async function onUploadFiles(fileList) {
     if (!fileList || fileList.length === 0) return;
-        
+
     try {
       for (const file of fileList) {
         await documentService.uploadFile(currentFolderId, file);
@@ -297,7 +307,7 @@ export function useDocuments() {
         type.toUpperCase()
       );
 
-      const updateItem = (items) => 
+      const updateItem = (items) =>
         items.map((i) => (i.id === item.id ? { ...i, favorite: result } : i));
 
       setFolders((prev) => updateItem(prev));
@@ -325,7 +335,7 @@ export function useDocuments() {
 
   async function onConfirmDelete() {
     if (!deleteItem) return;
-        
+
     try {
       if (deleteItem.type === "folder") {
         await documentService.deleteFolder(deleteItem.data.id);
@@ -468,11 +478,12 @@ export function useDocuments() {
     setViewMode,
     sortedItems,
     currentPath,
-    
+
     // Handlers
     handleSortChange,
     getSortLabel,
     handleItemClick,
+    handleItemDoubleClick,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,

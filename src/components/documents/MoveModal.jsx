@@ -23,11 +23,11 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get all folders and filter by parent
       const allFolders = await documentService.getAllFolders();
       const filteredFolders = allFolders.filter(f => f.parentId === folderId && f.id !== moveItem?.data?.id);
-      
+
       setFolders(filteredFolders);
     } catch (err) {
       console.error('Error loading folders:', err);
@@ -39,20 +39,20 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
   const handleFolderClick = async (folder) => {
     if (loading) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // Add to breadcrumb
       const newBreadcrumbs = [...breadcrumbs];
       newBreadcrumbs.push({ id: folder.id, name: folder.name, parentId: folder.parentId });
       setBreadcrumbs(newBreadcrumbs);
-      
+
       // Navigate to folder
       setCurrentFolderId(folder.id);
       await loadFolders(folder.id);
-      
+
     } catch (err) {
       console.error('Error navigating folder:', err);
       setError('Không thể truy cập thư mục con');
@@ -63,20 +63,20 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
   const handleBreadcrumbClick = async (index) => {
     if (loading) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const clickedCrumb = breadcrumbs[index];
-      
+
       // Update breadcrumbs
       setBreadcrumbs(breadcrumbs.slice(0, index + 1));
-      
+
       // Navigate to folder
       setCurrentFolderId(clickedCrumb.id);
       await loadFolders(clickedCrumb.id);
-      
+
     } catch (err) {
       console.error('Error navigating breadcrumb:', err);
       setError('Không thể quay lại thư mục');
@@ -87,25 +87,25 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
   const handleMoveHere = async () => {
     if (!moveItem || moveLoading) return;
-    
+
     try {
       setMoveLoading(true);
       setError(null);
-      
+
       if (moveItem.type === "folder") {
         await documentService.moveFolder(moveItem.data.id, currentFolderId);
       } else {
         await documentService.moveFile(moveItem.data.id, currentFolderId);
       }
-      
+
       // Call callback to refresh main view
       if (onMoveCompleted) {
         onMoveCompleted();
       }
-      
+
       // Close modal
       onClose();
-      
+
     } catch (err) {
       console.error('Error moving item:', err);
       setError(err.message || 'Không thể di chuyển item');
@@ -127,9 +127,9 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Move {moveItem.data.name} to {getCurrentFolderName()}
+              Di chuyển {moveItem.data.name} đến {getCurrentFolderName()}
             </h2>
-            
+
             {/* Breadcrumb */}
             <div className="flex items-center space-x-1 mt-2">
               {breadcrumbs.map((crumb, index) => (
@@ -137,11 +137,10 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
                   {index > 0 && <span className="text-gray-400">/</span>}
                   <button
                     onClick={() => handleBreadcrumbClick(index)}
-                    className={`text-sm ${
-                      index === breadcrumbs.length - 1
+                    className={`text-sm ${index === breadcrumbs.length - 1
                         ? "text-blue-600 font-medium"
                         : "text-gray-600 hover:text-blue-600"
-                    }`}
+                      }`}
                     disabled={loading}
                   >
                     {crumb.name}
@@ -150,7 +149,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
               ))}
             </div>
           </div>
-          
+
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -191,10 +190,10 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
                       disabled={loading}
                     >
                       <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center mb-2 group-hover:bg-yellow-500 transition-colors">
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          viewBox="0 0 24 24" 
-                          fill="currentColor" 
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
                           className="w-8 h-8 text-yellow-900"
                         >
                           <path d="M10 4l2 2h8a2 2 0 012 2v1H2V6a2 2 0 012-2h6z"></path>
@@ -218,7 +217,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
                       </svg>
                     </div>
                     <p className="text-gray-500">Không có thư mục con nào</p>
-                    <p className="text-sm text-gray-400">Chọn "Move to here" để di chuyển vào thư mục này</p>
+                    <p className="text-sm text-gray-400">Chọn "Di chuyển vào đây" để di chuyển vào thư mục này</p>
                   </div>
                 )}
               </>
@@ -235,7 +234,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
               >
                 Hủy
               </button>
-              
+
               <button
                 onClick={handleMoveHere}
                 disabled={moveLoading}
@@ -247,7 +246,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
                     Đang di chuyển...
                   </>
                 ) : (
-                  "Move to here"
+                  "Di chuyển vào đây"
                 )}
               </button>
             </div>
