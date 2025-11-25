@@ -23,6 +23,8 @@ export type Task = {
   priority: string
   taskType: string
   parentTaskId: string | null
+  phaseId: string | null
+  phaseName?: string
   startDate: string | null
   dueDate: string | null
   createdByName?: string
@@ -129,6 +131,19 @@ export const taskColumns: ColumnDef<Task>[] = [
         <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-gray-900 dark:text-gray-100">
           <Icon className={`h-4 w-4 ${display.color}`} aria-hidden />
           <span>{display.label}</span>
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "phaseName",
+    header: "Giai đoạn",
+    cell: ({ row }) => {
+      const task = row.original
+      const phaseName = task.phaseName || ""
+      return (
+        <div className="min-w-[150px] whitespace-nowrap text-gray-900 dark:text-gray-100">
+          {phaseName || "-"}
         </div>
       )
     },

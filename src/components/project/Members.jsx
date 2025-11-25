@@ -31,6 +31,7 @@ export default function Members() {
     });
     const [assignableUsers, setAssignableUsers] = useState([]);
     const [projectRoles, setProjectRoles] = useState([]);
+    const [rolesVersion, setRolesVersion] = useState(0); // Track roles changes
     const listSkeletons = useMemo(() => Array.from({ length: 4 }), []);
 
     useEffect(() => {
@@ -86,30 +87,61 @@ export default function Members() {
         if (projectId) load();
     }, [projectId, navigate]);
 
-    const handleEditMember = (member) => {
+    // Listen for project roles updates
+    useEffect(() => {
+        const handleRolesUpdate = async (event) => {
+            if (event.detail.projectId === projectId) {
+                try {
+                    const roles = await projectService.getProjectRoles(projectId);
+                    setProjectRoles(Array.isArray(roles) ? roles : []);
+                } catch (e) {
+                    console.error("Failed to refresh project roles:", e);
+                }
+            }
+        };
+
+        window.addEventListener('projectRolesUpdated', handleRolesUpdate);
+        return () => window.removeEventListener('projectRolesUpdated', handleRolesUpdate);
+    }, [projectId]);
+
+    const handleEditMember = async (member) => {
         setEditingMember(member);
         setFormData({
             userId: member.userId || "",
             roleId: member.roleId || "",
-            status: member.status
+            status: member.status === "ACTIVE" ? "Hoạt động" : "Không hoạt động"
         });
+        // Refresh project roles before opening modal
+        try {
+            const roles = await projectService.getProjectRoles(projectId);
+            setProjectRoles(Array.isArray(roles) ? roles : []);
+        } catch (e) {
+            console.error("Failed to load project roles:", e);
+        }
         setShowModal(true);
     };
 
-    const handleAddMember = () => {
+    const handleAddMember = async () => {
         setEditingMember(null);
         setFormData({
             userId: "",
             roleId: "",
             status: "Hoạt động"
         });
+        // Refresh project roles before opening modal
+        try {
+            const roles = await projectService.getProjectRoles(projectId);
+            setProjectRoles(Array.isArray(roles) ? roles : []);
+        } catch (e) {
+            console.error("Failed to load project roles:", e);
+        }
         setShowModal(true);
     };
 
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            // If editingMember exists, update flow would go here (not implemented yet)
+
             if (!formData.userId) {
                 toast.warning("Vui lòng chọn người dùng");
                 return;
@@ -122,22 +154,28 @@ export default function Members() {
 
             const memberPayload = {
                 userId: formData.userId,
-                roleId: formData.roleId, // Required field
+                roleId: formData.roleId,
             };
 
+            // Add or update member (backend handles both)
             await projectService.addProjectMember(projectId, memberPayload);
+
+            // Update status if changed (only for edit mode)
+            if (editingMember && formData.status !== editingMember.status) {
+                const statusValue = formData.status === "Hoạt động" ? "ACTIVE" : "INACTIVE";
+                await projectService.updateMemberStatus(projectId, formData.userId, statusValue);
+            }
 
             // Refresh members list
             const updated = await projectService.getProjectMembers(projectId);
             setMembers(Array.isArray(updated) ? updated : []);
 
             setShowModal(false);
-            setFormData({ name: "", role: "", status: "Hoạt động" });
-            toast.success("Thêm thành viên thành công");
+            setFormData({ userId: "", roleId: "", status: "Hoạt động" });
+            toast.success(editingMember ? "Cập nhật thành viên thành công" : "Thêm thành viên thành công");
         } catch (e) {
-            console.error("Error adding project member:", e);
-            // Show error message with appropriate variant
-            const errorMessage = e?.message || "Có lỗi khi thêm thành viên dự án";
+            console.error("Error with project member:", e);
+            const errorMessage = e?.message || "Có lỗi khi xử lý thành viên dự án";
             toast.error(errorMessage);
         } finally {
             setLoading(false);
@@ -146,7 +184,8 @@ export default function Members() {
 
     const handleClose = () => {
         setShowModal(false);
-        setFormData({ name: "", role: "", status: "Hoạt động" });
+        setEditingMember(null);
+        setFormData({ userId: "", roleId: "", status: "Hoạt động" });
     };
 
     return (
@@ -187,7 +226,9 @@ export default function Members() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="gray">Hoạt động</Badge>
+                                            <Badge variant={m.status === "ACTIVE" ? "success" : "gray"}>
+                                                {m.status === "ACTIVE" ? "Hoạt động" : "Không hoạt động"}
+                                            </Badge>
                                             <IconActionButton
                                                 icon={PencilLine}
                                                 label="Chỉnh sửa thành viên"

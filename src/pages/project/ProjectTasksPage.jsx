@@ -6,17 +6,20 @@ import Input from "../../components/ui/Input";
 import Select from "../../components/ui/select";
 import Tasks from "../../components/project/Tasks";
 import { taskService } from "../../services/taskService";
+import { projectService } from "../../services/projectService";
 import { translatePriority, translateStatus } from "../../lib/i18n";
 
 export default function ProjectTasksPage() {
     const { projectId } = useParams();
     const [tasks, setTasks] = useState([]);
     const [tasksLoading, setTasksLoading] = useState(true);
+    const [phases, setPhases] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState({
         status: "",
         assignee: "",
         priority: "",
+        phase: "",
     });
     const [sortBy, setSortBy] = useState("title");
     const [sortOrder, setSortOrder] = useState("asc");
@@ -25,10 +28,15 @@ export default function ProjectTasksPage() {
         const load = async () => {
             try {
                 setTasksLoading(true);
-                const data = await taskService.getTasksByProject(projectId);
+                const [data, phasesData] = await Promise.all([
+                    taskService.getTasksByProject(projectId),
+                    projectService.getPhases(projectId)
+                ]);
                 setTasks(Array.isArray(data) ? data : []);
+                setPhases(Array.isArray(phasesData) ? phasesData : []);
             } catch (_e) {
                 setTasks([]);
+                setPhases([]);
             } finally {
                 setTasksLoading(false);
             }
@@ -40,6 +48,12 @@ export default function ProjectTasksPage() {
     const statuses = [...new Set(tasks.map(t => translateStatus(t.status)).filter(Boolean))];
     const assignees = [...new Set(tasks.map(t => t.assignedTo?.fullName || t.assignedTo?.email || "").filter(Boolean))];
     const priorities = [...new Set(tasks.map(t => translatePriority(t.priority)).filter(Boolean))];
+
+    // Create a map of phase IDs to phase names for display
+    const phaseMap = phases.reduce((acc, phase) => {
+        acc[phase.id] = phase.name;
+        return acc;
+    }, {});
 
     // Filter and sort tasks
     const filteredAndSortedTasks = React.useMemo(() => {
@@ -70,6 +84,11 @@ export default function ProjectTasksPage() {
         // Priority filter
         if (filters.priority) {
             result = result.filter(task => translatePriority(task.priority) === filters.priority);
+        }
+
+        // Phase filter
+        if (filters.phase) {
+            result = result.filter(task => task.phaseId === filters.phase);
         }
 
         // Sort
@@ -116,12 +135,12 @@ export default function ProjectTasksPage() {
 
     const clearFilters = () => {
         setSearchQuery("");
-        setFilters({ status: "", assignee: "", priority: "" });
+        setFilters({ status: "", assignee: "", priority: "", phase: "" });
         setSortBy("title");
         setSortOrder("asc");
     };
 
-    const hasActiveFilters = filters.status || filters.assignee || filters.priority || searchQuery;
+    const hasActiveFilters = filters.status || filters.assignee || filters.priority || filters.phase || searchQuery;
 
     return (
         <div className="space-y-6">
@@ -162,6 +181,16 @@ export default function ProjectTasksPage() {
                     <option value="">Ưu tiên</option>
                     {priorities.map(priority => (
                         <option key={priority} value={priority}>{priority}</option>
+                    ))}
+                </Select>
+                <Select
+                    value={filters.phase}
+                    onChange={(e) => handleFilterChange("phase", e.target.value)}
+                    className="w-auto min-w-[130px]"
+                >
+                    <option value="">Giai đoạn</option>
+                    {phases.map(phase => (
+                        <option key={phase.id} value={phase.id}>{phase.name}</option>
                     ))}
                 </Select>
                 <Select

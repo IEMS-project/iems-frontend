@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import ProjectDetailLayout from "./components/project/ProjectDetailLayout";
 import ProjectOverviewPage from "./pages/project/ProjectOverviewPage";
 import ProjectTimelinePage from "./pages/project/ProjectTimelinePage";
+import ProjectPhasesPage from "./pages/ProjectPhasesPage";
 import ProjectTasksPage from "./pages/project/ProjectTasksPage";
 import ProjectMembersPage from "./pages/project/ProjectMembersPage";
 import Projects from "./pages/Projects";
@@ -51,6 +52,7 @@ export default function App() {
                                     <Route index element={<Navigate to="overview" replace />} />
                                     <Route path="overview" element={<ProjectOverviewPage />} />
                                     <Route path="timeline" element={<ProjectTimelinePage />} />
+                                    <Route path="phases" element={<ProjectPhasesPage />} />
                                     <Route path="tasks" element={<ProjectTasksPage />} />
                                     <Route path="members" element={<ProjectMembersPage />} />
                                 </Route>
