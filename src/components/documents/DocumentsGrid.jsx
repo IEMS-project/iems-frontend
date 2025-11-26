@@ -68,7 +68,8 @@ export default function DocumentsGrid({
             key={item.id}
             className={cn(
               "group relative flex flex-col rounded-lg border p-3 hover:border-primary hover:bg-muted/50 transition-colors",
-              selectedItem?.id === item.id && "border-primary bg-muted"
+              selectedItem?.id === item.id && "border-primary bg-muted",
+              selectedItems.has(item.id) && "bg-blue-50 border-blue-300"
             )}
           >
             <div className="mb-2 flex items-center justify-between">
@@ -158,7 +159,15 @@ export default function DocumentsGrid({
             </div>
             <div
               className="cursor-pointer"
-              onClick={() => onItemClick(item)}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey) {
+                  // Ctrl+Click: toggle selection
+                  e.stopPropagation();
+                  onToggleItemSelection(item.id, e);
+                } else {
+                  onItemClick(item);
+                }
+              }}
               onDoubleClick={() => onItemDoubleClick(item)}
             >
               <div className="truncate text-sm font-medium flex items-center gap-1">

@@ -436,6 +436,80 @@ export function useDocuments() {
     return currentUserId && String(currentUserId) === String(item.ownerId);
   };
 
+  async function handleBatchDelete() {
+    if (selectedItems.size === 0) return;
+
+    const fileIds = [];
+    const folderIds = [];
+
+    selectedItems.forEach((itemId) => {
+      const item = sortedItems.find((i) => i.id === itemId);
+      if (item) {
+        if (item.type === "folder") {
+          folderIds.push(item.id);
+        } else {
+          fileIds.push(item.id);
+        }
+      }
+    });
+
+    try {
+      const result = await documentService.batchDelete(fileIds, folderIds);
+      setSelectedItems(new Set());
+      loadFolderContents();
+      
+      if (result.failureCount > 0) {
+        toast.warning(
+          `Đã xóa ${result.successCount}/${result.totalRequested} mục. ${result.failureCount} mục không thể xóa.`
+        );
+      } else {
+        toast.success(`Đã xóa thành công ${result.successCount} mục`);
+      }
+    } catch (error) {
+      console.error("Error batch deleting:", error);
+      toast.error(error?.message || "Lỗi khi xóa các mục");
+    }
+  }
+
+  async function handleBatchMove(destinationFolderId) {
+    if (selectedItems.size === 0) return;
+
+    const fileIds = [];
+    const folderIds = [];
+
+    selectedItems.forEach((itemId) => {
+      const item = sortedItems.find((i) => i.id === itemId);
+      if (item) {
+        if (item.type === "folder") {
+          folderIds.push(item.id);
+        } else {
+          fileIds.push(item.id);
+        }
+      }
+    });
+
+    try {
+      const result = await documentService.batchMove(
+        fileIds,
+        folderIds,
+        destinationFolderId
+      );
+      setSelectedItems(new Set());
+      loadFolderContents();
+
+      if (result.failureCount > 0) {
+        toast.warning(
+          `Đã di chuyển ${result.successCount}/${result.totalRequested} mục. ${result.failureCount} mục không thể di chuyển.`
+        );
+      } else {
+        toast.success(`Đã di chuyển thành công ${result.successCount} mục`);
+      }
+    } catch (error) {
+      console.error("Error batch moving:", error);
+      toast.error(error?.message || "Lỗi khi di chuyển các mục");
+    }
+  }
+
   return {
     // State
     folders,
@@ -503,6 +577,8 @@ export function useDocuments() {
     handleMoveCompleted,
     isOwner,
     goUpOneLevel,
+    handleBatchDelete,
+    handleBatchMove,
   };
 }
 

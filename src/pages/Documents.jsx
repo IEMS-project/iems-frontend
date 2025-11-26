@@ -27,6 +27,7 @@ import EmptyState from "../components/documents/EmptyState";
 
 export default function Documents() {
   const isMobile = useIsMobile();
+  const [batchMoveModalOpen, setBatchMoveModalOpen] = React.useState(false);
   const {
     // State
     search,
@@ -87,6 +88,8 @@ export default function Documents() {
     handlePermissionConfirm,
     handleMoveCompleted,
     isOwner,
+    handleBatchDelete,
+    handleBatchMove,
   } = useDocuments();
 
   return (
@@ -96,6 +99,13 @@ export default function Documents() {
         <DocumentsToolbar
           onUpload={onUploadFiles}
           onCreateFolder={() => setIsCreateOpen(true)}
+          selectedCount={selectedItems.size}
+          onBatchDelete={() => {
+            if (window.confirm(`Bạn có chắc muốn xóa ${selectedItems.size} mục đã chọn?`)) {
+              handleBatchDelete();
+            }
+          }}
+          onBatchMove={() => setBatchMoveModalOpen(true)}
         />
 
         {/* Header */}
@@ -281,6 +291,17 @@ export default function Documents() {
         onClose={() => setMoveItem(null)}
         moveItem={moveItem}
         onMoveCompleted={handleMoveCompleted}
+      />
+
+      <MoveModal
+        isOpen={batchMoveModalOpen}
+        onClose={() => setBatchMoveModalOpen(false)}
+        moveItem={null}
+        isBatchMode={true}
+        onMoveCompleted={(destinationFolderId) => {
+          handleBatchMove(destinationFolderId);
+          setBatchMoveModalOpen(false);
+        }}
       />
     </div>
   );

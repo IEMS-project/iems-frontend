@@ -161,4 +161,20 @@ export const documentService = {
     const data = await request(`/document-service/api/search?q=${encodeURIComponent(query)}`);
     return data?.data || data || [];
   },
+
+  async batchDelete(fileIds = [], folderIds = []) {
+    const data = await request("/document-service/api/batch-delete", {
+      method: "POST",
+      body: { fileIds, folderIds },
+    });
+    return data?.data || data;
+  },
+
+  async batchMove(fileIds = [], folderIds = [], destinationFolderId = null) {
+    const data = await request("/document-service/api/batch-move", {
+      method: "POST",
+      body: { fileIds, folderIds, destinationFolderId },
+    });
+    return data?.data || data;
+  },
 };
