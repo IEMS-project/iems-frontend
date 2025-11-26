@@ -11,6 +11,7 @@ import { useParams } from "react-router-dom";
 import { projectService } from "../../services/projectService";
 import Skeleton from "../ui/Skeleton";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import { toast } from "sonner";
 
 export default function ProjectRoles() {
     const { projectId } = useParams();
@@ -52,11 +53,21 @@ export default function ProjectRoles() {
     };
     const onSubmit = async () => {
         try {
-            if (!form.roleId) return;
+            if (!form.roleId) {
+                toast.warning("Vui lòng chọn vai trò");
+                return;
+            }
             await projectService.addProjectRole(projectId, form);
             setShowModal(false);
             await load();
-        } catch (_e) { }
+            toast.success("Thêm vai trò thành công");
+            // Trigger event to notify other components about role changes
+            window.dispatchEvent(new CustomEvent('projectRolesUpdated', { detail: { projectId } }));
+        } catch (e) {
+            console.error("Error adding role:", e);
+            const errorMessage = e?.message || "Có lỗi khi thêm vai trò";
+            toast.error(errorMessage);
+        }
     };
     const onDelete = (r) => {
         setRoleToDelete(r);
@@ -68,11 +79,21 @@ export default function ProjectRoles() {
         try {
             await projectService.deleteProjectRole(projectId, roleToDelete.id);
             await load();
+            toast.success("Xóa vai trò thành công");
             setDeleteRoleDialogOpen(false);
             setRoleToDelete(null);
-        } catch (_e) {
+        } catch (e) {
+            console.error("Error deleting role:", e);
             setDeleteRoleDialogOpen(false);
             setRoleToDelete(null);
+
+            // Check for specific error about role being assigned
+            if (e?.message?.includes("already assigned") || e?.message?.includes("ROLE_ALREADY_ASSIGNED")) {
+                toast.error("Không thể xóa vai trò đã được gán cho thành viên");
+            } else {
+                const errorMessage = e?.message || "Có lỗi khi xóa vai trò";
+                toast.error(errorMessage);
+            }
         }
     };
 

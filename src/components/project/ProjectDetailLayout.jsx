@@ -12,6 +12,7 @@ import { translateStatus } from "../../lib/i18n";
 const tabs = [
     { id: "overview", label: "Tổng quan", path: "overview" },
     { id: "timeline", label: "Tiến độ", path: "timeline" },
+    { id: "phases", label: "Giai đoạn", path: "phases" },
     { id: "tasks", label: "Nhiệm vụ", path: "tasks" },
     { id: "members", label: "Thành viên", path: "members" },
 ];
@@ -30,6 +31,7 @@ export default function ProjectDetailLayout() {
         if (path.includes("/members")) return "members";
         if (path.includes("/tasks")) return "tasks";
         if (path.includes("/timeline")) return "timeline";
+        if (path.includes("/phases")) return "phases";
         return "overview";
     }, [location.pathname]);
 

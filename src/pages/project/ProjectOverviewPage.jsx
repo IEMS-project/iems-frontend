@@ -201,9 +201,11 @@ export default function ProjectOverviewPage() {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-medium">Tiến độ hoàn thành</span>
-                                <span className="text-sm text-gray-600 dark:text-gray-400">{stats.progress}%</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {projectData?.progress ?? stats.progress}%
+                                </span>
                             </div>
-                            <Progress value={stats.progress} />
+                            <Progress value={projectData?.progress ?? stats.progress} />
                         </div>
                     </div>
                 </CardContent>

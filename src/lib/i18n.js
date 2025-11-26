@@ -129,4 +129,28 @@ export const getPriorityVariant = (value, fallback = "gray") => {
   return PRIORITY_VARIANT[translated] || fallback;
 };
 
+// Reverse translation: Vietnamese to Backend Enum
+export const reverseTranslateStatus = (vietnameseValue) => {
+  const statusMapping = {
+    "Đang chờ": "TO_DO",
+    "Đang thực hiện": "IN_PROGRESS",
+    "Đang duyệt": "IN_REVIEW",
+    "Hoàn thành": "COMPLETED",
+    "Bị chặn": "BLOCKED",
+    "Đã hủy": "CANCELLED",
+    "Tạm ngừng": "ON_HOLD"
+  };
+  return statusMapping[vietnameseValue] || vietnameseValue;
+};
+
+export const reverseTranslatePriority = (vietnameseValue) => {
+  const priorityMapping = {
+    "Cao nhất": "CRITICAL",
+    "Cao": "HIGH",
+    "Trung bình": "MEDIUM",
+    "Thấp": "LOW",
+    "Thấp nhất": "LOWEST"
+  };
+  return priorityMapping[vietnameseValue] || vietnameseValue;
+};
 

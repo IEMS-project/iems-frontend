@@ -71,5 +71,46 @@ export const projectService = {
     });
     return data?.data || data;
   },
+
+  async updateMemberStatus(projectId, userId, status) {
+    const data = await request(`/project-service/api/projects/${projectId}/members/${userId}/status?status=${status}`, {
+      method: "PUT",
+    });
+    return data?.data || data;
+  },
+
+  // Phase APIs
+  async getPhases(projectId) {
+    const data = await request(`/project-service/projects/${projectId}/phases`);
+    return data?.data || data || [];
+  },
+
+  async getPhaseById(projectId, phaseId) {
+    const data = await request(`/project-service/projects/${projectId}/phases/${phaseId}`);
+    return data?.data || data || null;
+  },
+
+  async createPhase(projectId, phaseData) {
+    const data = await request(`/project-service/projects/${projectId}/phases`, {
+      method: "POST",
+      body: phaseData,
+    });
+    return data?.data || data;
+  },
+
+  async updatePhase(projectId, phaseId, phaseData) {
+    const data = await request(`/project-service/projects/${projectId}/phases/${phaseId}`, {
+      method: "PATCH",
+      body: phaseData,
+    });
+    return data?.data || data;
+  },
+
+  async deletePhase(projectId, phaseId) {
+    const data = await request(`/project-service/projects/${projectId}/phases/${phaseId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
 };
 

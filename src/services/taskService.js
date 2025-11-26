@@ -57,6 +57,7 @@ export const taskService = {
       priority: mapPriority(payload.priority),
       taskType: mapTaskType(payload.taskType),
       parentTaskId: payload.parentTaskId,
+      phaseId: payload.phaseId,
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };
@@ -76,6 +77,7 @@ export const taskService = {
       priority: mapPriority(payload.priority),
       taskType: mapTaskType(payload.taskType),
       parentTaskId: payload.parentTaskId,
+      phaseId: payload.phaseId,
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };

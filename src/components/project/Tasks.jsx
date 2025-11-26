@@ -9,11 +9,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "../../services/taskService";
 import { projectService } from "../../services/projectService";
 import UserSelect from "./UserSelect";
+import PhaseSelect from "./PhaseSelect";
 import TaskDetailModal from "../tasks/TaskDetailModal";
 import { toast } from "sonner";
 import { taskColumns } from "./tasks-columns";
 import { TasksDataTable } from "./tasks-data-table";
-import { translatePriority, translateStatus } from "../../lib/i18n";
+import { translatePriority, translateStatus, reverseTranslateStatus, reverseTranslatePriority } from "../../lib/i18n";
 import RichTextEditor from "../ui/RichTextEditor";
 import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
 import { CheckSquare, Bug, BookOpen, Zap, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Equal } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
     const [assignableUsers, setAssignableUsers] = useState([]);
+    const [phases, setPhases] = useState([]);
     const [showTaskTypeDropdown, setShowTaskTypeDropdown] = useState(false);
     const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
 
@@ -56,6 +58,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         priority: "Trung bình",
         taskType: "TASK",
         parentTaskId: "",
+        phaseId: "",
         startDate: "",
         dueDate: ""
     });
@@ -64,9 +67,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         const load = async () => {
             try {
                 setLoading(true);
-                const [data, members] = await Promise.all([
+                const [data, members, phasesData] = await Promise.all([
                     tasksProp ? Promise.resolve(tasksProp) : taskService.getTasksByProject(projectId),
-                    projectService.getProjectMembers(projectId)
+                    projectService.getProjectMembers(projectId),
+                    projectService.getPhases(projectId)
                 ]);
 
                 // Check if response indicates permission error
@@ -81,6 +85,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 const nextTasks = Array.isArray(data) ? data : [];
                 setTasksData(nextTasks);
                 if (onTasksChange && !tasksProp) onTasksChange(nextTasks);
+
+                setPhases(Array.isArray(phasesData) ? phasesData : []);
+
                 const users = Array.isArray(members) ? members.map(m => ({
                     // preserve original fields and also normalize common keys
                     id: m.userId || m.id,
@@ -138,6 +145,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     : (task.taskType || '').toString().toUpperCase().includes('BUG') ? 'BUG'
                         : 'TASK',
             parentTaskId: task.parentTaskId || "",
+            phaseId: task.phaseId || "",
             startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
         });
@@ -155,6 +163,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             priority: "Trung bình",
             taskType: "TASK",
             parentTaskId: "",
+            phaseId: "",
             startDate: "",
             dueDate: ""
         });
@@ -182,10 +191,11 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 title: formData.title.trim(),
                 description: formData.description?.trim() || undefined,
                 assignedTo: formData.assignee,
-                status: formData.status,
-                priority: formData.priority,
+                status: reverseTranslateStatus(formData.status),
+                priority: reverseTranslatePriority(formData.priority),
                 taskType: formData.taskType,
-                parentTaskId: formData.parentTaskId || undefined,
+                parentTaskId: formData.parentTaskId || null,
+                phaseId: formData.phaseId || null,
                 startDate: formData.startDate || undefined,
                 dueDate: formData.dueDate,
             };
@@ -245,6 +255,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             priority: "Trung bình",
             taskType: "TASK",
             parentTaskId: "",
+            phaseId: "",
             dueDate: ""
         });
     };
@@ -253,6 +264,17 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         setDetailTask(task);
         setShowDetail(true);
     };
+
+    // Map phaseId to phaseName for display in table
+    const tasksWithPhaseName = tasksData.map(task => {
+        const phaseName = task.phaseId && phases.length > 0
+            ? (phases.find(p => p.id === task.phaseId)?.name || '')
+            : '';
+        return {
+            ...task,
+            phaseName
+        };
+    });
 
     return (
         <>
@@ -266,7 +288,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 <CardContent>
                     <TasksDataTable
                         columns={taskColumns}
-                        data={tasksData}
+                        data={tasksWithPhaseName}
                         loading={showLoading}
                         onRowClick={handleRowClick}
                     />
@@ -382,6 +404,16 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                         <option key={t.id} value={t.id}>{t.title}</option>
                                     ))}
                             </Select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giai đoạn</label>
+                            <PhaseSelect
+                                phases={phases}
+                                value={formData.phaseId}
+                                onChange={(value) => setFormData({ ...formData, phaseId: value })}
+                                placeholder="Không thuộc giai đoạn nào"
+                            />
                         </div>
 
                         <div>
