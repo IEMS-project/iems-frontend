@@ -102,7 +102,7 @@ export default function ProjectOverview() {
 										</td>
 										<td className="px-4 py-3">
 											{project.progress !== undefined && project.progress !== null
-												? `${project.progress.progress}%`
+												? `${project.progress}%`
 												: "N/A"}
 										</td>
 									</tr>
