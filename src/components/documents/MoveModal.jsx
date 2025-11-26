@@ -145,7 +145,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted, 
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {isBatchMode 
+              {isBatchMode
                 ? `Di chuyển các mục đã chọn đến ${getCurrentFolderName()}`
                 : `Di chuyển ${moveItem?.data?.name} đến ${getCurrentFolderName()}`
               }
@@ -159,8 +159,8 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted, 
                   <button
                     onClick={() => handleBreadcrumbClick(index)}
                     className={`text-sm ${index === breadcrumbs.length - 1
-                        ? "text-blue-600 font-medium"
-                        : "text-gray-600 hover:text-blue-600"
+                      ? "text-blue-600 font-medium"
+                      : "text-gray-600 hover:text-blue-600"
                       }`}
                     disabled={loading}
                   >

@@ -457,7 +457,7 @@ export function useDocuments() {
       const result = await documentService.batchDelete(fileIds, folderIds);
       setSelectedItems(new Set());
       loadFolderContents();
-      
+
       if (result.failureCount > 0) {
         toast.warning(
           `Đã xóa ${result.successCount}/${result.totalRequested} mục. ${result.failureCount} mục không thể xóa.`

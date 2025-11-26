@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { FolderPlus, Trash2, FolderInput } from "lucide-react";
 import { FileUploadDialog } from "./FileUploadDialog";
 
-export default function DocumentsToolbar({ 
-  onUpload, 
+export default function DocumentsToolbar({
+  onUpload,
   onCreateFolder,
   selectedCount = 0,
   onBatchDelete,
