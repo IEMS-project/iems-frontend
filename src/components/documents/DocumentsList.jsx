@@ -83,9 +83,17 @@ export default function DocumentsList({
             key={item.id}
             className={cn(
               "hover:bg-muted flex cursor-pointer items-center justify-between border-b p-2 lg:p-4",
-              selectedItem?.id === item.id && "bg-muted"
+              selectedItem?.id === item.id && "bg-muted",
+              selectedItems.has(item.id) && "bg-blue-50"
             )}
-            onClick={() => onItemClick(item)}
+            onClick={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                // Ctrl+Click: toggle selection
+                onToggleItemSelection(item.id, e);
+              } else {
+                onItemClick(item);
+              }
+            }}
             onDoubleClick={() => onItemDoubleClick(item)}
           >
             <div className="flex min-w-0 items-center space-x-4 flex-1">

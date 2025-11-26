@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { documentService } from "../../services/documentService";
 import Skeleton from "../ui/Skeleton";
 
-export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }) {
+export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted, isBatchMode = false }) {
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null);
   const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: "Home", parentId: null }]);
@@ -26,7 +26,13 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
 
       // Get all folders and filter by parent
       const allFolders = await documentService.getAllFolders();
-      const filteredFolders = allFolders.filter(f => f.parentId === folderId && f.id !== moveItem?.data?.id);
+      const filteredFolders = allFolders.filter(f => {
+        const matchesParent = f.parentId === folderId;
+        // In batch mode, don't filter out any folder
+        // In single mode, filter out the item being moved
+        const isNotMovingItem = isBatchMode || f.id !== moveItem?.data?.id;
+        return matchesParent && isNotMovingItem;
+      });
 
       setFolders(filteredFolders);
     } catch (err) {
@@ -86,7 +92,19 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
   };
 
   const handleMoveHere = async () => {
-    if (!moveItem || moveLoading) return;
+    if (moveLoading) return;
+
+    // In batch mode, just return the destination folder ID
+    if (isBatchMode) {
+      if (onMoveCompleted) {
+        onMoveCompleted(currentFolderId);
+      }
+      onClose();
+      return;
+    }
+
+    // Single item move
+    if (!moveItem) return;
 
     try {
       setMoveLoading(true);
@@ -118,7 +136,7 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
     return breadcrumbs[breadcrumbs.length - 1].name;
   };
 
-  if (!isOpen || !moveItem) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -127,7 +145,10 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Di chuyển {moveItem.data.name} đến {getCurrentFolderName()}
+              {isBatchMode
+                ? `Di chuyển các mục đã chọn đến ${getCurrentFolderName()}`
+                : `Di chuyển ${moveItem?.data?.name} đến ${getCurrentFolderName()}`
+              }
             </h2>
 
             {/* Breadcrumb */}
@@ -138,8 +159,8 @@ export default function MoveModal({ isOpen, onClose, moveItem, onMoveCompleted }
                   <button
                     onClick={() => handleBreadcrumbClick(index)}
                     className={`text-sm ${index === breadcrumbs.length - 1
-                        ? "text-blue-600 font-medium"
-                        : "text-gray-600 hover:text-blue-600"
+                      ? "text-blue-600 font-medium"
+                      : "text-gray-600 hover:text-blue-600"
                       }`}
                     disabled={loading}
                   >
