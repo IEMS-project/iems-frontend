@@ -14,6 +14,18 @@ import Skeleton from "../components/ui/Skeleton";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import {
+    User,
+    Mail,
+    Phone,
+    Calendar,
+    IdCard,
+    MapPin,
+    Building2,
+    CreditCard,
+    Shield,
+    FileText,
+} from "lucide-react";
 
 
 export default function DepartmentDetail() {
@@ -867,59 +879,98 @@ export default function DepartmentDetail() {
                         {/* Personal Information */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>Họ</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.firstName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>Tên</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.lastName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                    <span>Số điện thoại</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.phone || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày sinh</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span>Ngày sinh</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">
                                     {viewingMember.dob ? new Date(viewingMember.dob).toLocaleDateString('vi-VN') : "N/A"}
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giới tính</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>Giới tính</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.gender || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <span>Email</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.email || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vai trò</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Shield className="h-4 w-4 text-muted-foreground" />
+                                    <span>Vai trò</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.role || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại hợp đồng</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    <span>Loại hợp đồng</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.contractType || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên ngân hàng</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                                    <span>Tên ngân hàng</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tài khoản ngân hàng</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                    <span>Số tài khoản ngân hàng</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankAccountNumber || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CCCD</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <IdCard className="h-4 w-4 text-muted-foreground" />
+                                    <span>CCCD</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.personalID || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày vào làm</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span>Ngày vào làm</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">
                                     {viewingMember.startDate ? new Date(viewingMember.startDate).toLocaleDateString('vi-VN') : "N/A"}
                                 </p>
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
+                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                    <span>Địa chỉ</span>
+                                </label>
                                 <p className="text-gray-900 dark:text-gray-100">{viewingMember.address || "N/A"}</p>
                             </div>
                         </div>

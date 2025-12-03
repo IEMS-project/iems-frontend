@@ -8,6 +8,7 @@ import { Card } from "../components/ui/Card";
 import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
+import ImageCropModal from "../components/ui/ImageCropModal";
 
 export default function Profile() {
 	const [isEditing, setIsEditing] = useState(false);
@@ -25,6 +26,8 @@ export default function Profile() {
 		bankAccountNumber: "",
 		bankName: "",
 	});
+	const [cropModalOpen, setCropModalOpen] = useState(false);
+	const [imageSrcForCrop, setImageSrcForCrop] = useState(null);
 
 	// Mock data for statistics
 	const userStats = {
@@ -97,11 +100,30 @@ export default function Profile() {
 	const handlePickAvatar = async (e) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
+
+		// Read file and show crop modal
+		const reader = new FileReader();
+		reader.onload = () => {
+			setImageSrcForCrop(reader.result);
+			setCropModalOpen(true);
+		};
+		reader.readAsDataURL(file);
+
+		// Reset input
+		e.target.value = '';
+	};
+
+	const handleCropComplete = async (croppedImageBlob) => {
 		try {
 			setAvatarUploading(true);
 			setError("");
 			setSuccess("");
-			await userService.uploadAvatar(file);
+			setCropModalOpen(false);
+
+			// Create File from Blob
+			const croppedFile = new File([croppedImageBlob], 'avatar.jpg', { type: 'image/jpeg' });
+
+			await userService.uploadAvatar(croppedFile);
 			const fresh = await userService.getMyProfile();
 			setProfile(fresh);
 			setSuccess("Cập nhật ảnh đại diện thành công");
@@ -109,6 +131,7 @@ export default function Profile() {
 			setError(e?.message || "Tải ảnh thất bại");
 		} finally {
 			setAvatarUploading(false);
+			setImageSrcForCrop(null);
 		}
 	};
 
@@ -414,6 +437,16 @@ export default function Profile() {
 			{success && (
 				<p className="text-sm text-green-600">{success}</p>
 			)}
+
+			<ImageCropModal
+				isOpen={cropModalOpen}
+				onClose={() => {
+					setCropModalOpen(false);
+					setImageSrcForCrop(null);
+				}}
+				imageSrc={imageSrcForCrop}
+				onCropComplete={handleCropComplete}
+			/>
 		</div>
 	);
 }

@@ -31,11 +31,17 @@ export default function MainLayout({ children }) {
 						<SidebarTrigger className="-ml-1" />
 						<Breadcrumb />
 					</header>
-				<div className={`flex-1 ${isFullHeightPage ? "overflow-hidden" : "overflow-y-auto"}`}>
+				{/* 
+					Không cho toàn bộ trang scroll:
+					- Div này chiếm hết phần còn lại của màn hình và ẩn tràn.
+					- Các page "full height" (project detail, messages, chatbot) tự quản lý scroll bên trong.
+					- Các page còn lại được bọc trong một container có overflow-auto để scroll bên trong page.
+				*/}
+				<div className="flex-1 overflow-hidden">
 					{isFullHeightPage ? (
 						children
 					) : (
-						<div className="flex flex-col gap-4 p-4">
+						<div className="flex h-full flex-col gap-4 p-4 overflow-auto">
 							{children}
 						</div>
 					)}

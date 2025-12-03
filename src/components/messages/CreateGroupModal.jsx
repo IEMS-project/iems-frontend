@@ -6,14 +6,12 @@ import UserSelectionPanel from "../ui/UserSelectionPanel";
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
     const [name, setName] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState("");
     const [query, setQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
 
     useEffect(() => {
         if (open) {
             setName("");
-            setAvatarUrl("");
             setQuery("");
             const init = new Set();
             if (currentUserId) init.add(currentUserId);
@@ -37,7 +35,6 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
         const memberIds = Array.from(selectedIds);
         if (!name.trim() || memberIds.length < 2) return;
         const payload = { name: name.trim(), members: memberIds, type: 'GROUP' };
-        if (avatarUrl && avatarUrl.trim()) payload.avatarUrl = avatarUrl.trim();
         if (onSubmit) await onSubmit(payload);
     }
 
@@ -62,12 +59,6 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Nhập tên nhóm"
-                />
-                <Input
-                    label="Ảnh nhóm (URL)"
-                    value={avatarUrl}
-                    onChange={e => setAvatarUrl(e.target.value)}
-                    placeholder="Dán URL ảnh nhóm (tùy chọn)"
                 />
                 <Input
                     value={query}

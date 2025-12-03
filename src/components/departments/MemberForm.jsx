@@ -2,6 +2,20 @@ import React, { useEffect, useState } from "react";
 import Input from "../ui/Input";
 import Select from "../ui/select";
 import { userService } from "../../services/userService";
+import {
+    User,
+    Mail,
+    Phone,
+    Calendar,
+    Shield,
+    FileText,
+    Building2,
+    CreditCard,
+    IdCard,
+    MapPin,
+    UserCircle2,
+    Lock,
+} from "lucide-react";
 
 export default function MemberForm({ formData, setFormData, isEdit = false }) {
     const [roles, setRoles] = useState([]);
@@ -50,59 +64,93 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Họ"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                        setFormData({ ...formData, firstName: e.target.value })
-                    }
-                    placeholder="Nhập họ"
-                />
-                <Input
-                    label="Tên"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                        setFormData({ ...formData, lastName: e.target.value })
-                    }
-                    placeholder="Nhập tên"
-                />
+                {/* Họ */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>Họ</span>
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) =>
+                            setFormData({ ...formData, firstName: e.target.value })
+                        }
+                        placeholder="Nhập họ"
+                    />
+                </div>
+
+                {/* Tên */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>Tên</span>
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) =>
+                            setFormData({ ...formData, lastName: e.target.value })
+                        }
+                        placeholder="Nhập tên"
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="Nhập email"
-                />
-                <Input
-                    label="Số điện thoại"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="Nhập số điện thoại"
-                />
+                {/* Email */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>Email</span>
+                    </label>
+                    <Input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="Nhập email"
+                    />
+                </div>
+
+                {/* Số điện thoại */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>Số điện thoại</span>
+                    </label>
+                    <Input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                        }
+                        placeholder="Nhập số điện thoại"
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Ngày sinh"
-                    type="date"
-                    value={formatDateInput(formData.dob)}
-                    onChange={(e) =>
-                        setFormData({ ...formData, dob: e.target.value })
-                    }
-                />
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Giới tính
+                {/* Ngày sinh */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>Ngày sinh</span>
+                    </label>
+                    <Input
+                        type="date"
+                        value={formatDateInput(formData.dob)}
+                        onChange={(e) =>
+                            setFormData({ ...formData, dob: e.target.value })
+                        }
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>Giới tính</span>
                     </label>
                     <Select
                         value={formData.gender}
@@ -120,9 +168,10 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Replace free-text role with system role select labelled 'Vai trò' */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Vai trò
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <span>Vai trò</span>
                     </label>
                     <Select
                         value={(formData.roleCodes && formData.roleCodes[0]) || ""}
@@ -144,9 +193,10 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                     )}
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Loại hợp đồng
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span>Loại hợp đồng</span>
                     </label>
                     <Select
                         value={formData.contractType}
@@ -166,96 +216,129 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="Tên ngân hàng"
-                    type="text"
-                    value={formData.bankName}
-                    onChange={(e) =>
-                        setFormData({ ...formData, bankName: e.target.value })
-                    }
-                    placeholder="Nhập tên ngân hàng"
-                />
-                <Input
-                    label="Số tài khoản ngân hàng"
-                    type="text"
-                    value={formData.bankAccountNumber}
-                    onChange={(e) =>
-                        setFormData({
-                            ...formData,
-                            bankAccountNumber: e.target.value,
-                        })
-                    }
-                    placeholder="Nhập số tài khoản ngân hàng"
-                />
+                {/* Tên ngân hàng */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span>Tên ngân hàng</span>
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.bankName}
+                        onChange={(e) =>
+                            setFormData({ ...formData, bankName: e.target.value })
+                        }
+                        placeholder="Nhập tên ngân hàng"
+                    />
+                </div>
+
+                {/* Số tài khoản ngân hàng */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        <span>Số tài khoản ngân hàng</span>
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.bankAccountNumber}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                bankAccountNumber: e.target.value,
+                            })
+                        }
+                        placeholder="Nhập số tài khoản ngân hàng"
+                    />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                    label="CCCD"
-                    type="text"
-                    value={formData.personalID}
-                    onChange={(e) =>
-                        setFormData({ ...formData, personalID: e.target.value })
-                    }
-                    placeholder="Nhập số CCCD"
-                />
-                <Input
-                    label="Ngày vào làm"
-                    type="date"
-                    value={formatDateInput(formData.startDate)}
-                    onChange={(e) =>
-                        setFormData({
-                            ...formData,
-                            startDate: e.target.value,
-                        })
-                    }
-                />
+                {/* CCCD */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <IdCard className="h-4 w-4 text-muted-foreground" />
+                        <span>CCCD</span>
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.personalID}
+                        onChange={(e) =>
+                            setFormData({ ...formData, personalID: e.target.value })
+                        }
+                        placeholder="Nhập số CCCD"
+                    />
+                </div>
+
+                {/* Ngày vào làm */}
+                <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>Ngày vào làm</span>
+                    </label>
+                    <Input
+                        type="date"
+                        value={formatDateInput(formData.startDate)}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                startDate: e.target.value,
+                            })
+                        }
+                    />
+                </div>
             </div>
 
             {!isEdit && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                        label="Tên đăng nhập"
-                        type="text"
-                        value={formData.username}
-                        onChange={(e) =>
-                            setFormData({ ...formData, username: e.target.value })
-                        }
-                        placeholder="Nhập tên đăng nhập"
-                    />
-                    <Input
-                        label="Mật khẩu"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) =>
-                            setFormData({ ...formData, password: e.target.value })
-                        }
-                        placeholder="Nhập mật khẩu"
-                    />
+                    {/* Tên đăng nhập */}
+                    <div className="space-y-1">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+                            <span>Tên đăng nhập</span>
+                        </label>
+                        <Input
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) =>
+                                setFormData({ ...formData, username: e.target.value })
+                            }
+                            placeholder="Nhập tên đăng nhập"
+                        />
+                    </div>
+
+                    {/* Mật khẩu */}
+                    <div className="space-y-1">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <Lock className="h-4 w-4 text-muted-foreground" />
+                            <span>Mật khẩu</span>
+                        </label>
+                        <Input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) =>
+                                setFormData({ ...formData, password: e.target.value })
+                            }
+                            placeholder="Nhập mật khẩu"
+                        />
+                    </div>
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Địa chỉ */}
+            <div className="space-y-1">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>Địa chỉ</span>
+                </label>
                 <Input
-                    label="Hình ảnh"
                     type="text"
-                    value={formData.image}
+                    value={formData.address}
                     onChange={(e) =>
-                        setFormData({ ...formData, image: e.target.value })
+                        setFormData({ ...formData, address: e.target.value })
                     }
-                    placeholder="Nhập URL hình ảnh"
+                    placeholder="Nhập địa chỉ"
                 />
             </div>
-
-            <Input
-                label="Địa chỉ"
-                type="text"
-                value={formData.address}
-                onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                }
-                placeholder="Nhập địa chỉ"
-            />
         </div>
     );
 }

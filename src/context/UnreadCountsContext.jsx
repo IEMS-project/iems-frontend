@@ -26,7 +26,9 @@ export const UnreadCountsProvider = ({ children }) => {
     const conversationIdsRef = useRef(new Set());
     const isConnectedRef = useRef(false);
     const { userProfile, isAuthenticated } = useAuth();
-    const userId = userProfile?.userId;
+    const storedTokens = getStoredTokens();
+    const fallbackUserId = storedTokens?.userInfo?.userId;
+    const userId = userProfile?.userId || fallbackUserId;
 
     const setNotificationStatesBulk = useCallback((states) => {
         setNotificationStates(states || {});
@@ -240,7 +242,7 @@ export const UnreadCountsProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        if (!isAuthenticated || !userProfile?.userId) {
+        if (!isAuthenticated || !userId) {
             disconnectWs();
             return undefined;
         }
@@ -259,7 +261,7 @@ export const UnreadCountsProvider = ({ children }) => {
                 try { userSubRef.current.unsubscribe(); } catch (_e) { }
                 userSubRef.current = null;
             }
-            userSubRef.current = client.subscribe(chatWs.userTopic(userProfile.userId), handleUserMessage);
+            userSubRef.current = client.subscribe(chatWs.userTopic(userId), handleUserMessage);
             syncConversationSubscriptions();
         };
         client.onStompError = (frame) => {
@@ -271,7 +273,7 @@ export const UnreadCountsProvider = ({ children }) => {
         return () => {
             disconnectWs();
         };
-    }, [disconnectWs, handleUserMessage, isAuthenticated, syncConversationSubscriptions, userProfile?.userId]);
+    }, [disconnectWs, handleUserMessage, isAuthenticated, syncConversationSubscriptions, userId]);
 
     // Get unread count for a specific conversation
     const getCount = useCallback((conversationId) => {

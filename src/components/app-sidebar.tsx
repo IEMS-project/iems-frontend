@@ -87,9 +87,8 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  const { getTotal } = useUnreadCounts();
-  const totalUnread = getTotal();
-  const formattedUnread = totalUnread > 99 ? "99+" : totalUnread;
+  const { getTotal, refreshUnreadCounts } = useUnreadCounts();
+  const hasUnread = getTotal() > 0;
 
   // Load projects
   useEffect(() => {
@@ -107,6 +106,14 @@ export function AppSidebar() {
     };
     loadProjects();
   }, []);
+
+  // Đảm bảo sidebar luôn có số tin nhắn chưa đọc mới nhất,
+  // ngay cả khi người dùng chưa mở trang Tin nhắn.
+  useEffect(() => {
+    if (refreshUnreadCounts) {
+      refreshUnreadCounts().catch(() => {});
+    }
+  }, [refreshUnreadCounts]);
 
   // Check if current path is a project detail page
   const isProjectDetailPage = location.pathname.startsWith("/projects/") && location.pathname !== "/projects";
@@ -142,7 +149,32 @@ export function AppSidebar() {
           <SidebarGroupLabel>Chức năng chính</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Projects - Always open with submenu */}
+              {/* Dashboard - always on top */}
+              {items
+                .filter((item) => item.url === "/dashboard")
+                .map((item) => {
+                  const isActive = location.pathname === item.url;
+                  const showUnreadBadge = item.url === "/messages" && hasUnread;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        isActive={isActive}
+                      >
+                        <NavLink to={item.url} className="flex items-center gap-2">
+                          <item.icon />
+                          <span>{item.title}</span>
+                          {showUnreadBadge && (
+                            <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+
+              {/* Projects - always below Dashboard with submenu */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -198,10 +230,12 @@ export function AppSidebar() {
                 </SidebarMenuSub>
               </SidebarMenuItem>
 
-              {/* Other menu items */}
-              {items.map((item) => {
+              {/* Other menu items (except Dashboard, which is already rendered) */}
+              {items
+                .filter((item) => item.url !== "/dashboard")
+                .map((item) => {
                 const isActive = location.pathname === item.url;
-                const showUnreadBadge = item.url === "/messages" && totalUnread > 0;
+                const showUnreadBadge = item.url === "/messages" && hasUnread;
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -213,9 +247,7 @@ export function AppSidebar() {
                         <item.icon />
                         <span>{item.title}</span>
                         {showUnreadBadge && (
-                          <span className="ml-auto text-xs font-semibold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-destructive text-destructive-foreground">
-                            {formattedUnread}
-                          </span>
+                          <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
                         )}
                       </NavLink>
                     </SidebarMenuButton>

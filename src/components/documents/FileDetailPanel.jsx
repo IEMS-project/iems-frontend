@@ -117,3 +117,4 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose }) 
 
 
 
+
