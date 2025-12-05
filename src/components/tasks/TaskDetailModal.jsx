@@ -5,11 +5,13 @@ import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import { getPriorityVariant, getStatusVariant } from "../../lib/i18n";
 import RichTextEditor from "../ui/RichTextEditor";
-import { getTaskTypeIcon, getTaskTypeColor, translateTaskType, getTaskTypeVariant } from "../../lib/taskTypeUtils";
+import { getTaskTypeVariant } from "../../lib/taskTypeUtils";
+import { useTaskType } from "../../hooks/useTaskType";
 import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle } from 'lucide-react';
 
 export default function TaskDetailModal({ open, onClose, task, onEdit }) {
     const { t } = useTranslation();
+    const { getTaskTypeIcon, getTaskTypeColor, translateTaskType } = useTaskType();
 
     const getPriorityLabel = (priority) => {
         if (!priority) return t('dashboard.priority.medium');
@@ -54,25 +56,30 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
     const getPriorityIcon = (priority) => {
         if (!priority) return null;
 
-        const normalized = priority.toString().trim();
-        const priorityIcons = {
-            'Cao nhất': { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' },
-            'Highest': { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' },
-            'Critical': { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' },
-            'Cao': { icon: ChevronUp, color: 'text-red-600 dark:text-red-400' },
-            'High': { icon: ChevronUp, color: 'text-red-600 dark:text-red-400' },
-            'Trung bình': { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' },
-            'Medium': { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' },
-            'Normal': { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' },
-            'Thấp': { icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' },
-            'Low': { icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' },
-            'Thấp nhất': { icon: ChevronsDown, color: 'text-blue-700 dark:text-blue-400' },
-            'Lowest': { icon: ChevronsDown, color: 'text-blue-700 dark:text-blue-400' },
-            'Không ưu tiên': { icon: Circle, color: 'text-gray-500 dark:text-gray-400' },
-            'None': { icon: Circle, color: 'text-gray-500 dark:text-gray-400' }
-        };
+        const normalized = priority.toString().trim().toUpperCase();
 
-        return priorityIcons[normalized] || priorityIcons['Trung bình'];
+        // Highest/Critical
+        if (normalized.includes('CAO NHẤT') || normalized === 'HIGHEST' || normalized === 'CRITICAL') {
+            return { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' };
+        }
+        // High
+        if (normalized === 'CAO' || normalized === 'HIGH') {
+            return { icon: ChevronUp, color: 'text-red-600 dark:text-red-400' };
+        }
+        // Medium
+        if (normalized.includes('TRUNG BÌNH') || normalized.includes('TRUNG BINH') || normalized === 'MEDIUM' || normalized === 'NORMAL') {
+            return { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' };
+        }
+        // Low
+        if (normalized.includes('THẤP') || normalized.includes('THAP') || normalized === 'LOW') {
+            return { icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' };
+        }
+        // Lowest
+        if (normalized.includes('THẤP NHẤT') || normalized.includes('THAP NHAT') || normalized === 'LOWEST') {
+            return { icon: ChevronsDown, color: 'text-blue-700 dark:text-blue-400' };
+        }
+        // None/Default
+        return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
     };
 
     const getStatusLabel = (status) => {

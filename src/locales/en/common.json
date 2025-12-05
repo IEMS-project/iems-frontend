@@ -450,6 +450,48 @@
     }
   },
   "tasks": {
+    "title": "Tasks List",
+    "filters": {
+      "project": "Project",
+      "allProjects": "All projects",
+      "noProjects": "No projects",
+      "projectCount": "{{count}} projects",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "statusCount": "{{count}} statuses",
+      "priority": "Priority",
+      "allPriorities": "All priorities",
+      "priorityCount": "{{count}} priorities",
+      "dateFrom": "From date",
+      "dateTo": "To date"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "priorities": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "types": {
+      "task": "Task",
+      "bug": "Bug",
+      "userStory": "User Story",
+      "epic": "Epic",
+      "subTask": "Sub-task"
+    },
+    "actions": {
+      "save": "Save changes",
+      "saving": "Saving...",
+      "reset": "Reset",
+      "unsavedChanges": "Unsaved changes"
+    },
+    "timeRemaining": {
+      "overdue": "Overdue {{days}}d {{hours}}h {{minutes}}m",
+      "remaining": "{{days}}d {{hours}}h {{minutes}}m left"
+    },
     "detail": {
       "title": "Task Details",
       "fields": {

@@ -450,6 +450,48 @@
     }
   },
   "tasks": {
+    "title": "Danh sách nhiệm vụ",
+    "filters": {
+      "project": "Dự án",
+      "allProjects": "Tất cả dự án",
+      "noProjects": "Không có dự án",
+      "projectCount": "{{count}} dự án",
+      "status": "Trạng thái",
+      "allStatuses": "Tất cả trạng thái",
+      "statusCount": "{{count}} trạng thái",
+      "priority": "Độ ưu tiên",
+      "allPriorities": "Tất cả độ ưu tiên",
+      "priorityCount": "{{count}} độ ưu tiên",
+      "dateFrom": "Từ ngày",
+      "dateTo": "Đến ngày"
+    },
+    "statuses": {
+      "pending": "Đang chờ",
+      "inProgress": "Đang thực hiện",
+      "completed": "Hoàn thành"
+    },
+    "priorities": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "types": {
+      "task": "Nhiệm vụ",
+      "bug": "Lỗi",
+      "userStory": "User story",
+      "epic": "Epic",
+      "subTask": "Nhiệm vụ con"
+    },
+    "actions": {
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu...",
+      "reset": "Khôi phục",
+      "unsavedChanges": "Có thay đổi chưa lưu"
+    },
+    "timeRemaining": {
+      "overdue": "Quá hạn {{days}}d {{hours}}h {{minutes}}m",
+      "remaining": "Còn {{days}}d {{hours}}h {{minutes}}m"
+    },
     "detail": {
       "title": "Chi tiết nhiệm vụ",
       "fields": {
