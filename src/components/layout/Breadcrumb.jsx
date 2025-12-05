@@ -1,49 +1,57 @@
 import React from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
 import { useBreadcrumb } from "../../context/BreadcrumbContext";
 import { cn } from "@/lib/utils";
-
-// Route mapping
-const routeMap = {
-  "/dashboard": "Bảng điều khiển",
-  "/projects": "Dự án",
-  "/tasks": "Nhiệm vụ",
-  "/calendar": "Lịch",
-  "/messages": "Tin nhắn",
-  "/chatbot": "Trợ lý AI",
-  "/documents": "Tài liệu",
-  "/departments": "Phòng ban",
-  "/profile": "Hồ sơ",
-  "/notifications": "Thông báo",
-  "/admin": "Quản trị",
-  "/admin/access-control": "Phân quyền",
-  "/projects/overview": "Tổng quan",
-  "/projects/tasks": "Nhiệm vụ",
-  "/projects/timeline": "Tiến độ",
-  "/projects/members": "Thành viên",
-};
-
-const segmentMap = {
-  "overview": "Tổng quan",
-  "tasks": "Nhiệm vụ",
-  "timeline": "Tiến độ",
-  "members": "Thành viên",
-  "settings": "Cài đặt",
-  "documents": "Tài liệu",
-  "messages": "Tin nhắn",
-  "departments": "Phòng ban",
-  "profile": "Hồ sơ",
-  "notifications": "Thông báo",
-  "calendar": "Lịch",
-  "access-control": "Phân quyền",
-  "access": "Phân quyền",
-};
 
 export default function Breadcrumb() {
   const location = useLocation();
   const params = useParams();
   const { customBreadcrumbs } = useBreadcrumb();
+  const { t } = useTranslation();
+
+  // Route mapping using translation keys
+  const getRouteLabel = (path) => {
+    const routeKeyMap = {
+      "/dashboard": "breadcrumb.dashboard",
+      "/projects": "breadcrumb.projects",
+      "/tasks": "breadcrumb.tasks",
+      "/calendar": "breadcrumb.calendar",
+      "/messages": "breadcrumb.messages",
+      "/chatbot": "breadcrumb.chatbot",
+      "/documents": "breadcrumb.documents",
+      "/departments": "breadcrumb.departments",
+      "/profile": "breadcrumb.profile",
+      "/notifications": "breadcrumb.notifications",
+      "/admin": "breadcrumb.admin",
+      "/admin/access-control": "breadcrumb.accessControl",
+      "/projects/overview": "breadcrumb.overview",
+      "/projects/tasks": "breadcrumb.tasks",
+      "/projects/timeline": "breadcrumb.timeline",
+      "/projects/members": "breadcrumb.members",
+    };
+    return routeKeyMap[path];
+  };
+
+  const getSegmentLabel = (segment) => {
+    const segmentKeyMap = {
+      "overview": "breadcrumb.overview",
+      "tasks": "breadcrumb.tasks",
+      "timeline": "breadcrumb.timeline",
+      "members": "breadcrumb.members",
+      "settings": "breadcrumb.settings",
+      "documents": "breadcrumb.documents",
+      "messages": "breadcrumb.messages",
+      "departments": "breadcrumb.departments",
+      "profile": "breadcrumb.profile",
+      "notifications": "breadcrumb.notifications",
+      "calendar": "breadcrumb.calendar",
+      "access-control": "breadcrumb.accessControl",
+      "access": "breadcrumb.accessControl",
+    };
+    return segmentKeyMap[segment.toLowerCase()];
+  };
   
   // If custom breadcrumbs are provided, use them
   if (customBreadcrumbs && Array.isArray(customBreadcrumbs) && customBreadcrumbs.length > 0) {
@@ -95,10 +103,10 @@ export default function Breadcrumb() {
   
   // If at root, just show home
   if (pathSegments.length === 0) {
-    breadcrumbs.push({ label: "Trang chủ", to: null });
+    breadcrumbs.push({ label: t('breadcrumb.home'), to: null });
   } else {
     // Always add home as first item
-    breadcrumbs.push({ label: "Trang chủ", to: "/" });
+    breadcrumbs.push({ label: t('breadcrumb.home'), to: "/" });
     
     // Build path progressively
     let currentPath = "";
@@ -111,15 +119,17 @@ export default function Breadcrumb() {
         // It's likely an ID, try to get a meaningful name from params or use generic
         const paramKey = Object.keys(params).find(key => params[key] === segment);
         if (paramKey === "projectId") {
-          breadcrumbs.push({ label: "Chi tiết dự án", to: null });
+          breadcrumbs.push({ label: t('breadcrumb.projectDetail'), to: null });
         } else if (paramKey === "departmentId") {
-          breadcrumbs.push({ label: "Chi tiết phòng ban", to: null });
+          breadcrumbs.push({ label: t('breadcrumb.departmentDetail'), to: null });
         } else {
-          breadcrumbs.push({ label: "Chi tiết", to: null });
+          breadcrumbs.push({ label: t('breadcrumb.detail'), to: null });
         }
       } else {
-        // Regular route segment - check routeMap first
-        const label = routeMap[currentPath] || segmentMap[segment.toLowerCase()] || segment.charAt(0).toUpperCase() + segment.slice(1);
+        // Regular route segment - check route label first
+        const routeKey = getRouteLabel(currentPath);
+        const segmentKey = getSegmentLabel(segment);
+        const label = routeKey ? t(routeKey) : segmentKey ? t(segmentKey) : segment.charAt(0).toUpperCase() + segment.slice(1);
         breadcrumbs.push({ 
           label, 
           to: isLast ? null : currentPath 

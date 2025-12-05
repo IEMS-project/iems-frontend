@@ -8,6 +8,7 @@ import { FaRobot } from "react-icons/fa";
 import { Toaster } from "@/components/ui/sonner";
 import { BreadcrumbProvider } from "@/context/BreadcrumbContext";
 import { UnreadCountsProvider } from "@/context/UnreadCountsContext";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 export default function MainLayout({ children }) {
 	const [chatOpen, setChatOpen] = useState(false);
@@ -30,6 +31,9 @@ export default function MainLayout({ children }) {
 					<header className="flex h-16 shrink-0 items-center gap-4 border-b px-4 bg-background z-10">
 						<SidebarTrigger className="-ml-1" />
 						<Breadcrumb />
+						<div className="ml-auto">
+							<LanguageSwitcher />
+						</div>
 					</header>
 				{/* 
 					Không cho toàn bộ trang scroll:

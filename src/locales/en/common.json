@@ -1,0 +1,43 @@
+{
+  "sidebar": {
+    "appName": "IEMS",
+    "appDescription": "Intelligent EMS",
+    "mainFeatures": "Main Features",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "allProjects": "All Projects",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "chatbot": "Virtual Assistant",
+    "documents": "Documents",
+    "departments": "Departments",
+    "accessControl": "Access Control",
+    "loading": "Loading...",
+    "noProjects": "No projects",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "projectDetail": "Project Detail",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "chatbot": "AI Assistant",
+    "documents": "Documents",
+    "departments": "Departments",
+    "departmentDetail": "Department Detail",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "admin": "Admin",
+    "accessControl": "Access Control",
+    "overview": "Overview",
+    "timeline": "Timeline",
+    "members": "Members",
+    "settings": "Settings",
+    "detail": "Detail"
+  }
+}

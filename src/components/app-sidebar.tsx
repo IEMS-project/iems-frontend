@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Home,
   FolderKanban,
@@ -36,51 +37,8 @@ import UserProfile from "@/components/layout/UserProfile";
 import { projectService } from "@/services/projectService";
 import { useUnreadCounts } from "@/context/UnreadCountsContext";
 
-// Menu items (excluding Projects as it's handled separately)
-const items = [
-  {
-    title: "Bảng điều khiển",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Nhiệm vụ",
-    url: "/tasks",
-    icon: CheckSquare,
-  },
-  {
-    title: "Lịch",
-    url: "/calendar",
-    icon: Calendar,
-  },
-  {
-    title: "Tin nhắn",
-    url: "/messages",
-    icon: MessageSquare,
-  },
-  {
-    title: "Trợ lý ảo",
-    url: "/chatbot",
-    icon: Bot,
-  },
-  {
-    title: "Tài liệu",
-    url: "/documents",
-    icon: FileText,
-  },
-  {
-    title: "Phòng ban",
-    url: "/departments",
-    icon: Users,
-  },
-  {
-    title: "Phân quyền",
-    url: "/admin/access-control",
-    icon: Shield,
-  },
-];
-
 export function AppSidebar() {
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const { state } = useSidebar();
   const location = useLocation();
@@ -89,6 +47,50 @@ export function AppSidebar() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const { getTotal, refreshUnreadCounts } = useUnreadCounts();
   const hasUnread = getTotal() > 0;
+
+  // Menu items (excluding Projects as it's handled separately)
+  const items = [
+    {
+      title: t('sidebar.dashboard'),
+      url: "/dashboard",
+      icon: Home,
+    },
+    {
+      title: t('sidebar.tasks'),
+      url: "/tasks",
+      icon: CheckSquare,
+    },
+    {
+      title: t('sidebar.calendar'),
+      url: "/calendar",
+      icon: Calendar,
+    },
+    {
+      title: t('sidebar.messages'),
+      url: "/messages",
+      icon: MessageSquare,
+    },
+    {
+      title: t('sidebar.chatbot'),
+      url: "/chatbot",
+      icon: Bot,
+    },
+    {
+      title: t('sidebar.documents'),
+      url: "/documents",
+      icon: FileText,
+    },
+    {
+      title: t('sidebar.departments'),
+      url: "/departments",
+      icon: Users,
+    },
+    {
+      title: t('sidebar.accessControl'),
+      url: "/admin/access-control",
+      icon: Shield,
+    },
+  ];
 
   // Load projects
   useEffect(() => {
@@ -131,10 +133,10 @@ export function AppSidebar() {
                 {!collapsed && (
                   <div className="flex flex-col">
                     <div className="text-base font-semibold leading-tight">
-                      IEMS
+                      {t('sidebar.appName')}
                     </div>
                     <div className="text-xs text-sidebar-foreground/70">
-                      Intelligent EMS
+                      {t('sidebar.appDescription')}
                     </div>
                   </div>
                 )}
@@ -146,7 +148,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Chức năng chính</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('sidebar.mainFeatures')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Dashboard - always on top */}
@@ -178,12 +180,12 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip="Dự án"
+                  tooltip={t('sidebar.projects')}
                   isActive={location.pathname === "/projects" || isProjectDetailPage}
                 >
                   <NavLink to="/projects">
                     <FolderKanban />
-                    <span>Dự án</span>
+                    <span>{t('sidebar.projects')}</span>
                   </NavLink>
                 </SidebarMenuButton>
                 <SidebarMenuSub>
@@ -194,20 +196,20 @@ export function AppSidebar() {
                       isActive={location.pathname === "/projects"}
                     >
                       <NavLink to="/projects">
-                        <span>Tất cả dự án</span>
+                        <span>{t('sidebar.allProjects')}</span>
                       </NavLink>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   {loadingProjects ? (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton disabled>
-                        <span>Đang tải...</span>
+                        <span>{t('sidebar.loading')}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : projects.length === 0 ? (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton disabled>
-                        <span>Không có dự án</span>
+                        <span>{t('sidebar.noProjects')}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : (
@@ -267,7 +269,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 {collapsed ? (
                   <SidebarMenuButton
-                    tooltip={theme === "dark" ? "Chế độ sáng" : "Chế độ tối"}
+                    tooltip={theme === "dark" ? t('sidebar.lightMode') : t('sidebar.darkMode')}
                     onClick={toggleTheme}
                   >
                     {theme === "dark" ? (
@@ -284,7 +286,7 @@ export function AppSidebar() {
                       ) : (
                         <Sun className="h-4 w-4" />
                       )}
-                      <span>Chế độ tối</span>
+                      <span>{t('sidebar.darkMode')}</span>
                     </div>
                     <Toggle
                       checked={theme === "dark"}

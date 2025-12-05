@@ -1,0 +1,43 @@
+{
+  "sidebar": {
+    "appName": "IEMS",
+    "appDescription": "Intelligent EMS",
+    "mainFeatures": "Chức năng chính",
+    "dashboard": "Bảng điều khiển",
+    "projects": "Dự án",
+    "allProjects": "Tất cả dự án",
+    "tasks": "Nhiệm vụ",
+    "calendar": "Lịch",
+    "messages": "Tin nhắn",
+    "chatbot": "Trợ lý ảo",
+    "documents": "Tài liệu",
+    "departments": "Phòng ban",
+    "accessControl": "Phân quyền",
+    "loading": "Đang tải...",
+    "noProjects": "Không có dự án",
+    "darkMode": "Chế độ tối",
+    "lightMode": "Chế độ sáng"
+  },
+  "breadcrumb": {
+    "home": "Trang chủ",
+    "dashboard": "Bảng điều khiển",
+    "projects": "Dự án",
+    "projectDetail": "Chi tiết dự án",
+    "tasks": "Nhiệm vụ",
+    "calendar": "Lịch",
+    "messages": "Tin nhắn",
+    "chatbot": "Trợ lý AI",
+    "documents": "Tài liệu",
+    "departments": "Phòng ban",
+    "departmentDetail": "Chi tiết phòng ban",
+    "profile": "Hồ sơ",
+    "notifications": "Thông báo",
+    "admin": "Quản trị",
+    "accessControl": "Phân quyền",
+    "overview": "Tổng quan",
+    "timeline": "Tiến độ",
+    "members": "Thành viên",
+    "settings": "Cài đặt",
+    "detail": "Chi tiết"
+  }
+}
