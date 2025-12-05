@@ -6,36 +6,36 @@ import viCommon from '@/locales/vi/common.json';
 import enCommon from '@/locales/en/common.json';
 
 const resources = {
-  vi: {
-    common: viCommon,
-  },
-  en: {
-    common: enCommon,
-  },
+    vi: {
+        common: viCommon,
+    },
+    en: {
+        common: enCommon,
+    },
 };
 
 i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'vi',
-    defaultNS: 'common',
-    ns: ['common'],
-    
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
-      lookupLocalStorage: 'i18nextLng',
-    },
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+        resources,
+        fallbackLng: 'vi',
+        defaultNS: 'common',
+        ns: ['common'],
 
-    interpolation: {
-      escapeValue: false,
-    },
+        detection: {
+            order: ['localStorage', 'navigator'],
+            caches: ['localStorage'],
+            lookupLocalStorage: 'i18nextLng',
+        },
 
-    react: {
-      useSuspense: false,
-    },
-  });
+        interpolation: {
+            escapeValue: false,
+        },
+
+        react: {
+            useSuspense: false,
+        },
+    });
 
 export default i18n;

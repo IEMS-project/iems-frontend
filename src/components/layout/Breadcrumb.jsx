@@ -52,7 +52,7 @@ export default function Breadcrumb() {
     };
     return segmentKeyMap[segment.toLowerCase()];
   };
-  
+
   // If custom breadcrumbs are provided, use them
   if (customBreadcrumbs && Array.isArray(customBreadcrumbs) && customBreadcrumbs.length > 0) {
     return (
@@ -94,26 +94,26 @@ export default function Breadcrumb() {
       </nav>
     );
   }
-  
+
   // Split pathname into segments
   const pathSegments = location.pathname.split("/").filter(Boolean);
-  
+
   // Build breadcrumb items
   const breadcrumbs = [];
-  
+
   // If at root, just show home
   if (pathSegments.length === 0) {
     breadcrumbs.push({ label: t('breadcrumb.home'), to: null });
   } else {
     // Always add home as first item
     breadcrumbs.push({ label: t('breadcrumb.home'), to: "/" });
-    
+
     // Build path progressively
     let currentPath = "";
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const isLast = index === pathSegments.length - 1;
-      
+
       // Check if it's a dynamic route (like :projectId)
       if (segment.match(/^[a-f0-9-]{36}$/i) || segment.match(/^\d+$/)) {
         // It's likely an ID, try to get a meaningful name from params or use generic
@@ -130,14 +130,14 @@ export default function Breadcrumb() {
         const routeKey = getRouteLabel(currentPath);
         const segmentKey = getSegmentLabel(segment);
         const label = routeKey ? t(routeKey) : segmentKey ? t(segmentKey) : segment.charAt(0).toUpperCase() + segment.slice(1);
-        breadcrumbs.push({ 
-          label, 
-          to: isLast ? null : currentPath 
+        breadcrumbs.push({
+          label,
+          to: isLast ? null : currentPath
         });
       }
     });
   }
-  
+
   return (
     <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
       <ol className="flex items-center gap-1.5">
