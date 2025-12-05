@@ -1,7 +1,6 @@
 import React from "react";
 import ProjectOverview from "../components/dashboard/ProjectOverview";
 import MyTasks from "../components/dashboard/MyTasks";
-import ActivityPanel from "../components/dashboard/ActivityPanel";
 import Calendar from "../components/ui/Calendar";
 
 export default function Dashboard() {
@@ -14,7 +13,6 @@ export default function Dashboard() {
 				</div>
 				<div className="space-y-6">
 					<Calendar />
-					<ActivityPanel />
 				</div>
 			</div>
 		</div>

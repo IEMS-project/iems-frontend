@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import { projectService } from "../../services/projectService";
 import Skeleton from "../ui/Skeleton";
 
 export default function ProjectOverview() {
+	const { t } = useTranslation();
 	const [projects, setProjects] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
@@ -27,23 +29,23 @@ export default function ProjectOverview() {
 	}, []);
 
 	const formatDate = (dateString) => {
-		if (!dateString) return "N/A";
+		if (!dateString) return t("dashboard.projectOverview.na");
 		try {
 			const date = new Date(dateString);
-			return date.toLocaleDateString("vi-VN");
+			return date.toLocaleDateString();
 		} catch {
 			return dateString;
 		}
 	};
 
 	const formatStatus = (status) => {
-		if (!status) return "N/A";
+		if (!status) return t("dashboard.projectOverview.na");
 		const statusMap = {
-			PLANNING: "Đang lên kế hoạch",
-			IN_PROGRESS: "Đang thực hiện",
-			COMPLETED: "Hoàn thành",
-			ON_HOLD: "Đang bị chặn",
-			REVIEW: "Đang đánh giá",
+			PLANNING: t("dashboard.status.planning"),
+			IN_PROGRESS: t("dashboard.status.inProgress"),
+			COMPLETED: t("dashboard.status.completed"),
+			ON_HOLD: t("dashboard.status.onHold"),
+			REVIEW: t("dashboard.status.review"),
 		};
 		return statusMap[status] || status;
 	};
@@ -57,7 +59,7 @@ export default function ProjectOverview() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Tổng quan dự án</CardTitle>
+				<CardTitle>{t("dashboard.projectOverview.title")}</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{loading ? (
@@ -73,17 +75,17 @@ export default function ProjectOverview() {
 					</div>
 				) : projects.length === 0 ? (
 					<div className="py-8 text-center text-gray-500 dark:text-gray-400">
-						Không có dự án nào
+						{t("dashboard.projectOverview.noProjects")}
 					</div>
 				) : (
 					<div className="overflow-x-auto">
 						<table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
 							<thead>
 								<tr className="text-left text-gray-500 dark:text-gray-400">
-									<th className="px-4 py-2 font-medium">Dự án</th>
-									<th className="px-4 py-2 font-medium">Trạng thái</th>
-									<th className="px-4 py-2 font-medium">Hạn chót</th>
-									<th className="px-4 py-2 font-medium">Tiến độ</th>
+									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.project")}</th>
+									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.status")}</th>
+									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.deadline")}</th>
+									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.progress")}</th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -94,7 +96,7 @@ export default function ProjectOverview() {
 										className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 cursor-pointer transition-colors"
 									>
 										<td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
-											{project.name || project.title || "N/A"}
+											{project.name || project.title || t("dashboard.projectOverview.na")}
 										</td>
 										<td className="px-4 py-3">{formatStatus(project.status)}</td>
 										<td className="px-4 py-3">
@@ -103,7 +105,7 @@ export default function ProjectOverview() {
 										<td className="px-4 py-3">
 											{project.progress !== undefined && project.progress !== null
 												? `${project.progress}%`
-												: "N/A"}
+												: t("dashboard.projectOverview.na")}
 										</td>
 									</tr>
 								))}

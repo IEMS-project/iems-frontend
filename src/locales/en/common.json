@@ -39,5 +39,41 @@
     "members": "Members",
     "settings": "Settings",
     "detail": "Detail"
+  },
+  "dashboard": {
+    "projectOverview": {
+      "title": "Project Overview",
+      "project": "Project",
+      "status": "Status",
+      "deadline": "Deadline",
+      "progress": "Progress",
+      "noProjects": "No projects available",
+      "na": "N/A"
+    },
+    "myTasks": {
+      "title": "My Tasks",
+      "noTasks": "No tasks available",
+      "noDueDate": "No due date",
+      "overdue": "Overdue {{days}} days",
+      "dueToday": "Due today",
+      "dueTomorrow": "Due tomorrow",
+      "dueInDays": "Due in {{days}} days",
+      "na": "N/A"
+    },
+    "calendar": {
+      "title": "Calendar"
+    },
+    "status": {
+      "planning": "Planning",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "onHold": "On Hold",
+      "review": "Review"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
   }
 }

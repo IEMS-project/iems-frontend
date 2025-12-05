@@ -39,5 +39,41 @@
     "members": "Thành viên",
     "settings": "Cài đặt",
     "detail": "Chi tiết"
+  },
+  "dashboard": {
+    "projectOverview": {
+      "title": "Tổng quan dự án",
+      "project": "Dự án",
+      "status": "Trạng thái",
+      "deadline": "Hạn chót",
+      "progress": "Tiến độ",
+      "noProjects": "Không có dự án nào",
+      "na": "N/A"
+    },
+    "myTasks": {
+      "title": "Nhiệm vụ của tôi",
+      "noTasks": "Không có nhiệm vụ nào",
+      "noDueDate": "Không có hạn",
+      "overdue": "Quá hạn {{days}} ngày",
+      "dueToday": "Hạn hôm nay",
+      "dueTomorrow": "Hạn ngày mai",
+      "dueInDays": "Hạn trong {{days}} ngày",
+      "na": "N/A"
+    },
+    "calendar": {
+      "title": "Lịch"
+    },
+    "status": {
+      "planning": "Đang lên kế hoạch",
+      "inProgress": "Đang thực hiện",
+      "completed": "Hoàn thành",
+      "onHold": "Đang bị chặn",
+      "review": "Đang đánh giá"
+    },
+    "priority": {
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    }
   }
 }
