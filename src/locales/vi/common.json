@@ -61,19 +61,414 @@
       "na": "N/A"
     },
     "calendar": {
-      "title": "Lịch"
+      "title": "Lịch",
+      "weekdays": {
+        "monday": "T2",
+        "tuesday": "T3",
+        "wednesday": "T4",
+        "thursday": "T5",
+        "friday": "T6",
+        "saturday": "T7",
+        "sunday": "CN"
+      },
+      "prevMonth": "Tháng trước",
+      "nextMonth": "Tháng sau"
     },
     "status": {
       "planning": "Đang lên kế hoạch",
+      "pending": "Đang chờ",
+      "todo": "Đang chờ",
       "inProgress": "Đang thực hiện",
+      "inReview": "Đang duyệt",
       "completed": "Hoàn thành",
-      "onHold": "Đang bị chặn",
-      "review": "Đang đánh giá"
+      "done": "Hoàn thành",
+      "onHold": "Tạm ngừng",
+      "blocked": "Bị chặn",
+      "cancelled": "Đã hủy",
+      "review": "Đang duyệt",
+      "unknown": "Chưa xác định"
     },
     "priority": {
+      "highest": "Cao nhất",
+      "critical": "Cao nhất",
       "high": "Cao",
       "medium": "Trung bình",
-      "low": "Thấp"
+      "normal": "Trung bình",
+      "low": "Thấp",
+      "lowest": "Thấp nhất",
+      "none": "Không ưu tiên"
+    }
+  },
+  "ui": {
+    "confirmDialog": {
+      "title": "Xác nhận",
+      "description": "Bạn có chắc chắn muốn thực hiện hành động này?",
+      "confirm": "Xác nhận",
+      "cancel": "Hủy"
+    },
+    "userSelection": {
+      "emptyMessage": "Không tìm thấy người dùng",
+      "emptySelected": "Chưa chọn ai",
+      "deselect": "Bỏ chọn"
+    },
+    "imageCrop": {
+      "title": "Cắt ảnh đại diện",
+      "save": "Lưu",
+      "cancel": "Hủy"
+    },
+    "common": {
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận",
+      "delete": "Xóa",
+      "edit": "Chỉnh sửa",
+      "add": "Thêm",
+      "search": "Tìm kiếm",
+      "filter": "Lọc",
+      "sort": "Sắp xếp",
+      "actions": "Hành động",
+      "close": "Đóng",
+      "back": "Quay lại",
+      "next": "Tiếp theo",
+      "previous": "Trước",
+      "loading": "Đang tải...",
+      "noData": "Không có dữ liệu",
+      "error": "Lỗi",
+      "success": "Thành công",
+      "of": "trong",
+      "processing": "đang xử lý",
+      "created": "đã tạo",
+      "dueSoon": "Sắp đến hạn",
+      "inNext7Days": "trong 7 ngày tới"
+    }
+  },
+  "projects": {
+    "title": "Danh sách dự án",
+    "createProject": "Tạo dự án",
+    "editProject": "Chỉnh sửa dự án",
+    "deleteProject": "Xóa dự án",
+    "createNew": "Tạo dự án mới",
+    "noProjects": "Chưa có dự án nào",
+    "viewProject": "Xem dự án",
+    "projectCount": "{{count}} dự án",
+    "columns": {
+      "name": "Tên",
+      "description": "Mô tả",
+      "status": "Trạng thái",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "manager": "Quản lý",
+      "actions": "Hành động"
+    },
+    "form": {
+      "projectName": "Tên dự án",
+      "projectNamePlaceholder": "Nhập tên dự án",
+      "projectManager": "Quản lý dự án",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "status": "Trạng thái dự án",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Nhập mô tả dự án",
+      "required": "*"
+    },
+    "status": {
+      "planning": "Lên kế hoạch",
+      "inProgress": "Đang thực hiện",
+      "onHold": "Tạm dừng",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy",
+      "undefined": "Chưa xác định"
+    },
+    "actions": {
+      "openMenu": "Mở menu hành động",
+      "copyId": "Sao chép ID dự án",
+      "view": "Xem dự án",
+      "edit": "Sửa dự án",
+      "delete": "Xóa dự án"
+    },
+    "messages": {
+      "created": "Dự án đã được tạo thành công",
+      "updated": "Dự án đã được cập nhật thành công",
+      "deleted": "Dự án đã được xóa thành công",
+      "nameRequired": "Vui lòng nhập tên dự án",
+      "managerRequired": "Vui lòng chọn quản lý dự án",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa dự án {{name}}? Hành động này không thể hoàn tác."
+    },
+    "filter": {
+      "placeholder": "Lọc theo tên dự án...",
+      "columns": "Cột"
+    },
+    "pagination": {
+      "previous": "Trước",
+      "next": "Sau"
+    },
+    "phases": {
+      "title": "Giai đoạn dự án",
+      "create": "Tạo giai đoạn",
+      "edit": "Chỉnh sửa giai đoạn",
+      "delete": "Xóa giai đoạn",
+      "createNew": "Tạo giai đoạn mới",
+      "noPhases": "Chưa có giai đoạn nào. Hãy tạo giai đoạn đầu tiên!",
+      "loading": "Đang tải...",
+      "form": {
+        "name": "Tên giai đoạn",
+        "namePlaceholder": "VD: Giai đoạn 1: Thu thập yêu cầu",
+        "goal": "Mục tiêu",
+        "goalPlaceholder": "VD: Hoàn thành tài liệu yêu cầu",
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả chi tiết về giai đoạn này"
+      },
+      "fields": {
+        "goal": "Mục tiêu:",
+        "startDate": "Bắt đầu:",
+        "endDate": "Kết thúc:",
+        "undefined": "Chưa xác định"
+      },
+      "messages": {
+        "created": "Giai đoạn đã được tạo thành công",
+        "updated": "Giai đoạn đã được cập nhật thành công",
+        "deleted": "Giai đoạn đã được xóa thành công",
+        "nameRequired": "Vui lòng nhập tên giai đoạn",
+        "loadError": "Không thể tải danh sách giai đoạn",
+        "deleteConfirm": "Bạn có chắc chắn muốn xóa giai đoạn {{name}}? Hành động này không thể hoàn tác."
+      }
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Tổng quan",
+        "timeline": "Tiến độ",
+        "phases": "Giai đoạn",
+        "tasks": "Nhiệm vụ",
+        "members": "Thành viên"
+      },
+      "overview": {
+        "title": "Tổng quan dự án",
+        "statistics": {
+          "totalTasks": "Tổng số nhiệm vụ",
+          "completed": "Hoàn thành",
+          "inProgress": "Đang thực hiện",
+          "pending": "Chờ xử lý",
+          "completionRate": "Tỷ lệ hoàn thành"
+        },
+        "charts": {
+          "statusBreakdown": "Phân bố trạng thái",
+          "priorityBreakdown": "Phân bố ưu tiên",
+          "workTypesBreakdown": "Phân bố loại công việc",
+          "taskType": "Loại nhiệm vụ"
+        },
+        "loading": "Đang tải dữ liệu...",
+        "noData": "Không có dữ liệu"
+      },
+      "tasks": {
+        "title": "Danh sách nhiệm vụ",
+        "search": "Tìm kiếm nhiệm vụ...",
+        "columns": {
+          "title": "Nhiệm vụ",
+          "assignee": "Người thực hiện",
+          "status": "Trạng thái",
+          "priority": "Độ ưu tiên",
+          "phase": "Giai đoạn",
+          "startDate": "Bắt đầu",
+          "dueDate": "Kết thúc",
+          "createdBy": "Người tạo"
+        },
+        "filters": {
+          "status": "Trạng thái",
+          "assignee": "Người thực hiện",
+          "priority": "Độ ưu tiên",
+          "phase": "Giai đoạn",
+          "all": "Tất cả"
+        },
+        "sort": {
+          "label": "Sắp xếp theo",
+          "title": "Tiêu đề",
+          "status": "Trạng thái",
+          "priority": "Độ ưu tiên",
+          "dueDate": "Hạn chót",
+          "ascending": "Tăng dần",
+          "descending": "Giảm dần"
+        },
+        "actions": {
+          "clearFilters": "Xóa bộ lọc",
+          "addTask": "Thêm nhiệm vụ"
+        },
+        "form": {
+          "title": "Tiêu đề",
+          "titlePlaceholder": "Nhập tiêu đề nhiệm vụ",
+          "description": "Mô tả",
+          "descriptionPlaceholder": "Nhập mô tả chi tiết",
+          "assignee": "Người thực hiện",
+          "status": "Trạng thái",
+          "priority": "Độ ưu tiên",
+          "taskType": "Loại nhiệm vụ",
+          "phase": "Giai đoạn",
+          "parentTask": "Nhiệm vụ cha",
+          "startDate": "Ngày bắt đầu",
+          "dueDate": "Hạn chót",
+          "selectMember": "Chọn thành viên",
+          "selectPhase": "Chọn giai đoạn",
+          "selectParentTask": "Chọn nhiệm vụ cha",
+          "noParentTask": "Không có nhiệm vụ cha"
+        },
+        "taskTypes": {
+          "epic": "Epic",
+          "task": "Nhiệm vụ",
+          "story": "User story",
+          "bug": "Lỗi"
+        },
+        "priorities": {
+          "highest": "Cao nhất",
+          "high": "Cao",
+          "medium": "Trung bình",
+          "low": "Thấp",
+          "lowest": "Thấp nhất",
+          "none": "Không ưu tiên"
+        },
+        "statuses": {
+          "pending": "Đang chờ",
+          "inProgress": "Đang thực hiện",
+          "inReview": "Đang xem xét",
+          "completed": "Hoàn thành",
+          "cancelled": "Đã hủy"
+        },
+        "messages": {
+          "created": "Nhiệm vụ đã được tạo thành công",
+          "updated": "Nhiệm vụ đã được cập nhật thành công",
+          "deleted": "Nhiệm vụ đã được xóa thành công",
+          "titleRequired": "Vui lòng nhập tiêu đề nhiệm vụ",
+          "assigneeRequired": "Vui lòng chọn người thực hiện",
+          "dueDateRequired": "Vui lòng chọn hạn hoàn thành"
+        },
+        "modal": {
+          "addTitle": "Thêm nhiệm vụ",
+          "editTitle": "Chỉnh sửa nhiệm vụ"
+        },
+        "empty": "Không có nhiệm vụ nào",
+        "loading": "Đang tải nhiệm vụ..."
+      },
+      "timeline": {
+        "title": "Biểu đồ Gantt",
+        "range": {
+          "daily": "Ngày",
+          "monthly": "Tháng",
+          "quarterly": "Quý"
+        },
+        "zoom": {
+          "in": "Phóng to",
+          "out": "Thu nhỏ",
+          "reset": "Đặt lại"
+        },
+        "actions": {
+          "scrollToToday": "Đi đến hôm nay",
+          "clearFilters": "Xóa bộ lọc"
+        },
+        "filters": {
+          "assignee": "Người thực hiện",
+          "status": "Trạng thái",
+          "tag": "Nhãn",
+          "all": "Tất cả"
+        },
+        "noTasks": "Không có nhiệm vụ nào",
+        "loading": "Đang tải biểu đồ...",
+        "statusColors": "Màu trạng thái"
+      },
+      "members": {
+        "title": "Thành viên dự án",
+        "add": "Thêm thành viên",
+        "edit": "Chỉnh sửa thành viên",
+        "delete": "Xóa thành viên",
+        "form": {
+          "user": "Người dùng",
+          "role": "Vai trò",
+          "status": "Trạng thái",
+          "selectUser": "Chọn người dùng",
+          "selectRole": "Chọn vai trò"
+        },
+        "statuses": {
+          "active": "Hoạt động",
+          "inactive": "Không hoạt động"
+        },
+        "messages": {
+          "added": "Thành viên đã được thêm thành công",
+          "updated": "Thông tin thành viên đã được cập nhật",
+          "deleted": "Thành viên đã được xóa",
+          "userRequired": "Vui lòng chọn người dùng",
+          "roleRequired": "Vui lòng chọn vai trò",
+          "loadError": "Không thể tải danh sách thành viên"
+        },
+        "noMembers": "Chưa có thành viên nào",
+        "loading": "Đang tải danh sách thành viên..."
+      },
+      "roles": {
+        "title": "Vai trò dự án",
+        "add": "Thêm vai trò",
+        "edit": "Chỉnh sửa vai trò",
+        "delete": "Xóa vai trò",
+        "form": {
+          "role": "Vai trò",
+          "roleName": "Tên vai trò",
+          "selectRole": "Chọn vai trò",
+          "selectRoleFromUserService": "Chọn vai trò từ User-service"
+        },
+        "messages": {
+          "added": "Vai trò đã được thêm thành công",
+          "updated": "Vai trò đã được cập nhật",
+          "deleted": "Vai trò đã được xóa",
+          "deleteSuccess": "Xóa vai trò thành công",
+          "addSuccess": "Thêm vai trò thành công",
+          "roleRequired": "Vui lòng chọn vai trò",
+          "loadError": "Không thể tải danh sách vai trò",
+          "deleteConfirm": "Bạn có chắc chắn muốn xóa vai trò này?",
+          "deleteError": "Có lỗi khi xóa vai trò",
+          "addError": "Có lỗi khi thêm vai trò",
+          "roleAlreadyAssigned": "Không thể xóa vai trò đã được gán cho thành viên"
+        },
+        "noRoles": "Chưa có vai trò",
+        "loading": "Đang tải danh sách vai trò...",
+        "modal": {
+          "addTitle": "Thêm vai trò",
+          "editTitle": "Thêm lại vai trò",
+          "deleteTitle": "Xác nhận xóa vai trò"
+        }
+      }
+    },
+    "tables": {
+      "filter": "Lọc",
+      "columns": "Cột",
+      "previous": "Trước",
+      "next": "Sau",
+      "noResults": "Không có kết quả nào",
+      "loading": "Đang tải...",
+      "searchPlaceholder": "Tìm kiếm..."
+    },
+    "select": {
+      "search": "Tìm kiếm...",
+      "noResults": "Không tìm thấy kết quả",
+      "selectPlaceholder": "Chọn..."
+    }
+  },
+  "tasks": {
+    "detail": {
+      "title": "Chi tiết nhiệm vụ",
+      "fields": {
+        "description": "Mô tả",
+        "details": "Chi tiết",
+        "taskId": "Mã nhiệm vụ",
+        "type": "Loại",
+        "project": "Dự án",
+        "status": "Trạng thái",
+        "priority": "Ưu tiên",
+        "assignee": "Người thực hiện",
+        "startDate": "Bắt đầu",
+        "dueDate": "Hạn hoàn thành",
+        "timeRemaining": "Thời gian còn lại"
+      },
+      "overdue": "Quá hạn {{days}} ngày {{hours}} giờ {{minutes}} phút",
+      "remainingMinutes": "Còn {{minutes}} phút",
+      "remainingHours": "Còn {{hours}} giờ {{minutes}} phút",
+      "remainingDays": "Còn {{days}} ngày {{hours}} giờ {{minutes}} phút"
     }
   }
 }

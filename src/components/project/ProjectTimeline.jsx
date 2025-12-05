@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Select from "../ui/select";
@@ -36,6 +37,7 @@ const groupBy = (array, key) => {
 };
 
 export default function ProjectTimeline({ tasks = [], loading = false }) {
+    const { t } = useTranslation();
     const [range, setRange] = useState("monthly"); // "daily" | "monthly" | "quarterly"
     const [zoom] = useState(100);
     const [selectedTask, setSelectedTask] = useState(null);
@@ -277,14 +279,14 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
         <Card>
             <CardHeader>
                 <div className="flex items-center justify-between flex-wrap gap-4">
-                    <CardTitle>Dòng thời gian</CardTitle>
+                    <CardTitle>{t('projects.detail.timeline.title')}</CardTitle>
                     <div className="flex items-center gap-2 flex-wrap">
                         <Select
                             value={filters.assignee}
                             onChange={(e) => handleFilterChange("assignee", e.target.value)}
                             className="w-auto min-w-[150px]"
                         >
-                            <option value="">Người phụ trách</option>
+                            <option value="">{t('projects.detail.timeline.filters.assignee')}</option>
                             {assignees.map(assignee => (
                                 <option key={assignee} value={assignee}>{assignee}</option>
                             ))}
@@ -294,7 +296,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                             onChange={(e) => handleFilterChange("status", e.target.value)}
                             className="w-auto min-w-[130px]"
                         >
-                            <option value="">Trạng thái</option>
+                            <option value="">{t('projects.detail.timeline.filters.status')}</option>
                             {statuses.map(status => (
                                 <option key={status} value={status}>{status}</option>
                             ))}
@@ -304,7 +306,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                             onChange={(e) => handleFilterChange("tag", e.target.value)}
                             className="w-auto min-w-[120px]"
                         >
-                            <option value="">Nhãn</option>
+                            <option value="">{t('projects.detail.timeline.filters.tag')}</option>
                             {tags.map(tag => (
                                 <option key={tag} value={tag}>{tag}</option>
                             ))}
@@ -315,7 +317,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                 size="sm"
                                 onClick={clearFilters}
                             >
-                                Xóa
+                                {t('projects.detail.timeline.actions.clearFilters')}
                             </Button>
                         )}
                         <div className="ml-2 flex items-center gap-2 border-l pl-2">
@@ -323,21 +325,21 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                 variant={range === "daily" ? "primary" : "secondary"}
                                 onClick={() => setRange("daily")}
                             >
-                                Theo ngày
+                                {t('projects.detail.timeline.range.daily')}
                             </Button>
                             <Button
                                 variant={range === "monthly" ? "primary" : "secondary"}
                                 onClick={() => setRange("monthly")}
                             >
-                                Theo tháng
+                                {t('projects.detail.timeline.range.monthly')}
                             </Button>
                             <Button
                                 variant={range === "quarterly" ? "primary" : "secondary"}
                                 onClick={() => setRange("quarterly")}
                             >
-                                Theo quý
+                                {t('projects.detail.timeline.range.quarterly')}
                             </Button>
-                            <Button variant="secondary" onClick={scrollToToday}>Hôm nay</Button>
+                            <Button variant="secondary" onClick={scrollToToday}>{t('projects.detail.timeline.actions.scrollToToday')}</Button>
                         </div>
                     </div>
                 </div>
@@ -360,7 +362,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                     </div>
                 ) : features.length === 0 ? (
                     <div className="py-12 text-center text-sm text-gray-500 p-6">
-                        Không có nhiệm vụ nào
+                        {t('projects.detail.timeline.noTasks')}
                     </div>
                 ) : (
                     <div className="h-[calc(100vh-280px)] max-h-[800px] min-h-[475px] w-full overflow-hidden" ref={ganttContainerRef}>
@@ -420,7 +422,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                                                                     onClick={() => handleViewTask(feature.id)}
                                                                 >
                                                                     <EyeIcon className="text-muted-foreground" size={16} />
-                                                                    Xem chi tiết
+                                                                    {t('projects.actions.view')}
                                                                 </ContextMenuItem>
                                                             </ContextMenuContent>
                                                         </ContextMenu>

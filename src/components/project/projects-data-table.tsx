@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -47,6 +48,7 @@ export function ProjectsDataTable<TData, TValue>({
   onEdit,
   onDelete,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -110,7 +112,7 @@ export function ProjectsDataTable<TData, TValue>({
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Lọc theo tên dự án..."
+          placeholder={t('projects.filter.placeholder')}
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -120,7 +122,7 @@ export function ProjectsDataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Cột <ChevronDown className="ml-2 h-4 w-4" />
+              {t('tables.columns')} <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -196,7 +198,7 @@ export function ProjectsDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} dự án
+          {t('projects.projectCount', { count: table.getFilteredRowModel().rows.length })}
         </div>
         <div className="space-x-2">
           <Button
@@ -205,7 +207,7 @@ export function ProjectsDataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Trước
+            {t('tables.previous')}
           </Button>
           <Button
             variant="outline"
@@ -213,7 +215,7 @@ export function ProjectsDataTable<TData, TValue>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Sau
+            {t('tables.next')}
           </Button>
         </div>
       </div>

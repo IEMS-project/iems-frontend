@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
@@ -19,6 +20,7 @@ import RichTextEditor from "../ui/RichTextEditor";
 import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
 import { CheckSquare, Bug, BookOpen, Zap, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Equal } from 'lucide-react';
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
+    const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -37,16 +39,16 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const [detailTask, setDetailTask] = useState(null);
 
     const taskTypeOptions = [
-        { value: 'EPIC', label: 'Epic', icon: Zap, color: getTaskTypeColor('EPIC') },
-        { value: 'TASK', label: 'Nhiệm vụ', icon: CheckSquare, color: getTaskTypeColor('TASK') },
-        { value: 'STORY', label: 'User story', icon: BookOpen, color: getTaskTypeColor('STORY') },
-        { value: 'BUG', label: 'Lỗi', icon: Bug, color: getTaskTypeColor('BUG') },
+        { value: 'EPIC', label: t('projects.detail.tasks.taskTypes.epic'), icon: Zap, color: getTaskTypeColor('EPIC') },
+        { value: 'TASK', label: t('projects.detail.tasks.taskTypes.task'), icon: CheckSquare, color: getTaskTypeColor('TASK') },
+        { value: 'STORY', label: t('projects.detail.tasks.taskTypes.story'), icon: BookOpen, color: getTaskTypeColor('STORY') },
+        { value: 'BUG', label: t('projects.detail.tasks.taskTypes.bug'), icon: Bug, color: getTaskTypeColor('BUG') },
     ];
 
     const priorityOptions = [
-        { value: 'Cao', label: 'Cao', icon: ChevronUp, color: 'text-red-600 dark:text-red-400' },
-        { value: 'Trung bình', label: 'Trung bình', icon: Equal, color: 'text-yellow-600 dark:text-yellow-400' },
-        { value: 'Thấp', label: 'Thấp', icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' },
+        { value: 'Cao', label: t('dashboard.priority.high'), icon: ChevronUp, color: 'text-red-600 dark:text-red-400' },
+        { value: 'Trung bình', label: t('dashboard.priority.medium'), icon: Equal, color: 'text-yellow-600 dark:text-yellow-400' },
+        { value: 'Thấp', label: t('dashboard.priority.low'), icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' },
     ];
 
     const [formData, setFormData] = useState({
@@ -174,15 +176,15 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         try {
             setLoading(true);
             if (!formData.title.trim()) {
-                toast.warning("Vui lòng nhập tiêu đề");
+                toast.warning(t('projects.detail.tasks.messages.titleRequired'));
                 return;
             }
             if (!formData.assignee) {
-                toast.warning("Vui lòng chọn người phụ trách trong dự án");
+                toast.warning(t('projects.detail.tasks.messages.assigneeRequired'));
                 return;
             }
             if (!formData.dueDate) {
-                toast.warning("Vui lòng chọn hạn hoàn thành");
+                toast.warning(t('projects.detail.tasks.messages.dueDateRequired'));
                 return;
             }
 
@@ -202,10 +204,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
             if (editingTask?.id) {
                 await taskService.updateTask(editingTask.id, payload);
-                toast.success("Nhiệm vụ đã được cập nhật thành công");
+                toast.success(t('projects.detail.tasks.messages.updated'));
             } else {
                 await taskService.createTask(payload);
-                toast.success("Nhiệm vụ đã được tạo thành công");
+                toast.success(t('projects.detail.tasks.messages.created'));
             }
 
             const refreshed = await taskService.getTasksByProject(projectId);
@@ -281,8 +283,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle>Nhiệm vụ</CardTitle>
-                        <Button size="sm" onClick={handleAddTask}>+ Thêm nhiệm vụ</Button>
+                        <CardTitle>{t('projects.detail.tasks.title')}</CardTitle>
+                        <Button size="sm" onClick={handleAddTask}>+ {t('projects.detail.tasks.actions.addTask')}</Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -298,12 +300,12 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             <Modal
                 open={showModal}
                 onClose={handleClose}
-                title={editingTask ? 'Chỉnh sửa nhiệm vụ' : 'Thêm nhiệm vụ mới'}
+                title={editingTask ? t('projects.detail.tasks.modal.editTitle') : t('projects.detail.tasks.modal.addTitle')}
                 footer={
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={handleClose}>Hủy</Button>
+                        <Button variant="secondary" onClick={handleClose}>{t('ui.common.cancel')}</Button>
                         <Button onClick={handleSubmit}>
-                            {editingTask ? 'Cập nhật' : 'Thêm'}
+                            {editingTask ? t('ui.common.save') : t('ui.common.add')}
                         </Button>
                     </div>
                 }
@@ -312,32 +314,32 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     {/* Left side - Description */}
                     <div className="lg:col-span-2 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-2 pl-2">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiêu đề</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.title')}</label>
                             <Input
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 className="w-full"
-                                placeholder="Nhập tiêu đề"
+                                placeholder={t('projects.detail.tasks.form.titlePlaceholder')}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.description')}</label>
                             <RichTextEditor
                                 value={formData.description}
                                 onChange={(content) => setFormData({ ...formData, description: content })}
-                                placeholder="Nhập mô tả chi tiết cho nhiệm vụ"
+                                placeholder={t('projects.detail.tasks.form.descriptionPlaceholder')}
                             />
                         </div>
                     </div>
 
                     {/* Right side - Details */}
                     <div className="lg:col-span-1 overflow-y-auto max-h-[calc(90vh-200px)] space-y-4 pr-2 pl-2">
-                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Chi tiết</div>
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('tasks.detail.fields.details')}</div>
 
                         {editingTask && (
                             <div>
-                                <div className="text-xs uppercase text-gray-500 dark:text-gray-400">Dự án</div>
+                                <div className="text-xs uppercase text-gray-500 dark:text-gray-400">{t('tasks.detail.fields.project')}</div>
                                 <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                     {(editingTask.project && editingTask.project.name) || editingTask.projectName || '-'}
                                 </div>
@@ -345,7 +347,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại nhiệm vụ</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.taskType')}</label>
                             <div className="relative">
                                 <button
                                     type="button"
@@ -353,7 +355,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                     className="w-full px-3 py-2 pl-9 text-left border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between"
                                 >
                                     <span className="flex items-center gap-2">
-                                        {taskTypeOptions.find(opt => opt.value === formData.taskType)?.label || 'Chọn loại'}
+                                        {taskTypeOptions.find(opt => opt.value === formData.taskType)?.label || t('projects.detail.tasks.form.taskType')}
                                     </span>
                                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -391,7 +393,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thuộc nhiệm vụ</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.parentTask')}</label>
                             <Select
                                 value={formData.parentTaskId}
                                 onChange={(e) => setFormData({ ...formData, parentTaskId: e.target.value })}
@@ -407,7 +409,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giai đoạn</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.phase')}</label>
                             <PhaseSelect
                                 phases={phases}
                                 value={formData.phaseId}
@@ -417,7 +419,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phụ trách</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.assignee')}</label>
                             <UserSelect
                                 assignableUsers={assignableUsers}
                                 value={formData.assignee}
@@ -426,20 +428,20 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.status')}</label>
                             <Select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                 className="w-full"
                             >
-                                <option value="Đang chờ">Đang chờ</option>
-                                <option value="Đang thực hiện">Đang thực hiện</option>
-                                <option value="Hoàn thành">Hoàn thành</option>
+                                <option value="Đang chờ">{t('dashboard.status.pending')}</option>
+                                <option value="Đang thực hiện">{t('dashboard.status.inProgress')}</option>
+                                <option value="Hoàn thành">{t('dashboard.status.completed')}</option>
                             </Select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ưu tiên</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.priority')}</label>
                             <div className="relative">
                                 <button
                                     type="button"
@@ -447,7 +449,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                     className="w-full px-3 py-2 pl-9 text-left border border-input bg-background rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between"
                                 >
                                     <span className="flex items-center gap-2">
-                                        {priorityOptions.find(opt => opt.value === formData.priority)?.label || 'Chọn ưu tiên'}
+                                        {priorityOptions.find(opt => opt.value === formData.priority)?.label || t('projects.detail.tasks.form.priority')}
                                     </span>
                                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -484,7 +486,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày bắt đầu</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.startDate')}</label>
                             <Input
                                 type="date"
                                 value={formData.startDate}
@@ -494,7 +496,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hạn hoàn thành</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.dueDate')}</label>
                             <Input
                                 type="date"
                                 value={formData.dueDate}

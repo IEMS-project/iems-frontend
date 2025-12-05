@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, Minus, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -49,12 +50,13 @@ export const taskColumns: ColumnDef<Task>[] = [
   {
     accessorKey: "title",
     header: ({ column }) => {
+      const { t } = useTranslation()
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Nhiệm vụ
+          {t('projects.detail.tasks.columns.title')}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
@@ -73,7 +75,10 @@ export const taskColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: "assignedToName",
-    header: "Người thực hiện",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.assignee')
+    },
     cell: ({ row }) => {
       const task = row.original
       // Try multiple possible field names
@@ -110,34 +115,78 @@ export const taskColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: "status",
-    header: "Trạng thái",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.status')
+    },
     cell: ({ row }) => {
-      const status = translateStatus(row.getValue("status") as string)
+      const { t } = useTranslation()
+      const rawStatus = row.getValue("status") as string
+      const statusTranslated = translateStatus(rawStatus)
+      
+      // Map Vietnamese status to i18n keys
+      const statusMap: Record<string, string> = {
+        'Đang chờ': 'pending',
+        'Đang thực hiện': 'inProgress',
+        'Đang duyệt': 'inReview',
+        'Hoàn thành': 'completed',
+        'Bị chặn': 'blocked',
+        'Đã hủy': 'cancelled',
+        'Tạm ngừng': 'onHold',
+        'Chưa xác định': 'unknown'
+      }
+      
+      const statusKey = statusMap[statusTranslated] || 'unknown'
+      const statusLabel = t(`dashboard.status.${statusKey}`)
+      
       return (
         <div className="min-w-[120px] whitespace-nowrap">
-          <Badge variant={statusVariant(status)}>{status || "Chưa xác định"}</Badge>
+          <Badge variant={statusVariant(statusTranslated)}>{statusLabel}</Badge>
         </div>
       )
     },
   },
   {
     accessorKey: "priority",
-    header: "Độ ưu tiên",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.priority')
+    },
     cell: ({ row }) => {
-      const priority = translatePriority(row.getValue("priority") as string) || "Không ưu tiên"
-      const display = priorityDisplayMap[priority] || { icon: Circle, label: priority, color: "text-gray-500 dark:text-gray-400" }
+      const { t } = useTranslation()
+      const rawPriority = row.getValue("priority") as string
+      const priorityTranslated = translatePriority(rawPriority) || "Không ưu tiên"
+      
+      // Map Vietnamese priority to i18n keys
+      const priorityMap: Record<string, string> = {
+        'Cao nhất': 'highest',
+        'Cao': 'high',
+        'Trung bình': 'medium',
+        'Thấp': 'low',
+        'Thấp nhất': 'lowest',
+        'Không ưu tiên': 'none'
+      }
+      
+      const priorityKey = priorityMap[priorityTranslated] || 'medium'
+      const priorityLabel = t(`dashboard.priority.${priorityKey}`)
+      
+      const display = priorityDisplayMap[priorityTranslated] || { icon: Circle, label: priorityLabel, color: "text-gray-500 dark:text-gray-400" }
       const Icon = display.icon || Circle
+      
       return (
         <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-gray-900 dark:text-gray-100">
           <Icon className={`h-4 w-4 ${display.color}`} aria-hidden />
-          <span>{display.label}</span>
+          <span>{priorityLabel}</span>
         </div>
       )
     },
   },
   {
     accessorKey: "phaseName",
-    header: "Giai đoạn",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.phase')
+    },
     cell: ({ row }) => {
       const task = row.original
       const phaseName = task.phaseName || ""
@@ -150,7 +199,10 @@ export const taskColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: "startDate",
-    header: "Bắt đầu",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.startDate')
+    },
     cell: ({ row }) => {
       const date = row.getValue("startDate") as string | null
       return (
@@ -162,7 +214,10 @@ export const taskColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: "dueDate",
-    header: "Kết thúc",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.dueDate')
+    },
     cell: ({ row }) => {
       const date = row.getValue("dueDate") as string | null
       return (
@@ -174,7 +229,10 @@ export const taskColumns: ColumnDef<Task>[] = [
   },
   {
     accessorKey: "createdByName",
-    header: "Người tạo",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.detail.tasks.columns.createdBy')
+    },
     cell: ({ row }) => {
       const task = row.original
       // Try multiple possible field names

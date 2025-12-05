@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import Avatar from '../ui/Avatar.jsx';
 
 export default function UserSelect({ assignableUsers = [], value = '', onChange }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef();
@@ -36,7 +38,7 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
       >
         <Avatar user={selected || {}} size={8} />
         <div className="flex-1 min-w-0">
-          <div className="truncate font-medium text-foreground">{selected ? (selected.fullName || selected.email) : 'Chọn thành viên'}</div>
+          <div className="truncate font-medium text-foreground">{selected ? (selected.fullName || selected.email) : t('projects.detail.tasks.form.selectMember')}</div>
           <div className="text-xs text-muted-foreground truncate">{selected ? selected.email : ''}</div>
         </div>
         <span className="text-xs text-gray-400 dark:text-gray-400">▾</span>
@@ -49,7 +51,7 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm tên hoặc email..."
+              placeholder={t('select.search')}
               className="w-full rounded-md border border-input px-2 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -72,7 +74,7 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
               );
             })}
             {filtered.length === 0 && (
-              <div className="p-3 text-sm text-muted-foreground">Không tìm thấy người dùng</div>
+              <div className="p-3 text-sm text-muted-foreground">{t('select.noResults')}</div>
             )}
           </div>
         </div>

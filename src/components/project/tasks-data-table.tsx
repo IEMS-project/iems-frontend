@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -45,6 +46,7 @@ export function TasksDataTable<TData, TValue>({
   loading = false,
   onRowClick,
 }: TasksDataTableProps<TData, TValue>) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -116,7 +118,7 @@ export function TasksDataTable<TData, TValue>({
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Lọc theo tiêu đề..."
+          placeholder={t('projects.detail.tasks.search')}
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("title")?.setFilterValue(event.target.value)
@@ -126,7 +128,7 @@ export function TasksDataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Cột <ChevronDown className="ml-2 h-4 w-4" />
+              {t('tables.columns')} <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -196,7 +198,7 @@ export function TasksDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center text-gray-500 dark:text-gray-400"
                 >
-                  Chưa có nhiệm vụ
+                  {t('projects.detail.tasks.empty')}
                 </TableCell>
               </TableRow>
               )}
@@ -206,7 +208,7 @@ export function TasksDataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground dark:text-gray-400">
-          {table.getFilteredRowModel().rows.length} nhiệm vụ
+          {table.getFilteredRowModel().rows.length} {t('breadcrumb.tasks').toLowerCase()}
         </div>
         <div className="space-x-2">
           <Button
@@ -215,7 +217,7 @@ export function TasksDataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Trước
+            {t('tables.previous')}
           </Button>
           <Button
             variant="outline"
@@ -223,7 +225,7 @@ export function TasksDataTable<TData, TValue>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Sau
+            {t('tables.next')}
           </Button>
         </div>
       </div>

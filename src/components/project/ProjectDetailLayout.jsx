@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
@@ -7,17 +8,17 @@ import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
-import { translateStatus } from "../../lib/i18n";
 
 const tabs = [
-    { id: "overview", label: "Tổng quan", path: "overview" },
-    { id: "timeline", label: "Tiến độ", path: "timeline" },
-    { id: "phases", label: "Giai đoạn", path: "phases" },
-    { id: "tasks", label: "Nhiệm vụ", path: "tasks" },
-    { id: "members", label: "Thành viên", path: "members" },
+    { id: "overview", label: "overview", path: "overview" },
+    { id: "timeline", label: "timeline", path: "timeline" },
+    { id: "phases", label: "phases", path: "phases" },
+    { id: "tasks", label: "tasks", path: "tasks" },
+    { id: "members", label: "members", path: "members" },
 ];
 
 export default function ProjectDetailLayout() {
+    const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -92,7 +93,7 @@ export default function ProjectDetailLayout() {
                                 <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
                                     <span className=" text-xl font-bold ">-</span>
                                     <Badge variant="blue" className="whitespace-nowrap">
-                                        {translateStatus(projectData?.status) || 'Chưa xác định'}
+                                        {projectData?.status ? t(`dashboard.status.${projectData.status.toLowerCase().replace(/\s+/g, '')}`) : t('dashboard.status.unknown')}
                                     </Badge>
                                 </div>
                             </>
@@ -115,7 +116,7 @@ export default function ProjectDetailLayout() {
                                         }
                                     `}
                                 >
-                                    {tab.label}
+                                    {t(`projects.detail.tabs.${tab.label}`)}
                                 </button>
                             );
                         })}

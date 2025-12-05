@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
 
@@ -25,12 +26,13 @@ export default function UserSelectionPanel({
     onRemove,
     query = "",
     loading = false,
-    emptyMessage = "Không tìm thấy người dùng",
-    emptySelectedMessage = "Chưa chọn ai",
+    emptyMessage,
+    emptySelectedMessage,
     currentUserId,
     maxHeight = 24,
     preselectedUsers = []
 }) {
+    const { t } = useTranslation();
     // Ensure selectedIds is a Set
     const selectedSet = useMemo(() => {
         if (selectedIds instanceof Set) return selectedIds;
@@ -131,7 +133,7 @@ export default function UserSelectionPanel({
                         })}
                         {filtered.length === 0 && (
                             <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                                {emptyMessage}
+                                {emptyMessage || t("ui.userSelection.emptyMessage")}
                             </div>
                         )}
                     </>
@@ -170,7 +172,7 @@ export default function UserSelectionPanel({
                                 <button
                                     onClick={() => handleRemove(userId)}
                                     className="ml-1 hover:text-red-600 text-xl leading-none"
-                                    title="Bỏ chọn"
+                                    title={t("ui.userSelection.deselect")}
                                 >
                                     ×
                                 </button>
@@ -180,7 +182,7 @@ export default function UserSelectionPanel({
                 })}
                 {selectedList.length === 0 && (
                     <div className="text-sm text-gray-500 text-center py-4">
-                        {emptySelectedMessage}
+                        {emptySelectedMessage || t("ui.userSelection.emptySelected")}
                     </div>
                 )}
             </div>

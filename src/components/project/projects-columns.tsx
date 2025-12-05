@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Avatar from "@/components/ui/Avatar"
-import { translateStatus } from "@/lib/i18n"
 
 export type Project = {
   id: string
@@ -32,12 +32,13 @@ export const columns: ColumnDef<Project>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
+      const { t } = useTranslation()
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Tên
+          {t('projects.columns.name')}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
@@ -56,7 +57,10 @@ export const columns: ColumnDef<Project>[] = [
   },
   {
     accessorKey: "description",
-    header: "Mô tả",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.columns.description')
+    },
     cell: ({ row }) => {
       return (
         <div className="max-w-xs truncate text-foreground/90">{row.getValue("description")}</div>
@@ -65,15 +69,50 @@ export const columns: ColumnDef<Project>[] = [
   },
   {
     accessorKey: "status",
-    header: "Trạng thái",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.columns.status')
+    },
     cell: ({ row }) => {
-      const status = translateStatus(row.getValue("status") as string)
-      return <div className="text-foreground">{status || "Chưa xác định"}</div>
+      const { t } = useTranslation()
+      const status = row.getValue("status") as string
+      const statusMap = {
+        // API values (uppercase with underscores)
+        "PLANNING": "planning",
+        "IN_PROGRESS": "inProgress",
+        "ON_HOLD": "onHold",
+        "COMPLETED": "completed",
+        "CANCELLED": "cancelled",
+        // Vietnamese display names
+        "Đang chờ": "pending",
+        "Đang thực hiện": "inProgress",
+        "Đang đánh giá": "inReview",
+        "Hoàn thành": "completed",
+        "Đã hoàn thành": "done",
+        "Tạm dừng": "onHold",
+        "Bị chặn": "blocked",
+        "Đã hủy": "cancelled",
+        // English display names
+        "Pending": "pending",
+        "Planning": "planning",
+        "In Progress": "inProgress",
+        "In Review": "inReview",
+        "Completed": "completed",
+        "Done": "done",
+        "On Hold": "onHold",
+        "Blocked": "blocked",
+        "Cancelled": "cancelled"
+      }
+      const key = statusMap[status] || "unknown"
+      return <div className="text-foreground">{t(`dashboard.status.${key}`)}</div>
     },
   },
   {
     accessorKey: "startDate",
-    header: "Ngày bắt đầu",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.columns.startDate')
+    },
     cell: ({ row }) => {
       const date = row.getValue("startDate") as string | null
       return (
@@ -85,7 +124,10 @@ export const columns: ColumnDef<Project>[] = [
   },
   {
     accessorKey: "endDate",
-    header: "Ngày kết thúc",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.columns.endDate')
+    },
     cell: ({ row }) => {
       const date = row.getValue("endDate") as string | null
       return (
@@ -97,7 +139,10 @@ export const columns: ColumnDef<Project>[] = [
   },
   {
     accessorKey: "managerName",
-    header: "Quản lý",
+    header: () => {
+      const { t } = useTranslation()
+      return t('projects.columns.manager')
+    },
     cell: ({ row }) => {
       const project = row.original
       return (
@@ -119,26 +164,27 @@ export const columns: ColumnDef<Project>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row, table }) => {
+      const { t } = useTranslation()
       const project = row.original
 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Mở menu hành động</span>
+              <span className="sr-only">{t('projects.actions.openMenu')}</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('projects.columns.actions')}</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(project.id)}
             >
-              Sao chép ID dự án
+              {t('projects.actions.copyId')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to={`/projects/${project.id}/overview`}>Xem dự án</Link>
+              <Link to={`/projects/${project.id}/overview`}>{t('projects.actions.view')}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -146,7 +192,7 @@ export const columns: ColumnDef<Project>[] = [
                 if (onEdit) onEdit(project)
               }}
             >
-              Sửa dự án
+              {t('projects.actions.edit')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -156,7 +202,7 @@ export const columns: ColumnDef<Project>[] = [
               }}
               className="text-red-600 focus:text-red-600"
             >
-              Xóa dự án
+              {t('projects.actions.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,10 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Button from './Button';
 import { FaSave, FaTimes } from 'react-icons/fa';
 
 export default function ImageCropModal({ isOpen, onClose, imageSrc, onCropComplete }) {
+    const { t } = useTranslation();
     const [crop, setCrop] = useState({
         unit: '%',
         width: 50,
@@ -123,7 +125,7 @@ export default function ImageCropModal({ isOpen, onClose, imageSrc, onCropComple
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                    Cắt ảnh đại diện
+                    {t("ui.imageCrop.title")}
                 </h2>
 
                 <div className="mb-6 flex justify-center">
@@ -153,14 +155,14 @@ export default function ImageCropModal({ isOpen, onClose, imageSrc, onCropComple
                         className="flex items-center gap-2"
                     >
                         <FaTimes className="h-4 w-4" />
-                        Hủy
+                        {t("ui.imageCrop.cancel")}
                     </Button>
                     <Button
                         onClick={handleSave}
                         className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                     >
                         <FaSave className="h-4 w-4" />
-                        Lưu
+                        {t("ui.imageCrop.save")}
                     </Button>
                 </div>
             </div>
