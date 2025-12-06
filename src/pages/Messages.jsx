@@ -1472,7 +1472,7 @@ function Messages() {
 
             if (!result || !result.targetMessage) {
                 console.log('❌ Message not found or deleted');
-                toast.warning('Tin nhắn gốc đã bị xóa');
+                toast.warning('Original message has been deleted');
                 return;
             }
 
@@ -1490,7 +1490,7 @@ function Messages() {
                     return;
                 } else {
                     console.log('❌ Target conversation not found');
-                    toast.warning('Cuộc trò chuyện không tồn tại');
+                    toast.warning('Conversation does not exist');
                     return;
                 }
             }
@@ -1525,7 +1525,7 @@ function Messages() {
 
         } catch (error) {
             console.error('❌ Error loading message with neighbors:', error);
-            toast.error(error?.message || 'Không thể tải tin nhắn. Tin nhắn gốc có thể đã bị xóa.');
+            toast.error(error?.message || 'Failed to load message. Original message may have been deleted.');
         }
     }
 
@@ -1661,7 +1661,7 @@ function Messages() {
             await chatService.sendMedia({ conversationId: selectedConversationId, senderId: currentUserId, files });
         } catch (e) {
             console.error('❌ Error sending media:', e);
-            toast.error(e?.message || 'Gửi tệp thất bại. Vui lòng thử lại.');
+            toast.error(e?.message || 'Failed to send file. Please try again.');
         }
     };
 

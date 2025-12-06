@@ -57,7 +57,7 @@ const ChatbotSettings = ({ className = "" }) => {
       // Simulate save
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast.success('Cài đặt đã được lưu thành công');
+      toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
       setError('Không thể lưu cài đặt');

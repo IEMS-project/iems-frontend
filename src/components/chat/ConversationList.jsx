@@ -92,7 +92,7 @@ const ConversationList = ({
       setConversationToDelete(null);
     } catch (error) {
       console.error('Error deleting conversation:', error);
-      toast.error(error?.message || 'Không thể xóa cuộc trò chuyện');
+      toast.error(error?.message || 'Failed to delete conversation');
       setConversationToDelete(null);
     }
   };
@@ -110,7 +110,7 @@ const ConversationList = ({
         ));
       } catch (error) {
         console.error('Error renaming conversation:', error);
-        toast.error(error?.message || 'Không thể đổi tên cuộc trò chuyện');
+        toast.error(error?.message || 'Failed to rename conversation');
       }
     }
   };

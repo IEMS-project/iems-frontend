@@ -109,7 +109,7 @@ export default function MessageComposer({
                   return sizeMB <= 20;
                 });
                 if (valid.length < files.length) {
-                  toast.warning(t('messages.composer.fileSizeWarning', 'Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).'));
+                  toast.warning(t('messages.composer.fileSizeWarning', 'Some files exceed size limit (Images ≤ 5MB, Videos/Files ≤ 20MB)'));
                 }
                 handlePickFiles(valid);
                 e.target.value = '';

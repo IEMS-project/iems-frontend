@@ -98,23 +98,26 @@ export const taskService = {
       dueDate: toLocalDate(payload.dueDate),
     };
 
-    // Always use FormData for update to ensure consistent behavior
-    const formData = new FormData();
-    formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
-
-    // Add files if provided
+    // If files are provided, use FormData
     if (files && files.length > 0) {
+      const formData = new FormData();
+      formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
+      const data = await request(`/task-service/tasks/${taskId}`, {
+        method: "PATCH",
+        body: formData,
+        isFormData: true,
+      });
+      return data?.data || data;
+    } else {
+      const data = await request(`/task-service/tasks/${taskId}`, {
+        method: "PATCH",
+        body,
+      });
+      return data?.data || data;
     }
-
-    const data = await request(`/task-service/tasks/${taskId}`, {
-      method: "PATCH",
-      body: formData,
-      isFormData: true,
-    });
-    return data?.data || data;
   },
 
   async assignTask(taskId, newAssigneeId) {

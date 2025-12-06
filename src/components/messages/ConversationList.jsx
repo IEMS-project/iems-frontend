@@ -156,11 +156,11 @@ export default function ConversationList({
       if (onConversationUpdate) {
         onConversationUpdate();
       }
-      toast.success(t('messages.conversation.groupDeleted', 'Nhóm đã được xóa thành công'));
+      toast.success(t('messages.conversation.groupDeleted', 'Group deleted successfully'));
       setConversationToDelete(null);
     } catch (error) {
       console.error('Error deleting group:', error);
-      toast.error(error?.message || t('messages.conversation.deleteGroupError', 'Không thể xóa nhóm. Vui lòng thử lại.'));
+      toast.error(error?.message || t('messages.conversation.deleteGroupError', 'Failed to delete group. Please try again.'));
       setConversationToDelete(null);
     }
   };

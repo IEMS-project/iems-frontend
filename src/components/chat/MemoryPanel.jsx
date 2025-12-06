@@ -41,10 +41,10 @@ const MemoryPanel = ({ className = "" }) => {
       setClearing(true);
       await chatbotService.clearMemory();
       setMemory(null);
-      toast.success('Memory đã được xóa thành công');
+      toast.success('Memory cleared successfully');
     } catch (error) {
       console.error('Error clearing memory:', error);
-      toast.error(error?.message || 'Không thể xóa memory');
+      toast.error(error?.message || 'Failed to clear memory');
     } finally {
       setClearing(false);
       setClearMemoryDialogOpen(false);

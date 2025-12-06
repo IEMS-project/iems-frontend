@@ -66,9 +66,9 @@ export const taskColumns: ColumnDef<Task>[] = [
       const TaskIcon = getTaskTypeIcon(task.taskType)
       const iconColor = getTaskTypeColor(task.taskType)
       return (
-        <div className="min-w-[200px] whitespace-nowrap flex items-center gap-2">
+        <div className="w-[200px] flex items-center gap-2">
           <TaskIcon className={`w-4 h-4 flex-shrink-0 ${iconColor}`} />
-          <span className="text-gray-900 dark:text-gray-100">{row.getValue("title")}</span>
+          <span className="text-gray-900 dark:text-gray-100 truncate">{row.getValue("title")}</span>
         </div>
       )
     },

@@ -258,7 +258,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 navigate("/permission-denied");
                 return;
             } else {
-                toast.error(e?.message || "Có lỗi xảy ra khi lưu nhiệm vụ");
+                toast.error(e?.message || "An error occurred while saving the task");
             }
         } finally {
             setLoading(false);
@@ -381,7 +381,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             </label>
                             <RichTextEditor
                                 value={formData.description}
-                                onChange={(content) => setFormData({ ...formData, description: content })}
+                                onChange={(content) => setFormData(prev => ({ ...prev, description: content }))}
                                 placeholder={t('projects.detail.tasks.form.descriptionPlaceholder')}
                             />
                         </div>
@@ -624,7 +624,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                 phases={phases}
                                 value={formData.phaseId}
                                 onChange={(value) => setFormData({ ...formData, phaseId: value })}
-                                placeholder="Không thuộc giai đoạn nào"
+                                placeholder=" "
                             />
                         </div>
 
