@@ -167,7 +167,7 @@ export default function Profile() {
 	return (
 		<div className="space-y-6">
 			{/* Statistics Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+			{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title={t('profile.stats.projectsCompleted')}
 					value={userStats.projectsCompleted}
@@ -200,7 +200,7 @@ export default function Profile() {
 					trendUp={true}
 					accent="purple"
 				/>
-			</div>
+			</div> */}
 
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 				{/* Thông tin cơ bản - Chiếm 4/12 cột */}

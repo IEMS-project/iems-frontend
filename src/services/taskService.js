@@ -48,7 +48,7 @@ export const taskService = {
     return data?.data || data || [];
   },
 
-  async createTask(payload) {
+  async createTask(payload, files = null) {
     const body = {
       projectId: payload.projectId,
       title: payload.title,
@@ -61,14 +61,30 @@ export const taskService = {
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };
-    const data = await request("/task-service/tasks", {
-      method: "POST",
-      body,
-    });
-    return data?.data || data;
+
+    // If files are provided, use FormData
+    if (files && files.length > 0) {
+      const formData = new FormData();
+      formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+      const data = await request("/task-service/tasks", {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      return data?.data || data;
+    } else {
+      const data = await request("/task-service/tasks", {
+        method: "POST",
+        body,
+      });
+      return data?.data || data;
+    }
   },
 
-  async updateTask(taskId, payload) {
+  async updateTask(taskId, payload, files = null) {
     const body = {
       title: payload.title,
       description: payload.description,
@@ -81,9 +97,22 @@ export const taskService = {
       startDate: toLocalDate(payload.startDate),
       dueDate: toLocalDate(payload.dueDate),
     };
+
+    // Always use FormData for update to ensure consistent behavior
+    const formData = new FormData();
+    formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+
+    // Add files if provided
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+    }
+
     const data = await request(`/task-service/tasks/${taskId}`, {
       method: "PATCH",
-      body,
+      body: formData,
+      isFormData: true,
     });
     return data?.data || data;
   },
@@ -124,6 +153,13 @@ export const taskService = {
     const data = await request(`/task-service/tasks/${taskId}/comments`, {
       method: "POST",
       body: { content },
+    });
+    return data?.data || data;
+  },
+
+  async deleteAttachment(taskId, attachmentId) {
+    const data = await request(`/task-service/tasks/${taskId}/attachments/${attachmentId}`, {
+      method: "DELETE",
     });
     return data?.data || data;
   },

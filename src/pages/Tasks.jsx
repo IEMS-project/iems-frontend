@@ -70,14 +70,30 @@ export default function Tasks() {
 
     // Helper to map backend status to status key
     const mapBackendStatusToKey = (backendStatus) => {
-        const status = (backendStatus || '').toLowerCase();
-        if (status.includes('to do') || status.includes('pending') || status.includes('đang chờ')) {
+        const status = (backendStatus || '').toLowerCase().trim();
+
+        // Check for PENDING/TO_DO statuses
+        if (status.includes('to do') || status.includes('to_do') ||
+            status.includes('pending') || status === 'pending' ||
+            status.includes('đang chờ') || status.includes('dang cho')) {
             return STATUS_KEYS.PENDING;
-        } else if (status.includes('progress') || status.includes('làm') || status.includes('đang thực hiện')) {
+        }
+
+        // Check for IN_PROGRESS statuses
+        if (status.includes('progress') || status.includes('in_progress') ||
+            status.includes('làm') || status.includes('lam') ||
+            status.includes('đang thực hiện') || status.includes('dang thuc hien')) {
             return STATUS_KEYS.IN_PROGRESS;
-        } else {
+        }
+
+        // Check for COMPLETED statuses
+        if (status.includes('complete') || status.includes('done') ||
+            status.includes('hoàn thành') || status.includes('hoan thanh')) {
             return STATUS_KEYS.COMPLETED;
         }
+
+        // Default to PENDING if status is unclear
+        return STATUS_KEYS.PENDING;
     };
 
     // Helper to get translated priority name
@@ -304,14 +320,6 @@ export default function Tasks() {
         );
     };
 
-    const findTaskById = (data, id) => {
-        for (const status of Object.keys(data)) {
-            const f = data[status].find(t => t.id === id);
-            if (f) return f;
-        }
-        return null;
-    };
-
     // Load projects for filter
     useEffect(() => {
         const loadProjects = async () => {
@@ -382,11 +390,16 @@ export default function Tasks() {
                         id: t.id,
                         title: t.title,
                         project: t.projectName || t.projectId,
+                        projectName: t.projectName,
                         startDate: t.startDate,
                         dueDate: t.dueDate,
                         description: t.description,
                         priority: t.priority,
                         type: t.taskType || t.type || 'TASK',
+                        status: t.status,
+                        assignedTo: t.assignedTo,
+                        assignedToName: t.assignedToName || t.userName,
+                        attachments: t.attachments || [],
                     });
                 }
                 setTasks(group);
@@ -406,13 +419,34 @@ export default function Tasks() {
         try {
             // Persist all moves since last save: compare savedTasks vs tasks
             const toUpdate = [];
-            Object.entries(tasks).forEach(([status, list]) => {
+
+            // Helper to map status key to backend enum
+            const mapStatusKeyToBackend = (statusKey) => {
+                switch (statusKey) {
+                    case STATUS_KEYS.PENDING: return 'TO_DO';
+                    case STATUS_KEYS.IN_PROGRESS: return 'IN_PROGRESS';
+                    case STATUS_KEYS.COMPLETED: return 'COMPLETED';
+                    default: return 'TO_DO';
+                }
+            };
+
+            Object.entries(tasks).forEach(([currentColumn, list]) => {
                 list.forEach(t => {
-                    const prev = findTaskById(savedTasks, t.id);
-                    if (prev && prev.status !== status) {
-                        // map UI status to enum
-                        const map = s => s === 'Đang chờ' ? 'TO_DO' : s === 'Đang thực hiện' ? 'IN_PROGRESS' : 'COMPLETED';
-                        toUpdate.push({ id: t.id, newStatus: map(status) });
+                    // Find where this task was in savedTasks
+                    let previousColumn = null;
+                    for (const [col, taskList] of Object.entries(savedTasks)) {
+                        if (taskList.find(task => task.id === t.id)) {
+                            previousColumn = col;
+                            break;
+                        }
+                    }
+
+                    // If task moved to a different column, queue for update
+                    if (previousColumn && previousColumn !== currentColumn) {
+                        toUpdate.push({
+                            id: t.id,
+                            newStatus: mapStatusKeyToBackend(currentColumn)
+                        });
                     }
                 });
             });

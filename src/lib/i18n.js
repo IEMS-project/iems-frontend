@@ -157,7 +157,7 @@ export const reverseTranslatePriority = (vietnameseValue) => {
 // Map API status to translation keys
 export const getStatusTranslationKey = (apiStatus) => {
   if (!apiStatus) return "dashboard.status.unknown";
-  
+
   const statusKeyMap = {
     "PLANNING": "planning",
     "PENDING": "pending",
@@ -173,10 +173,10 @@ export const getStatusTranslationKey = (apiStatus) => {
     "CANCELLED": "cancelled",
     "CANCELED": "cancelled",
   };
-  
+
   const normalized = apiStatus.toString().toUpperCase().replace(/\s+/g, "_");
   const key = statusKeyMap[normalized];
-  
+
   return key ? `dashboard.status.${key}` : "dashboard.status.unknown";
 };
 

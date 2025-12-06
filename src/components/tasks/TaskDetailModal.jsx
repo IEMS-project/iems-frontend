@@ -3,15 +3,14 @@ import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import { getPriorityVariant, getStatusVariant } from "../../lib/i18n";
 import RichTextEditor from "../ui/RichTextEditor";
 import { getTaskTypeVariant } from "../../lib/taskTypeUtils";
 import { useTaskType } from "../../hooks/useTaskType";
-import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle, Paperclip, Download, Hash, Layers, FolderKanban, Flag, User, CalendarDays, CalendarClock, Clock } from 'lucide-react';
 
 export default function TaskDetailModal({ open, onClose, task, onEdit }) {
     const { t } = useTranslation();
-    const { getTaskTypeIcon, getTaskTypeColor, translateTaskType } = useTaskType();
+    const { getTaskTypeIcon, translateTaskType } = useTaskType();
 
     const getPriorityLabel = (priority) => {
         if (!priority) return t('dashboard.priority.medium');
@@ -82,50 +81,6 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
     };
 
-    const getStatusLabel = (status) => {
-        if (!status) return t('dashboard.status.unknown');
-
-        // Normalize status - trim and handle case insensitivity
-        const normalizedStatus = status.toString().trim();
-
-        const statusMap = {
-            'Đang chờ': 'pending',
-            'Đang thực hiện': 'inProgress',
-            'Đang duyệt': 'inReview',
-            'Hoàn thành': 'completed',
-            'Bị chặn': 'blocked',
-            'Đã hủy': 'cancelled',
-            'Tạm ngừng': 'onHold',
-            'Chưa xác định': 'unknown',
-            // English mappings
-            'Pending': 'pending',
-            'To Do': 'pending',
-            'In Progress': 'inProgress',
-            'In Review': 'inReview',
-            'Completed': 'completed',
-            'Done': 'completed',
-            'Blocked': 'blocked',
-            'Cancelled': 'cancelled',
-            'On Hold': 'onHold',
-            'Unknown': 'unknown'
-        };
-
-        const key = statusMap[normalizedStatus];
-        if (key) {
-            return t(`dashboard.status.${key}`);
-        }
-
-        // Fallback: try case-insensitive match
-        const lowerStatus = normalizedStatus.toLowerCase();
-        for (const [mapKey, mapValue] of Object.entries(statusMap)) {
-            if (mapKey.toLowerCase() === lowerStatus) {
-                return t(`dashboard.status.${mapValue}`);
-            }
-        }
-
-        return t('dashboard.status.unknown');
-    };
-
     const getTimeRemaining = (dueDate) => {
         if (!dueDate) return null;
         const today = new Date();
@@ -136,13 +91,13 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
 
         if (diffTime < 0) {
-            return t('tasks.detail.overdue', { days: Math.abs(diffDays), hours: Math.abs(diffHours), minutes: Math.abs(diffMinutes) });
+            return t('tasks.timeRemaining.overdue', { days: Math.abs(diffDays), hours: Math.abs(diffHours), minutes: Math.abs(diffMinutes) });
         } else if (diffDays === 0 && diffHours === 0) {
-            return t('tasks.detail.remainingMinutes', { minutes: diffMinutes });
+            return t('tasks.timeRemaining.remainingMinutes', { minutes: diffMinutes });
         } else if (diffDays === 0) {
-            return t('tasks.detail.remainingHours', { hours: diffHours, minutes: diffMinutes });
+            return t('tasks.timeRemaining.remainingHours', { hours: diffHours, minutes: diffMinutes });
         } else {
-            return t('tasks.detail.remainingDays', { days: diffDays, hours: diffHours, minutes: diffMinutes });
+            return t('tasks.timeRemaining.remainingDays', { days: diffDays, hours: diffHours, minutes: diffMinutes });
         }
     };
 
@@ -177,8 +132,8 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
             }
         >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left side - Description */}
-                <div className="lg:col-span-2">
+                {/* Left side - Description & Attachments */}
+                <div className="lg:col-span-2 space-y-6">
                     {task.description && (
                         <div>
                             <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('tasks.detail.fields.description')}</div>
@@ -186,6 +141,76 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                                 value={task.description}
                                 readOnly={true}
                             />
+                        </div>
+                    )}
+
+                    {task.attachments && task.attachments.length > 0 && (
+                        <div>
+                            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                <Paperclip className="w-4 h-4" />
+                                {t('tasks.detail.fields.attachments') || 'File đính kèm'} ({task.attachments.length})
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {/* Hiển thị ảnh trước */}
+                                {task.attachments
+                                    .filter(attachment => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+                                    })
+                                    .map((attachment) => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return (
+                                            <div key={attachment.id} className="relative group aspect-square">
+                                                <img
+                                                    src={attachment.fileUrl}
+                                                    alt={fileName}
+                                                    className="w-full h-full object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                                                    onClick={() => window.open(attachment.fileUrl, '_blank')}
+                                                    title="Nhấn để xem ảnh"
+                                                />
+                                                <a
+                                                    href={attachment.fileUrl}
+                                                    download
+                                                    className="absolute top-1 right-1 p-1 bg-white/90 dark:bg-gray-800/90 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                    title={t('ui.common.download') || 'Tải xuống'}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Download className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+
+                                {/* Hiển thị file thường sau */}
+                                {task.attachments
+                                    .filter(attachment => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return !/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+                                    })
+                                    .map((attachment) => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return (
+                                            <div
+                                                key={attachment.id}
+                                                className="col-span-3 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md text-sm"
+                                            >
+                                                <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                <span className="truncate text-gray-700 dark:text-gray-300 flex-1" title={fileName}>
+                                                    {fileName}
+                                                </span>
+                                                <a
+                                                    href={attachment.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                                    title={t('ui.common.download') || 'Tải xuống'}
+                                                >
+                                                    <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -196,14 +221,20 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.id && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.taskId')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <Hash className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.taskId')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">{task.id}</div>
                         </div>
                     )}
 
                     {task.type && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.type')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <Layers className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.type')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                 <Badge variant={getTaskTypeVariant(task.type)} className="inline-flex items-center gap-1.5">
                                     {React.createElement(getTaskTypeIcon(task.type), { className: "w-3.5 h-3.5" })}
@@ -214,7 +245,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                     )}
 
                     <div>
-                        <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.project')}</div>
+                        <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <FolderKanban className="w-3.5 h-3.5" />
+                            {t('tasks.detail.fields.project')}
+                        </div>
                         <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                             <Badge variant="black" className="font-normal">
                                 {(task.project && task.project.name) || task.projectName || task.project || '-'}
@@ -222,20 +256,12 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                         </div>
                     </div>
 
-                    {task.status && (
-                        <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.status')}</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
-                                <Badge variant={getStatusVariant(task.status)}>
-                                    {getStatusLabel(task.status)}
-                                </Badge>
-                            </div>
-                        </div>
-                    )}
-
                     {task.priority && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.priority')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <Flag className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.priority')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1 inline-flex items-center gap-1.5">
                                 {(() => {
                                     const iconData = getPriorityIcon(task.priority);
@@ -252,7 +278,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {(task.userName || task.assignedToName || task.assigneeName || task.assignedTo) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.assignee')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.assignee')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                 {task.userName || task.assignedToName || task.assigneeName ||
                                     (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.name : task.assignedTo) ||
@@ -263,7 +292,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.startDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.startDate')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <CalendarDays className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.startDate')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                 {new Date(task.startDate).toLocaleDateString('vi-VN')}
                             </div>
@@ -272,7 +304,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.dueDate')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <CalendarClock className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.dueDate')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                 {formatDueDate(task.dueDate)}
                             </div>
@@ -281,7 +316,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && getTimeRemaining(task.dueDate) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">{t('tasks.detail.fields.timeRemaining')}</div>
+                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.timeRemaining')}
+                            </div>
                             <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
                                 {getTimeRemaining(task.dueDate)}
                             </div>

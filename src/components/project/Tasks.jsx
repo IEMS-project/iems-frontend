@@ -18,7 +18,7 @@ import { TasksDataTable } from "./tasks-data-table";
 import { translatePriority, translateStatus, reverseTranslateStatus, reverseTranslatePriority } from "../../lib/i18n";
 import RichTextEditor from "../ui/RichTextEditor";
 import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
-import { CheckSquare, Bug, BookOpen, Zap, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Equal } from 'lucide-react';
+import { CheckSquare, Bug, BookOpen, Zap, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Equal, Paperclip, Type, FileText, Layers, GitBranch, Milestone, User, Clock, Flag, Calendar, CalendarClock } from 'lucide-react';
 export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = false }) {
     const { t } = useTranslation();
     const { projectId } = useParams();
@@ -37,6 +37,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const [editingTask, setEditingTask] = useState(null);
     const [showDetail, setShowDetail] = useState(false);
     const [detailTask, setDetailTask] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [existingAttachments, setExistingAttachments] = useState([]);
+    const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
 
     const taskTypeOptions = [
         { value: 'EPIC', label: t('projects.detail.tasks.taskTypes.epic'), icon: Zap, color: getTaskTypeColor('EPIC') },
@@ -151,11 +154,17 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
         });
+        setExistingAttachments(task.attachments || []);
+        setAttachmentsToDelete([]);
+        setSelectedFiles([]);
         setShowModal(true);
     };
 
     const handleAddTask = () => {
         setEditingTask(null);
+        setSelectedFiles([]);
+        setExistingAttachments([]);
+        setAttachmentsToDelete([]);
         setFormData({
             id: "",
             title: "",
@@ -203,10 +212,21 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             };
 
             if (editingTask?.id) {
-                await taskService.updateTask(editingTask.id, payload);
+                // Delete attachments first if any
+                if (attachmentsToDelete.length > 0) {
+                    await Promise.all(
+                        attachmentsToDelete.map(attachmentId =>
+                            taskService.deleteAttachment(editingTask.id, attachmentId)
+                        )
+                    );
+                }
+
+                // Then update task with new files
+                await taskService.updateTask(editingTask.id, payload, selectedFiles);
+
                 toast.success(t('projects.detail.tasks.messages.updated'));
             } else {
-                await taskService.createTask(payload);
+                await taskService.createTask(payload, selectedFiles.length > 0 ? selectedFiles : null);
                 toast.success(t('projects.detail.tasks.messages.created'));
             }
 
@@ -249,6 +269,9 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
     const handleClose = () => {
         setShowModal(false);
+        setSelectedFiles([]);
+        setExistingAttachments([]);
+        setAttachmentsToDelete([]);
         setFormData({
             id: "",
             title: "",
@@ -265,6 +288,31 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const handleRowClick = (task) => {
         setDetailTask(task);
         setShowDetail(true);
+    };
+
+    const isImageFile = (file) => {
+        if (file instanceof File) {
+            return file.type.startsWith('image/');
+        }
+        // For existing attachments
+        const fileName = file.fileName || file.name || '';
+        return /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+    };
+
+    const getFilePreview = (file) => {
+        if (file instanceof File) {
+            return URL.createObjectURL(file);
+        }
+        return file.fileUrl || file.url || '';
+    };
+
+    const removeSelectedFile = (index) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingAttachment = (attachmentId) => {
+        setAttachmentsToDelete(prev => [...prev, attachmentId]);
+        setExistingAttachments(prev => prev.filter(att => att.id !== attachmentId));
     };
 
     // Map phaseId to phaseName for display in table
@@ -311,10 +359,13 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 }
             >
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left side - Description */}
+                    {/* Left side - Description & Attachments */}
                     <div className="lg:col-span-2 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-2 pl-2">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.title')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Type className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.title')}
+                            </label>
                             <Input
                                 type="text"
                                 value={formData.title}
@@ -324,12 +375,162 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.description')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <FileText className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.description')}
+                            </label>
                             <RichTextEditor
                                 value={formData.description}
                                 onChange={(content) => setFormData({ ...formData, description: content })}
                                 placeholder={t('projects.detail.tasks.form.descriptionPlaceholder')}
                             />
+                        </div>
+
+                        {/* Attachments section moved here */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <Paperclip className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.attachments') || 'File đính kèm'}
+                            </label>
+
+                            {/* Existing attachments */}
+                            {existingAttachments.length > 0 && (
+                                <div className="mb-3">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">File hiện có:</div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {/* Hiển thị ảnh trước */}
+                                        {existingAttachments
+                                            .filter(attachment => isImageFile(attachment))
+                                            .map((attachment) => (
+                                                <div key={attachment.id} className="relative group aspect-square">
+                                                    <img
+                                                        src={getFilePreview(attachment)}
+                                                        alt={attachment.fileName}
+                                                        className="w-full h-full object-cover rounded border border-gray-200 dark:border-gray-700"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeExistingAttachment(attachment.id)}
+                                                        className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                        title="Xóa file"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {/* Hiển thị file thường sau */}
+                                        {existingAttachments
+                                            .filter(attachment => !isImageFile(attachment))
+                                            .map((attachment) => (
+                                                <div key={attachment.id} className="col-span-3 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                                                    <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm text-gray-900 dark:text-gray-100 truncate" title={attachment.fileName}>
+                                                            {attachment.fileName}
+                                                        </div>
+                                                        <a
+                                                            href={attachment.fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                                        >
+                                                            Xem file
+                                                        </a>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeExistingAttachment(attachment.id)}
+                                                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                                        title="Xóa file"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* New files to upload */}
+                            {selectedFiles.length > 0 && (
+                                <div className="mb-3">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">File mới:</div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {/* Hiển thị ảnh trước */}
+                                        {selectedFiles
+                                            .map((file, index) => ({ file, index }))
+                                            .filter(({ file }) => isImageFile(file))
+                                            .map(({ file, index }) => (
+                                                <div key={index} className="relative group aspect-square">
+                                                    <img
+                                                        src={getFilePreview(file)}
+                                                        alt={file.name}
+                                                        className="w-full h-full object-cover rounded border border-blue-200 dark:border-blue-800"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeSelectedFile(index)}
+                                                        className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                        title="Xóa file"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {/* Hiển thị file thường sau */}
+                                        {selectedFiles
+                                            .map((file, index) => ({ file, index }))
+                                            .filter(({ file }) => !isImageFile(file))
+                                            .map(({ file, index }) => (
+                                                <div key={index} className="col-span-3 flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                                    <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm text-gray-900 dark:text-gray-100 truncate" title={file.name}>
+                                                            {file.name}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {(file.size / 1024).toFixed(2)} KB
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeSelectedFile(index)}
+                                                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                                        title="Xóa file"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* File input */}
+                            <div className="relative">
+                                <Input
+                                    type="file"
+                                    multiple
+                                    onChange={(e) => {
+                                        const newFiles = Array.from(e.target.files);
+                                        setSelectedFiles(prev => [...prev, ...newFiles]);
+                                        e.target.value = ''; // Reset input để có thể chọn lại cùng file
+                                    }}
+                                    className="w-full"
+                                    accept="*/*"
+                                    id="file-upload"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -347,7 +548,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.taskType')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Layers className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.taskType')}
+                            </label>
                             <div className="relative">
                                 <button
                                     type="button"
@@ -393,7 +597,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.parentTask')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <GitBranch className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.parentTask')}
+                            </label>
                             <Select
                                 value={formData.parentTaskId}
                                 onChange={(e) => setFormData({ ...formData, parentTaskId: e.target.value })}
@@ -409,7 +616,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.phase')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Milestone className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.phase')}
+                            </label>
                             <PhaseSelect
                                 phases={phases}
                                 value={formData.phaseId}
@@ -419,7 +629,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.assignee')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <User className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.assignee')}
+                            </label>
                             <UserSelect
                                 assignableUsers={assignableUsers}
                                 value={formData.assignee}
@@ -428,7 +641,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.status')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Clock className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.status')}
+                            </label>
                             <Select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -441,7 +657,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.priority')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Flag className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.priority')}
+                            </label>
                             <div className="relative">
                                 <button
                                     type="button"
@@ -486,7 +705,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.startDate')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.startDate')}
+                            </label>
                             <Input
                                 type="date"
                                 value={formData.startDate}
@@ -496,7 +718,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('projects.detail.tasks.form.dueDate')}</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                                <CalendarClock className="w-4 h-4" />
+                                {t('projects.detail.tasks.form.dueDate')}
+                            </label>
                             <Input
                                 type="date"
                                 value={formData.dueDate}

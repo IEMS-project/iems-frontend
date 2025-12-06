@@ -120,6 +120,7 @@ async function baseRequest(path, {
   withAuth = true,
   retryOn401 = true,
   credentials = "include",
+  isFormData = false,
 } = {}) {
   const finalHeaders = { ...headers };
   const tokens = getStoredTokens();
@@ -128,7 +129,8 @@ async function baseRequest(path, {
     finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
   }
 
-  const preparedBody = prepareBody(body, finalHeaders);
+  // Don't add Content-Type for FormData, let browser set it with boundary
+  const preparedBody = isFormData ? body : prepareBody(body, finalHeaders);
 
   let response = await fetch(`${baseUrl}${path}`, {
     method,

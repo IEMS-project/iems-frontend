@@ -454,6 +454,7 @@
           "parentTask": "Nhiệm vụ cha",
           "startDate": "Ngày bắt đầu",
           "dueDate": "Hạn chót",
+          "attachments": "File đính kèm",
           "selectMember": "Chọn thành viên",
           "selectPhase": "Chọn giai đoạn",
           "selectParentTask": "Chọn nhiệm vụ cha",
@@ -637,7 +638,10 @@
     },
     "timeRemaining": {
       "overdue": "Quá hạn {{days}}d {{hours}}h {{minutes}}m",
-      "remaining": "Còn {{days}}d {{hours}}h {{minutes}}m"
+      "remaining": "Còn {{days}}d {{hours}}h {{minutes}}m",
+      "remainingMinutes": "Còn {{minutes}} phút",
+      "remainingHours": "Còn {{hours}} giờ {{minutes}} phút",
+      "remainingDays": "Còn {{days}} ngày {{hours}} giờ {{minutes}} phút"
     },
     "detail": {
       "title": "Chi tiết nhiệm vụ",
@@ -652,12 +656,10 @@
         "assignee": "Người thực hiện",
         "startDate": "Bắt đầu",
         "dueDate": "Hạn hoàn thành",
-        "timeRemaining": "Thời gian còn lại"
+        "timeRemaining": "Thời gian còn lại",
+        "attachments": "File đính kèm"
       },
-      "overdue": "Quá hạn {{days}} ngày {{hours}} giờ {{minutes}} phút",
-      "remainingMinutes": "Còn {{minutes}} phút",
-      "remainingHours": "Còn {{hours}} giờ {{minutes}} phút",
-      "remainingDays": "Còn {{days}} ngày {{hours}} giờ {{minutes}} phút"
+      "overdue": "Quá hạn {{days}} ngày {{hours}} giờ {{minutes}} phút"
     }
   },
   "documents": {

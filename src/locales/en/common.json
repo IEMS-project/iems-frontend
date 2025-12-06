@@ -454,6 +454,7 @@
           "parentTask": "Parent Task",
           "startDate": "Start Date",
           "dueDate": "Due Date",
+          "attachments": "Attachments",
           "selectMember": "Select member",
           "selectPhase": "Select phase",
           "selectParentTask": "Select parent task",
@@ -637,7 +638,10 @@
     },
     "timeRemaining": {
       "overdue": "Overdue {{days}}d {{hours}}h {{minutes}}m",
-      "remaining": "{{days}}d {{hours}}h {{minutes}}m left"
+      "remaining": "{{days}}d {{hours}}h {{minutes}}m left",
+      "remainingMinutes": "{{minutes}} minutes remaining",
+      "remainingHours": "{{hours}} hours {{minutes}} minutes remaining",
+      "remainingDays": "{{days}} days {{hours}} hours {{minutes}} minutes remaining"
     },
     "detail": {
       "title": "Task Details",
@@ -652,12 +656,10 @@
         "assignee": "Assignee",
         "startDate": "Start Date",
         "dueDate": "Due Date",
-        "timeRemaining": "Time Remaining"
+        "timeRemaining": "Time Remaining",
+        "attachments": "Attachments"
       },
-      "overdue": "Overdue by {{days}} days {{hours}} hours {{minutes}} minutes",
-      "remainingMinutes": "{{minutes}} minutes remaining",
-      "remainingHours": "{{hours}} hours {{minutes}} minutes remaining",
-      "remainingDays": "{{days}} days {{hours}} hours {{minutes}} minutes remaining"
+      "overdue": "Overdue by {{days}} days {{hours}} hours {{minutes}} minutes"
     }
   },
   "documents": {
