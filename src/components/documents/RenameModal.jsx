@@ -1,47 +1,49 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import { toast } from "sonner";
 
-export default function RenameModal({ 
-	isOpen, 
-	onClose, 
-	item, 
-	onConfirm 
+export default function RenameModal({
+	isOpen,
+	onClose,
+	item,
+	onConfirm
 }) {
+	const { t } = useTranslation();
 	const [newName, setNewName] = useState(item?.name || "");
 	const [loading, setLoading] = useState(false);
 
 	const handleSubmit = async () => {
 		if (!newName.trim()) return;
-		
+
 		setLoading(true);
 		try {
 			await onConfirm(newName.trim());
 			onClose();
 			setNewName("");
-			toast.success("Đã đổi tên thành công");
+			toast.success(t('documents.rename.success'));
 		} catch (error) {
 			console.error('Error renaming:', error);
-			toast.error(error?.message || 'Lỗi khi đổi tên');
+			toast.error(error?.message || t('documents.rename.error'));
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<Modal 
-			isOpen={isOpen} 
-			onClose={onClose} 
-			title={`Đổi tên ${item?.type === 'folder' ? 'thư mục' : 'tệp'}`}
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={item?.type === 'folder' ? t('documents.rename.titleFolder') : t('documents.rename.titleFile')}
 			footer={
 				<div className="flex justify-end gap-2">
 					<Button variant="secondary" onClick={onClose}>
-						Hủy
+						{t('documents.rename.cancel')}
 					</Button>
 					<Button onClick={handleSubmit} disabled={!newName.trim() || loading}>
-						{loading ? 'Đang xử lý...' : 'Lưu'}
+						{loading ? t('documents.rename.processing') : t('documents.rename.save')}
 					</Button>
 				</div>
 			}
@@ -49,19 +51,19 @@ export default function RenameModal({
 			<div className="space-y-4">
 				<div>
 					<label className="block text-sm font-medium text-gray-700 mb-1">
-						Tên {item?.type === 'folder' ? 'thư mục' : 'tệp'}
+						{item?.type === 'folder' ? t('documents.rename.labelFolder') : t('documents.rename.labelFile')}
 					</label>
-					<Input 
+					<Input
 						value={newName}
 						onChange={(e) => setNewName(e.target.value)}
-						placeholder={`Nhập tên ${item?.type === 'folder' ? 'thư mục' : 'tệp'}...`}
+						placeholder={t('documents.rename.placeholder')}
 						className="w-full"
 						autoFocus
 					/>
 				</div>
 				{item && (
 					<div className="text-sm text-gray-500">
-						Tên hiện tại: <span className="font-medium">{item.name}</span>
+						{t('documents.rename.currentName')} <span className="font-medium">{item.name}</span>
 					</div>
 				)}
 			</div>

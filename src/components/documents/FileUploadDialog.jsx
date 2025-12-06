@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Upload, UploadIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function FileUploadDialog({ onUpload }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [files, setFiles] = React.useState([]);
   const [dragActive, setDragActive] = React.useState(false);
@@ -65,13 +67,13 @@ export function FileUploadDialog({ onUpload }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <Button onClick={() => setOpen(true)}>
         <UploadIcon />
-        Tải lên
+        {t('documents.upload.upload')}
       </Button>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Tải lên tệp</DialogTitle>
+          <DialogTitle>{t('documents.upload.title')}</DialogTitle>
           <DialogDescription>
-            Kéo và thả tệp vào đây hoặc nhấp để chọn tệp
+            {t('documents.upload.dragDrop')}
           </DialogDescription>
         </DialogHeader>
         <div
@@ -86,7 +88,7 @@ export function FileUploadDialog({ onUpload }) {
             <Upload className="mx-auto size-10 opacity-25" aria-hidden="true" />
             <div className="mt-4 flex text-sm leading-none">
               <Label htmlFor="file-upload" className="relative cursor-pointer">
-                <span>Tải lên tệp</span>
+                <span>{t('documents.upload.upload')}</span>
                 <Input
                   id="file-upload"
                   name="file-upload"
@@ -96,16 +98,16 @@ export function FileUploadDialog({ onUpload }) {
                   multiple
                 />
               </Label>
-              <p className="pl-1">hoặc kéo và thả</p>
+              <p className="pl-1">{t('documents.upload.dragDropOr')}</p>
             </div>
             <p className="text-muted-foreground text-xs leading-5">
-              PNG, JPG, GIF tối đa 10MB
+              {t('documents.upload.fileTypes')}
             </p>
           </div>
         </div>
         {files.length > 0 && (
           <div>
-            <h4 className="text-sm">Các tệp đã chọn</h4>
+            <h4 className="text-sm">{t('documents.upload.selectedFiles')}</h4>
             <ul className="divide mt-2 divide-y rounded-md border">
               {files.map((file, index) => (
                 <li
@@ -127,7 +129,7 @@ export function FileUploadDialog({ onUpload }) {
                       onClick={() => removeFile(index)}
                     >
                       <X />
-                      <span className="sr-only">Xóa tệp</span>
+                      <span className="sr-only">{t('documents.upload.removeFile')}</span>
                     </Button>
                   </div>
                 </li>
@@ -137,10 +139,10 @@ export function FileUploadDialog({ onUpload }) {
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Hủy
+            {t('documents.upload.cancel')}
           </Button>
           <Button onClick={handleUpload} disabled={files.length === 0}>
-            Bắt đầu tải lên
+            {t('documents.upload.startUpload')}
           </Button>
         </DialogFooter>
       </DialogContent>

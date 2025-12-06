@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,8 @@ export default function DocumentsGrid({
   onDelete,
   isOwner,
 }) {
+  const { t } = useTranslation();
+
   if (sortedItems.length === 0) {
     return null;
   }
@@ -118,25 +121,25 @@ export default function DocumentsGrid({
                       <>
                         <DropdownMenuItem onClick={() => onRename(item, item.type)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Đổi tên
+                          {t('documents.contextMenu.rename')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
                           <Lock className="mr-2 h-4 w-4" />
-                          Phân quyền
+                          {t('documents.contextMenu.permission')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onShare(item, item.type)}>
                           <Share2 className="mr-2 h-4 w-4" />
-                          Chia sẻ
+                          {t('documents.contextMenu.share')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
                           <Users className="mr-2 h-4 w-4" />
-                          Người được chia sẻ
+                          {t('documents.contextMenu.sharedUsers')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onMove(item, item.type)}>
                           <Move className="mr-2 h-4 w-4" />
-                          Di chuyển
+                          {t('documents.contextMenu.move')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -144,13 +147,13 @@ export default function DocumentsGrid({
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Xóa
+                          {t('documents.contextMenu.delete')}
                         </DropdownMenuItem>
                       </>
                     )}
                     {!itemIsOwner && (
                       <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        Không có quyền chỉnh sửa
+                        {t('documents.contextMenu.noPermission')}
                       </div>
                     )}
                   </DropdownMenuContent>

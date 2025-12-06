@@ -324,8 +324,8 @@ export default function MessageItem({
         if (/^https?:\/\//i.test(content)) {
             const name = stripTsPrefixFromUrl(content);
             const ext = (name.split('.').pop() || '').toLowerCase();
-            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.image')}</span>;
-            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.video')}</span>;
+            if (["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.image')}</span>;
+            if (["mp4", "mov", "m4v", "webm", "avi", "mkv"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.video')}</span>;
             return <span className="text-muted-foreground">{t('messages.reply.file', { fileName: name })}</span>;
         }
         return <span className="text-muted-foreground">{content}</span>;
@@ -380,411 +380,411 @@ export default function MessageItem({
 
     return (
         <>
-        {/* System log render */}
-        {isSystemLog && !invalidSender && (
-            <div className="my-2 px-4">
-                <div className="text-center text-xs font-semibold text-muted-foreground">
-                    {(() => {
-                        const raw = message?.content;
-                        if (!raw || typeof raw !== 'string') return raw;
-                        return raw.split(/(\s+)/).map(token => {
-                            if (/^\s+$/.test(token)) return token;
-                            const name = getUserName?.(token);
-                            if (name && name !== token && name !== 'unknown') return name;
-                            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return t('messages.messageItem.user', 'Người dùng');
-                            return token;
-                        }).join('');
-                    })()}
+            {/* System log render */}
+            {isSystemLog && !invalidSender && (
+                <div className="my-2 px-4">
+                    <div className="text-center text-xs font-semibold text-muted-foreground">
+                        {(() => {
+                            const raw = message?.content;
+                            if (!raw || typeof raw !== 'string') return raw;
+                            return raw.split(/(\s+)/).map(token => {
+                                if (/^\s+$/.test(token)) return token;
+                                const name = getUserName?.(token);
+                                if (name && name !== token && name !== 'unknown') return name;
+                                if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return t('messages.messageItem.user', 'Người dùng');
+                                return token;
+                            }).join('');
+                        })()}
+                    </div>
                 </div>
-            </div>
-        )}
+            )}
 
-        {/* Regular message render */}
-        {!isSystemLog && !shouldHide && (
-        <div className={`group relative ${elevated ? 'z-50' : ''} flex ${isMe ? 'justify-end' : 'justify-start'} mb-2 px-4`}>
-            <div className={`flex items-end max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
-                {/* Avatar for others */}
-                {!isMe && (
-                    <Avatar src={senderImg} name={senderName} size={8} className="mb-1" />
-                )}
+            {/* Regular message render */}
+            {!isSystemLog && !shouldHide && (
+                <div className={`group relative ${elevated ? 'z-50' : ''} flex ${isMe ? 'justify-end' : 'justify-start'} mb-2 px-4`}>
+                    <div className={`flex items-end max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
+                        {/* Avatar for others */}
+                        {!isMe && (
+                            <Avatar src={senderImg} name={senderName} size={8} className="mb-1" />
+                        )}
 
-                <div className={`relative mt-2 ${isMe ? 'mr-2' : 'ml-2'}`}>
-                    {/* Reply indicator */}
-                    {message.replyToMessageId && !isRecalled && (
-                        <div className={`text-xs mb-1 ${isMe ? 'text-right' : 'text-left'}`}>
-                            <div
-                                className="bg-muted rounded-lg p-2 border-l-2 border-border max-w-xs cursor-pointer hover:bg-muted/80 transition-colors"
-                                onClick={() => onJumpToMessage?.(message.replyToMessageId)}
-                                title={t('messages.messageItem.clickToViewOriginal', 'Nhấn để xem tin nhắn gốc')}
-                            >
-                                <div className="text-foreground font-medium text-xs">
-                                    {getUserName(message.replyToSenderId)}
-                                </div>
-                                <div className="text-muted-foreground text-xs truncate">
-                                    {renderReplyPreview()}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-
-                    {/* Message bubble */}
-                    <div
-                        ref={bubbleRef}
-                        className="relative"
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            setOpenMenuUp(computeOpenUp(bubbleRef, 220));
-                            setShowMenu(true);
-                        }}
-                    >
-                        { /* Different container styles for media vs text */ }
-                        <div className={`relative ${isRecalled
-                            ? 'px-3 py-2 max-w-xs break-words'
-                            : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())
-                                ? 'p-1 max-w-sm'
-                                : 'px-3 py-2 max-w-xs break-words')} rounded-lg ${isRecalled
-                            ? isMe
-                                ? "bg-muted text-muted-foreground italic border border-dashed border-border"
-                                : "bg-muted text-muted-foreground italic border border-dashed border-border"
-                            : isMe
-                                ? (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-foreground text-background')
-                                : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-muted text-foreground')
-                            }`}>
-                            {isRecalled ? (
-                                <span className="text-sm">{t('messages.messageItem.recalled')}</span>
-                            ) : (
-                                <>
-                                    {/* Sender name inside message bubble for others */}
-                                    {!isMe && (
-                                        <div className="text-xs font-medium mb-1 text-foreground">
-                                            {senderName}
-                                        </div>
-                                    )}
-                                    <div className="text-sm">
-                                        {(() => {
-                                            const msgType = (message.type || '').toUpperCase();
-                                            if (msgType === 'IMAGE') {
-                                                return (
-                                                    <div className="overflow-hidden rounded-xl border border-border bg-muted/50">
-                                                        <img
-                                                            src={message.content}
-                                                            alt="image"
-                                                            className="max-w-xs cursor-pointer hover:opacity-90 transition"
-                                                            loading="lazy"
-                                                            onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'IMAGE' })}
-                                                        />
-                                                    </div>
-                                                );
-                                            }
-                                            if (msgType === 'VIDEO') {
-                                                return (
-                                                    <div className="overflow-hidden rounded-xl border border-border bg-black">
-                                                        <video
-                                                            className="max-w-xs cursor-pointer"
-                                                            onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'VIDEO' })}
-                                                            controls
-                                                            preload="metadata"
-                                                        >
-                                                            <source src={message.content} />
-                                                        </video>
-                                                    </div>
-                                                );
-                                            }
-                                            if (msgType === 'FILE') {
-                                                const url = message.content || '';
-                                                let name = t('messages.messageItem.fileAttachment', 'Tệp đính kèm');
-                                                try {
-                                                    if (!url.startsWith('blob:')) {
-                                                        const decoded = decodeURIComponent(url);
-                                                        const lastSlash = decoded.lastIndexOf('/') + 1;
-                                                        const lastSegment = decoded.substring(lastSlash) || '';
-                                                        const hyphenIdx = lastSegment.indexOf('-');
-                                                        const leading = hyphenIdx > 0 ? lastSegment.substring(0, hyphenIdx) : '';
-                                                        name = /^\d{10,17}$/.test(leading) ? (lastSegment.substring(hyphenIdx + 1) || lastSegment) : (lastSegment || 'Tệp đính kèm');
-                                                    }
-                                                } catch(_) { }
-                                                const linkCls = isMe ? 'text-background hover:underline' : 'text-foreground underline';
-                                                return (
-                                                    <div className={`flex items-start gap-3`}>
-                                                        <span className="inline-flex w-8 h-8 items-center justify-center rounded bg-muted text-muted-foreground text-xs">FILE</span>
-                                                        <div className="flex flex-col min-w-0">
-                                                            <a href={url} target="_blank" rel="noreferrer" className={`truncate ${linkCls}`} title={name}>{name}</a>
-                                                            {fileSizeText && (
-                                                                <span className={`text-xs ${isMe ? 'text-background/70' : 'text-muted-foreground'}`}>{fileSizeText}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            }
-                                            return (<>{message.content}</>);
-                                        })()}
-                                    </div>
-                                    {message.edited && (
-                                        <span className="text-xs opacity-70 ml-2">{t('messages.messageItem.edited')}</span>
-                                    )}
-                                    {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
-                                    {!(isMe && ['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())) && (
-                                        <div className={`text-xs mt-1 ${isRecalled
-                                            ? 'text-muted-foreground'
-                                            : isMe
-                                                ? 'text-background/70'
-                                                : 'text-muted-foreground'
-                                            }`}>
-                                            {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                            {message.pinned && (
-                                                <span className="ml-1">📌</span>
-                                            )}
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        {/* Heart reaction button - positioned on bubble edge */}
-                        {!isRecalled && (
-                            <div
-                                className="relative"
-                                onMouseEnter={() => {
-                                    if (hideEmojiTimeoutRef.current) {
-                                        clearTimeout(hideEmojiTimeoutRef.current);
-                                    }
-                                    setEmojiOpenUp(computeOpenUp(bubbleRef, 120));
-                                    setShowEmojiPicker(true);
-                                }}
-                                onMouseLeave={() => {
-                                    if (hideEmojiTimeoutRef.current) {
-                                        clearTimeout(hideEmojiTimeoutRef.current);
-                                    }
-                                    hideEmojiTimeoutRef.current = setTimeout(() => {
-                                        setShowEmojiPicker(false);
-                                    }, 150);
-                                }}
-                            >
-                                <button
-                                    className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded-full bg-card shadow-md border border-border"
-                                    title={t('messages.messageItem.react', 'Thả cảm xúc')}
-                                    style={{
-                                        [isMe ? 'right' : 'right']: '12px'
-                                    }}
-                                >
-                                    <Heart className="w-4 h-4 text-destructive" />
-                                </button>
-
-                                {/* Emoji picker - appears on hover over heart */}
-                                {showEmojiPicker && (
+                        <div className={`relative mt-2 ${isMe ? 'mr-2' : 'ml-2'}`}>
+                            {/* Reply indicator */}
+                            {message.replyToMessageId && !isRecalled && (
+                                <div className={`text-xs mb-1 ${isMe ? 'text-right' : 'text-left'}`}>
                                     <div
-                                        className={`absolute z-30 bg-card rounded-2xl shadow-xl border border-border py-2 px-3 ${emojiOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${isMe ? 'right-0' : 'left-0'}`}
-                                        style={{
-                                            [isMe ? 'right' : 'left']: '-12px'
+                                        className="bg-muted rounded-lg p-2 border-l-2 border-border max-w-xs cursor-pointer hover:bg-muted/80 transition-colors"
+                                        onClick={() => onJumpToMessage?.(message.replyToMessageId)}
+                                        title={t('messages.messageItem.clickToViewOriginal', 'Nhấn để xem tin nhắn gốc')}
+                                    >
+                                        <div className="text-foreground font-medium text-xs">
+                                            {getUserName(message.replyToSenderId)}
+                                        </div>
+                                        <div className="text-muted-foreground text-xs truncate">
+                                            {renderReplyPreview()}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+
+                            {/* Message bubble */}
+                            <div
+                                ref={bubbleRef}
+                                className="relative"
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    setOpenMenuUp(computeOpenUp(bubbleRef, 220));
+                                    setShowMenu(true);
+                                }}
+                            >
+                                { /* Different container styles for media vs text */}
+                                <div className={`relative ${isRecalled
+                                    ? 'px-3 py-2 max-w-xs break-words'
+                                    : (['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase())
+                                        ? 'p-1 max-w-sm'
+                                        : 'px-3 py-2 max-w-xs break-words')} rounded-lg ${isRecalled
+                                            ? isMe
+                                                ? "bg-muted text-muted-foreground italic border border-dashed border-border"
+                                                : "bg-muted text-muted-foreground italic border border-dashed border-border"
+                                            : isMe
+                                                ? (['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase()) ? 'bg-transparent' : 'bg-foreground text-background')
+                                                : (['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase()) ? 'bg-transparent' : 'bg-muted text-foreground')
+                                    }`}>
+                                    {isRecalled ? (
+                                        <span className="text-sm">{t('messages.messageItem.recalled')}</span>
+                                    ) : (
+                                        <>
+                                            {/* Sender name inside message bubble for others */}
+                                            {!isMe && (
+                                                <div className="text-xs font-medium mb-1 text-foreground">
+                                                    {senderName}
+                                                </div>
+                                            )}
+                                            <div className="text-sm">
+                                                {(() => {
+                                                    const msgType = (message.type || '').toUpperCase();
+                                                    if (msgType === 'IMAGE') {
+                                                        return (
+                                                            <div className="overflow-hidden rounded-xl border border-border bg-muted/50">
+                                                                <img
+                                                                    src={message.content}
+                                                                    alt="image"
+                                                                    className="max-w-xs cursor-pointer hover:opacity-90 transition"
+                                                                    loading="lazy"
+                                                                    onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'IMAGE' })}
+                                                                />
+                                                            </div>
+                                                        );
+                                                    }
+                                                    if (msgType === 'VIDEO') {
+                                                        return (
+                                                            <div className="overflow-hidden rounded-xl border border-border bg-black">
+                                                                <video
+                                                                    className="max-w-xs cursor-pointer"
+                                                                    onClick={() => setPreviewMedia({ isOpen: true, url: message.content, type: 'VIDEO' })}
+                                                                    controls
+                                                                    preload="metadata"
+                                                                >
+                                                                    <source src={message.content} />
+                                                                </video>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    if (msgType === 'FILE') {
+                                                        const url = message.content || '';
+                                                        let name = t('messages.messageItem.fileAttachment', 'Tệp đính kèm');
+                                                        try {
+                                                            if (!url.startsWith('blob:')) {
+                                                                const decoded = decodeURIComponent(url);
+                                                                const lastSlash = decoded.lastIndexOf('/') + 1;
+                                                                const lastSegment = decoded.substring(lastSlash) || '';
+                                                                const hyphenIdx = lastSegment.indexOf('-');
+                                                                const leading = hyphenIdx > 0 ? lastSegment.substring(0, hyphenIdx) : '';
+                                                                name = /^\d{10,17}$/.test(leading) ? (lastSegment.substring(hyphenIdx + 1) || lastSegment) : (lastSegment || 'Tệp đính kèm');
+                                                            }
+                                                        } catch (_) { }
+                                                        const linkCls = isMe ? 'text-background hover:underline' : 'text-foreground underline';
+                                                        return (
+                                                            <div className={`flex items-start gap-3`}>
+                                                                <span className="inline-flex w-8 h-8 items-center justify-center rounded bg-muted text-muted-foreground text-xs">FILE</span>
+                                                                <div className="flex flex-col min-w-0">
+                                                                    <a href={url} target="_blank" rel="noreferrer" className={`truncate ${linkCls}`} title={name}>{name}</a>
+                                                                    {fileSizeText && (
+                                                                        <span className={`text-xs ${isMe ? 'text-background/70' : 'text-muted-foreground'}`}>{fileSizeText}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return (<>{message.content}</>);
+                                                })()}
+                                            </div>
+                                            {message.edited && (
+                                                <span className="text-xs opacity-70 ml-2">{t('messages.messageItem.edited')}</span>
+                                            )}
+                                            {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
+                                            {!(isMe && ['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase())) && (
+                                                <div className={`text-xs mt-1 ${isRecalled
+                                                    ? 'text-muted-foreground'
+                                                    : isMe
+                                                        ? 'text-background/70'
+                                                        : 'text-muted-foreground'
+                                                    }`}>
+                                                    {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                    {message.pinned && (
+                                                        <span className="ml-1">📌</span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Heart reaction button - positioned on bubble edge */}
+                                {!isRecalled && (
+                                    <div
+                                        className="relative"
+                                        onMouseEnter={() => {
+                                            if (hideEmojiTimeoutRef.current) {
+                                                clearTimeout(hideEmojiTimeoutRef.current);
+                                            }
+                                            setEmojiOpenUp(computeOpenUp(bubbleRef, 120));
+                                            setShowEmojiPicker(true);
+                                        }}
+                                        onMouseLeave={() => {
+                                            if (hideEmojiTimeoutRef.current) {
+                                                clearTimeout(hideEmojiTimeoutRef.current);
+                                            }
+                                            hideEmojiTimeoutRef.current = setTimeout(() => {
+                                                setShowEmojiPicker(false);
+                                            }, 150);
                                         }}
                                     >
-                                        <div className="flex gap-2 items-center">
-                                            {emojis.map(emoji => (
-                                                <button
-                                                    key={emoji}
-                                                    onClick={() => handleReaction(emoji)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-xl transition-colors"
-                                                    title={t('messages.messageItem.reactWith', { emoji })}
+                                        <button
+                                            className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded-full bg-card shadow-md border border-border"
+                                            title={t('messages.messageItem.react', 'Thả cảm xúc')}
+                                            style={{
+                                                [isMe ? 'right' : 'right']: '12px'
+                                            }}
+                                        >
+                                            <Heart className="w-4 h-4 text-destructive" />
+                                        </button>
+
+                                        {/* Emoji picker - appears on hover over heart */}
+                                        {showEmojiPicker && (
+                                            <div
+                                                className={`absolute z-30 bg-card rounded-2xl shadow-xl border border-border py-2 px-3 ${emojiOpenUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${isMe ? 'right-0' : 'left-0'}`}
+                                                style={{
+                                                    [isMe ? 'right' : 'left']: '-12px'
+                                                }}
+                                            >
+                                                <div className="flex gap-2 items-center">
+                                                    {emojis.map(emoji => (
+                                                        <button
+                                                            key={emoji}
+                                                            onClick={() => handleReaction(emoji)}
+                                                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-xl transition-colors"
+                                                            title={t('messages.messageItem.reactWith', { emoji })}
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Action buttons container - Reply and Menu */}
+                                {!isRecalled && (
+                                    <div className={`absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 ${isMe ? '-left-20' : '-right-20'
+                                        }`}>
+                                        {/* Reply button */}
+                                        <button
+                                            onClick={() => {
+                                                onReply?.(message);
+                                                setShowMenu(false);
+                                            }}
+                                            className="p-1 hover:bg-muted rounded-full"
+                                            title={t('messages.messageItem.reply')}
+                                        >
+                                            <Reply className="w-4 h-4 text-muted-foreground" />
+                                        </button>
+
+                                        {/* Three dots menu button with relative wrapper */}
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => {
+                                                    if (!showMenu) setOpenMenuUp(computeOpenUp(bubbleRef, 220));
+                                                    setShowMenu(!showMenu);
+                                                }}
+                                                className="p-1 hover:bg-muted rounded-full"
+                                            >
+                                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                                            </button>
+
+                                            {/* Menu dropdown - positioned next to 3 dots button */}
+                                            {showMenu && (
+                                                <div
+                                                    ref={menuRef}
+                                                    className={`absolute right-0 z-20 bg-card rounded-lg shadow-lg border border-border py-1 min-w-[200px] ${openMenuUp ? 'bottom-full mb-2' : 'mt-2'}`}
                                                 >
-                                                    {emoji}
-                                                </button>
-                                            ))}
+                                                    {/* Copy */}
+                                                    <button
+                                                        onClick={handleCopy}
+                                                        className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                        {t('messages.messageItem.copy')}
+                                                    </button>
+
+                                                    {/* Pin */}
+                                                    <button
+                                                        onClick={handlePin}
+                                                        className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
+                                                    >
+                                                        <Pin className="w-4 h-4" />
+                                                        {message.pinned ? t('messages.messageItem.unpin') : t('messages.messageItem.pin')}
+                                                    </button>
+                                                    {/* Delete for me (red) */}
+                                                    <button
+                                                        onClick={handleDeleteForMe}
+                                                        className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                        {t('messages.messageItem.deleteForMe')}
+                                                    </button>
+
+                                                    {isMe && (
+                                                        <button
+                                                            onClick={handleRecall}
+                                                            className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
+                                                        >
+                                                            <Undo2 className="w-4 h-4" />
+                                                            {t('messages.messageItem.recall')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        {/* Action buttons container - Reply and Menu */}
-                        {!isRecalled && (
-                            <div className={`absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 ${isMe ? '-left-20' : '-right-20'
-                                }`}>
-                                {/* Reply button */}
-                                <button
-                                    onClick={() => {
-                                        onReply?.(message);
-                                        setShowMenu(false);
-                                    }}
-                                    className="p-1 hover:bg-muted rounded-full"
-                                    title={t('messages.messageItem.reply')}
-                                >
-                                    <Reply className="w-4 h-4 text-muted-foreground" />
-                                </button>
 
-                                {/* Three dots menu button with relative wrapper */}
-                                <div className="relative">
+                            <div className={`flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                {reactions.length > 0 && (
                                     <button
-                                        onClick={() => {
-                                            if (!showMenu) setOpenMenuUp(computeOpenUp(bubbleRef, 220));
-                                            setShowMenu(!showMenu);
-                                        }}
-                                        className="p-1 hover:bg-muted rounded-full"
+                                        onClick={() => setShowReactionModal(true)}
+                                        className="flex items-center px-2 py-0.5 rounded-full bg-muted border border-border shadow-sm hover:bg-muted/80 transition-colors cursor-pointer"
                                     >
-                                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                                    </button>
-
-                                    {/* Menu dropdown - positioned next to 3 dots button */}
-                                    {showMenu && (
-                                        <div
-                                            ref={menuRef}
-                                            className={`absolute right-0 z-20 bg-card rounded-lg shadow-lg border border-border py-1 min-w-[200px] ${openMenuUp ? 'bottom-full mb-2' : 'mt-2'}`}
-                                        >
-                                            {/* Copy */}
-                                            <button
-                                                onClick={handleCopy}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
-                                            >
-                                                <Copy className="w-4 h-4" />
-                                                {t('messages.messageItem.copy')}
-                                            </button>
-
-                                            {/* Pin */}
-                                            <button
-                                                onClick={handlePin}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
-                                            >
-                                                <Pin className="w-4 h-4" />
-                                                {message.pinned ? t('messages.messageItem.unpin') : t('messages.messageItem.pin')}
-                                            </button>
-                                            {/* Delete for me (red) */}
-                                            <button
-                                                onClick={handleDeleteForMe}
-                                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                {t('messages.messageItem.deleteForMe')}
-                                            </button>
-
-                                            {isMe && (
-                                                <button
-                                                    onClick={handleRecall}
-                                                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
-                                                >
-                                                    <Undo2 className="w-4 h-4" />
-                                                    {t('messages.messageItem.recall')}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-
-                    <div className={`flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        {reactions.length > 0 && (
-                            <button
-                                onClick={() => setShowReactionModal(true)}
-                                className="flex items-center px-2 py-0.5 rounded-full bg-muted border border-border shadow-sm hover:bg-muted/80 transition-colors cursor-pointer"
-                            >
-                                {/* Hiển thị tối đa 3 emoji khác nhau */}
-                                {reactions.slice(0, 3).map(({ emoji }) => (
-                                    <span key={emoji} className="text-sm mr-1">
-                                        {emoji}
-                                    </span>
-                                ))}
-                                {/* Tổng số reaction */}
-                                <span className="text-xs font-medium text-foreground">
-                                    {reactions.reduce((sum, r) => sum + r.count, 0)}
-                                </span>
-                            </button>
-                        )}
-                    </div>
-
-                </div>
-            </div>
-
-            {/* Reaction Details Modal */}
-            {showReactionModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-border">
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border">
-                            <h3 className="text-lg font-semibold text-foreground">{t('messages.messageItem.reactions')}</h3>
-                            <button
-                                onClick={() => setShowReactionModal(false)}
-                                className="text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4">
-                            {/* User Reactions */}
-
-
-                            {/* Danh sách tất cả users đã react */}
-                            {getAllReactingUsers().map((user) => (
-                                <div key={user.id} className={`flex items-center justify-between mb-2 p-2 rounded-lg ${user.id === currentUserId
-                                    ? 'bg-muted'
-                                    : 'hover:bg-muted/50'
-                                    }`}>
-                                    <div className="flex items-center">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium mr-3 ${user.id === currentUserId ? 'bg-primary' : 'bg-muted-foreground'
-                                            }`}>
-                                            {user.name.charAt(0)}
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground">
-                                            {user.name}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        {user.emojis.map((emoji) => (
-                                            <span key={emoji} className="text-sm mr-1">{emoji}</span>
+                                        {/* Hiển thị tối đa 3 emoji khác nhau */}
+                                        {reactions.slice(0, 3).map(({ emoji }) => (
+                                            <span key={emoji} className="text-sm mr-1">
+                                                {emoji}
+                                            </span>
                                         ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Footer */}
-                        {reactions.some(r => r.hasReacted) && (
-                            <div className="border-t border-border p-4">
-                                <button
-                                    onClick={handleRemoveAllMyReactions}
-                                    className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
-                                >
-                                    {t('messages.messageItem.removeAllMyReactions')}
-                                </button>
+                                        {/* Tổng số reaction */}
+                                        <span className="text-xs font-medium text-foreground">
+                                            {reactions.reduce((sum, r) => sum + r.count, 0)}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
-                        )}
+
+                        </div>
                     </div>
+
+                    {/* Reaction Details Modal */}
+                    {showReactionModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                            <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-border">
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-4 border-b border-border">
+                                    <h3 className="text-lg font-semibold text-foreground">{t('messages.messageItem.reactions')}</h3>
+                                    <button
+                                        onClick={() => setShowReactionModal(false)}
+                                        className="text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-4">
+                                    {/* User Reactions */}
+
+
+                                    {/* Danh sách tất cả users đã react */}
+                                    {getAllReactingUsers().map((user) => (
+                                        <div key={user.id} className={`flex items-center justify-between mb-2 p-2 rounded-lg ${user.id === currentUserId
+                                            ? 'bg-muted'
+                                            : 'hover:bg-muted/50'
+                                            }`}>
+                                            <div className="flex items-center">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium mr-3 ${user.id === currentUserId ? 'bg-primary' : 'bg-muted-foreground'
+                                                    }`}>
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                                <span className="text-sm font-medium text-foreground">
+                                                    {user.name}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center">
+                                                {user.emojis.map((emoji) => (
+                                                    <span key={emoji} className="text-sm mr-1">{emoji}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Footer */}
+                                {reactions.some(r => r.hasReacted) && (
+                                    <div className="border-t border-border p-4">
+                                        <button
+                                            onClick={handleRemoveAllMyReactions}
+                                            className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
+                                        >
+                                            {t('messages.messageItem.removeAllMyReactions')}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
-        </div>
-        )}
-        {!isSystemLog && !shouldHide && (
-            <MediaPreviewModal
-                isOpen={previewMedia.isOpen}
-                mediaUrl={previewMedia.url}
-                mediaType={previewMedia.type}
-                messageId={message.id}
-                senderId={message.senderId}
-                senderName={senderName}
-                senderImage={senderImg}
-                sentAt={message.sentAt}
-                onReplyMessage={(msg) => {
-                    onReply?.({
-                        ...message,
-                        id: msg.id,
-                        content: msg.content,
-                        type: msg.type,
-                        senderId: msg.senderId,
-                        sentAt: msg.sentAt
-                    });
-                    setPreviewMedia({ isOpen: false, url: "", type: "" });
-                }}
-                getUserName={getUserName}
-                getUserImage={getUserImage}
-                onViewUser={() => {}}
-                onPrev={undefined}
-                onNext={undefined}
-                onClose={() => setPreviewMedia({ isOpen: false, url: "", type: "" })}
-            />
-        )}
+            {!isSystemLog && !shouldHide && (
+                <MediaPreviewModal
+                    isOpen={previewMedia.isOpen}
+                    mediaUrl={previewMedia.url}
+                    mediaType={previewMedia.type}
+                    messageId={message.id}
+                    senderId={message.senderId}
+                    senderName={senderName}
+                    senderImage={senderImg}
+                    sentAt={message.sentAt}
+                    onReplyMessage={(msg) => {
+                        onReply?.({
+                            ...message,
+                            id: msg.id,
+                            content: msg.content,
+                            type: msg.type,
+                            senderId: msg.senderId,
+                            sentAt: msg.sentAt
+                        });
+                        setPreviewMedia({ isOpen: false, url: "", type: "" });
+                    }}
+                    getUserName={getUserName}
+                    getUserImage={getUserImage}
+                    onViewUser={() => { }}
+                    onPrev={undefined}
+                    onNext={undefined}
+                    onClose={() => setPreviewMedia({ isOpen: false, url: "", type: "" })}
+                />
+            )}
         </>
     );
 }

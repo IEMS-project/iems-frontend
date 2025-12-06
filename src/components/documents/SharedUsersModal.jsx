@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import { documentService } from "../../services/documentService";
@@ -11,6 +12,7 @@ export default function SharedUsersModal({
 	onClose,
 	item
 }) {
+	const { t } = useTranslation();
 	console.log('SharedUsersModal item:', item);
 	const [sharedUsers, setSharedUsers] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -41,10 +43,10 @@ export default function SharedUsersModal({
 			setActionLoading(shareId);
 			await documentService.updateSharePermission(shareId, newPermission);
 			loadSharedUsers(); // Reload to get updated data
-			toast.success("Quyền đã được cập nhật");
+			toast.success(t('documents.sharedUsers.permissionUpdated'));
 		} catch (error) {
 			console.error('Error updating permission:', error);
-			toast.error(error?.message || 'Lỗi khi cập nhật quyền');
+			toast.error(error?.message || t('documents.sharedUsers.updateError'));
 		} finally {
 			setActionLoading(null);
 		}
@@ -55,10 +57,10 @@ export default function SharedUsersModal({
 			setActionLoading(shareId);
 			await documentService.removeShare(shareId);
 			loadSharedUsers(); // Reload to get updated data
-			toast.success("Đã xóa quyền chia sẻ");
+			toast.success(t('documents.sharedUsers.removeSuccess'));
 		} catch (error) {
 			console.error('Error removing share:', error);
-			toast.error(error?.message || 'Lỗi khi xóa quyền');
+			toast.error(error?.message || t('documents.sharedUsers.removeError'));
 		} finally {
 			setActionLoading(null);
 		}
@@ -68,12 +70,12 @@ export default function SharedUsersModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={`Người dùng đã chia sẻ`}
+			title={t('documents.sharedUsers.title')}
 			className="max-w-2xl"
 			footer={
 				<div className="flex justify-end gap-2">
 					<Button variant="secondary" onClick={onClose}>
-						Đóng
+						{t('documents.sharedUsers.close')}
 					</Button>
 				</div>
 			}
@@ -81,7 +83,10 @@ export default function SharedUsersModal({
 			<div className="space-y-4">
 				{item && (
 					<div className="text-sm text-gray-600 mb-4">
-						{item.type === 'folder' ? 'Thư mục' : 'Tệp'}: <span className="font-medium">{item.name}</span>
+						{t('documents.sharedUsers.item', {
+							type: item.type === 'folder' ? t('documents.sharedUsers.folder') : t('documents.sharedUsers.file'),
+							name: item.name
+						})}
 					</div>
 				)}
 
@@ -105,7 +110,7 @@ export default function SharedUsersModal({
 					</div>
 				) : sharedUsers.length === 0 ? (
 					<div className="text-center py-8 text-gray-500">
-						Chưa chia sẻ với ai
+						{t('documents.sharedUsers.noUsers')}
 					</div>
 				) : (
 					<div className="space-y-2">
@@ -129,8 +134,8 @@ export default function SharedUsersModal({
 										disabled={actionLoading === user.shareId}
 										className="px-2 py-1 border border-gray-300 rounded text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
 									>
-										<option value="VIEWER">Xem</option>
-										<option value="EDITOR">Chỉnh sửa</option>
+										<option value="VIEWER">{t('documents.share.viewer')}</option>
+										<option value="EDITOR">{t('documents.share.editor')}</option>
 									</select>
 									<Button
 										variant="secondary"
@@ -139,7 +144,7 @@ export default function SharedUsersModal({
 										disabled={actionLoading === user.shareId}
 										className="text-red-600 hover:text-red-700"
 									>
-										{actionLoading === user.shareId ? '...' : 'Xóa'}
+										{actionLoading === user.shareId ? '...' : t('documents.sharedUsers.remove')}
 									</Button>
 								</div>
 							</div>

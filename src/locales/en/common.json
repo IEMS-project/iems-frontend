@@ -513,6 +513,186 @@
       "remainingDays": "{{days}} days {{hours}} hours {{minutes}} minutes remaining"
     }
   },
+  "documents": {
+    "title": "Documents",
+    "toolbar": {
+      "newFolder": "New Folder",
+      "upload": "Upload",
+      "move": "Move",
+      "delete": "Delete",
+      "selected": "{{count}} items selected"
+    },
+    "header": {
+      "searchPlaceholder": "Search files and folders...",
+      "sort": "Sort",
+      "sortByName": "By name",
+      "sortByDate": "By date",
+      "sortBySize": "By size"
+    },
+    "list": {
+      "name": "Name",
+      "dateCreated": "Date Created",
+      "size": "Size"
+    },
+    "emptyState": {
+      "title": "This folder is empty.",
+      "noResults": "No files or folders matching \"{{search}}\""
+    },
+    "createFolder": {
+      "title": "New Folder",
+      "placeholder": "Folder name",
+      "create": "Create",
+      "cancel": "Cancel",
+      "success": "Folder created successfully",
+      "error": "Error creating folder"
+    },
+    "upload": {
+      "title": "Upload Files",
+      "dragDrop": "Drag and drop files here or click to select files",
+      "dragDropOr": "or drag and drop",
+      "dragActive": "Drop files here...",
+      "selectedFiles": "Selected Files",
+      "removeFile": "Remove",
+      "upload": "Upload",
+      "cancel": "Cancel",
+      "uploading": "Uploading...",
+      "success": "Upload successful",
+      "startUpload": "Start Upload",
+      "fileTypes": "PNG, JPG, GIF up to 10MB"
+    },
+    "delete": {
+      "title": "Confirm Delete",
+      "confirmFolder": "Are you sure you want to delete the folder <strong>{{name}}</strong> and all its contents?",
+      "confirmFile": "Are you sure you want to delete the file <strong>{{name}}</strong>?",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "success": "Successfully deleted",
+      "error": "Error deleting"
+    },
+    "rename": {
+      "title": "Rename",
+      "titleFolder": "Rename Folder",
+      "titleFile": "Rename File",
+      "label": "Name",
+      "labelFolder": "Folder name",
+      "labelFile": "File name",
+      "placeholder": "Enter name...",
+      "currentName": "Current name:",
+      "save": "Save",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "success": "Successfully renamed"
+    },
+    "permission": {
+      "title": "Update Permission",
+      "titleFolder": "Update Folder Permission",
+      "titleFile": "Update File Permission",
+      "currentStatus": "Current status:",
+      "public": "Public",
+      "publicDesc": "Everyone can view and access",
+      "private": "Private",
+      "privateDesc": "Only you and shared users can view",
+      "update": "Update",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "success": "Permission updated successfully"
+    },
+    "share": {
+      "title": "Share",
+      "shareItem": "Share {{type}}: <strong>{{name}}</strong>",
+      "folder": "folder",
+      "file": "file",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied",
+      "searchPlaceholder": "Enter name...",
+      "permission": "Permission",
+      "viewer": "Viewer",
+      "editor": "Editor",
+      "selected": "Selected {{count}}/{{total}}",
+      "share": "Share",
+      "cancel": "Cancel",
+      "success": "Shared successfully",
+      "error": "Error sharing"
+    },
+    "sharedUsers": {
+      "title": "Shared Users",
+      "item": "{{type}}: <strong>{{name}}</strong>",
+      "folder": "Folder",
+      "file": "File",
+      "noUsers": "Not shared with anyone yet",
+      "remove": "Remove",
+      "close": "Close",
+      "loading": "Loading...",
+      "permissionUpdated": "Permission updated successfully",
+      "updateError": "Error updating permission",
+      "removeSuccess": "Share permission removed",
+      "removeError": "Error removing permission"
+    },
+    "move": {
+      "title": "Move",
+      "titleBatch": "Move Multiple Items",
+      "selectDestination": "Select destination folder",
+      "currentFolder": "Current folder:",
+      "movingItems": "Moving {{count}} items",
+      "movingItem": "Moving: <strong>{{name}}</strong>",
+      "home": "Home",
+      "loading": "Loading...",
+      "noFolders": "No folders available",
+      "moveHere": "Move Here",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "success": "Successfully moved"
+    },
+    "contextMenu": {
+      "rename": "Rename",
+      "permission": "Permission",
+      "share": "Share",
+      "sharedUsers": "Shared Users",
+      "move": "Move",
+      "delete": "Delete",
+      "download": "Download",
+      "noPermission": "No edit permission"
+    },
+    "fileDetail": {
+      "details": "Details",
+      "name": "Name:",
+      "type": "Type:",
+      "size": "Size:",
+      "created": "Created:",
+      "modified": "Modified:",
+      "owner": "Owner:",
+      "permission": "Permission:",
+      "folder": "Folder",
+      "file": "File",
+      "public": "Public",
+      "private": "Private",
+      "unknown": "Unknown",
+      "location": "Location:",
+      "myFiles": "My Files",
+      "settings": "Settings",
+      "shareFile": "Share file",
+      "favorite": "Favorite"
+    },
+    "types": {
+      "folder": "folder",
+      "file": "file"
+    },
+    "favorite": {
+      "added": "Added to favorites",
+      "removed": "Removed from favorites",
+      "error": "Error updating favorite"
+    },
+    "batchDelete": {
+      "success": "Successfully deleted {{count}} items",
+      "partial": "Deleted {{success}}/{{total}} items. {{failed}} items could not be deleted.",
+      "error": "Error deleting items"
+    },
+    "batchMove": {
+      "success": "Successfully moved {{count}} items",
+      "partial": "Moved {{success}}/{{total}} items. {{failed}} items could not be moved.",
+      "error": "Error moving items"
+    }
+  },
   "messages": {
     "title": "Messages",
     "emptyChat": {

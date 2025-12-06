@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import { toast } from "sonner";
 
-export default function PermissionModal({ 
-	isOpen, 
-	onClose, 
-	item, 
-	onConfirm 
+export default function PermissionModal({
+	isOpen,
+	onClose,
+	item,
+	onConfirm
 }) {
+	const { t } = useTranslation();
 	const [permission, setPermission] = useState(item?.permission || "PUBLIC");
 	const [loading, setLoading] = useState(false);
 
@@ -17,27 +19,27 @@ export default function PermissionModal({
 		try {
 			await onConfirm(permission);
 			onClose();
-			toast.success("Quyền đã được cập nhật thành công");
+			toast.success(t('documents.permission.success'));
 		} catch (error) {
 			console.error('Error updating permission:', error);
-			toast.error(error?.message || 'Lỗi khi cập nhật quyền');
+			toast.error(error?.message || t('documents.permission.error'));
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<Modal 
-			isOpen={isOpen} 
-			onClose={onClose} 
-			title={`Cập nhật quyền ${item?.type === 'folder' ? 'thư mục' : 'tệp'}`}
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={item?.type === 'folder' ? t('documents.permission.titleFolder') : t('documents.permission.titleFile')}
 			footer={
 				<div className="flex justify-end gap-2">
 					<Button variant="secondary" onClick={onClose}>
-						Hủy
+						{t('documents.permission.cancel')}
 					</Button>
 					<Button onClick={handleSubmit} disabled={loading}>
-						{loading ? 'Đang xử lý...' : 'Cập nhật'}
+						{loading ? t('documents.permission.processing') : t('documents.permission.update')}
 					</Button>
 				</div>
 			}
@@ -45,42 +47,42 @@ export default function PermissionModal({
 			<div className="space-y-4">
 				<div>
 					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Trạng thái hiện tại: <span className="font-medium">{item?.permission === 'PUBLIC' ? 'Công khai' : 'Riêng tư'}</span>
+						{t('documents.permission.currentStatus')} <span className="font-medium">{item?.permission === 'PUBLIC' ? t('documents.permission.public') : t('documents.permission.private')}</span>
 					</label>
 					<div className="space-y-2">
 						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-							<input 
-								type="radio" 
-								name="permission" 
+							<input
+								type="radio"
+								name="permission"
 								value="PUBLIC"
 								checked={permission === "PUBLIC"}
 								onChange={(e) => setPermission(e.target.value)}
 								className="h-4 w-4"
 							/>
 							<div>
-								<div className="font-medium text-green-600">Công khai</div>
-								<div className="text-sm text-gray-500">Mọi người có thể xem và truy cập</div>
+								<div className="font-medium text-green-600">{t('documents.permission.public')}</div>
+								<div className="text-sm text-gray-500">{t('documents.permission.publicDesc')}</div>
 							</div>
 						</label>
 						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
-							<input 
-								type="radio" 
-								name="permission" 
+							<input
+								type="radio"
+								name="permission"
 								value="PRIVATE"
 								checked={permission === "PRIVATE"}
 								onChange={(e) => setPermission(e.target.value)}
 								className="h-4 w-4"
 							/>
 							<div>
-								<div className="font-medium text-blue-600">Riêng tư</div>
-								<div className="text-sm text-gray-500">Chỉ bạn và những người được chia sẻ có thể xem</div>
+								<div className="font-medium text-blue-600">{t('documents.permission.private')}</div>
+								<div className="text-sm text-gray-500">{t('documents.permission.privateDesc')}</div>
 							</div>
 						</label>
 					</div>
 				</div>
 				{item && (
 					<div className="text-sm text-gray-500">
-						{item.type === 'folder' ? 'Thư mục' : 'Tệp'}: <span className="font-medium">{item.name}</span>
+						{item.type === 'folder' ? t('documents.types.folder') : t('documents.types.file')}: <span className="font-medium">{item.name}</span>
 					</div>
 				)}
 			</div>

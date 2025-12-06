@@ -513,6 +513,186 @@
       "remainingDays": "Còn {{days}} ngày {{hours}} giờ {{minutes}} phút"
     }
   },
+  "documents": {
+    "title": "Tài liệu",
+    "toolbar": {
+      "newFolder": "Thư mục mới",
+      "upload": "Tải lên",
+      "move": "Di chuyển",
+      "delete": "Xóa",
+      "selected": "{{count}} mục đã chọn"
+    },
+    "header": {
+      "searchPlaceholder": "Tìm kiếm tệp và thư mục...",
+      "sort": "Sắp xếp",
+      "sortByName": "Theo tên",
+      "sortByDate": "Theo ngày",
+      "sortBySize": "Theo dung lượng"
+    },
+    "list": {
+      "name": "Tên",
+      "dateCreated": "Ngày tạo",
+      "size": "Kích thước"
+    },
+    "emptyState": {
+      "title": "Thư mục này trống.",
+      "noResults": "Không tìm thấy tệp hoặc thư mục phù hợp với \"{{search}}\""
+    },
+    "createFolder": {
+      "title": "Thư mục mới",
+      "placeholder": "Tên thư mục",
+      "create": "Tạo",
+      "cancel": "Hủy",
+      "success": "Thư mục đã được tạo thành công",
+      "error": "Lỗi khi tạo thư mục"
+    },
+    "upload": {
+      "title": "Tải tệp lên",
+      "dragDrop": "Kéo và thả tệp vào đây hoặc nhấp để chọn tệp",
+      "dragDropOr": "hoặc kéo và thả",
+      "dragActive": "Thả tệp vào đây...",
+      "selectedFiles": "Các tệp đã chọn",
+      "removeFile": "Xóa",
+      "upload": "Tải lên",
+      "cancel": "Hủy",
+      "uploading": "Đang tải lên...",
+      "success": "Tải lên thành công",
+      "startUpload": "Bắt đầu tải lên",
+      "fileTypes": "PNG, JPG, GIF tối đa 10MB"
+    },
+    "delete": {
+      "title": "Xác nhận xóa",
+      "confirmFolder": "Bạn có chắc muốn xóa thư mục <strong>{{name}}</strong> và tất cả nội dung bên trong?",
+      "confirmFile": "Bạn có chắc muốn xóa tệp <strong>{{name}}</strong>?",
+      "delete": "Xóa",
+      "cancel": "Hủy",
+      "success": "Đã xóa thành công",
+      "error": "Lỗi khi xóa"
+    },
+    "rename": {
+      "title": "Đổi tên",
+      "titleFolder": "Đổi tên thư mục",
+      "titleFile": "Đổi tên tệp",
+      "label": "Tên",
+      "labelFolder": "Tên thư mục",
+      "labelFile": "Tên tệp",
+      "placeholder": "Nhập tên...",
+      "currentName": "Tên hiện tại:",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "processing": "Đang xử lý...",
+      "success": "Đã đổi tên thành công"
+    },
+    "permission": {
+      "title": "Cập nhật quyền",
+      "titleFolder": "Cập nhật quyền thư mục",
+      "titleFile": "Cập nhật quyền tệp",
+      "currentStatus": "Trạng thái hiện tại:",
+      "public": "Công khai",
+      "publicDesc": "Mọi người có thể xem và truy cập",
+      "private": "Riêng tư",
+      "privateDesc": "Chỉ bạn và những người được chia sẻ có thể xem",
+      "update": "Cập nhật",
+      "cancel": "Hủy",
+      "processing": "Đang xử lý...",
+      "success": "Quyền đã được cập nhật thành công"
+    },
+    "share": {
+      "title": "Chia sẻ",
+      "shareItem": "Chia sẻ {{type}}: <strong>{{name}}</strong>",
+      "folder": "thư mục",
+      "file": "tệp",
+      "copyLink": "Sao chép liên kết",
+      "linkCopied": "Đã sao chép liên kết",
+      "searchPlaceholder": "Nhập tên...",
+      "permission": "Quyền",
+      "viewer": "Xem",
+      "editor": "Chỉnh sửa",
+      "selected": "Đã chọn {{count}}/{{total}}",
+      "share": "Chia sẻ",
+      "cancel": "Hủy",
+      "success": "Chia sẻ thành công",
+      "error": "Lỗi khi chia sẻ"
+    },
+    "sharedUsers": {
+      "title": "Người dùng đã chia sẻ",
+      "item": "{{type}}: <strong>{{name}}</strong>",
+      "folder": "Thư mục",
+      "file": "Tệp",
+      "noUsers": "Chưa chia sẻ với ai",
+      "remove": "Xóa",
+      "close": "Đóng",
+      "loading": "Đang tải...",
+      "permissionUpdated": "Quyền đã được cập nhật",
+      "updateError": "Lỗi khi cập nhật quyền",
+      "removeSuccess": "Đã xóa quyền chia sẻ",
+      "removeError": "Lỗi khi xóa quyền"
+    },
+    "move": {
+      "title": "Di chuyển",
+      "titleBatch": "Di chuyển nhiều mục",
+      "selectDestination": "Chọn thư mục đích",
+      "currentFolder": "Thư mục hiện tại:",
+      "movingItems": "Đang di chuyển {{count}} mục",
+      "movingItem": "Đang di chuyển: <strong>{{name}}</strong>",
+      "home": "Trang chủ",
+      "loading": "Đang tải...",
+      "noFolders": "Không có thư mục nào",
+      "moveHere": "Di chuyển đến đây",
+      "cancel": "Hủy",
+      "processing": "Đang xử lý...",
+      "success": "Đã di chuyển thành công"
+    },
+    "contextMenu": {
+      "rename": "Đổi tên",
+      "permission": "Quyền",
+      "share": "Chia sẻ",
+      "sharedUsers": "Người dùng đã chia sẻ",
+      "move": "Di chuyển",
+      "delete": "Xóa",
+      "download": "Tải xuống",
+      "noPermission": "Không có quyền chỉnh sửa"
+    },
+    "fileDetail": {
+      "details": "Thông tin",
+      "name": "Tên:",
+      "type": "Loại:",
+      "size": "Kích thước:",
+      "created": "Ngày tạo:",
+      "modified": "Ngày sửa:",
+      "owner": "Chủ sở hữu:",
+      "permission": "Quyền:",
+      "folder": "Thư mục",
+      "file": "Tệp",
+      "public": "Công khai",
+      "private": "Riêng tư",
+      "unknown": "Không rõ",
+      "location": "Vị trí:",
+      "myFiles": "Tệp của tôi",
+      "settings": "Cài đặt",
+      "shareFile": "Chia sẻ tệp",
+      "favorite": "Yêu thích"
+    },
+    "types": {
+      "folder": "thư mục",
+      "file": "tệp"
+    },
+    "favorite": {
+      "added": "Đã thêm vào yêu thích",
+      "removed": "Đã xóa khỏi yêu thích",
+      "error": "Lỗi khi cập nhật yêu thích"
+    },
+    "batchDelete": {
+      "success": "Đã xóa thành công {{count}} mục",
+      "partial": "Đã xóa {{success}}/{{total}} mục. {{failed}} mục không thể xóa.",
+      "error": "Lỗi khi xóa các mục"
+    },
+    "batchMove": {
+      "success": "Đã di chuyển thành công {{count}} mục",
+      "partial": "Đã di chuyển {{success}}/{{total}} mục. {{failed}} mục không thể di chuyển.",
+      "error": "Lỗi khi di chuyển các mục"
+    }
+  },
   "messages": {
     "title": "Tin nhắn",
     "emptyChat": {

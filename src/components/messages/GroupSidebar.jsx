@@ -140,12 +140,12 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
   // Helpers
   const stripTsPrefix = (nameOrUrl) => {
     try {
-      const decoded = decodeURIComponent(nameOrUrl||'');
+      const decoded = decodeURIComponent(nameOrUrl || '');
       const lastSlash = decoded.lastIndexOf('/') + 1;
       const last = decoded.substring(lastSlash);
       const hyphen = last.indexOf('-');
-      const leading = hyphen>0 ? last.substring(0, hyphen) : '';
-      if (/^\d{10,17}$/.test(leading)) return last.substring(hyphen+1) || last;
+      const leading = hyphen > 0 ? last.substring(0, hyphen) : '';
+      if (/^\d{10,17}$/.test(leading)) return last.substring(hyphen + 1) || last;
       return last || decoded;
     } catch { return nameOrUrl || 'Tệp'; }
   };
@@ -168,7 +168,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         return t === 'FILE';
       });
       for (const m of filtered) {
-        const t = (m.type||'TEXT').toUpperCase();
+        const t = (m.type || 'TEXT').toUpperCase();
         if (type === 'media') {
           collected.push({ id: m.id || m._id, url: m.content, type: t, sentAt: m.sentAt || m.timestamp, senderId: m.senderId });
         } else {
@@ -187,7 +187,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     setLoadingMedia(true);
     try {
       const resp = await chatService.getLatestByType(conversation.id, 'MEDIA', 8, null);
-      const list = (resp?.messages || []).map(m => ({ id: m.id || m._id, url: m.content, type: (m.type||'').toUpperCase(), sentAt: m.sentAt || m.timestamp, senderId: m.senderId }));
+      const list = (resp?.messages || []).map(m => ({ id: m.id || m._id, url: m.content, type: (m.type || '').toUpperCase(), sentAt: m.sentAt || m.timestamp, senderId: m.senderId }));
       setMediaItems(list);
       setMediaHasMore(!!resp?.hasMore);
       setMediaCursor(resp?.nextCursor || null);
@@ -260,13 +260,13 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     try {
       setSearchLoading(true);
       const result = await chatService.searchMessages(conversation.id, query, pageNum, 10);
-      
+
       if (pageNum === 0) {
         setSearchResults(result.messages || []);
       } else {
         setSearchResults(prev => [...prev, ...(result.messages || [])]);
       }
-      
+
       setSearchHasMore(result.hasMore || false);
       setSearchTotal(result.total || 0);
       setSearchPage(pageNum);
@@ -297,7 +297,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
@@ -320,12 +320,12 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
     try {
       setLoadingMedia(true);
       const resp = await chatService.getLatestByType(conversation.id, 'MEDIA', 8, mediaCursor);
-      const more = (resp?.messages || []).map(m => ({ id: m.id || m._id, url: m.content, type: (m.type||'').toUpperCase(), sentAt: m.sentAt || m.timestamp, senderId: m.senderId }));
+      const more = (resp?.messages || []).map(m => ({ id: m.id || m._id, url: m.content, type: (m.type || '').toUpperCase(), sentAt: m.sentAt || m.timestamp, senderId: m.senderId }));
       setMediaItems(prev => {
         const exist = new Set(prev.map(x => x.id));
         const dedup = more.filter(x => !exist.has(x.id));
         const next = [...prev, ...dedup];
-        next.sort((a,b) => new Date(b.sentAt) - new Date(a.sentAt));
+        next.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
         return next;
       });
       setMediaCursor(resp?.nextCursor || null);
@@ -344,7 +344,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         const exist = new Set(prev.map(x => x.id));
         const dedup = more.filter(x => !exist.has(x.id));
         const next = [...prev, ...dedup];
-        next.sort((a,b) => new Date(b.sentAt) - new Date(a.sentAt));
+        next.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
         return next;
       });
       setFileCursor(resp?.nextCursor || null);
@@ -363,57 +363,57 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       </div>
       <div className="flex-1 overflow-y-auto bg-background">
         <div className="p-4 flex flex-col items-center gap-3">
-        <div className="relative">
-          <Avatar src={isDirect ? getUserImage(peerId) : (conversation?.avatarUrl || "")} name={isDirect ? getUserName(peerId) : (conversation?.name || conversation?.id)} size={16} />
-          {!isDirect && isOwner && (
-            <button onClick={handlePickAvatar} className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50 shadow" disabled={uploading} title={t('messages.sidebar.groupAvatar')}>
-              {uploading ? <span className="text-xs">...</span> : <Camera className="w-4 h-4" />}
-            </button>
-          )}
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-        </div>
-
-        {isDirect ? (
-          <div className="w-full flex items-center justify-center">
-            <div className="text-lg font-semibold truncate text-center text-foreground">{getUserName(peerId)}</div>
+          <div className="relative">
+            <Avatar src={isDirect ? getUserImage(peerId) : (conversation?.avatarUrl || "")} name={isDirect ? getUserName(peerId) : (conversation?.name || conversation?.id)} size={16} />
+            {!isDirect && isOwner && (
+              <button onClick={handlePickAvatar} className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50 shadow" disabled={uploading} title={t('messages.sidebar.groupAvatar')}>
+                {uploading ? <span className="text-xs">...</span> : <Camera className="w-4 h-4" />}
+              </button>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </div>
-        ) : (
-          editingName ? (
-            <div className="w-full flex items-center gap-2">
-              <input className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground" value={name} onChange={(e) => setName(e.target.value)} />
-              <button onClick={handleSaveName} className="px-3 py-2 bg-primary text-primary-foreground rounded" title={t('ui.common.save')}>{t('ui.common.save')}</button>
-              <button onClick={() => { setEditingName(false); setName(conversation?.name || ""); }} className="px-3 py-2 border border-border rounded" title={t('ui.common.cancel')}>{t('ui.common.cancel')}</button>
+
+          {isDirect ? (
+            <div className="w-full flex items-center justify-center">
+              <div className="text-lg font-semibold truncate text-center text-foreground">{getUserName(peerId)}</div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="text-lg font-semibold text-foreground">{conversation?.name || t('messages.group.groupName')}</div>
-              {isOwner && (
-                <button onClick={() => setEditingName(true)} className="p-2 rounded-full hover:bg-muted text-muted-foreground" title={t('messages.sidebar.editGroupName')}>
-                  <Edit className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )
-        )}
-        {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-3 w-full">
-          <button onClick={handleToggleNotifications} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted">
-            {notificationsEnabled ? <Bell className="w-4 h-4 text-foreground" /> : <BellOff className="w-4 h-4 text-foreground" />}
-            <span className="text-xs text-foreground">{notificationsEnabled ? t('messages.conversation.muteNotifications') : t('messages.conversation.unmuteNotifications')}</span>
-          </button>
-          <button onClick={handleTogglePin} className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted ${isPinned ? 'text-foreground' : 'text-foreground'}`}>
-            <Pin className="w-4 h-4" />
-            <span className="text-xs">{isPinned ? t('messages.conversation.unpin') : t('messages.conversation.pin')}</span>
-          </button>
-          <button onClick={handleClearMyMessages} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted text-destructive">
-            <Trash2 className="w-4 h-4" />
-            <span className="text-xs">{t('messages.sidebar.clearMessages')}</span>
-          </button>
-        </div>
+            editingName ? (
+              <div className="w-full flex items-center gap-2">
+                <input className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground" value={name} onChange={(e) => setName(e.target.value)} />
+                <button onClick={handleSaveName} className="px-3 py-2 bg-primary text-primary-foreground rounded" title={t('ui.common.save')}>{t('ui.common.save')}</button>
+                <button onClick={() => { setEditingName(false); setName(conversation?.name || ""); }} className="px-3 py-2 border border-border rounded" title={t('ui.common.cancel')}>{t('ui.common.cancel')}</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="text-lg font-semibold text-foreground">{conversation?.name || t('messages.group.groupName')}</div>
+                {isOwner && (
+                  <button onClick={() => setEditingName(true)} className="p-2 rounded-full hover:bg-muted text-muted-foreground" title={t('messages.sidebar.editGroupName')}>
+                    <Edit className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )
+          )}
+          {/* Quick actions */}
+          <div className="grid grid-cols-3 gap-3 w-full">
+            <button onClick={handleToggleNotifications} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted">
+              {notificationsEnabled ? <Bell className="w-4 h-4 text-foreground" /> : <BellOff className="w-4 h-4 text-foreground" />}
+              <span className="text-xs text-foreground">{notificationsEnabled ? t('messages.conversation.muteNotifications') : t('messages.conversation.unmuteNotifications')}</span>
+            </button>
+            <button onClick={handleTogglePin} className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted ${isPinned ? 'text-foreground' : 'text-foreground'}`}>
+              <Pin className="w-4 h-4" />
+              <span className="text-xs">{isPinned ? t('messages.conversation.unpin') : t('messages.conversation.pin')}</span>
+            </button>
+            <button onClick={handleClearMyMessages} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted text-destructive">
+              <Trash2 className="w-4 h-4" />
+              <span className="text-xs">{t('messages.sidebar.clearMessages')}</span>
+            </button>
+          </div>
 
           {/* Search Messages */}
           <div className="w-full mt-3 border-t border-border pt-3">
-            <button onClick={() => setOpenSearchSection(o=>!o)} className="w-full flex items-center justify-between text-foreground">
+            <button onClick={() => setOpenSearchSection(o => !o)} className="w-full flex items-center justify-between text-foreground">
               <div className="text-sm font-semibold flex items-center gap-2"><Search className="w-4 h-4" />{t('messages.sidebar.searchMessages')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openSearchSection ? 'rotate-180' : ''}`} />
             </button>
@@ -440,7 +440,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                     )}
                   </button>
                 </form>
-                
+
                 {searchResults.length > 0 && (
                   <div className="space-y-2">
                     <div className="text-xs text-muted-foreground">
@@ -458,10 +458,10 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                           }}
                         >
                           <div className="flex items-start gap-2">
-                            <Avatar 
-                              src={getUserImage?.(result.senderId)} 
-                              name={getUserName(result.senderId)} 
-                              size={6} 
+                            <Avatar
+                              src={getUserImage?.(result.senderId)}
+                              name={getUserName(result.senderId)}
+                              size={6}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between mb-1">
@@ -472,7 +472,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                                   {formatTime(result.sentAt)}
                                 </div>
                               </div>
-                              <div 
+                              <div
                                 className="text-xs text-foreground line-clamp-2"
                                 dangerouslySetInnerHTML={{
                                   __html: highlightKeyword(result.snippet || result.content || '', searchQuery)
@@ -494,7 +494,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                     )}
                   </div>
                 )}
-                
+
                 {searchQuery && searchResults.length === 0 && !searchLoading && (
                   <div className="text-center py-4 text-xs text-muted-foreground">
                     {t('messages.search.noResults')}
@@ -506,7 +506,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
 
           {/* Images/Videos */}
           <div className="w-full mt-3 border-t border-border pt-3">
-            <button onClick={() => setOpenImages(o=>!o)} className="w-full flex items-center justify-between text-foreground">
+            <button onClick={() => setOpenImages(o => !o)} className="w-full flex items-center justify-between text-foreground">
               <div className="text-sm font-semibold flex items-center gap-2"><ImageIcon className="w-4 h-4" />{t('messages.sidebar.media')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openImages ? 'rotate-180' : ''}`} />
             </button>
@@ -542,14 +542,14 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             )}
             <div className="mt-3">
               <button onClick={loadMoreMedia} disabled={!mediaHasMore || loadingMedia} className="w-full text-center py-2 text-sm border border-border rounded disabled:opacity-50 text-foreground">
-                {loadingMedia ? t('ui.common.loading') : mediaHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore') }
+                {loadingMedia ? t('ui.common.loading') : mediaHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore')}
               </button>
             </div>
           </div>
 
           {/* Files */}
           <div className="w-full mt-3 border-t border-border pt-3">
-            <button onClick={() => setOpenFiles(o=>!o)} className="w-full flex items-center justify-between text-foreground">
+            <button onClick={() => setOpenFiles(o => !o)} className="w-full flex items-center justify-between text-foreground">
               <div className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4" />{t('messages.sidebar.files')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openFiles ? 'rotate-180' : ''}`} />
             </button>
@@ -585,14 +585,14 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             )}
             <div className="mt-3">
               <button onClick={loadMoreFiles} disabled={!fileHasMore || loadingFiles} className="w-full text-center py-2 text-sm border border-border rounded disabled:opacity-50 text-foreground">
-                {loadingFiles ? t('ui.common.loading') : fileHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore') }
+                {loadingFiles ? t('ui.common.loading') : fileHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore')}
               </button>
             </div>
           </div>
 
           {/* Mock sections: Links */}
           <div className="w-full mt-3 border-t border-border pt-3">
-            <button onClick={() => setOpenLinks(o=>!o)} className="w-full flex items-center justify-between text-foreground">
+            <button onClick={() => setOpenLinks(o => !o)} className="w-full flex items-center justify-between text-foreground">
               <div className="text-sm font-semibold flex items-center gap-2"><LinkIcon className="w-4 h-4" />{t('messages.sidebar.links')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openLinks ? 'rotate-180' : ''}`} />
             </button>

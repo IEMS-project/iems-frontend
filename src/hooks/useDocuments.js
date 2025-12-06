@@ -1,10 +1,12 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { documentService } from "../services/documentService";
 import { getStoredTokens } from "../lib/api";
 import { toast } from "sonner";
 import { useBreadcrumb } from "../context/BreadcrumbContext";
 
 export function useDocuments() {
+  const { t } = useTranslation();
   const [folders, setFolders] = useState([]);
   const [allFolders, setAllFolders] = useState([]);
   const [files, setFiles] = useState([]);
@@ -90,8 +92,8 @@ export function useDocuments() {
   // Update breadcrumb
   useEffect(() => {
     const breadcrumbs = [
-      { label: "Trang chủ", to: "/" },
-      { label: "Tài liệu", to: "/documents" },
+      { label: t('breadcrumb.home'), to: "/" },
+      { label: t('documents.title'), to: "/documents" },
     ];
 
     if (currentPath.length > 0) {
@@ -111,7 +113,7 @@ export function useDocuments() {
     return () => {
       setCustomBreadcrumbs(null);
     };
-  }, [currentPath, setCustomBreadcrumbs]);
+  }, [currentPath, setCustomBreadcrumbs, t]);
 
   const idToFolder = useMemo(
     () => new Map(allFolders.map((f) => [f.id, f])),
@@ -212,11 +214,11 @@ export function useDocuments() {
     const directionIcon = sortDirection === "asc" ? "↑" : "↓";
     switch (sortBy) {
       case "name":
-        return `Tên ${directionIcon}`;
+        return `${t('documents.header.sortByName')} ${directionIcon}`;
       case "date":
-        return `Ngày ${directionIcon}`;
+        return `${t('documents.header.sortByDate')} ${directionIcon}`;
       case "size":
-        return `Dung lượng ${directionIcon}`;
+        return `${t('documents.header.sortBySize')} ${directionIcon}`;
       default:
         return directionIcon;
     }
@@ -272,10 +274,10 @@ export function useDocuments() {
       setNewFolderName("");
       setIsCreateOpen(false);
       loadFolderContents();
-      toast.success("Thư mục đã được tạo thành công");
+      toast.success(t('documents.createFolder.success'));
     } catch (error) {
       console.error("Error creating folder:", error);
-      toast.error(error?.message || "Lỗi khi tạo thư mục");
+      toast.error(error?.message || t('documents.createFolder.error'));
     }
   }
 
@@ -287,10 +289,10 @@ export function useDocuments() {
         await documentService.uploadFile(currentFolderId, file);
       }
       loadFolderContents();
-      toast.success(`Đã tải lên ${fileList.length} tệp thành công`);
+      toast.success(t('documents.upload.successMultiple', { count: fileList.length }));
     } catch (error) {
       console.error("Error uploading files:", error);
-      toast.error(error?.message || "Lỗi khi tải tệp lên");
+      toast.error(error?.message || t('documents.upload.error'));
     }
   }
 
@@ -313,14 +315,14 @@ export function useDocuments() {
       setFolders((prev) => updateItem(prev));
       setFiles((prev) => updateItem(prev));
 
-      const action = result ? "thêm" : "xóa";
-      const itemType = type === "folder" ? "thư mục" : "tệp";
+      const action = result ? t('documents.favorite.added') : t('documents.favorite.removed');
+      const itemType = type === "folder" ? t('documents.types.folder') : t('documents.types.file');
       toast.success(
-        `Đã ${action} ${itemType} '${item.name}' ${result ? "vào" : "khỏi"} mục yêu thích`
+        `${action} ${itemType} '${item.name}'`
       );
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      toast.error(error?.message || "Lỗi khi cập nhật yêu thích");
+      toast.error(error?.message || t('documents.favorite.error'));
     }
   }
 
@@ -347,10 +349,10 @@ export function useDocuments() {
       }
       loadFolderContents();
       setDeleteItem(null);
-      toast.success("Đã xóa thành công");
+      toast.success(t('documents.delete.success'));
     } catch (error) {
       console.error("Error deleting item:", error);
-      toast.error(error?.message || "Lỗi khi xóa");
+      toast.error(error?.message || t('documents.delete.error'));
     }
   }
 
@@ -363,10 +365,10 @@ export function useDocuments() {
         permission
       );
       setShareItem(null);
-      toast.success("Chia sẻ thành công");
+      toast.success(t('documents.share.success'));
     } catch (error) {
       console.error("Error sharing:", error);
-      toast.error(error?.message || "Lỗi khi chia sẻ");
+      toast.error(error?.message || t('documents.share.error'));
     }
   }
 
@@ -460,14 +462,18 @@ export function useDocuments() {
 
       if (result.failureCount > 0) {
         toast.warning(
-          `Đã xóa ${result.successCount}/${result.totalRequested} mục. ${result.failureCount} mục không thể xóa.`
+          t('documents.batchDelete.partial', {
+            success: result.successCount,
+            total: result.totalRequested,
+            failed: result.failureCount
+          })
         );
       } else {
-        toast.success(`Đã xóa thành công ${result.successCount} mục`);
+        toast.success(t('documents.batchDelete.success', { count: result.successCount }));
       }
     } catch (error) {
       console.error("Error batch deleting:", error);
-      toast.error(error?.message || "Lỗi khi xóa các mục");
+      toast.error(error?.message || t('documents.batchDelete.error'));
     }
   }
 
@@ -499,14 +505,18 @@ export function useDocuments() {
 
       if (result.failureCount > 0) {
         toast.warning(
-          `Đã di chuyển ${result.successCount}/${result.totalRequested} mục. ${result.failureCount} mục không thể di chuyển.`
+          t('documents.batchMove.partial', {
+            success: result.successCount,
+            total: result.totalRequested,
+            failed: result.failureCount
+          })
         );
       } else {
-        toast.success(`Đã di chuyển thành công ${result.successCount} mục`);
+        toast.success(t('documents.batchMove.success', { count: result.successCount }));
       }
     } catch (error) {
       console.error("Error batch moving:", error);
-      toast.error(error?.message || "Lỗi khi di chuyển các mục");
+      toast.error(error?.message || t('documents.batchMove.error'));
     }
   }
 

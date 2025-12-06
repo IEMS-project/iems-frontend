@@ -57,7 +57,7 @@ export default function ConversationList({
       // If both have same pinned status, sort by timestamp (newest first)
       const aTime = lastMessagesByConv?.current?.[a.id]?.timestamp || a.lastMessage?.sentAt || a.updatedAt || new Date(0);
       const bTime = lastMessagesByConv?.current?.[b.id]?.timestamp || b.lastMessage?.sentAt || b.updatedAt || new Date(0);
-      
+
       return new Date(bTime).getTime() - new Date(aTime).getTime();
     });
   }, [searchQuery, conversations, currentUserId, getConversationDisplayName, lastMessagesByConv, uiTick]);
@@ -130,7 +130,7 @@ export default function ConversationList({
       console.error('Error toggling notification settings:', error);
     }
   };
-  
+
   const handleDeleteGroup = (conversationId) => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (!conversation) return;
@@ -285,13 +285,12 @@ export default function ConversationList({
               onMouseEnter={() => setHoveredConversation(c.id)}
               onMouseLeave={() => setHoveredConversation(null)}
               onContextMenu={(e) => handleContextMenu(e, c.id)}
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${
-                isSelected 
-                  ? 'bg-muted/80' 
-                  : isHovered 
-                    ? 'bg-muted/40' 
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${isSelected
+                  ? 'bg-muted/80'
+                  : isHovered
+                    ? 'bg-muted/40'
                     : ''
-              }`}
+                }`}
             >
               {/* Avatar */}
               <div className="flex-shrink-0">
@@ -341,11 +340,10 @@ export default function ConversationList({
                 {/* Bottom row: Message preview and unread badge */}
                 <div className="flex items-center justify-between gap-2">
                   <div
-                    className={`text-sm truncate flex-1 ${
-                      unread > 0
+                    className={`text-sm truncate flex-1 ${unread > 0
                         ? "text-foreground font-semibold"
                         : "text-muted-foreground font-medium"
-                    }`}
+                      }`}
                   >
                     {lastMessageSenderName && lastMessageSenderId !== currentUserId && (
                       <span className="mr-1">
