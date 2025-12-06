@@ -1135,5 +1135,68 @@
       "next": "Next",
       "close": "Close"
     }
+  },
+  "profile": {
+    "title": "Personal Profile",
+    "stats": {
+      "projectsCompleted": "Projects Completed",
+      "tasksCompleted": "Tasks Completed",
+      "departmentsJoined": "Departments Joined",
+      "hoursWorked": "Hours Worked"
+    },
+    "basicInfo": "Basic Information",
+    "detailInfo": "Detailed Information",
+    "fields": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "address": "Address",
+      "bankAccountNumber": "Bank Account Number",
+      "bankName": "Bank Name",
+      "personalID": "Personal ID",
+      "dob": "Date of Birth",
+      "gender": "Gender",
+      "contractType": "Contract Type",
+      "startDate": "Start Date",
+      "role": "Role",
+      "joinedFrom": "Joined from",
+      "lastUpdated": "Last Updated"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "contractType": {
+      "fulltime": "Full-time",
+      "parttime": "Part-time",
+      "contract": "Contract"
+    },
+    "actions": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "changeAvatar": "Change Avatar"
+    },
+    "messages": {
+      "loading": "Processing...",
+      "loadFailed": "Failed to load profile",
+      "updateSuccess": "Profile updated successfully",
+      "updateFailed": "Update failed",
+      "avatarUploadSuccess": "Avatar updated successfully",
+      "avatarUploadFailed": "Failed to upload avatar"
+    },
+    "placeholders": {
+      "enterEmail": "Enter email",
+      "enterPhone": "Enter phone number",
+      "enterAddress": "Enter address",
+      "enterBankAccount": "Enter bank account number",
+      "enterBankName": "Enter bank name"
+    }
+  },
+  "userProfile": {
+    "account": "Account",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "logout": "Logout"
   }
 }

@@ -28,7 +28,7 @@ export default function PermissionFormDialog({
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>
-                        {mode === "create" 
+                        {mode === "create"
                             ? t("admin.accessControl.permissions.createPermission")
                             : t("admin.accessControl.permissions.updatePermission")}
                     </DialogTitle>

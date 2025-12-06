@@ -1135,5 +1135,68 @@
       "next": "Tiếp theo",
       "close": "Đóng"
     }
+  },
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "stats": {
+      "projectsCompleted": "Dự án hoàn thành",
+      "tasksCompleted": "Nhiệm vụ hoàn thành",
+      "departmentsJoined": "Phòng ban tham gia",
+      "hoursWorked": "Giờ làm việc"
+    },
+    "basicInfo": "Thông tin cơ bản",
+    "detailInfo": "Thông tin chi tiết",
+    "fields": {
+      "fullName": "Họ và tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "address": "Địa chỉ",
+      "bankAccountNumber": "Số tài khoản",
+      "bankName": "Ngân hàng",
+      "personalID": "CMND/CCCD",
+      "dob": "Ngày sinh",
+      "gender": "Giới tính",
+      "contractType": "Loại hợp đồng",
+      "startDate": "Ngày bắt đầu",
+      "role": "Chức vụ",
+      "joinedFrom": "Tham gia từ",
+      "lastUpdated": "Cập nhật lần cuối"
+    },
+    "gender": {
+      "male": "Nam",
+      "female": "Nữ"
+    },
+    "contractType": {
+      "fulltime": "Toàn thời gian",
+      "parttime": "Bán thời gian",
+      "contract": "Hợp đồng"
+    },
+    "actions": {
+      "edit": "Chỉnh sửa",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "changeAvatar": "Thay đổi ảnh đại diện"
+    },
+    "messages": {
+      "loading": "Đang xử lý...",
+      "loadFailed": "Tải hồ sơ thất bại",
+      "updateSuccess": "Cập nhật hồ sơ thành công",
+      "updateFailed": "Cập nhật thất bại",
+      "avatarUploadSuccess": "Cập nhật ảnh đại diện thành công",
+      "avatarUploadFailed": "Tải ảnh thất bại"
+    },
+    "placeholders": {
+      "enterEmail": "Nhập email",
+      "enterPhone": "Nhập số điện thoại",
+      "enterAddress": "Nhập địa chỉ",
+      "enterBankAccount": "Nhập số tài khoản",
+      "enterBankName": "Nhập ngân hàng"
+    }
+  },
+  "userProfile": {
+    "account": "Tài khoản",
+    "settings": "Cài đặt",
+    "notifications": "Thông báo",
+    "logout": "Đăng xuất"
   }
 }
