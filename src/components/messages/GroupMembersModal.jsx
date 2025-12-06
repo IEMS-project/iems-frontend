@@ -4,8 +4,10 @@ import Input from "../ui/Input";
 import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
 import { chatService } from "../../services/chatService";
+import { useTranslation } from "react-i18next";
 
 export default function GroupMembersModal({ open, onClose, conversationId, allUsers = [], currentUserId, onChanged }) {
+    const { t } = useTranslation();
     const [members, setMembers] = useState([]);
     const [query, setQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
@@ -81,13 +83,13 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
         <Modal
             open={open}
             onClose={onClose}
-            title="Thành viên nhóm"
+            title={t('messages.group.membersTitle')}
             footer={
                 <div className="flex items-center justify-between w-full">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Đã chọn {selectedIds.size}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">{t('messages.group.selected', { count: selectedIds.size })}</div>
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={onClose} disabled={saving || loadingMembers}>Đóng</Button>
-                        <Button onClick={handleSave} disabled={saving || loadingMembers}>Lưu thay đổi</Button>
+                        <Button variant="secondary" onClick={onClose} disabled={saving || loadingMembers}>{t('messages.group.close')}</Button>
+                        <Button onClick={handleSave} disabled={saving || loadingMembers}>{t('messages.group.saveChanges')}</Button>
                     </div>
                 </div>
             }
@@ -96,7 +98,7 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
                 <Input
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="Tìm kiếm thành viên..."
+                    placeholder={t('messages.group.searchMembers')}
                     className="w-full"
                 />
                 <UserSelectionPanel

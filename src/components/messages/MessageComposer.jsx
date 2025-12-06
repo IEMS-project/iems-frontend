@@ -11,6 +11,7 @@ import ReplyInput from "../messages/ReplyInput";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
+import { useTranslation } from "react-i18next";
 
 export default function MessageComposer({
   content,
@@ -22,6 +23,7 @@ export default function MessageComposer({
   onCancelReply,
   getUserName,
 }) {
+  const { t } = useTranslation();
   const textareaRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -107,7 +109,7 @@ export default function MessageComposer({
                   return sizeMB <= 20;
                 });
                 if (valid.length < files.length) {
-                  toast.warning('Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).');
+                  toast.warning(t('messages.composer.fileSizeWarning', 'Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).'));
                 }
                 handlePickFiles(valid);
                 e.target.value = '';
@@ -137,7 +139,7 @@ export default function MessageComposer({
                       </video>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[10px] px-1 text-center text-muted-foreground break-all">
-                        {(x.file.name || 'Tệp')}
+                        {(x.file.name || t('messages.composer.file', 'Tệp'))}
                       </div>
                     )}
                     <button onClick={() => handleRemoveFile(x.id)} className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded">x</button>
@@ -148,7 +150,7 @@ export default function MessageComposer({
             <Textarea
               ref={textareaRef}
               className="w-full px-4 py-2 pr-12 rounded-xl resize-none min-h-[48px] max-h-[96px]"
-              placeholder={replyingTo ? "Trả lời tin nhắn..." : "Nhập tin nhắn..."}
+              placeholder={replyingTo ? t('messages.composer.replyPlaceholder') : t('messages.composer.placeholder')}
               value={content}
               rows={1}
               onChange={(e) => {

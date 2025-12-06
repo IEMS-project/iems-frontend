@@ -3,8 +3,10 @@ import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
+import { useTranslation } from "react-i18next";
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
+    const { t } = useTranslation();
     const [name, setName] = useState("");
     const [query, setQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
@@ -42,28 +44,28 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
         <Modal
             open={open}
             onClose={onClose}
-            title="Tạo nhóm mới"
+            title={t('messages.group.createTitle')}
             footer={
                 <div className="flex justify-between items-center w-full">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Đã chọn {selectedIds.size}/100</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">{t('messages.group.selected', { count: selectedIds.size })}</div>
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={onClose}>Hủy</Button>
-                        <Button onClick={handleSubmit} disabled={!name.trim() || selectedIds.size < 2}>Tạo nhóm</Button>
+                        <Button variant="secondary" onClick={onClose}>{t('messages.group.cancel')}</Button>
+                        <Button onClick={handleSubmit} disabled={!name.trim() || selectedIds.size < 2}>{t('messages.group.create')}</Button>
                     </div>
                 </div>
             }
         >
             <div className="space-y-4">
                 <Input
-                    label="Tên nhóm"
+                    label={t('messages.group.groupName')}
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Nhập tên nhóm"
+                    placeholder={t('messages.group.groupNamePlaceholder')}
                 />
                 <Input
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="Tìm kiếm thành viên..."
+                    placeholder={t('messages.group.searchMembers')}
                     className="w-full"
                 />
                 <UserSelectionPanel

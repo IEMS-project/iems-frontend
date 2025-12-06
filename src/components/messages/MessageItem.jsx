@@ -13,6 +13,7 @@ import {
     X,
     Check
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Simple in-memory cache for file sizes keyed by URL
 const fileSizeCache = new Map();
@@ -40,6 +41,7 @@ export default function MessageItem({
     onMessageUpdate,
     onJumpToMessage
 }) {
+    const { t } = useTranslation();
     const [showMenu, setShowMenu] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showReactionModal, setShowReactionModal] = useState(false);
@@ -313,18 +315,18 @@ export default function MessageItem({
     const renderReplyPreview = () => {
         const content = message.replyToContent || '';
         const type = (message.replyToType || '').toUpperCase();
-        if (type === 'IMAGE') return <span className="text-muted-foreground">[Ảnh]</span>;
-        if (type === 'VIDEO') return <span className="text-muted-foreground">[Video]</span>;
+        if (type === 'IMAGE') return <span className="text-muted-foreground">{t('messages.reply.image')}</span>;
+        if (type === 'VIDEO') return <span className="text-muted-foreground">{t('messages.reply.video')}</span>;
         if (type === 'FILE') {
             const name = stripTsPrefixFromUrl(content);
-            return <span className="text-muted-foreground">[Tệp] {name}</span>;
+            return <span className="text-muted-foreground">{t('messages.reply.file', { fileName: name })}</span>;
         }
         if (/^https?:\/\//i.test(content)) {
             const name = stripTsPrefixFromUrl(content);
             const ext = (name.split('.').pop() || '').toLowerCase();
-            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-muted-foreground">[Ảnh]</span>;
-            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-muted-foreground">[Video]</span>;
-            return <span className="text-muted-foreground">[Tệp] {name}</span>;
+            if (["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.image')}</span>;
+            if (["mp4","mov","m4v","webm","avi","mkv"].includes(ext)) return <span className="text-muted-foreground">{t('messages.reply.video')}</span>;
+            return <span className="text-muted-foreground">{t('messages.reply.file', { fileName: name })}</span>;
         }
         return <span className="text-muted-foreground">{content}</span>;
     };
@@ -335,8 +337,8 @@ export default function MessageItem({
 
     // Try to resolve file size for FILE messages
     useEffect(() => {
-        const t = (message.type || '').toUpperCase();
-        if (t !== 'FILE') {
+        const msgType = (message.type || '').toUpperCase();
+        if (msgType !== 'FILE') {
             setFileSizeText(null);
             return;
         }
@@ -389,7 +391,7 @@ export default function MessageItem({
                             if (/^\s+$/.test(token)) return token;
                             const name = getUserName?.(token);
                             if (name && name !== token && name !== 'unknown') return name;
-                            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return 'Người dùng';
+                            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) return t('messages.messageItem.user', 'Người dùng');
                             return token;
                         }).join('');
                     })()}
@@ -413,7 +415,7 @@ export default function MessageItem({
                             <div
                                 className="bg-muted rounded-lg p-2 border-l-2 border-border max-w-xs cursor-pointer hover:bg-muted/80 transition-colors"
                                 onClick={() => onJumpToMessage?.(message.replyToMessageId)}
-                                title="Nhấn để xem tin nhắn gốc"
+                                title={t('messages.messageItem.clickToViewOriginal', 'Nhấn để xem tin nhắn gốc')}
                             >
                                 <div className="text-foreground font-medium text-xs">
                                     {getUserName(message.replyToSenderId)}
@@ -450,7 +452,7 @@ export default function MessageItem({
                                 : (['IMAGE','VIDEO'].includes((message.type||'').toUpperCase()) ? 'bg-transparent' : 'bg-muted text-foreground')
                             }`}>
                             {isRecalled ? (
-                                <span className="text-sm">Tin nhắn đã được thu hồi</span>
+                                <span className="text-sm">{t('messages.messageItem.recalled')}</span>
                             ) : (
                                 <>
                                     {/* Sender name inside message bubble for others */}
@@ -461,8 +463,8 @@ export default function MessageItem({
                                     )}
                                     <div className="text-sm">
                                         {(() => {
-                                            const t = (message.type || '').toUpperCase();
-                                            if (t === 'IMAGE') {
+                                            const msgType = (message.type || '').toUpperCase();
+                                            if (msgType === 'IMAGE') {
                                                 return (
                                                     <div className="overflow-hidden rounded-xl border border-border bg-muted/50">
                                                         <img
@@ -475,7 +477,7 @@ export default function MessageItem({
                                                     </div>
                                                 );
                                             }
-                                            if (t === 'VIDEO') {
+                                            if (msgType === 'VIDEO') {
                                                 return (
                                                     <div className="overflow-hidden rounded-xl border border-border bg-black">
                                                         <video
@@ -489,9 +491,9 @@ export default function MessageItem({
                                                     </div>
                                                 );
                                             }
-                                            if (t === 'FILE') {
+                                            if (msgType === 'FILE') {
                                                 const url = message.content || '';
-                                                let name = 'Tệp đính kèm';
+                                                let name = t('messages.messageItem.fileAttachment', 'Tệp đính kèm');
                                                 try {
                                                     if (!url.startsWith('blob:')) {
                                                         const decoded = decodeURIComponent(url);
@@ -519,7 +521,7 @@ export default function MessageItem({
                                         })()}
                                     </div>
                                     {message.edited && (
-                                        <span className="text-xs opacity-70 ml-2">(đã chỉnh sửa)</span>
+                                        <span className="text-xs opacity-70 ml-2">{t('messages.messageItem.edited')}</span>
                                     )}
                                     {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
                                     {!(isMe && ['IMAGE','VIDEO'].includes((message.type||'').toUpperCase())) && (
@@ -561,7 +563,7 @@ export default function MessageItem({
                             >
                                 <button
                                     className="absolute top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded-full bg-card shadow-md border border-border"
-                                    title="Thả cảm xúc"
+                                    title={t('messages.messageItem.react', 'Thả cảm xúc')}
                                     style={{
                                         [isMe ? 'right' : 'right']: '12px'
                                     }}
@@ -583,7 +585,7 @@ export default function MessageItem({
                                                     key={emoji}
                                                     onClick={() => handleReaction(emoji)}
                                                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-xl transition-colors"
-                                                    title={`Thả cảm xúc ${emoji}`}
+                                                    title={t('messages.messageItem.reactWith', { emoji })}
                                                 >
                                                     {emoji}
                                                 </button>
@@ -605,7 +607,7 @@ export default function MessageItem({
                                         setShowMenu(false);
                                     }}
                                     className="p-1 hover:bg-muted rounded-full"
-                                    title="Trả lời"
+                                    title={t('messages.messageItem.reply')}
                                 >
                                     <Reply className="w-4 h-4 text-muted-foreground" />
                                 </button>
@@ -634,7 +636,7 @@ export default function MessageItem({
                                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                                             >
                                                 <Copy className="w-4 h-4" />
-                                                Copy tin nhắn
+                                                {t('messages.messageItem.copy')}
                                             </button>
 
                                             {/* Pin */}
@@ -643,7 +645,7 @@ export default function MessageItem({
                                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                                             >
                                                 <Pin className="w-4 h-4" />
-                                                {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                                                {message.pinned ? t('messages.messageItem.unpin') : t('messages.messageItem.pin')}
                                             </button>
                                             {/* Delete for me (red) */}
                                             <button
@@ -651,7 +653,7 @@ export default function MessageItem({
                                                 className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                                Xóa chỉ ở phía tôi
+                                                {t('messages.messageItem.deleteForMe')}
                                             </button>
 
                                             {isMe && (
@@ -660,7 +662,7 @@ export default function MessageItem({
                                                     className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-destructive"
                                                 >
                                                     <Undo2 className="w-4 h-4" />
-                                                    Thu hồi tin nhắn
+                                                    {t('messages.messageItem.recall')}
                                                 </button>
                                             )}
                                         </div>
@@ -700,7 +702,7 @@ export default function MessageItem({
                     <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-border">
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-border">
-                            <h3 className="text-lg font-semibold text-foreground">Biểu cảm</h3>
+                            <h3 className="text-lg font-semibold text-foreground">{t('messages.messageItem.reactions')}</h3>
                             <button
                                 onClick={() => setShowReactionModal(false)}
                                 className="text-muted-foreground hover:text-foreground"
@@ -745,7 +747,7 @@ export default function MessageItem({
                                     onClick={handleRemoveAllMyReactions}
                                     className="w-full px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors text-sm font-medium"
                                 >
-                                    Hủy tất cả biểu cảm của tôi
+                                    {t('messages.messageItem.removeAllMyReactions')}
                                 </button>
                             </div>
                         )}

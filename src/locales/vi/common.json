@@ -512,5 +512,160 @@
       "remainingHours": "Còn {{hours}} giờ {{minutes}} phút",
       "remainingDays": "Còn {{days}} ngày {{hours}} giờ {{minutes}} phút"
     }
+  },
+  "messages": {
+    "title": "Tin nhắn",
+    "emptyChat": {
+      "title": "Chọn cuộc trò chuyện",
+      "description": "Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu nhắn tin"
+    },
+    "header": {
+      "active": "Đang hoạt động",
+      "members": "{{count}} thành viên",
+      "searchMessages": "Tìm kiếm tin nhắn",
+      "manageMembers": "Quản lý thành viên",
+      "conversationInfo": "Thông tin cuộc trò chuyện"
+    },
+    "composer": {
+      "placeholder": "Nhập tin nhắn...",
+      "replyPlaceholder": "Trả lời tin nhắn...",
+      "send": "Gửi",
+      "file": "Tệp",
+      "fileSizeWarning": "Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB)."
+    },
+    "reply": {
+      "replyTo": "Trả lời {{name}}",
+      "cancelReply": "Hủy trả lời",
+      "image": "[Ảnh]",
+      "video": "[Video]",
+      "file": "[Tệp] {{fileName}}",
+      "fileShort": "[Tệp]"
+    },
+    "conversation": {
+      "createGroup": "Tạo nhóm",
+      "search": "Tìm kiếm...",
+      "searchPlaceholder": "Tìm người để nhắn...",
+      "noConversations": "Không có cuộc trò chuyện nào",
+      "loadingConversations": "Đang tải cuộc trò chuyện...",
+      "conversations": "Cuộc trò chuyện",
+      "noUsersFound": "Không tìm thấy người dùng",
+      "yesterday": "Hôm qua",
+      "pin": "Ghim",
+      "unpin": "Bỏ ghim",
+      "markAsUnread": "Đánh dấu chưa đọc",
+      "manuallyMarkedUnread": "Đánh dấu chưa đọc thủ công",
+      "muteNotifications": "Tắt thông báo",
+      "unmuteNotifications": "Bật thông báo",
+      "deleteGroup": "Xóa nhóm",
+      "onlyOwnerCanDelete": "Chỉ người tạo nhóm mới có thể xóa nhóm này",
+      "deleteGroupConfirm": "Bạn có chắc chắn muốn xóa nhóm này?",
+      "groupDeleted": "Nhóm đã được xóa thành công",
+      "deleteGroupError": "Không thể xóa nhóm. Vui lòng thử lại.",
+      "confirmDeleteTitle": "Xác nhận xóa nhóm",
+      "confirmDeleteDescription": "Bạn có chắc chắn muốn xóa nhóm \"{{name}}\"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.",
+      "thisGroup": "Nhóm này"
+    },
+    "group": {
+      "createTitle": "Tạo nhóm mới",
+      "groupName": "Tên nhóm",
+      "groupNamePlaceholder": "Nhập tên nhóm",
+      "searchMembers": "Tìm kiếm thành viên...",
+      "selected": "Đã chọn {{count}}/100",
+      "cancel": "Hủy",
+      "create": "Tạo nhóm",
+      "membersTitle": "Thành viên nhóm",
+      "saveChanges": "Lưu thay đổi",
+      "close": "Đóng"
+    },
+    "sidebar": {
+      "searchMessages": "Tìm kiếm tin nhắn",
+      "members": "Thành viên ({{count}})",
+      "groupName": "Tên nhóm",
+      "groupAvatar": "Ảnh đại diện nhóm",
+      "editGroupName": "Sửa tên nhóm",
+      "notificationsEnabled": "Bật thông báo",
+      "notificationsDisabled": "Tắt thông báo",
+      "pinned": "Đã ghim",
+      "unpinned": "Bỏ ghim",
+      "media": "Ảnh & Video",
+      "files": "Tệp tin",
+      "links": "Liên kết",
+      "clearMessages": "Xóa tin nhắn",
+      "clearMessagesConfirm": "Bạn có chắc chắn muốn xóa tất cả tin nhắn trong cuộc trò chuyện này?",
+      "loadMore": "Tải thêm",
+      "viewAll": "Xem tất cả",
+      "noMedia": "Chưa có ảnh/video",
+      "noFiles": "Chưa có tệp",
+      "noMore": "Hết",
+      "messagesCleared": "Đã xóa {{count}} tin nhắn trên máy bạn",
+      "clearMessagesError": "Không thể xóa lịch sử ngay lúc này",
+      "confirmClearTitle": "Xác nhận xóa tin nhắn",
+      "confirmClearDescription": "Xóa toàn bộ tin nhắn của cuộc trò chuyện này trên máy bạn?"
+    },
+    "messageItem": {
+      "reply": "Trả lời",
+      "forward": "Chuyển tiếp",
+      "copy": "Copy tin nhắn",
+      "pin": "Ghim tin nhắn",
+      "unpin": "Bỏ ghim",
+      "delete": "Xóa",
+      "deleteForMe": "Xóa chỉ ở phía tôi",
+      "recall": "Thu hồi tin nhắn",
+      "edit": "Chỉnh sửa",
+      "edited": "(đã chỉnh sửa)",
+      "recalled": "Tin nhắn đã được thu hồi",
+      "deleted": "Tin nhắn đã bị xóa",
+      "reactions": "Biểu cảm",
+      "user": "Người dùng",
+      "clickToViewOriginal": "Nhấn để xem tin nhắn gốc",
+      "fileAttachment": "Tệp đính kèm",
+      "react": "Thả cảm xúc",
+      "reactWith": "Thả cảm xúc {{emoji}}",
+      "removeAllMyReactions": "Hủy tất cả biểu cảm của tôi"
+    },
+    "messageList": {
+      "loadingOlder": "Đang tải tin nhắn cũ hơn...",
+      "loadingNewer": "Đang tải tin nhắn mới hơn...",
+      "returnToLatest": "Trở về hiện tại",
+      "noMessages": "Không có tin nhắn"
+    },
+    "search": {
+      "title": "Tìm kiếm tin nhắn",
+      "placeholder": "Nhập từ khóa...",
+      "search": "Tìm kiếm",
+      "results": "{{count}} kết quả",
+      "noResults": "Không tìm thấy kết quả",
+      "loadMore": "Tải thêm",
+      "emptyKeyword": "Nhập từ khóa để tìm kiếm tin nhắn"
+    },
+    "pinnedMessages": {
+      "title": "Tin nhắn đã ghim",
+      "viewAll": "Xem tất cả",
+      "noPinned": "Không có tin nhắn đã ghim",
+      "unpin": "Bỏ ghim",
+      "pinnedList": "Danh sách ghim ({{count}})",
+      "expand": "Mở rộng",
+      "collapse": "Thu gọn",
+      "message": "Tin nhắn",
+      "openPinnedList": "Mở danh sách ghim",
+      "morePinned": "+{{count}} ghim"
+    },
+    "typing": {
+      "typing": "đang nhập",
+      "and": "và",
+      "others": "người khác"
+    },
+    "media": {
+      "preview": "Xem trước",
+      "download": "Tải xuống",
+      "zoomIn": "Phóng to",
+      "zoomOut": "Thu nhỏ",
+      "rotateLeft": "Xoay trái",
+      "rotateRight": "Xoay phải",
+      "reset": "Đặt lại",
+      "previous": "Trước",
+      "next": "Tiếp theo",
+      "close": "Đóng"
+    }
   }
 }

@@ -7,8 +7,10 @@ import { X, Camera, Edit, Bell, BellOff, Trash2, Pin, ChevronDown, Image as Imag
 import MediaPreviewModal from "./MediaPreviewModal";
 import { toast } from "sonner";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import { useTranslation } from "react-i18next";
 
 export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, onConversationUpdated, onClose, onReplyMessage, onReply, onMessageClick, openSearch = false, onSearchOpened }) {
+  const { t } = useTranslation();
   const isOwner = conversation?.createdBy === currentUserId;
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(conversation?.name || "");
@@ -113,11 +115,11 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       }
       // Notify parent to refresh if needed
       onConversationUpdated && onConversationUpdated(conversation);
-      toast.success(`Đã xóa ${totalDeleted} tin nhắn trên máy bạn`);
+      toast.success(t('messages.sidebar.messagesCleared', { count: totalDeleted }));
       setClearMessagesDialogOpen(false);
     } catch (e) {
       console.error(e);
-      toast.error('Không thể xóa lịch sử ngay lúc này');
+      toast.error(t('messages.sidebar.clearMessagesError'));
       setClearMessagesDialogOpen(false);
     }
   };
@@ -354,8 +356,8 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
   return (
     <div className="w-80 border-l border-border h-full flex flex-col overflow-hidden bg-card">
       <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="font-semibold truncate text-foreground">Thông tin cuộc trò chuyện</div>
-        <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors" title="Đóng">
+        <div className="font-semibold truncate text-foreground">{t('messages.header.conversationInfo')}</div>
+        <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors" title={t('ui.common.close')}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -364,7 +366,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         <div className="relative">
           <Avatar src={isDirect ? getUserImage(peerId) : (conversation?.avatarUrl || "")} name={isDirect ? getUserName(peerId) : (conversation?.name || conversation?.id)} size={16} />
           {!isDirect && isOwner && (
-            <button onClick={handlePickAvatar} className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50 shadow" disabled={uploading} title="Đổi ảnh nhóm">
+            <button onClick={handlePickAvatar} className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50 shadow" disabled={uploading} title={t('messages.sidebar.groupAvatar')}>
               {uploading ? <span className="text-xs">...</span> : <Camera className="w-4 h-4" />}
             </button>
           )}
@@ -379,14 +381,14 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
           editingName ? (
             <div className="w-full flex items-center gap-2">
               <input className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground" value={name} onChange={(e) => setName(e.target.value)} />
-              <button onClick={handleSaveName} className="px-3 py-2 bg-primary text-primary-foreground rounded" title="Lưu tên">Lưu</button>
-              <button onClick={() => { setEditingName(false); setName(conversation?.name || ""); }} className="px-3 py-2 border border-border rounded" title="Hủy">Hủy</button>
+              <button onClick={handleSaveName} className="px-3 py-2 bg-primary text-primary-foreground rounded" title={t('ui.common.save')}>{t('ui.common.save')}</button>
+              <button onClick={() => { setEditingName(false); setName(conversation?.name || ""); }} className="px-3 py-2 border border-border rounded" title={t('ui.common.cancel')}>{t('ui.common.cancel')}</button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="text-lg font-semibold text-foreground">{conversation?.name || 'Nhóm'}</div>
+              <div className="text-lg font-semibold text-foreground">{conversation?.name || t('messages.group.groupName')}</div>
               {isOwner && (
-                <button onClick={() => setEditingName(true)} className="p-2 rounded-full hover:bg-muted text-muted-foreground" title="Sửa tên nhóm">
+                <button onClick={() => setEditingName(true)} className="p-2 rounded-full hover:bg-muted text-muted-foreground" title={t('messages.sidebar.editGroupName')}>
                   <Edit className="w-4 h-4" />
                 </button>
               )}
@@ -397,22 +399,22 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         <div className="grid grid-cols-3 gap-3 w-full">
           <button onClick={handleToggleNotifications} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted">
             {notificationsEnabled ? <Bell className="w-4 h-4 text-foreground" /> : <BellOff className="w-4 h-4 text-foreground" />}
-            <span className="text-xs text-foreground">{notificationsEnabled ? 'Tắt thông báo' : 'Bật thông báo'}</span>
+            <span className="text-xs text-foreground">{notificationsEnabled ? t('messages.conversation.muteNotifications') : t('messages.conversation.unmuteNotifications')}</span>
           </button>
           <button onClick={handleTogglePin} className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted ${isPinned ? 'text-foreground' : 'text-foreground'}`}>
             <Pin className="w-4 h-4" />
-            <span className="text-xs">{isPinned ? 'Bỏ ghim hội thoại' : 'Ghim hội thoại'}</span>
+            <span className="text-xs">{isPinned ? t('messages.conversation.unpin') : t('messages.conversation.pin')}</span>
           </button>
           <button onClick={handleClearMyMessages} className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded hover:bg-muted text-destructive">
             <Trash2 className="w-4 h-4" />
-            <span className="text-xs">Xóa tin nhắn</span>
+            <span className="text-xs">{t('messages.sidebar.clearMessages')}</span>
           </button>
         </div>
 
           {/* Search Messages */}
           <div className="w-full mt-3 border-t border-border pt-3">
             <button onClick={() => setOpenSearchSection(o=>!o)} className="w-full flex items-center justify-between text-foreground">
-              <div className="text-sm font-semibold flex items-center gap-2"><Search className="w-4 h-4" />Tìm kiếm tin nhắn</div>
+              <div className="text-sm font-semibold flex items-center gap-2"><Search className="w-4 h-4" />{t('messages.sidebar.searchMessages')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openSearchSection ? 'rotate-180' : ''}`} />
             </button>
             {openSearchSection && (
@@ -423,7 +425,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Nhập từ khóa..."
+                    placeholder={t('messages.search.placeholder')}
                     className="flex-1 px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground text-sm"
                   />
                   <button
@@ -442,7 +444,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                 {searchResults.length > 0 && (
                   <div className="space-y-2">
                     <div className="text-xs text-muted-foreground">
-                      Tìm thấy {searchTotal} kết quả
+                      {t('messages.search.results', { count: searchTotal })}
                     </div>
                     <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
                       {searchResults.map((result) => (
@@ -487,7 +489,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                         disabled={searchLoading}
                         className="w-full text-center py-1.5 text-xs border border-border rounded disabled:opacity-50 text-foreground hover:bg-muted"
                       >
-                        {searchLoading ? 'Đang tải...' : 'Tải thêm'}
+                        {searchLoading ? t('ui.common.loading') : t('messages.sidebar.loadMore')}
                       </button>
                     )}
                   </div>
@@ -495,7 +497,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                 
                 {searchQuery && searchResults.length === 0 && !searchLoading && (
                   <div className="text-center py-4 text-xs text-muted-foreground">
-                    Không tìm thấy kết quả
+                    {t('messages.search.noResults')}
                   </div>
                 )}
               </div>
@@ -505,7 +507,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
           {/* Images/Videos */}
           <div className="w-full mt-3 border-t border-border pt-3">
             <button onClick={() => setOpenImages(o=>!o)} className="w-full flex items-center justify-between text-foreground">
-              <div className="text-sm font-semibold flex items-center gap-2"><ImageIcon className="w-4 h-4" />Ảnh/Video</div>
+              <div className="text-sm font-semibold flex items-center gap-2"><ImageIcon className="w-4 h-4" />{t('messages.sidebar.media')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openImages ? 'rotate-180' : ''}`} />
             </button>
             {openImages && (
@@ -532,7 +534,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                       )
                     ))}
                     {mediaItems.length === 0 && (
-                      <div className="col-span-4 text-center text-xs text-muted-foreground">Chưa có ảnh/video</div>
+                      <div className="col-span-4 text-center text-xs text-muted-foreground">{t('messages.sidebar.noMedia')}</div>
                     )}
                   </div>
                 )}
@@ -540,7 +542,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             )}
             <div className="mt-3">
               <button onClick={loadMoreMedia} disabled={!mediaHasMore || loadingMedia} className="w-full text-center py-2 text-sm border border-border rounded disabled:opacity-50 text-foreground">
-                {loadingMedia ? 'Đang tải...' : mediaHasMore ? 'Xem thêm' : 'Hết' }
+                {loadingMedia ? t('ui.common.loading') : mediaHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore') }
               </button>
             </div>
           </div>
@@ -548,7 +550,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
           {/* Files */}
           <div className="w-full mt-3 border-t border-border pt-3">
             <button onClick={() => setOpenFiles(o=>!o)} className="w-full flex items-center justify-between text-foreground">
-              <div className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4" />File</div>
+              <div className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4" />{t('messages.sidebar.files')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openFiles ? 'rotate-180' : ''}`} />
             </button>
             {openFiles && (
@@ -575,7 +577,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                       </a>
                     ))}
                     {fileItems.length === 0 && (
-                      <div className="text-center text-xs text-muted-foreground">Chưa có tệp</div>
+                      <div className="text-center text-xs text-muted-foreground">{t('messages.sidebar.noFiles')}</div>
                     )}
                   </>
                 )}
@@ -583,7 +585,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             )}
             <div className="mt-3">
               <button onClick={loadMoreFiles} disabled={!fileHasMore || loadingFiles} className="w-full text-center py-2 text-sm border border-border rounded disabled:opacity-50 text-foreground">
-                {loadingFiles ? 'Đang tải...' : fileHasMore ? 'Xem thêm' : 'Hết' }
+                {loadingFiles ? t('ui.common.loading') : fileHasMore ? t('messages.sidebar.loadMore') : t('messages.sidebar.noMore') }
               </button>
             </div>
           </div>
@@ -591,7 +593,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
           {/* Mock sections: Links */}
           <div className="w-full mt-3 border-t border-border pt-3">
             <button onClick={() => setOpenLinks(o=>!o)} className="w-full flex items-center justify-between text-foreground">
-              <div className="text-sm font-semibold flex items-center gap-2"><LinkIcon className="w-4 h-4" />Link</div>
+              <div className="text-sm font-semibold flex items-center gap-2"><LinkIcon className="w-4 h-4" />{t('messages.sidebar.links')}</div>
               <ChevronDown className={`w-3 h-3 transition-transform ${openLinks ? 'rotate-180' : ''}`} />
             </button>
             {openLinks && (
@@ -608,13 +610,13 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
               </div>
             )}
             <div className="mt-3">
-              <button className="w-full text-center py-2 text-sm border border-border rounded text-foreground">Xem tất cả</button>
+              <button className="w-full text-center py-2 text-sm border border-border rounded text-foreground">{t('messages.sidebar.viewAll')}</button>
             </div>
           </div>
         </div>
         {!isDirect && (
           <>
-            <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border">Thành viên ({members.length})</div>
+            <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border">{t('messages.sidebar.members', { count: members.length })}</div>
             <div className="pb-4">
               {members.map(uid => (
                 <div key={uid} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50">
@@ -662,10 +664,10 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         open={clearMessagesDialogOpen}
         onOpenChange={setClearMessagesDialogOpen}
         onConfirm={confirmClearMyMessages}
-        title="Xác nhận xóa tin nhắn"
-        description="Xóa toàn bộ tin nhắn của cuộc trò chuyện này trên máy bạn?"
-        confirmText="Xóa"
-        cancelText="Hủy"
+        title={t('messages.sidebar.confirmClearTitle')}
+        description={t('messages.sidebar.confirmClearDescription')}
+        confirmText={t('ui.common.delete')}
+        cancelText={t('ui.common.cancel')}
         variant="destructive"
       />
     </div>

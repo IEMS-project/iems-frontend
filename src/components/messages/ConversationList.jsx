@@ -6,6 +6,7 @@ import { Pin } from "lucide-react";
 import { chatService } from "../../services/chatService";
 import { toast } from "sonner";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import { useTranslation } from "react-i18next";
 
 export default function ConversationList({
   conversations,
@@ -30,6 +31,7 @@ export default function ConversationList({
   loadingConversations = false,
   selectedConversationId = null,
 }) {
+  const { t } = useTranslation();
   const [hoveredConversation, setHoveredConversation] = useState(null);
   const [contextMenu, setContextMenu] = useState({ show: false, conversationId: null, x: 0, y: 0 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -75,7 +77,7 @@ export default function ConversationList({
       const displayHours = hours % 12 || 12;
       return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return t('messages.conversation.yesterday', 'Yesterday');
     } else if (diffDays < 7) {
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       return days[date.getDay()];
@@ -135,7 +137,7 @@ export default function ConversationList({
 
     // Check if user is the creator
     if (conversation.createdBy !== currentUserId) {
-      toast.warning('Chỉ người tạo nhóm mới có thể xóa nhóm này');
+      toast.warning(t('messages.conversation.onlyOwnerCanDelete'));
       return;
     }
 
@@ -154,11 +156,11 @@ export default function ConversationList({
       if (onConversationUpdate) {
         onConversationUpdate();
       }
-      toast.success('Nhóm đã được xóa thành công');
+      toast.success(t('messages.conversation.groupDeleted', 'Nhóm đã được xóa thành công'));
       setConversationToDelete(null);
     } catch (error) {
       console.error('Error deleting group:', error);
-      toast.error(error?.message || 'Không thể xóa nhóm. Vui lòng thử lại.');
+      toast.error(error?.message || t('messages.conversation.deleteGroupError', 'Không thể xóa nhóm. Vui lòng thử lại.'));
       setConversationToDelete(null);
     }
   };
@@ -194,14 +196,14 @@ export default function ConversationList({
       <div className="h-14 flex items-center gap-2 px-4 border-b border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 shrink-0">
         <input
           className="flex-1 px-3 py-2 rounded-full text-sm bg-background text-foreground placeholder:text-muted-foreground border border-input focus:ring-2 focus:ring-ring focus:border-transparent transition"
-          placeholder="Tìm người để nhắn..."
+          placeholder={t('messages.conversation.searchPlaceholder', 'Tìm người để nhắn...')}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
         <button
           onClick={onCreateGroupClick}
           className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors flex-shrink-0"
-          title="Tạo nhóm"
+          title={t('messages.conversation.createGroup')}
         >
           <FaPlus className="w-5 h-5" />
         </button>
@@ -235,11 +237,11 @@ export default function ConversationList({
               const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
               return fullName.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
             }).length === 0 && (
-              <div className="p-3 text-sm text-muted-foreground">Không tìm thấy người dùng</div>
+              <div className="p-3 text-sm text-muted-foreground">{t('messages.conversation.noUsersFound', 'Không tìm thấy người dùng')}</div>
             )}
         </div>
       )}
-      <div className="px-3 py-2 text-xs text-muted-foreground bg-card/70">Cuộc trò chuyện</div>
+      <div className="px-3 py-2 text-xs text-muted-foreground bg-card/70">{t('messages.conversation.conversations', 'Cuộc trò chuyện')}</div>
       <div className="flex-1 overflow-y-auto bg-background">
         {showSkeletons ? (
           <div>
@@ -264,7 +266,7 @@ export default function ConversationList({
           const lastMessageData = lastMessagesByConv?.current?.[c.id];
           const lastType = (typeof lastMessageData === 'object' && lastMessageData?.type) || c.lastMessage?.type || 'TEXT';
           const lastRaw = typeof lastMessageData === 'string' ? lastMessageData : (lastMessageData?.content || c.lastMessage?.content || "");
-          const last = lastType === 'IMAGE' ? '[Ảnh]' : lastType === 'VIDEO' ? '[Video]' : lastType === 'FILE' ? '[Tệp]' : lastRaw;
+          const last = lastType === 'IMAGE' ? t('messages.reply.image') : lastType === 'VIDEO' ? t('messages.reply.video') : lastType === 'FILE' ? t('messages.reply.fileShort', '[Tệp]') : lastRaw;
           const lastMessageSenderId = lastMessageData?.senderId || c.lastMessage?.senderId;
           const lastMessageSenderName = lastMessageSenderId ? getUserName(lastMessageSenderId) : "";
           const unread = (unreadCounts?.[c.id]) || (globalUnreadCounts?.[c.id]) || (unreadByConv?.[c.id]) || 0;
@@ -328,7 +330,7 @@ export default function ConversationList({
                           handleContextMenu(e, c.id);
                         }}
                         className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                        title="Tùy chọn"
+                        title={t('ui.common.actions', 'Tùy chọn')}
                       >
                         <FaEllipsisV className="w-3 h-3" />
                       </button>
@@ -356,7 +358,7 @@ export default function ConversationList({
                   {unread > 0 && (
                     <span
                       className="shrink-0 text-xs font-medium rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center text-primary-foreground bg-primary"
-                      title={manuallyMarkedAsUnread ? 'Đánh dấu chưa đọc thủ công' : ''}
+                      title={manuallyMarkedAsUnread ? t('messages.conversation.manuallyMarkedUnread', 'Đánh dấu chưa đọc thủ công') : ''}
                     >
                       {unread > 9 ? '9+' : unread}
                     </span>
@@ -367,7 +369,7 @@ export default function ConversationList({
           );
         }) : (
           <div className="px-4 py-6 text-sm text-muted-foreground">
-            Không có cuộc trò chuyện
+            {t('messages.conversation.noConversations')}
           </div>
         )}
       </div>
@@ -397,21 +399,21 @@ export default function ConversationList({
                   className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
                 >
                   <Pin className="w-3 h-3" />
-                  {isPinned ? 'Bỏ ghim hội thoại' : 'Ghim hội thoại'}
+                  {isPinned ? t('messages.conversation.unpin') : t('messages.conversation.pin')}
                 </button>
                 <div className="border-t border-border my-1"></div>
                 <button
                   onClick={() => handleMarkAsUnread(contextMenu.conversationId)}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-muted"
                 >
-                  Đánh dấu chưa đọc
+                  {t('messages.conversation.markAsUnread')}
                 </button>
                 <button
                   onClick={() => handleToggleNotifications(contextMenu.conversationId)}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
                 >
                   {notificationsEnabled ? <FaBellSlash className="w-3 h-3" /> : <FaBell className="w-3 h-3" />}
-                  {notificationsEnabled ? 'Tắt thông báo' : 'Bật thông báo'}
+                  {notificationsEnabled ? t('messages.conversation.muteNotifications') : t('messages.conversation.unmuteNotifications')}
                 </button>
                 {isGroup && isCreator && (
                   <>
@@ -421,7 +423,7 @@ export default function ConversationList({
                       className="w-full px-4 py-2 text-left text-sm hover:bg-red-500/10 text-destructive flex items-center gap-2"
                     >
                       <FaTrash className="w-3 h-3" />
-                      Xóa nhóm
+                      {t('messages.conversation.deleteGroup')}
                     </button>
                   </>
                 )}
@@ -436,14 +438,14 @@ export default function ConversationList({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={confirmDeleteGroup}
-        title="Xác nhận xóa nhóm"
+        title={t('messages.conversation.confirmDeleteTitle', 'Xác nhận xóa nhóm')}
         description={
           conversationToDelete
-            ? `Bạn có chắc chắn muốn xóa nhóm "${conversations.find(c => c.id === conversationToDelete)?.name || 'Nhóm này'}"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.`
+            ? t('messages.conversation.confirmDeleteDescription', 'Bạn có chắc chắn muốn xóa nhóm "{{name}}"?\n\nTất cả tin nhắn và dữ liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.', { name: conversations.find(c => c.id === conversationToDelete)?.name || t('messages.conversation.thisGroup', 'Nhóm này') })
             : ""
         }
-        confirmText="Xóa nhóm"
-        cancelText="Hủy"
+        confirmText={t('messages.conversation.deleteGroup')}
+        cancelText={t('ui.common.cancel')}
         variant="destructive"
       />
     </div>

@@ -60,11 +60,7 @@ export function AppSidebar() {
       url: "/tasks",
       icon: CheckSquare,
     },
-    {
-      title: t('sidebar.calendar'),
-      url: "/calendar",
-      icon: Calendar,
-    },
+
     {
       title: t('sidebar.messages'),
       url: "/messages",
