@@ -222,12 +222,12 @@ export default function Profile() {
 							<h2 className="mt-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
 								{fullName}
 							</h2>
-						<p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
-							{profile?.role || ""}
-						</p>
-						<p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-							{profile?.startDate ? `${t('profile.fields.joinedFrom')} ${new Date(profile.startDate).toLocaleDateString()}` : null}
-						</p>
+							<p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
+								{profile?.role || ""}
+							</p>
+							<p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+								{profile?.startDate ? `${t('profile.fields.joinedFrom')} ${new Date(profile.startDate).toLocaleDateString()}` : null}
+							</p>
 						</div>
 
 						<div className="mt-8 space-y-4">
@@ -247,175 +247,175 @@ export default function Profile() {
 								<FaCalendarAlt className="h-5 w-5 text-gray-400" />
 								<span className="text-gray-600 dark:text-gray-300">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
 							</div>
-						<div className="flex items-center gap-4 text-base">
-							<FaUsers className="h-5 w-5 text-gray-400" />
-							<span className="text-gray-600 dark:text-gray-300">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
-						</div>
-						<div className="flex items-center gap-4 text-base">
-							<FaBuilding className="h-5 w-5 text-gray-400" />
-							<span className="text-gray-600 dark:text-gray-300">{
-								profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
-									profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
-										profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
-							}</span>
-						</div>
+							<div className="flex items-center gap-4 text-base">
+								<FaUsers className="h-5 w-5 text-gray-400" />
+								<span className="text-gray-600 dark:text-gray-300">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
+							</div>
+							<div className="flex items-center gap-4 text-base">
+								<FaBuilding className="h-5 w-5 text-gray-400" />
+								<span className="text-gray-600 dark:text-gray-300">{
+									profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
+										profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
+											profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
+								}</span>
+							</div>
 						</div>
 
-					<div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-						<div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-							<span>{t('profile.fields.lastUpdated')}</span>
-							<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
+						<div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+							<div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+								<span>{t('profile.fields.lastUpdated')}</span>
+								<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
+							</div>
 						</div>
-					</div>
 					</Card>
 				</div>
 
 				{/* Chi tiết thông tin - Chiếm 8/12 cột */}
 				<div className="lg:col-span-8">
 					<Card className="p-8 h-full">
-					<div className="flex items-center justify-between mb-8">
-						<h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-							{t('profile.detailInfo')}
-						</h3>
-						{!isEditing ? (
-							<Button
-								onClick={() => setIsEditing(true)}
-								className="flex items-center gap-2 text-base px-6 py-3"
-							>
-								<FaEdit className="h-5 w-5" />
-								{t('profile.actions.edit')}
-							</Button>
-						) : (
-							<div className="flex gap-3">
+						<div className="flex items-center justify-between mb-8">
+							<h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+								{t('profile.detailInfo')}
+							</h3>
+							{!isEditing ? (
 								<Button
-									onClick={handleSave}
-									className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-base px-6 py-3"
-								>
-									<FaSave className="h-5 w-5" />
-									{t('profile.actions.save')}
-								</Button>
-								<Button
-									onClick={handleCancel}
-									variant="outline"
+									onClick={() => setIsEditing(true)}
 									className="flex items-center gap-2 text-base px-6 py-3"
 								>
-									<FaTimes className="h-5 w-5" />
-									{t('profile.actions.cancel')}
+									<FaEdit className="h-5 w-5" />
+									{t('profile.actions.edit')}
 								</Button>
-							</div>
-						)}
-					</div>						<div className="space-y-8">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.fullName')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{formData.firstName} {formData.lastName}</p>
-							</div>
+							) : (
+								<div className="flex gap-3">
+									<Button
+										onClick={handleSave}
+										className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-base px-6 py-3"
+									>
+										<FaSave className="h-5 w-5" />
+										{t('profile.actions.save')}
+									</Button>
+									<Button
+										onClick={handleCancel}
+										variant="outline"
+										className="flex items-center gap-2 text-base px-6 py-3"
+									>
+										<FaTimes className="h-5 w-5" />
+										{t('profile.actions.cancel')}
+									</Button>
+								</div>
+							)}
+						</div>						<div className="space-y-8">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.fullName')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.firstName} {formData.lastName}</p>
+								</div>
 
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.email')}</label>
-								{isEditing ? (
-									<Input
-										type="email"
-										value={formData.email}
-										onChange={(e) => handleInputChange('email', e.target.value)}
-										placeholder={t('profile.placeholders.enterEmail')}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.email}</p>
-								)}
-							</div>							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-									{t('profile.fields.phone')}
-								</label>
-								{isEditing ? (
-									<Input
-										value={formData.phone}
-										onChange={(e) => handleInputChange('phone', e.target.value)}
-										placeholder={t('profile.placeholders.enterPhone')}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.phone}</p>
-								)}
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.email')}</label>
+									{isEditing ? (
+										<Input
+											type="email"
+											value={formData.email}
+											onChange={(e) => handleInputChange('email', e.target.value)}
+											placeholder={t('profile.placeholders.enterEmail')}
+											className="text-base py-3"
+										/>
+									) : (
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.email}</p>
+									)}
+								</div>							<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
+										{t('profile.fields.phone')}
+									</label>
+									{isEditing ? (
+										<Input
+											value={formData.phone}
+											onChange={(e) => handleInputChange('phone', e.target.value)}
+											placeholder={t('profile.placeholders.enterPhone')}
+											className="text-base py-3"
+										/>
+									) : (
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.phone}</p>
+									)}
+								</div>
 
-						<div>
-							<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.personalID')}</label>
-							<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.personalID || ''}</p>
-						</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.personalID')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.personalID || ''}</p>
+								</div>
 
-						<div>
-							<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankAccountNumber')}</label>
-								{isEditing ? (
-									<Input
-										value={formData.bankAccountNumber}
-										onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
-										placeholder={t('profile.placeholders.enterBankAccount')}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankAccountNumber}</p>
-								)}
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankAccountNumber')}</label>
+									{isEditing ? (
+										<Input
+											value={formData.bankAccountNumber}
+											onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
+											placeholder={t('profile.placeholders.enterBankAccount')}
+											className="text-base py-3"
+										/>
+									) : (
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankAccountNumber}</p>
+									)}
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankName')}</label>
-								{isEditing ? (
-									<Input
-										value={formData.bankName}
-										onChange={(e) => handleInputChange('bankName', e.target.value)}
-										placeholder={t('profile.placeholders.enterBankName')}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankName}</p>
-								)}
-							</div>							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-									{t('profile.fields.address')}
-								</label>
-								{isEditing ? (
-									<Input
-										value={formData.address}
-										onChange={(e) => handleInputChange('address', e.target.value)}
-										placeholder={t('profile.placeholders.enterAddress')}
-										className="text-base py-3"
-									/>
-								) : (
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.address}</p>
-								)}
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankName')}</label>
+									{isEditing ? (
+										<Input
+											value={formData.bankName}
+											onChange={(e) => handleInputChange('bankName', e.target.value)}
+											placeholder={t('profile.placeholders.enterBankName')}
+											className="text-base py-3"
+										/>
+									) : (
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankName}</p>
+									)}
+								</div>							<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
+										{t('profile.fields.address')}
+									</label>
+									{isEditing ? (
+										<Input
+											value={formData.address}
+											onChange={(e) => handleInputChange('address', e.target.value)}
+											placeholder={t('profile.placeholders.enterAddress')}
+											className="text-base py-3"
+										/>
+									) : (
+										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.address}</p>
+									)}
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.dob')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.dob')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.gender')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.gender')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.contractType')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{
-									profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
-										profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
-											profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
-								}</p>
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.contractType')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{
+										profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
+											profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
+												profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
+									}</p>
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.startDate')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.startDate')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
+								</div>
 
-							<div>
-								<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.role')}</label>
-								<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.role || ''}</p>
-							</div>
+								<div>
+									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.role')}</label>
+									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.role || ''}</p>
+								</div>
 							</div>
 
 							{/* Removed Giới thiệu bản thân section as requested */}
