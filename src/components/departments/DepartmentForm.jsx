@@ -6,7 +6,7 @@ import Select from "../ui/select";
 
 export default function DepartmentForm({ formData, setFormData, isEdit = false, userOptions = [] }) {
     const { t } = useTranslation();
-    
+
     const colorOptions = [
         { value: "bg-blue-500", labelKey: "departments.colors.blue", color: "bg-blue-500" },
         { value: "bg-purple-500", labelKey: "departments.colors.purple", color: "bg-purple-500" },
@@ -61,8 +61,8 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false, 
                         <div
                             key={option.value}
                             className={`w-8 h-8 rounded-full ${option.color} cursor-pointer border-2 ${formData.color === option.value
-                                    ? 'border-gray-900 dark:border-white'
-                                    : 'border-gray-300 dark:border-gray-600'
+                                ? 'border-gray-900 dark:border-white'
+                                : 'border-gray-300 dark:border-gray-600'
                                 }`}
                             onClick={() => setFormData({ ...formData, color: option.value })}
                             title={t(option.labelKey)}

@@ -47,7 +47,7 @@ export default function DepartmentCard({ department, onEdit, onDelete }) {
                             className="shadow-md"
                         />
                     </div>
-                    
+
                     {/* Department content */}
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
@@ -55,7 +55,7 @@ export default function DepartmentCard({ department, onEdit, onDelete }) {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{department.name}</h3>
                         </div>
                         <div className="text-2xl font-bold text-blue-600">{department.memberCount}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{t("departments.members")}</div>                        
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{t("departments.members")}</div>
                     </div>
                 </CardContent>
             </Card>
