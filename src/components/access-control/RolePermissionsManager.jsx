@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +18,12 @@ export default function RolePermissionsManager({
     filterValue,
     onFilterChange,
 }) {
+    const { t } = useTranslation();
+
     if (!selectedRole) {
         return (
             <p className="text-sm text-muted-foreground">
-                Chọn một role ở bảng bên trái để cấu hình permission
+                {t("admin.accessControl.roles.selectRole")}
             </p>
         );
     }
@@ -41,39 +44,42 @@ export default function RolePermissionsManager({
             {success && <p className="mb-3 text-sm text-green-600">{success}</p>}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-1 space-y-3 rounded-md border p-4">
-                    <h4 className="text-sm font-medium">Thông tin role</h4>
+                    <h4 className="text-sm font-medium">{t("admin.accessControl.roles.roleInfo")}</h4>
                     <p className="text-sm">
-                        <span className="text-muted-foreground">Tên: </span>
+                        <span className="text-muted-foreground">{t("admin.accessControl.roles.name")}: </span>
                         {selectedRole?.roleName || "—"}
                     </p>
                     <p className="text-sm">
-                        <span className="text-muted-foreground">Mã: </span>
+                        <span className="text-muted-foreground">{t("admin.accessControl.roles.code")}: </span>
                         {selectedRole?.roleCode || "—"}
                     </p>
                     <p className="text-sm">
-                        <span className="text-muted-foreground">Mô tả: </span>
-                        {selectedRole?.description || "Chưa cập nhật"}
+                        <span className="text-muted-foreground">{t("admin.accessControl.roles.description")}: </span>
+                        {selectedRole?.description || t("admin.accessControl.roles.notUpdated")}
                     </p>
                     <p className="text-sm">
-                        <span className="text-muted-foreground">Tạo lúc: </span>
+                        <span className="text-muted-foreground">{t("admin.accessControl.roles.createdAt")}: </span>
                         {selectedRole?.createdAt
                             ? new Date(selectedRole.createdAt).toLocaleString()
                             : "—"}
                     </p>
                     <Badge variant="green">
-                        {selectedPermissionCodes.size} / {permissions.length} quyền
+                        {t("admin.accessControl.roles.permissionsAssigned", {
+                            count: selectedPermissionCodes.size,
+                            total: permissions.length
+                        })}
                     </Badge>
                 </div>
                 <div className="lg:col-span-2 space-y-4">
                     <Input
-                        placeholder="Lọc permission theo tên hoặc code..."
+                        placeholder={t("admin.accessControl.roles.filterPermissions")}
                         value={filterValue}
                         onChange={(e) => onFilterChange(e.target.value)}
                     />
                     <div className="rounded-md border">
                         {permissions.length === 0 ? (
                             <div className="p-4 text-sm text-muted-foreground">
-                                Không có permission phù hợp.
+                                {t("admin.accessControl.roles.noMatchingPermissions")}
                             </div>
                         ) : (
                             <ScrollArea className="h-[360px]">

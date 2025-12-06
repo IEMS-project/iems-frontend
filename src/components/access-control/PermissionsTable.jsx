@@ -1,5 +1,6 @@
 import React from "react";
 import { Plus, PencilLine, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,11 +25,13 @@ export default function PermissionsTable({
     onDeletePermission,
     deletingPermissionId,
 }) {
+    const { t } = useTranslation();
+
     return (
         <>
             <div className="mb-4">
                 <Input
-                    placeholder="Tìm permission..."
+                    placeholder={t("admin.accessControl.permissions.searchPlaceholder")}
                     value={searchValue}
                     onChange={(e) => onSearchChange(e.target.value)}
                 />
@@ -43,15 +46,15 @@ export default function PermissionsTable({
                     </div>
                 ) : permissions.length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground">
-                        Không có permission nào
+                        {t("admin.accessControl.permissions.noPermissions")}
                     </div>
                 ) : (
                     <ScrollArea className="h-[400px]">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Permission</TableHead>
-                                    <TableHead className="text-right">Thao tác</TableHead>
+                                    <TableHead>{t("admin.accessControl.permissions.title")}</TableHead>
+                                    <TableHead className="text-right">{t("admin.accessControl.common.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -67,14 +70,14 @@ export default function PermissionsTable({
                                             <div className="flex justify-end gap-2">
                                                 <IconActionButton
                                                     icon={PencilLine}
-                                                    label="Chỉnh sửa permission"
+                                                    label={t("admin.accessControl.permissions.edit")}
                                                     variant="edit"
                                                     className="text-black dark:text-white"
                                                     onClick={() => onEditPermission(permission)}
                                                 />
                                                 <IconActionButton
                                                     icon={Trash2}
-                                                    label="Xóa permission"
+                                                    label={t("admin.accessControl.permissions.delete")}
                                                     variant="danger"
                                                     disabled={deletingPermissionId === permission.id}
                                                     onClick={() => onDeletePermission(permission)}

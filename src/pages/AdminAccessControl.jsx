@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import AccountManagementTab from "@/components/access-control/AccountManagementTab";
 import RolesPermissionsTab from "@/components/access-control/RolesPermissionsTab";
 
-const tabs = [
-  { id: "accounts", label: "Quản lý tài khoản" },
-  { id: "roles-permissions", label: "Roles & Permissions" },
-];
-
 export default function AdminAccessControl() {
+  const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState("accounts");
+
+  const tabs = [
+    { id: "accounts", label: t("admin.accessControl.tabs.accounts") },
+    { id: "roles-permissions", label: t("admin.accessControl.tabs.rolesPermissions") },
+  ];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -19,7 +21,7 @@ export default function AdminAccessControl() {
           {/* Page Title */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <h1 className="text-xl font-bold truncate">Quản lý phân quyền</h1>
+            <h1 className="text-xl font-bold truncate">{t("admin.accessControl.title")}</h1>
           </div>
 
           {/* Tab Navigation */}

@@ -1,5 +1,6 @@
 import React from "react";
 import { RefreshCw, UserCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Badge from "@/components/ui/Badge";
@@ -24,6 +25,8 @@ export default function AccountsTable({
     onSelectAccount,
     selectedAccountId,
 }) {
+    const { t } = useTranslation();
+
     if (loading) {
         return (
             <div className="space-y-3 p-4">
@@ -37,7 +40,7 @@ export default function AccountsTable({
     if (accounts.length === 0) {
         return (
             <div className="p-4 text-sm text-muted-foreground">
-                Không có tài khoản nào
+                {t("admin.accessControl.accounts.noAccounts")}
             </div>
         );
     }
@@ -46,7 +49,7 @@ export default function AccountsTable({
         <>
             <div className="mb-3 flex items-center justify-between gap-2">
                 <Input
-                    placeholder="Tìm theo email, username hoặc role..."
+                    placeholder={t("admin.accessControl.accounts.searchPlaceholder")}
                     value={searchValue}
                     onChange={(e) => onSearchChange(e.target.value)}
                 />
@@ -60,9 +63,9 @@ export default function AccountsTable({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Tài khoản</TableHead>
-                                <TableHead>Trạng thái</TableHead>
-                                <TableHead>Roles</TableHead>
+                                <TableHead>{t("admin.accessControl.accounts.username")}</TableHead>
+                                <TableHead>{t("admin.accessControl.accounts.status")}</TableHead>
+                                <TableHead>{t("admin.accessControl.accounts.roles")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -86,7 +89,7 @@ export default function AccountsTable({
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant={acc.enabled ? "green" : "red"}>
-                                                {acc.enabled ? "Đang hoạt động" : "Đã khóa"}
+                                                {acc.enabled ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>

@@ -1,5 +1,6 @@
 import React from "react";
 import { UserCircle2, Lock, Unlock, KeyRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,18 +43,20 @@ export default function AccountDetailDialog({
     hasRolesChanges,
     hasPermissionsChanges,
 }) {
+    const { t } = useTranslation();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {account ? `Phân quyền tài khoản: ${account.username}` : "Chi tiết tài khoản"}
+                        {account ? `${t("admin.accessControl.accounts.details")}: ${account.username}` : t("admin.accessControl.accounts.details")}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     {!account ? (
                         <p className="text-sm text-muted-foreground">
-                            Chọn một tài khoản trong danh sách để xem chi tiết và chỉnh sửa phân quyền.
+                            {t("admin.accessControl.accounts.selectAccount")}
                         </p>
                     ) : loading ? (
                         <div className="space-y-3">
@@ -76,14 +79,14 @@ export default function AccountDetailDialog({
                                     </div>
                                     <div className="mt-2 flex flex-wrap gap-2">
                                         <Badge variant={accountEnabledDraft ? "green" : "red"}>
-                                            {accountEnabledDraft ? "Đang hoạt động" : "Đã khóa"}
+                                            {accountEnabledDraft ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                         </Badge>
                                         <Badge variant="outline">ID: {account.userId}</Badge>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
                                     <Label className="text-xs text-muted-foreground mb-1">
-                                        Trạng thái tài khoản
+                                        {t("admin.accessControl.accounts.status")}
                                     </Label>
                                     <Button
                                         variant={accountEnabledDraft ? "destructive" : "outline"}
@@ -93,12 +96,12 @@ export default function AccountDetailDialog({
                                         {accountEnabledDraft ? (
                                             <>
                                                 <Lock className="mr-1 h-4 w-4" />
-                                                Khóa tài khoản
+                                                {t("admin.accessControl.accounts.lockAccount")}
                                             </>
                                         ) : (
                                             <>
                                                 <Unlock className="mr-1 h-4 w-4" />
-                                                Mở khóa
+                                                {t("admin.accessControl.accounts.unlockAccount")}
                                             </>
                                         )}
                                     </Button>
@@ -108,15 +111,15 @@ export default function AccountDetailDialog({
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <Label>Roles</Label>
+                                        <Label>{t("admin.accessControl.accounts.roles")}</Label>
                                         <span className="text-xs text-muted-foreground">
-                                            Chọn các vai trò cho tài khoản
+                                            {t("admin.accessControl.accounts.selectRole")}
                                         </span>
                                     </div>
                                     <div className="rounded-md border">
                                         {roles.length === 0 ? (
                                             <div className="p-3 text-xs text-muted-foreground">
-                                                Chưa có role nào để gán.
+                                                {t("admin.accessControl.roles.noRoles")}
                                             </div>
                                         ) : (
                                             <ScrollArea className="h-[180px]">
@@ -151,22 +154,22 @@ export default function AccountDetailDialog({
                                             onClick={onSaveRoles}
                                             disabled={loading || accountRolesSaving || !hasRolesChanges}
                                         >
-                                            {accountRolesSaving ? "Đang lưu roles..." : "Lưu roles"}
+                                            {accountRolesSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.save")}
                                         </Button>
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <Label>Permissions trực tiếp</Label>
+                                        <Label>{t("admin.accessControl.accounts.directPermissions")}</Label>
                                         <span className="text-xs text-muted-foreground">
-                                            Bổ sung quyền ngoài role
+                                            {t("admin.accessControl.accounts.selectPermission")}
                                         </span>
                                     </div>
                                     <div className="rounded-md border">
                                         {permissions.length === 0 ? (
                                             <div className="p-3 text-xs text-muted-foreground">
-                                                Chưa có permission nào để gán.
+                                                {t("admin.accessControl.permissions.noPermissions")}
                                             </div>
                                         ) : (
                                             <ScrollArea className="h-[180px]">
@@ -202,7 +205,7 @@ export default function AccountDetailDialog({
                                             onClick={onSavePermissions}
                                             disabled={loading || accountPermissionsSaving || !hasPermissionsChanges}
                                         >
-                                            {accountPermissionsSaving ? "Đang lưu permissions..." : "Lưu permissions"}
+                                            {accountPermissionsSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.save")}
                                         </Button>
                                     </div>
                                 </div>
@@ -212,16 +215,16 @@ export default function AccountDetailDialog({
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <KeyRound className="h-4 w-4 text-muted-foreground" />
-                                        <Label>Reset mật khẩu</Label>
+                                        <Label>{t("admin.accessControl.accounts.resetPassword")}</Label>
                                     </div>
                                     <span className="text-xs text-muted-foreground">
-                                        Thiết lập mật khẩu mới cho tài khoản này
+                                        {t("admin.accessControl.accounts.resetPasswordDescription")}
                                     </span>
                                 </div>
                                 <div className="grid gap-2 md:grid-cols-2">
                                     <Input
                                         type="password"
-                                        placeholder="Mật khẩu mới"
+                                        placeholder={t("admin.accessControl.accounts.newPassword")}
                                         value={passwordForm.newPassword}
                                         onChange={(e) =>
                                             onPasswordFormChange({
@@ -232,7 +235,7 @@ export default function AccountDetailDialog({
                                     />
                                     <Input
                                         type="password"
-                                        placeholder="Xác nhận mật khẩu mới"
+                                        placeholder={t("admin.accessControl.accounts.confirmPassword")}
                                         value={passwordForm.confirmPassword}
                                         onChange={(e) =>
                                             onPasswordFormChange({
@@ -255,7 +258,7 @@ export default function AccountDetailDialog({
                                         onClick={onResetPassword}
                                         disabled={passwordSaving}
                                     >
-                                        {passwordSaving ? "Đang đặt lại..." : "Reset mật khẩu"}
+                                        {passwordSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.resetPassword")}
                                     </Button>
                                 </div>
                             </div>
@@ -268,7 +271,7 @@ export default function AccountDetailDialog({
                                     size="sm"
                                     onClick={() => onOpenChange(false)}
                                 >
-                                    Đóng
+                                    {t("admin.accessControl.common.close")}
                                 </Button>
                             </div>
                         </>

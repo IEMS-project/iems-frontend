@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import StatsCard from "@/components/ui/StatsCard";
 import { iamService } from "@/services/iamService";
@@ -9,6 +10,7 @@ import AccountDetailDialog from "./AccountDetailDialog";
 const emptyAccountPasswordForm = { newPassword: "", confirmPassword: "" };
 
 export default function AccountManagementTab() {
+    const { t } = useTranslation();
     const [roles, setRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
     const [accounts, setAccounts] = useState([]);
@@ -65,7 +67,7 @@ export default function AccountManagementTab() {
                 if (!active) return;
                 setAccounts(Array.isArray(data) ? data : []);
             } catch (error) {
-                if (active) setAccountsError(error?.message || "Không tải được danh sách tài khoản");
+                if (active) setAccountsError(error?.message || t("admin.accessControl.common.errorLoadingData"));
             } finally {
                 if (active) setAccountsLoading(false);
             }
@@ -176,10 +178,10 @@ export default function AccountManagementTab() {
             const refreshed = await iamService.getAccounts();
             setAccounts(Array.isArray(refreshed) ? refreshed : []);
 
-            setAccountSaveMessage("Đã lưu roles cho tài khoản");
+            setAccountSaveMessage(t("admin.accessControl.accounts.rolesUpdated"));
             setAccountSaveError("");
         } catch (error) {
-            setAccountSaveError(error?.message || "Không lưu được roles");
+            setAccountSaveError(error?.message || t("admin.accessControl.accounts.error"));
         } finally {
             setAccountRolesSaving(false);
         }
@@ -209,10 +211,10 @@ export default function AccountManagementTab() {
             const refreshed = await iamService.getAccounts();
             setAccounts(Array.isArray(refreshed) ? refreshed : []);
 
-            setAccountSaveMessage("Đã lưu permissions trực tiếp cho tài khoản");
+            setAccountSaveMessage(t("admin.accessControl.accounts.permissionsUpdated"));
             setAccountSaveError("");
         } catch (error) {
-            setAccountSaveError(error?.message || "Không lưu được permissions trực tiếp");
+            setAccountSaveError(error?.message || t("admin.accessControl.accounts.error"));
         } finally {
             setAccountPermissionsSaving(false);
         }
@@ -225,14 +227,14 @@ export default function AccountManagementTab() {
             const updated = await iamService.lockAccount(
                 selectedAccount.userId,
                 locked,
-                locked ? "Khóa từ màn phân quyền" : "Mở khóa từ màn phân quyền"
+                locked ? t("admin.accessControl.accounts.lockAccount") : t("admin.accessControl.accounts.unlockAccount")
             );
             setSelectedAccount((prev) => ({ ...(prev || {}), enabled: updated.enabled }));
             setAccountEnabledDraft(!!updated.enabled);
             const refreshed = await iamService.getAccounts();
             setAccounts(Array.isArray(refreshed) ? refreshed : []);
         } catch (error) {
-            setAccountSaveError(error?.message || "Không thay đổi được trạng thái khóa");
+            setAccountSaveError(error?.message || t("admin.accessControl.accounts.error"));
         }
     };
 
@@ -243,20 +245,20 @@ export default function AccountManagementTab() {
         const newPw = passwordForm.newPassword.trim();
         const confirmPw = passwordForm.confirmPassword.trim();
         if (!newPw || !confirmPw) {
-            setPasswordError("Vui lòng nhập đầy đủ mật khẩu mới và xác nhận");
+            setPasswordError(t("admin.accessControl.accounts.passwordMismatch"));
             return;
         }
         if (newPw !== confirmPw) {
-            setPasswordError("Mật khẩu xác nhận không khớp");
+            setPasswordError(t("admin.accessControl.accounts.passwordMismatch"));
             return;
         }
         try {
             setPasswordSaving(true);
             await iamService.resetAccountPassword(selectedAccount.userId, newPw);
             setPasswordForm(emptyAccountPasswordForm);
-            setPasswordSuccess("Đã reset mật khẩu cho tài khoản");
+            setPasswordSuccess(t("admin.accessControl.accounts.passwordResetSuccess"));
         } catch (error) {
-            setPasswordError(error?.message || "Không reset được mật khẩu");
+            setPasswordError(error?.message || t("admin.accessControl.accounts.passwordResetError"));
         } finally {
             setPasswordSaving(false);
         }
@@ -274,19 +276,19 @@ export default function AccountManagementTab() {
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <StatsCard
-                    title="Tổng số tài khoản"
+                    title={t("admin.accessControl.accounts.totalAccounts")}
                     value={accounts.length}
                     icon={<Users className="h-5 w-5" />}
                     accent="green"
                 />
                 <StatsCard
-                    title="Tài khoản hoạt động"
+                    title={t("admin.accessControl.accounts.activeAccounts")}
                     value={accounts.filter((acc) => acc.enabled).length}
                     icon={<Users className="h-5 w-5" />}
                     accent="blue"
                 />
                 <StatsCard
-                    title="Tài khoản bị khóa"
+                    title={t("admin.accessControl.accounts.lockedAccounts")}
                     value={accounts.filter((acc) => !acc.enabled).length}
                     icon={<Users className="h-5 w-5" />}
                     accent="red"
@@ -297,9 +299,9 @@ export default function AccountManagementTab() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Quản lý tài khoản & phân quyền</CardTitle>
+                        <CardTitle>{t("admin.accessControl.accounts.accountManagement")}</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                            Xem và chỉnh sửa quyền truy cập theo từng tài khoản người dùng
+                            {t("admin.accessControl.accounts.accountManagementDescription")}
                         </p>
                     </div>
                 </CardHeader>

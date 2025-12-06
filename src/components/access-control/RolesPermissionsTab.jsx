@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Shield, Key, Plus, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/ui/StatsCard";
@@ -14,6 +15,7 @@ const emptyRoleForm = { code: "", name: "", description: "" };
 const emptyPermissionForm = { code: "", name: "" };
 
 export default function RolesPermissionsTab() {
+    const { t } = useTranslation();
     const [roles, setRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
     const [rolesLoading, setRolesLoading] = useState(false);
@@ -57,7 +59,7 @@ export default function RolesPermissionsTab() {
                 if (!active) return;
                 setRoles(Array.isArray(data) ? data : []);
             } catch (error) {
-                if (active) setRolesError(error?.message || "Không tải được danh sách role");
+                if (active) setRolesError(error?.message || t("admin.accessControl.common.errorLoadingData"));
             } finally {
                 if (active) setRolesLoading(false);
             }
@@ -78,7 +80,7 @@ export default function RolesPermissionsTab() {
                 if (!active) return;
                 setPermissions(Array.isArray(data) ? data : []);
             } catch (error) {
-                if (active) setPermissionsError(error?.message || "Không tải được danh sách permission");
+                if (active) setPermissionsError(error?.message || t("admin.accessControl.common.errorLoadingData"));
             } finally {
                 if (active) setPermissionsLoading(false);
             }
@@ -156,7 +158,7 @@ export default function RolesPermissionsTab() {
             setSelectedRoleDetail(detail);
             setSelectedPermissionCodes(new Set(detail?.permissions || []));
         } catch (error) {
-            setAssignmentError(error?.message || "Không lấy được permission của role");
+            setAssignmentError(error?.message || t("admin.accessControl.common.errorLoadingData"));
             setSelectedRoleDetail(null);
             setSelectedPermissionCodes(new Set());
         } finally {
@@ -222,11 +224,11 @@ export default function RolesPermissionsTab() {
         const trimmedName = roleForm.name.trim();
         const trimmedCode = roleForm.code.trim();
         if (!trimmedName || (roleModal.mode === "create" && !trimmedCode)) {
-            setRoleFormError("Vui lòng nhập đầy đủ thông tin bắt buộc");
+            setRoleFormError(t("admin.accessControl.roles.error"));
             return;
         }
         if (roleModal.mode === "create" && selectedPermissionCodes.size === 0) {
-            setRoleFormError("Role phải có ít nhất một permission");
+            setRoleFormError(t("admin.accessControl.roles.atLeastOnePermission"));
             return;
         }
         try {
@@ -272,7 +274,7 @@ export default function RolesPermissionsTab() {
                 setRoleFormError("");
             }
         } catch (error) {
-            setRoleFormError(error?.message || "Không lưu được role");
+            setRoleFormError(error?.message || t("admin.accessControl.roles.error"));
         } finally {
             setRoleFormSubmitting(false);
         }
@@ -281,7 +283,7 @@ export default function RolesPermissionsTab() {
     const handleSaveRolePermissions = async () => {
         if (!roleModal.role) return;
         if (selectedPermissionCodes.size === 0) {
-            setRoleFormError("Role phải có ít nhất một permission");
+            setRoleFormError(t("admin.accessControl.roles.atLeastOnePermission"));
             return;
         }
         try {
@@ -309,14 +311,14 @@ export default function RolesPermissionsTab() {
                 );
             }
         } catch (error) {
-            setRoleFormError(error?.message || "Không cập nhật được permission cho role");
+            setRoleFormError(error?.message || t("admin.accessControl.roles.error"));
         } finally {
             setPermissionFormSubmitting(false);
         }
     };
 
     const handleDeleteRole = async (role) => {
-        if (!role || !window.confirm(`Xóa role ${role.name}?`)) return;
+        if (!role || !window.confirm(t("admin.accessControl.roles.deleteConfirm", { name: role.name }))) return;
         try {
             setDeletingRoleId(role.id);
             await iamService.deleteRole(role.id);
@@ -327,7 +329,7 @@ export default function RolesPermissionsTab() {
                 setSelectedPermissionCodes(new Set());
             }
         } catch (error) {
-            setRolesError(error?.message || "Không xóa được role");
+            setRolesError(error?.message || t("admin.accessControl.roles.error"));
         } finally {
             setDeletingRoleId(null);
         }
@@ -357,7 +359,7 @@ export default function RolesPermissionsTab() {
         const trimmedName = permissionForm.name.trim();
         const trimmedCode = permissionForm.code.trim();
         if (!trimmedName || (permissionModal.mode === "create" && !trimmedCode)) {
-            setPermissionFormError("Vui lòng nhập code và tên permission");
+            setPermissionFormError(t("admin.accessControl.permissions.error"));
             return;
         }
         try {
@@ -380,14 +382,14 @@ export default function RolesPermissionsTab() {
             }
             closePermissionModal();
         } catch (error) {
-            setPermissionFormError(error?.message || "Không lưu được permission");
+            setPermissionFormError(error?.message || t("admin.accessControl.permissions.error"));
         } finally {
             setPermissionFormSubmitting(false);
         }
     };
 
     const handleDeletePermission = async (permission) => {
-        if (!permission || !window.confirm(`Xóa permission ${permission.name}?`)) return;
+        if (!permission || !window.confirm(t("admin.accessControl.permissions.deleteConfirm", { name: permission.name }))) return;
         try {
             setDeletingPermissionId(permission.id);
             await iamService.deletePermission(permission.id);
@@ -418,7 +420,7 @@ export default function RolesPermissionsTab() {
                 );
             }
         } catch (error) {
-            setPermissionsError(error?.message || "Không xóa được permission");
+            setPermissionsError(error?.message || t("admin.accessControl.permissions.error"));
         } finally {
             setDeletingPermissionId(null);
         }
@@ -440,7 +442,7 @@ export default function RolesPermissionsTab() {
     const handleSaveAssignments = async () => {
         if (!selectedRoleId) return;
         if (selectedPermissionCodes.size === 0) {
-            setAssignmentError("Role phải có ít nhất một permission");
+            setAssignmentError(t("admin.accessControl.roles.atLeastOnePermission"));
             return;
         }
         try {
@@ -463,9 +465,9 @@ export default function RolesPermissionsTab() {
                     }
                     : detail
             );
-            setAssignmentSuccess("Đã cập nhật permission cho role");
+            setAssignmentSuccess(t("admin.accessControl.roles.permissionsUpdated"));
         } catch (error) {
-            setAssignmentError(error?.message || "Không cập nhật được permission cho role");
+            setAssignmentError(error?.message || t("admin.accessControl.roles.error"));
         } finally {
             setSavingAssignments(false);
         }
@@ -485,19 +487,19 @@ export default function RolesPermissionsTab() {
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <StatsCard
-                    title="Tổng số role"
+                    title={t("admin.accessControl.roles.totalRoles")}
                     value={roles.length}
                     icon={<Shield className="h-5 w-5" />}
                     accent="indigo"
                 />
                 <StatsCard
-                    title="Tổng permission"
+                    title={t("admin.accessControl.permissions.totalPermissions")}
                     value={permissions.length}
                     icon={<Key className="h-5 w-5" />}
                     accent="purple"
                 />
                 <StatsCard
-                    title="TB permission/role"
+                    title={t("admin.accessControl.roles.avgPermissionsPerRole")}
                     value={avgPermissionsPerRole}
                     icon={<Key className="h-5 w-5" />}
                     accent="blue"
@@ -508,9 +510,9 @@ export default function RolesPermissionsTab() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Danh sách role</CardTitle>
+                            <CardTitle>{t("admin.accessControl.roles.rolesList")}</CardTitle>
                             <p className="text-sm text-muted-foreground">
-                                Quản lý các nhóm quyền truy cập
+                                {t("admin.accessControl.roles.rolesListDescription")}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -519,7 +521,7 @@ export default function RolesPermissionsTab() {
                             </Button>
                             <Button onClick={() => openRoleModal("create")} size="sm">
                                 <Plus className="h-4 w-4" />
-                                Thêm role
+                                {t("admin.accessControl.roles.createRole")}
                             </Button>
                         </div>
                     </CardHeader>
@@ -542,14 +544,14 @@ export default function RolesPermissionsTab() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Danh sách permission</CardTitle>
+                            <CardTitle>{t("admin.accessControl.permissions.permissionsList")}</CardTitle>
                             <p className="text-sm text-muted-foreground">
-                                Quy định chi tiết quyền thao tác
+                                {t("admin.accessControl.permissions.permissionsListDescription")}
                             </p>
                         </div>
                         <Button onClick={() => openPermissionModal("create")} size="sm">
                             <Plus className="h-4 w-4" />
-                            Thêm permission
+                            {t("admin.accessControl.permissions.createPermission")}
                         </Button>
                     </CardHeader>
                     <CardContent>

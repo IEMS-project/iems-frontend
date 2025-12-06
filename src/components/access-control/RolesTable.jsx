@@ -1,5 +1,6 @@
 import React from "react";
 import { Plus, RefreshCw, PencilLine, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Badge from "@/components/ui/Badge";
@@ -26,11 +27,13 @@ export default function RolesTable({
     selectedRoleId,
     deletingRoleId,
 }) {
+    const { t } = useTranslation();
+
     return (
         <>
             <div className="mb-4 flex items-center justify-between gap-3">
                 <Input
-                    placeholder="Tìm theo tên hoặc code..."
+                    placeholder={t("admin.accessControl.roles.searchPlaceholder")}
                     value={searchValue}
                     onChange={(e) => onSearchChange(e.target.value)}
                 />
@@ -44,14 +47,14 @@ export default function RolesTable({
                         <Skeleton className="h-6 w-full" />
                     </div>
                 ) : roles.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">Không có role nào</div>
+                    <div className="p-4 text-sm text-muted-foreground">{t("admin.accessControl.roles.noRoles")}</div>
                 ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Số permission</TableHead>
-                                <TableHead className="text-right">Thao tác</TableHead>
+                                <TableHead>{t("admin.accessControl.roles.title")}</TableHead>
+                                <TableHead>{t("admin.accessControl.roles.permissions")}</TableHead>
+                                <TableHead className="text-right">{t("admin.accessControl.common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -72,14 +75,14 @@ export default function RolesTable({
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="blue">
-                                                {role.permissions?.length || 0} quyền
+                                                {t("admin.accessControl.roles.permissionCount", { count: role.permissions?.length || 0 })}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <IconActionButton
                                                     icon={PencilLine}
-                                                    label="Chỉnh sửa role"
+                                                    label={t("admin.accessControl.roles.editRole")}
                                                     variant="edit"
                                                     className="text-black dark:text-white"
                                                     onClick={(e) => {
@@ -89,7 +92,7 @@ export default function RolesTable({
                                                 />
                                                 <IconActionButton
                                                     icon={Trash2}
-                                                    label="Xóa role"
+                                                    label={t("admin.accessControl.roles.deleteRole")}
                                                     variant="danger"
                                                     disabled={deletingRoleId === role.id}
                                                     onClick={(e) => {
