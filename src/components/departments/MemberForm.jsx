@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Input from "../ui/Input";
 import Select from "../ui/select";
 import { userService } from "../../services/userService";
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 export default function MemberForm({ formData, setFormData, isEdit = false }) {
+    const { t } = useTranslation();
     const [roles, setRoles] = useState([]);
     const [rolesLoading, setRolesLoading] = useState(false);
     const [rolesError, setRolesError] = useState("");
@@ -40,7 +42,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 setRoles(normalized);
             } catch (e) {
                 if (!mounted) return;
-                setRolesError(e?.message || "Không tải được danh sách vai trò");
+                setRolesError(e?.message || t("departments.memberForm.noRoles"));
             } finally {
                 if (mounted) setRolesLoading(false);
             }
@@ -68,7 +70,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>Họ</span>
+                        <span>{t("departments.memberForm.firstNameLabel")}</span>
                     </label>
                     <Input
                         type="text"
@@ -76,7 +78,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, firstName: e.target.value })
                         }
-                        placeholder="Nhập họ"
+                        placeholder={t("departments.memberForm.firstNamePlaceholder")}
                     />
                 </div>
 
@@ -84,7 +86,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>Tên</span>
+                        <span>{t("departments.memberForm.lastNameLabel")}</span>
                     </label>
                     <Input
                         type="text"
@@ -92,7 +94,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, lastName: e.target.value })
                         }
-                        placeholder="Nhập tên"
+                        placeholder={t("departments.memberForm.lastNamePlaceholder")}
                     />
                 </div>
             </div>
@@ -102,7 +104,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>Email</span>
+                        <span>{t("departments.memberForm.emailLabel")}</span>
                     </label>
                     <Input
                         type="email"
@@ -110,7 +112,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, email: e.target.value })
                         }
-                        placeholder="Nhập email"
+                        placeholder={t("departments.memberForm.emailPlaceholder")}
                     />
                 </div>
 
@@ -118,7 +120,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>Số điện thoại</span>
+                        <span>{t("departments.memberForm.phoneLabel")}</span>
                     </label>
                     <Input
                         type="tel"
@@ -126,7 +128,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, phone: e.target.value })
                         }
-                        placeholder="Nhập số điện thoại"
+                        placeholder={t("departments.memberForm.phonePlaceholder")}
                     />
                 </div>
             </div>
@@ -136,7 +138,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Ngày sinh</span>
+                        <span>{t("departments.memberForm.dobLabel")}</span>
                     </label>
                     <Input
                         type="date"
@@ -150,7 +152,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>Giới tính</span>
+                        <span>{t("departments.memberForm.genderLabel")}</span>
                     </label>
                     <Select
                         value={formData.gender}
@@ -159,9 +161,9 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         }
                         className="w-full"
                     >
-                        <option value="MALE">Nam</option>
-                        <option value="FEMALE">Nữ</option>
-                        <option value="OTHER">Khác</option>
+                        <option value="MALE">{t("departments.memberForm.male")}</option>
+                        <option value="FEMALE">{t("departments.memberForm.female")}</option>
+                        <option value="OTHER">{t("departments.memberForm.other")}</option>
                     </Select>
                 </div>
             </div>
@@ -171,7 +173,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Shield className="h-4 w-4 text-muted-foreground" />
-                        <span>Vai trò</span>
+                        <span>{t("departments.memberForm.roleLabel")}</span>
                     </label>
                     <Select
                         value={(formData.roleCodes && formData.roleCodes[0]) || ""}
@@ -183,7 +185,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         }
                         className="w-full"
                     >
-                        <option value="">{rolesLoading ? "Đang tải..." : "Chọn vai trò"}</option>
+                        <option value="">{rolesLoading ? t("departments.memberForm.loadingRoles") : t("departments.memberForm.selectRole")}</option>
                         {roles.map((r) => (
                             <option key={r.id} value={r.code}>{r.name}</option>
                         ))}
@@ -196,7 +198,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span>Loại hợp đồng</span>
+                        <span>{t("departments.memberForm.contractTypeLabel")}</span>
                     </label>
                     <Select
                         value={formData.contractType}
@@ -208,9 +210,9 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         }
                         className="w-full"
                     >
-                        <option value="FULLTIME">Full-time</option>
-                        <option value="PARTTIME">Part-time</option>
-                        <option value="REMOTE">Remote</option>
+                        <option value="FULLTIME">{t("departments.memberForm.fullTime")}</option>
+                        <option value="PARTTIME">{t("departments.memberForm.partTime")}</option>
+                        <option value="REMOTE">{t("departments.memberForm.remote")}</option>
                     </Select>
                 </div>
             </div>
@@ -220,7 +222,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>Tên ngân hàng</span>
+                        <span>{t("departments.memberForm.bankNameLabel")}</span>
                     </label>
                     <Input
                         type="text"
@@ -228,7 +230,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, bankName: e.target.value })
                         }
-                        placeholder="Nhập tên ngân hàng"
+                        placeholder={t("departments.memberForm.bankNamePlaceholder")}
                     />
                 </div>
 
@@ -236,7 +238,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        <span>Số tài khoản ngân hàng</span>
+                        <span>{t("departments.memberForm.bankAccountLabel")}</span>
                     </label>
                     <Input
                         type="text"
@@ -247,7 +249,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                                 bankAccountNumber: e.target.value,
                             })
                         }
-                        placeholder="Nhập số tài khoản ngân hàng"
+                        placeholder={t("departments.memberForm.bankAccountPlaceholder")}
                     />
                 </div>
             </div>
@@ -257,7 +259,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <IdCard className="h-4 w-4 text-muted-foreground" />
-                        <span>CCCD</span>
+                        <span>{t("departments.memberForm.personalIdLabel")}</span>
                     </label>
                     <Input
                         type="text"
@@ -265,7 +267,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                         onChange={(e) =>
                             setFormData({ ...formData, personalID: e.target.value })
                         }
-                        placeholder="Nhập số CCCD"
+                        placeholder={t("departments.memberForm.personalIdPlaceholder")}
                     />
                 </div>
 
@@ -273,7 +275,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                 <div className="space-y-1">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Ngày vào làm</span>
+                        <span>{t("departments.memberForm.startDateLabel")}</span>
                     </label>
                     <Input
                         type="date"
@@ -294,7 +296,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                     <div className="space-y-1">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                             <UserCircle2 className="h-4 w-4 text-muted-foreground" />
-                            <span>Tên đăng nhập</span>
+                            <span>{t("departments.memberForm.usernameLabel")}</span>
                         </label>
                         <Input
                             type="text"
@@ -302,7 +304,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                             onChange={(e) =>
                                 setFormData({ ...formData, username: e.target.value })
                             }
-                            placeholder="Nhập tên đăng nhập"
+                            placeholder={t("departments.memberForm.usernamePlaceholder")}
                         />
                     </div>
 
@@ -310,7 +312,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                     <div className="space-y-1">
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                             <Lock className="h-4 w-4 text-muted-foreground" />
-                            <span>Mật khẩu</span>
+                            <span>{t("departments.memberForm.passwordLabel")}</span>
                         </label>
                         <Input
                             type="password"
@@ -318,7 +320,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                             onChange={(e) =>
                                 setFormData({ ...formData, password: e.target.value })
                             }
-                            placeholder="Nhập mật khẩu"
+                            placeholder={t("departments.memberForm.passwordPlaceholder")}
                         />
                     </div>
                 </div>
@@ -328,7 +330,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
             <div className="space-y-1">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>Địa chỉ</span>
+                    <span>{t("departments.memberForm.addressLabel")}</span>
                 </label>
                 <Input
                     type="text"
@@ -336,7 +338,7 @@ export default function MemberForm({ formData, setFormData, isEdit = false }) {
                     onChange={(e) =>
                         setFormData({ ...formData, address: e.target.value })
                     }
-                    placeholder="Nhập địa chỉ"
+                    placeholder={t("departments.memberForm.addressPlaceholder")}
                 />
             </div>
         </div>

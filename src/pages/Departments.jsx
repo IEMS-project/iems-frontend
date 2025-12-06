@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import DepartmentCard from "../components/departments/DepartmentCard";
 import DepartmentListItem from "../components/departments/DepartmentListItem";
@@ -11,6 +12,7 @@ import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
 
 export default function Teams() {
+    const { t } = useTranslation();
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -35,7 +37,7 @@ export default function Teams() {
                 setDepartments(Array.isArray(list) ? list : []);
             } catch (e) {
                 if (!mounted) return;
-                setError(e?.message || "Không tải được phòng ban");
+                setError(e?.message || t("departments.noDepartments"));
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -187,7 +189,7 @@ export default function Teams() {
                                 )}
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Tổng thành viên</p>
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-50">{t("departments.totalMembers")}</p>
                                 {loading ? (
                                     <Skeleton className="mt-2 h-6 w-24" />
                                 ) : (
@@ -211,7 +213,7 @@ export default function Teams() {
                                 )}
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Phòng ban</p>
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-50">{t("departments.title")}</p>
                                 {loading ? (
                                     <Skeleton className="mt-2 h-6 w-16" />
                                 ) : (
@@ -232,7 +234,7 @@ export default function Teams() {
                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
-                            Tổng quan phòng ban
+                            {t("departments.overview")}
                         </CardTitle>
                         <div className="flex items-center gap-3">
                             {/* view toggle */}
@@ -270,7 +272,7 @@ export default function Teams() {
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
-                                Thêm phòng ban
+                                {t("departments.addDepartment")}
                             </Button>
                         </div>
                     </div>
@@ -328,9 +330,9 @@ export default function Teams() {
                             <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                                 {/* header row */}
                                 <div className="hidden sm:flex items-center px-4 py-3 bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                    <div className="flex-1">Phòng ban</div>
-                                    <div className="w-28 text-right">Thành viên</div>
-                                    <div className="w-36 text-right">Hành động</div>
+                                    <div className="flex-1">{t("departments.title")}</div>
+                                    <div className="w-28 text-right">{t("departments.members")}</div>
+                                    <div className="w-36 text-right">{t("departments.columns.actions")}</div>
                                 </div>
 
                                 {/* rows */}
@@ -364,7 +366,7 @@ export default function Teams() {
                     setIsAddModalOpen(false);
                     resetFormData();
                 }}
-                title="Thêm phòng ban mới"
+                title={t("departments.addNewDepartment")}
             >
                 <DepartmentForm formData={formData} setFormData={setFormData} userOptions={userOptions} />
                 <div className="flex justify-end gap-3 mt-6">
@@ -375,10 +377,10 @@ export default function Teams() {
                             resetFormData();
                         }}
                     >
-                        Hủy
+                        {t("departments.actions.cancel")}
                     </Button>
                     <Button onClick={handleAddDepartment}>
-                        Thêm phòng ban
+                        {t("departments.addDepartment")}
                     </Button>
                 </div>
             </Modal>
@@ -391,7 +393,7 @@ export default function Teams() {
                     setEditingDepartment(null);
                     resetFormData();
                 }}
-                title="Sửa phòng ban"
+                title={t("departments.editDepartment")}
             >
                 <DepartmentForm formData={formData} setFormData={setFormData} isEdit={true} userOptions={userOptions} />
                 <div className="flex justify-end gap-3 mt-6">
@@ -403,10 +405,10 @@ export default function Teams() {
                             resetFormData();
                         }}
                     >
-                        Hủy
+                        {t("departments.actions.cancel")}
                     </Button>
                     <Button onClick={handleEditDepartment}>
-                        Cập nhật
+                        {t("departments.actions.update")}
                     </Button>
                 </div>
             </Modal>
@@ -419,17 +421,17 @@ export default function Teams() {
                     if (!open) setDeletingDepartment(null);
                 }}
                 onConfirm={handleDeleteDepartment}
-                title="Xác nhận xóa phòng ban"
+                title={t("departments.confirmDelete")}
                 description={
                     deletingDepartment
-                        ? `Bạn có chắc chắn muốn xóa phòng ban "${deletingDepartment?.departmentName || deletingDepartment?.name}"?${(deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0
-                            ? `\n\n⚠️ Phòng ban này có ${deletingDepartment.totalUsers || deletingDepartment.memberCount} thành viên. Tất cả thành viên sẽ bị xóa khỏi phòng ban này.`
+                        ? `${t("departments.deleteDescription", { name: deletingDepartment?.departmentName || deletingDepartment?.name })}${(deletingDepartment?.totalUsers || deletingDepartment?.memberCount) > 0
+                            ? `\n\n${t("departments.deleteWarning", { count: deletingDepartment.totalUsers || deletingDepartment.memberCount })}`
                             : ""
                         }`
                         : ""
                 }
-                confirmText="Xóa phòng ban"
-                cancelText="Hủy"
+                confirmText={t("departments.deleteDepartment")}
+                cancelText={t("departments.actions.cancel")}
                 variant="destructive"
             />
         </div>

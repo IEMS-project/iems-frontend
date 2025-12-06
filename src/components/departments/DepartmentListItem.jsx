@@ -1,9 +1,11 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import IconActionButton from "../ui/IconActionButton";
 import { PencilLine, Trash2 } from "lucide-react";
 
 export default function DepartmentListItem({ department, onEdit, onDelete }) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const handleRowClick = (e) => {
@@ -44,7 +46,7 @@ export default function DepartmentListItem({ department, onEdit, onDelete }) {
 
                         <div className="ml-4 text-right hidden sm:block">
                             <div className="text-lg font-bold text-blue-600">{department.memberCount}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">thành viên</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{t("departments.members")}</div>
                         </div>
                     </div>
                 </div>
@@ -52,14 +54,14 @@ export default function DepartmentListItem({ department, onEdit, onDelete }) {
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <IconActionButton
                         icon={PencilLine}
-                        label="Sửa phòng ban"
+                        label={t("departments.tooltips.editDepartment")}
                         variant="edit"
                         onClick={handleEdit}
                         className="shadow-sm"
                     />
                     <IconActionButton
                         icon={Trash2}
-                        label="Xóa phòng ban"
+                        label={t("departments.tooltips.deleteDepartment")}
                         variant="danger"
                         onClick={handleDelete}
                         className="shadow-sm"

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
@@ -11,8 +12,9 @@ export default function AddExistingUsersModal({
   initialSelectedIds = [],
   onSubmit,
   onCreateNew,
-  title = "Thêm thành viên",
+  title,
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set(initialSelectedIds));
 
@@ -61,26 +63,26 @@ export default function AddExistingUsersModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={title}
+      title={title || t("ui.addExistingUsersModal.title")}
       className="max-w-5xl"
       footer={
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-600 dark:text-gray-300">
-              Đã chọn {selectedIds.size}/{allUsers?.length || 0}
+              {t("ui.addExistingUsersModal.selected", { count: selectedIds.size, total: allUsers?.length || 0 })}
             </div>
             {onCreateNew && (
               <Button variant="secondary" onClick={onCreateNew}>
-                Thêm thành viên mới
+                {t("ui.addExistingUsersModal.addNewMember")}
               </Button>
             )}
           </div>
           <div className="flex gap-2">
             <Button variant="secondary" onClick={onClose}>
-              Hủy
+              {t("ui.addExistingUsersModal.cancel")}
             </Button>
             <Button onClick={handleSubmit} disabled={selectedIds.size === 0}>
-              Thêm
+              {t("ui.addExistingUsersModal.add")}
             </Button>
           </div>
         </div>
@@ -91,15 +93,15 @@ export default function AddExistingUsersModal({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nhập tên..."
+          placeholder={t("ui.addExistingUsersModal.searchPlaceholder")}
           className="flex-1"
         />
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={selectAllVisible} className="whitespace-nowrap">
-            Chọn tất cả
+            {t("ui.addExistingUsersModal.selectAll")}
           </Button>
           <Button variant="outline" onClick={clearAll} className="whitespace-nowrap">
-            Bỏ chọn tất cả
+            {t("ui.addExistingUsersModal.deselectAll")}
           </Button>
         </div>
       </div>
