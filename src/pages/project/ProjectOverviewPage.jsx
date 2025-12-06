@@ -182,21 +182,21 @@ export default function ProjectOverviewPage() {
                         <CardTitle>{t('projects.form.description')}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-foreground">
                             {projectData.description || t('projects.detail.overview.noData')}
                         </p>
                         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <div className="text-xs uppercase text-gray-500">{t('projects.form.startDate')}</div>
-                                <div className="text-gray-800 dark:text-gray-100">
+                                <div className="text-xs uppercase text-muted-foreground">{t('projects.form.startDate')}</div>
+                                <div className="text-foreground">
                                     {projectData.startDate
                                         ? new Date(projectData.startDate).toLocaleDateString('vi-VN')
                                         : '-'}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-xs uppercase text-gray-500">{t('projects.form.endDate')}</div>
-                                <div className="text-gray-800 dark:text-gray-100">
+                                <div className="text-xs uppercase text-muted-foreground">{t('projects.form.endDate')}</div>
+                                <div className="text-foreground">
                                     {projectData.endDate
                                         ? new Date(projectData.endDate).toLocaleDateString('vi-VN')
                                         : '-'}
@@ -259,8 +259,8 @@ export default function ProjectOverviewPage() {
                     <div className="space-y-4">
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium">{t('projects.detail.overview.statistics.completionRate')}</span>
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                <span className="text-sm font-medium text-foreground">{t('projects.detail.overview.statistics.completionRate')}</span>
+                                <span className="text-sm text-muted-foreground">
                                     {projectData?.progress ?? stats.progress}%
                                 </span>
                             </div>
@@ -331,8 +331,8 @@ export default function ProjectOverviewPage() {
                                             </svg>
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <div className="text-center">
-                                                    <div className="text-2xl font-bold">{stats.total}</div>
-                                                    <div className="text-xs text-gray-500">{t('projects.detail.overview.statistics.totalTasks')}</div>
+                                                    <div className="text-2xl font-bold text-foreground">{stats.total}</div>
+                                                    <div className="text-xs text-muted-foreground">{t('projects.detail.overview.statistics.totalTasks')}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -352,7 +352,7 @@ export default function ProjectOverviewPage() {
                                             return (
                                                 <div key={status} className="flex items-center gap-2">
                                                     <div className={`h-3 w-3 rounded-full ${colors[status] || "bg-gray-500"}`} />
-                                                    <span className="text-sm">{status}: {count}</span>
+                                                    <span className="text-sm text-foreground">{status}: {count}</span>
                                                 </div>
                                             );
                                         })}
@@ -374,10 +374,10 @@ export default function ProjectOverviewPage() {
                                 <div className="space-y-2">
                                     {Object.entries(priorityBreakdown).map(([priority, count]) => (
                                         <div key={priority} className="flex items-center justify-between">
-                                            <span className="text-sm">{priority}</span>
+                                            <span className="text-sm text-foreground">{priority}</span>
                                             <div className="flex items-center gap-2">
-                                                <div className="h-6 bg-blue-500 rounded" style={{ width: `${(count / Math.max(...Object.values(priorityBreakdown), 1)) * 200}px` }} />
-                                                <span className="text-sm font-medium w-8 text-right">{count}</span>
+                                                <div className="h-6 bg-blue-500 dark:bg-blue-400 rounded" style={{ width: `${(count / Math.max(...Object.values(priorityBreakdown), 1)) * 200}px` }} />
+                                                <span className="text-sm font-medium w-8 text-right text-foreground">{count}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -399,14 +399,14 @@ export default function ProjectOverviewPage() {
                                     {workTypesBreakdown.map(({ type, count, percentage }) => (
                                         <div key={type}>
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-medium">{type}</span>
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                <span className="text-sm font-medium text-foreground">{type}</span>
+                                                <span className="text-sm text-muted-foreground">
                                                     {percentage}% • {count}
                                                 </span>
                                             </div>
-                                            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div className="h-2 bg-muted rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-blue-500 rounded-full transition-all"
+                                                    className="h-full bg-blue-500 dark:bg-blue-400 rounded-full transition-all"
                                                     style={{ width: `${percentage}%` }}
                                                 />
                                             </div>

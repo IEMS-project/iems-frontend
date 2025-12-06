@@ -19,6 +19,7 @@ import {
 import Badge from "../components/ui/Badge";
 import { getTaskTypeIcon, getTaskTypeColor } from "../lib/taskTypeUtils";
 import { ChevronUp, ChevronDown, Equal, Clock, RefreshCw, CheckCircle2, ChevronsUp, ChevronsDown, Minus, Circle } from 'lucide-react';
+import { textColors, bgColors, borderColors, inputColors, statusColors, cn } from '../theme/colors';
 
 // Status constants - independent of language
 const STATUS_KEYS = {
@@ -263,26 +264,26 @@ export default function Tasks() {
 
         // Highest/Critical
         if (["CAO NHẤT", "HIGHEST", "CRITICAL"].includes(normalized)) {
-            return { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' };
+            return { icon: ChevronsUp, color: statusColors.dangerText };
         }
         // High
         if (["CAO", "HIGH"].includes(normalized)) {
-            return { icon: ChevronUp, color: 'text-red-600 dark:text-red-400' };
+            return { icon: ChevronUp, color: statusColors.dangerText };
         }
         // Medium
         if (["TRUNG BÌNH", "MEDIUM", "NORMAL"].includes(normalized)) {
-            return { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' };
+            return { icon: Minus, color: statusColors.warningText };
         }
         // Low
         if (["THẤP", "LOW"].includes(normalized)) {
-            return { icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' };
+            return { icon: ChevronDown, color: statusColors.infoText };
         }
         // Lowest
         if (["THẤP NHẤT", "LOWEST"].includes(normalized)) {
-            return { icon: ChevronsDown, color: 'text-blue-700 dark:text-blue-400' };
+            return { icon: ChevronsDown, color: statusColors.infoText };
         }
         // None/Default
-        return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
+        return { icon: Circle, color: textColors.muted };
     }, []);
 
     // Jira-style date badge component: calendar icon for normal dates,
@@ -298,19 +299,19 @@ export default function Tasks() {
         }
 
         const baseClass = 'inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium select-none';
-        const normalClass = `${baseClass} border border-gray-300 bg-white text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100`;
-        const overdueClass = `${baseClass} border border-red-400 bg-red-50 text-red-600`;
+        const normalClass = cn(baseClass, borderColors.medium, bgColors.primary, textColors.primary);
+        const overdueClass = cn(baseClass, statusColors.dangerBorder, statusColors.dangerBg, statusColors.dangerText);
 
         return (
             <span className={overdue ? overdueClass : normalClass}>
                 {overdue ? (
-                    <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <svg className={cn("w-4 h-4", statusColors.dangerText)} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12 9v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12 17h.01" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 ) : (
-                    <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <svg className={cn("w-4 h-4", textColors.secondary)} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={1.5} />
                         <path d="M16 2v4M8 2v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -489,13 +490,13 @@ export default function Tasks() {
                     <div className="flex items-end gap-4 flex-1 flex-wrap">
                         {/* Multi-select Project Filter */}
                         <div className="relative" ref={projectDropdownRef}>
-                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                            <label className={cn("block mb-1 text-sm font-medium", textColors.primary)}>
                                 {t('tasks.filters.project')}
                             </label>
                             <button
                                 type="button"
                                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
-                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                                className={cn("w-48 rounded-md border px-3 py-2 text-left text-sm shadow-sm outline-none transition", inputColors.base, inputColors.focus)}
                             >
                                 {filters.projectId.length === 0
                                     ? t('tasks.filters.allProjects')
@@ -507,10 +508,10 @@ export default function Tasks() {
                                 </svg>
                             </button>
                             {showProjectDropdown && (
-                                <div className="absolute z-10 mt-1 w-48 max-h-60 overflow-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                <div className={cn("absolute z-10 mt-1 w-48 max-h-60 overflow-auto rounded-md border shadow-lg", borderColors.medium, bgColors.primary)}>
                                     <div className="p-2 space-y-1">
                                         {projects.length === 0 ? (
-                                            <div className="p-2 text-sm text-gray-500 dark:text-gray-400">{t('tasks.filters.noProjects')}</div>
+                                            <div className={cn("p-2 text-sm", textColors.secondary)}>{t('tasks.filters.noProjects')}</div>
                                         ) : (
                                             projects.map((project) => (
                                                 <Checkbox
@@ -534,13 +535,13 @@ export default function Tasks() {
 
                         {/* Multi-select Status Filter */}
                         <div className="relative" ref={statusDropdownRef}>
-                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                            <label className={cn("block mb-1 text-sm font-medium", textColors.primary)}>
                                 {t('tasks.filters.status')}
                             </label>
                             <button
                                 type="button"
                                 onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                                className={cn("w-48 rounded-md border px-3 py-2 text-left text-sm shadow-sm outline-none transition", inputColors.base, inputColors.focus)}
                             >
                                 {filters.status.length === 0
                                     ? t('tasks.filters.allStatuses')
@@ -552,7 +553,7 @@ export default function Tasks() {
                                 </svg>
                             </button>
                             {showStatusDropdown && (
-                                <div className="absolute z-10 mt-1 w-48 rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                <div className={cn("absolute z-10 mt-1 w-48 rounded-md border shadow-lg", borderColors.medium, bgColors.primary)}>
                                     <div className="p-2 space-y-1">
                                         {statusOptions.map((option) => (
                                             <Checkbox
@@ -575,13 +576,13 @@ export default function Tasks() {
 
                         {/* Multi-select Priority Filter */}
                         <div className="relative" ref={priorityDropdownRef}>
-                            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                            <label className={cn("block mb-1 text-sm font-medium", textColors.primary)}>
                                 {t('tasks.filters.priority')}
                             </label>
                             <button
                                 type="button"
                                 onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                                className="w-48 rounded-md border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-400"
+                                className={cn("w-48 rounded-md border px-3 py-2 text-left text-sm shadow-sm outline-none transition", inputColors.base, inputColors.focus)}
                             >
                                 {filters.priority.length === 0
                                     ? t('tasks.filters.allPriorities')
@@ -593,7 +594,7 @@ export default function Tasks() {
                                 </svg>
                             </button>
                             {showPriorityDropdown && (
-                                <div className="absolute z-10 mt-1 w-48 rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                                <div className={cn("absolute z-10 mt-1 w-48 rounded-md border shadow-lg", borderColors.medium, bgColors.primary)}>
                                     <div className="p-2 space-y-1">
                                         {priorityOptions.map((option) => (
                                             <Checkbox
@@ -633,7 +634,7 @@ export default function Tasks() {
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end">
                             {hasUnsavedChanges && (
-                                <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                <span className={cn("text-sm flex items-center gap-1", statusColors.warningText)}>
                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                     </svg>
@@ -694,7 +695,7 @@ export default function Tasks() {
                                     <CardContent className="pt-0">
                                         <div className="min-h-[350px] space-y-3 mt-1">
                                             {skeletonCards.map((_, idx) => (
-                                                <div key={idx} className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 p-4 space-y-3">
+                                                <div key={idx} className={cn("rounded-lg border p-4 space-y-3", borderColors.light, bgColors.muted)}>
                                                     <Skeleton className="h-4 w-3/4" />
                                                     <Skeleton className="h-3 w-1/2" />
                                                     <Skeleton className="h-3 w-1/3" />
@@ -722,7 +723,7 @@ export default function Tasks() {
                                                 <StatusIcon className={`w-4 h-4 ${statusIconData.color}`} />
                                                 <span className="font-semibold">{column.name}</span>
                                             </div>
-                                            <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full dark:bg-gray-800 dark:text-gray-300">
+                                            <span className={cn("text-sm px-2 py-1 rounded-full", textColors.secondary, bgColors.muted)}>
                                                 {kanbanData.filter(item => item.column === column.id).length}
                                             </span>
                                         </KanbanHeader>
@@ -738,7 +739,7 @@ export default function Tasks() {
                                                         id={item.id}
                                                         name={item.name}
                                                         column={item.column}
-                                                        className={isSelected ? "border-blue-500 bg-blue-50 dark:bg-blue-950 cursor-pointer" : "cursor-pointer"}
+                                                        className={isSelected ? cn("cursor-pointer", statusColors.infoBorder, statusColors.infoBg) : "cursor-pointer"}
                                                     >
                                                         <div
                                                             className="space-y-2"
@@ -780,12 +781,12 @@ export default function Tasks() {
                                                                     {React.createElement(getTaskTypeIcon(item.type), {
                                                                         className: `w-4 h-4 flex-shrink-0 mt-0.5 ${getTaskTypeColor(item.type)}`
                                                                     })}
-                                                                    <h4 className="font-medium text-sm leading-tight flex-1 text-gray-900 dark:text-gray-100">
+                                                                    <h4 className={cn("font-medium text-sm leading-tight flex-1", textColors.primary)}>
                                                                         {item.title || item.name}
                                                                     </h4>
                                                                 </div>
                                                                 {timeRemaining && (
-                                                                    <span className={`text-xs flex-shrink-0 ${isOverdue ? "text-red-500" : "text-green-500"}`}>
+                                                                    <span className={cn("text-xs flex-shrink-0", isOverdue ? statusColors.dangerText : statusColors.successText)}>
                                                                         {timeRemaining}
                                                                     </span>
                                                                 )}
@@ -807,8 +808,8 @@ export default function Tasks() {
                                                                         const PriorityIcon = iconData.icon;
                                                                         return (
                                                                             <div className="flex-shrink-0 inline-flex items-center gap-1.5 text-sm">
-                                                                                <PriorityIcon className={`w-4 h-4 ${iconData.color}`} />
-                                                                                <span className="text-gray-900 dark:text-gray-100">{formatPriority(item.priority)}</span>
+                                                                                <PriorityIcon className={cn("w-4 h-4", iconData.color)} />
+                                                                                <span className={textColors.primary}>{formatPriority(item.priority)}</span>
                                                                             </div>
                                                                         );
                                                                     }

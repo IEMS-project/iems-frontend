@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import { projectService } from "../../services/projectService";
 import Skeleton from "../ui/Skeleton";
+import { textColors, borderColors, bgColors, cn } from "../../theme/colors";
 
 export default function ProjectOverview() {
 	const { t } = useTranslation();
@@ -74,28 +75,28 @@ export default function ProjectOverview() {
 						))}
 					</div>
 				) : projects.length === 0 ? (
-					<div className="py-8 text-center text-gray-500 dark:text-gray-400">
+					<div className={cn("py-8 text-center", textColors.muted)}>
 						{t("dashboard.projectOverview.noProjects")}
 					</div>
 				) : (
 					<div className="overflow-x-auto">
-						<table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+						<table className={cn("min-w-full text-sm", borderColors.divider)}>
 							<thead>
-								<tr className="text-left text-gray-500 dark:text-gray-400">
+								<tr className={cn("text-left", textColors.secondary)}>
 									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.project")}</th>
 									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.status")}</th>
 									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.deadline")}</th>
 									<th className="px-4 py-2 font-medium">{t("dashboard.projectOverview.progress")}</th>
 								</tr>
 							</thead>
-							<tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+							<tbody className={borderColors.divider}>
 								{projects.map((project) => (
 									<tr
 										key={project.id || project.projectId}
 										onClick={() => handleProjectClick(project.id || project.projectId)}
-										className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 cursor-pointer transition-colors"
+										className={cn(bgColors.hover, "cursor-pointer transition-colors")}
 									>
-										<td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+										<td className={cn("px-4 py-3 font-medium", textColors.primary)}>
 											{project.name || project.title || t("dashboard.projectOverview.na")}
 										</td>
 										<td className="px-4 py-3">{formatStatus(project.status)}</td>

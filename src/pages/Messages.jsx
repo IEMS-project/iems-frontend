@@ -182,7 +182,7 @@ function Messages() {
                             return updated;
                         });
                         try { resetUnread(payload.conversationId); } catch (e) { console.debug(e); }
-            } else if (payload.event === 'message') {
+                    } else if (payload.event === 'message') {
                         if (payload.conversationId && typeof payload.content === 'string') {
                             lastMessagesByConvRef.current[payload.conversationId] = {
                                 content: payload.content,
@@ -210,22 +210,22 @@ function Messages() {
                                 setUnreadByConv(prev => ({ ...prev, [payload.conversationId]: (prev[payload.conversationId] || 0) + 1 }));
                             }
                         }
-            } else if (payload.event === 'conversation_meta_updated') {
-                    const { conversationId, name, avatarUrl, updatedAt, notificationsEnabled } = payload;
-                if (conversationId) {
-                        if (typeof notificationsEnabled === 'boolean') {
-                            try { updateNotificationState(conversationId, notificationsEnabled); } catch (e) { console.debug(e); }
+                    } else if (payload.event === 'conversation_meta_updated') {
+                        const { conversationId, name, avatarUrl, updatedAt, notificationsEnabled } = payload;
+                        if (conversationId) {
+                            if (typeof notificationsEnabled === 'boolean') {
+                                try { updateNotificationState(conversationId, notificationsEnabled); } catch (e) { console.debug(e); }
+                            }
+                            setConversations(prev => prev.map(c => c.id === conversationId ? {
+                                ...c,
+                                name: name !== undefined ? name : c.name,
+                                avatarUrl: avatarUrl !== undefined ? avatarUrl : c.avatarUrl,
+                                updatedAt: updatedAt || c.updatedAt,
+                                notificationsEnabled: typeof notificationsEnabled === 'boolean' ? notificationsEnabled : c.notificationsEnabled
+                            } : c));
+                            setUiTick(t => t + 1);
                         }
-                    setConversations(prev => prev.map(c => c.id === conversationId ? {
-                        ...c,
-                        name: name !== undefined ? name : c.name,
-                        avatarUrl: avatarUrl !== undefined ? avatarUrl : c.avatarUrl,
-                            updatedAt: updatedAt || c.updatedAt,
-                            notificationsEnabled: typeof notificationsEnabled === 'boolean' ? notificationsEnabled : c.notificationsEnabled
-                    } : c));
-                    setUiTick(t => t + 1);
-                }
-            }
+                    }
                 } catch (_e) { }
             });
         });
@@ -617,10 +617,10 @@ function Messages() {
                                 ...conv,
                                 updatedAt: msg.updatedAt,
                                 lastMessage: msg.lastMessage,
-                                    unreadCount: msg.unreadCount,
-                                    notificationsEnabled: typeof msg.notificationsEnabled === 'boolean'
-                                        ? msg.notificationsEnabled
-                                        : conv.notificationsEnabled
+                                unreadCount: msg.unreadCount,
+                                notificationsEnabled: typeof msg.notificationsEnabled === 'boolean'
+                                    ? msg.notificationsEnabled
+                                    : conv.notificationsEnabled
                             };
                         }
                         return conv;
@@ -940,14 +940,14 @@ function Messages() {
             setLoadingOlderMessages(true);
             const oldest = messages[0];
             const oldestId = oldest.id || oldest._id;
-            
+
             // Skip if oldestId is a local/temp ID (not from server)
             if (!oldestId || oldestId.startsWith('local-') || oldestId.startsWith('temp-')) {
                 console.log('📥 Skipping loadOlderById - oldest message is local/temp:', oldestId);
                 setLoadingOlderMessages(false);
                 return;
             }
-            
+
             console.log('📥 Loading older-by-id before:', oldestId);
             const result = await chatService.getMessagesAround(oldestId, limit, 0);
             const older = (result?.beforeMessages || []).filter(msg => {
@@ -985,14 +985,14 @@ function Messages() {
             setLoadingNewerMessages(true);
             const newest = messages[messages.length - 1];
             const newestId = newest.id || newest._id;
-            
+
             // Skip if newestId is a local/temp ID (not from server)
             if (!newestId || newestId.startsWith('local-') || newestId.startsWith('temp-')) {
                 console.log('📥 Skipping loadNewerById - newest message is local/temp:', newestId);
                 setLoadingNewerMessages(false);
                 return;
             }
-            
+
             console.log('📥 Loading newer-by-id after:', newestId);
             const result = await chatService.getMessagesAround(newestId, 0, limit);
             const newer = (result?.afterMessages || []).filter(msg => {
@@ -1706,7 +1706,7 @@ function Messages() {
                             onMessageUpdate={handleMessageUpdate}
                             onJumpToMessage={jumpToMessage}
                             typingUsers={typingUsers}
-                            onShowMessageSearch={() => {}}
+                            onShowMessageSearch={() => { }}
                             onShowGroupMembers={() => setShowGroupMembers(true)}
                             isJumpMode={isJumpMode}
                             onReturnToLatest={returnToLatest}
@@ -1727,11 +1727,11 @@ function Messages() {
                             getPeerId={getPeerId}
                             getConversationDisplayName={getConversationDisplayName}
                             onShowPinnedMessages={() => setShowPinnedMessages(true)}
-                        onConversationMetaUpdated={(updated) => {
-                            if (!updated?.id) return;
-                            setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
-                            setUiTick(t => t + 1);
-                        }}
+                            onConversationMetaUpdated={(updated) => {
+                                if (!updated?.id) return;
+                                setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
+                                setUiTick(t => t + 1);
+                            }}
                         />
                     ) : (
                         <EmptyChat />

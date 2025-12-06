@@ -143,7 +143,7 @@ export default function ProjectPhases({ projectId }) {
         return (
             <Card>
                 <CardContent className="p-6">
-                    <div className="text-center text-gray-500">{t("projects.phases.loading")}</div>
+                    <div className="text-center text-muted-foreground">{t("projects.phases.loading")}</div>
                 </CardContent>
             </Card>
         );
@@ -161,7 +161,7 @@ export default function ProjectPhases({ projectId }) {
                 </CardHeader>
                 <CardContent>
                     {phases.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-muted-foreground">
                             {t("projects.phases.noPhases")}
                         </div>
                     ) : (
@@ -169,35 +169,35 @@ export default function ProjectPhases({ projectId }) {
                             {phases.map((phase) => (
                                 <div
                                     key={phase.id}
-                                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                                    className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-card"
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
                                                     #{phase.sortOrder}
                                                 </span>
-                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                <h3 className="text-lg font-semibold text-foreground">
                                                     {phase.name}
                                                 </h3>
                                             </div>
 
                                             {phase.description && (
-                                                <p className="text-sm text-gray-600 mb-2">
+                                                <p className="text-sm text-muted-foreground mb-2">
                                                     {phase.description}
                                                 </p>
                                             )}
 
                                             {phase.goal && (
                                                 <div className="flex items-start gap-2 mb-2">
-                                                    <Target className="h-4 w-4 text-blue-500 mt-0.5" />
-                                                    <p className="text-sm text-gray-700">
+                                                    <Target className="h-4 w-4 text-blue-500 dark:text-blue-400 mt-0.5" />
+                                                    <p className="text-sm text-foreground">
                                                         <span className="font-medium">{t("projects.phases.fields.goal")}</span> {phase.goal}
                                                     </p>
                                                 </div>
                                             )}
 
-                                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>{t("projects.phases.fields.startDate")} {formatDate(phase.startDate)}</span>
@@ -250,66 +250,66 @@ export default function ProjectPhases({ projectId }) {
             >
                 <div className="grid grid-cols-1 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.phases.form.name")} {t("projects.form.required")}
                         </label>
                         <Input
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.phases.form.namePlaceholder")}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.phases.form.goal")}
                         </label>
                         <Input
                             type="text"
                             value={formData.goal}
                             onChange={e => setFormData({ ...formData, goal: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.phases.form.goalPlaceholder")}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                                 {t("projects.phases.form.startDate")}
                             </label>
                             <Input
                                 type="date"
                                 value={formData.startDate}
                                 onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                                className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                                 {t("projects.phases.form.endDate")}
                             </label>
                             <Input
                                 type="date"
                                 value={formData.endDate}
                                 onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                                className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.phases.form.description")}
                         </label>
                         <Textarea
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.phases.form.descriptionPlaceholder")}
                         />
                     </div>

@@ -4,6 +4,7 @@ import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
+import { textColors } from "@/theme/colors";
 
 export default function AddExistingUsersModal({
   open,
@@ -68,7 +69,7 @@ export default function AddExistingUsersModal({
       footer={
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
+            <div className={`text-sm ${textColors.secondary}`}>
               {t("ui.addExistingUsersModal.selected", { count: selectedIds.size, total: allUsers?.length || 0 })}
             </div>
             {onCreateNew && (

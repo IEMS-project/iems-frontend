@@ -286,10 +286,10 @@ export default function ConversationList({
               onMouseLeave={() => setHoveredConversation(null)}
               onContextMenu={(e) => handleContextMenu(e, c.id)}
               className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${isSelected
-                  ? 'bg-muted/80'
-                  : isHovered
-                    ? 'bg-muted/40'
-                    : ''
+                ? 'bg-muted/80'
+                : isHovered
+                  ? 'bg-muted/40'
+                  : ''
                 }`}
             >
               {/* Avatar */}
@@ -341,8 +341,8 @@ export default function ConversationList({
                 <div className="flex items-center justify-between gap-2">
                   <div
                     className={`text-sm truncate flex-1 ${unread > 0
-                        ? "text-foreground font-semibold"
-                        : "text-muted-foreground font-medium"
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground font-medium"
                       }`}
                   >
                     {lastMessageSenderName && lastMessageSenderId !== currentUserId && (

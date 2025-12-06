@@ -196,7 +196,7 @@ export function TasksDataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-gray-500 dark:text-gray-400"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   {t('projects.detail.tasks.empty')}
                 </TableCell>
@@ -207,7 +207,7 @@ export function TasksDataTable<TData, TValue>({
         </div>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground dark:text-gray-400">
+        <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredRowModel().rows.length} {t('breadcrumb.tasks').toLowerCase()}
         </div>
         <div className="space-x-2">

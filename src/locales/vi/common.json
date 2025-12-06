@@ -787,9 +787,13 @@
       "home": "Trang chủ",
       "loading": "Đang tải...",
       "noFolders": "Không có thư mục nào",
+      "noSubfolders": "Không có thư mục con nào",
+      "noSubfoldersDesc": "Chọn \"Di chuyển vào đây\" để di chuyển vào thư mục này",
       "moveHere": "Di chuyển đến đây",
+      "moveToHere": "Di chuyển vào đây",
       "cancel": "Hủy",
       "processing": "Đang xử lý...",
+      "moving": "Đang di chuyển...",
       "success": "Đã di chuyển thành công"
     },
     "contextMenu": {

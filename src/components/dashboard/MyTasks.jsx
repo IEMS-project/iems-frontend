@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import { taskService } from "../../services/taskService";
 import Skeleton from "../ui/Skeleton";
 import { getTaskTypeIcon, getTaskTypeColor } from "../../lib/taskTypeUtils";
+import { textColors, badgeColors, cn } from "../../theme/colors";
 
 export default function MyTasks() {
 	const { t } = useTranslation();
@@ -30,15 +31,15 @@ export default function MyTasks() {
 	const priorityColor = (priority) => {
 		const priorityUpper = priority?.toString().toUpperCase() || "";
 		if (["CAO", "HIGH"].includes(priorityUpper)) {
-			return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+			return badgeColors.danger;
 		}
 		if (["TRUNG BÌNH", "TRUNG BINH", "MEDIUM"].includes(priorityUpper)) {
-			return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
+			return badgeColors.warning;
 		}
 		if (["THẤP", "THAP", "LOW"].includes(priorityUpper)) {
-			return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+			return badgeColors.success;
 		}
-		return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+		return badgeColors.default;
 	};
 
 	const formatPriority = (priority) => {
@@ -88,7 +89,7 @@ export default function MyTasks() {
 						))}
 					</div>
 				) : tasks.length === 0 ? (
-					<div className="py-8 text-center text-gray-500 dark:text-gray-400">
+					<div className={cn("py-8 text-center", textColors.muted)}>
 						{t("dashboard.myTasks.noTasks")}
 					</div>
 				) : (
@@ -99,20 +100,26 @@ export default function MyTasks() {
 							return (
 								<li
 									key={task.id || task.taskId}
-									className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-black dark:text-white dark:border-blue-800 dark:bg-blue-900/20"
+									className={cn(
+										"rounded-lg border p-4 text-sm",
+										"border-gray-200  dark:border-gray-700 dark:bg-gray-800",
+										textColors.primary
+									)}
 								>
 									<div className="flex justify-between items-center">
 										<div className="font-semibold text-base">
 											{task.projectName || task.project?.name || t("dashboard.myTasks.na")}
 										</div>
 										<div
-											className={`text-xs font-semibold ${isOverdue ? "text-red-500" : "text-gray-600 dark:text-gray-400"
-												}`}
+											className={cn(
+												"text-xs font-semibold",
+												isOverdue ? "text-red-500 dark:text-red-400" : textColors.secondary
+											)}
 										>
 											{dueText}
 										</div>
 									</div>
-									<div className="mt-1 flex items-center justify-between text-xs text-black dark:text-white">
+									<div className={cn("mt-1 flex items-center justify-between text-xs", textColors.primary)}>
 										<span className="flex items-center gap-1.5">
 											{React.createElement(getTaskTypeIcon(task.taskType || task.type), {
 												className: `w-3.5 h-3.5 ${getTaskTypeColor(task.taskType || task.type)}`

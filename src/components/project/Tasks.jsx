@@ -362,7 +362,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     {/* Left side - Description & Attachments */}
                     <div className="lg:col-span-2 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)] pr-2 pl-2">
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Type className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.title')}
                             </label>
@@ -375,7 +375,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <FileText className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.description')}
                             </label>
@@ -388,7 +388,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
                         {/* Attachments section moved here */}
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-1.5">
                                 <Paperclip className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.attachments') || 'File đính kèm'}
                             </label>
@@ -396,7 +396,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             {/* Existing attachments */}
                             {existingAttachments.length > 0 && (
                                 <div className="mb-3">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">File hiện có:</div>
+                                    <div className="text-xs text-muted-foreground mb-2">File hiện có:</div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {/* Hiển thị ảnh trước */}
                                         {existingAttachments
@@ -425,10 +425,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                         {existingAttachments
                                             .filter(attachment => !isImageFile(attachment))
                                             .map((attachment) => (
-                                                <div key={attachment.id} className="col-span-3 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                                                    <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                <div key={attachment.id} className="col-span-3 flex items-center gap-2 p-2 bg-muted rounded border border-border">
+                                                    <Paperclip className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-sm text-gray-900 dark:text-gray-100 truncate" title={attachment.fileName}>
+                                                        <div className="text-sm text-foreground truncate" title={attachment.fileName}>
                                                             {attachment.fileName}
                                                         </div>
                                                         <a
@@ -459,7 +459,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                             {/* New files to upload */}
                             {selectedFiles.length > 0 && (
                                 <div className="mb-3">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">File mới:</div>
+                                    <div className="text-xs text-muted-foreground mb-2">File mới:</div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {/* Hiển thị ảnh trước */}
                                         {selectedFiles
@@ -491,12 +491,12 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                             .filter(({ file }) => !isImageFile(file))
                                             .map(({ file, index }) => (
                                                 <div key={index} className="col-span-3 flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                                                    <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                    <Paperclip className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-sm text-gray-900 dark:text-gray-100 truncate" title={file.name}>
+                                                        <div className="text-sm text-foreground truncate" title={file.name}>
                                                             {file.name}
                                                         </div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <div className="text-xs text-muted-foreground">
                                                             {(file.size / 1024).toFixed(2)} KB
                                                         </div>
                                                     </div>
@@ -536,19 +536,19 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
                     {/* Right side - Details */}
                     <div className="lg:col-span-1 overflow-y-auto max-h-[calc(90vh-200px)] space-y-4 pr-2 pl-2">
-                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('tasks.detail.fields.details')}</div>
+                        <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.details')}</div>
 
                         {editingTask && (
                             <div>
-                                <div className="text-xs uppercase text-gray-500 dark:text-gray-400">{t('tasks.detail.fields.project')}</div>
-                                <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                                <div className="text-xs uppercase text-muted-foreground">{t('tasks.detail.fields.project')}</div>
+                                <div className="text-sm text-foreground mt-1">
                                     {(editingTask.project && editingTask.project.name) || editingTask.projectName || '-'}
                                 </div>
                             </div>
                         )}
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Layers className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.taskType')}
                             </label>
@@ -597,7 +597,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <GitBranch className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.parentTask')}
                             </label>
@@ -616,7 +616,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Milestone className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.phase')}
                             </label>
@@ -629,7 +629,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <User className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.assignee')}
                             </label>
@@ -641,7 +641,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Clock className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.status')}
                             </label>
@@ -657,7 +657,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Flag className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.priority')}
                             </label>
@@ -705,7 +705,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <Calendar className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.startDate')}
                             </label>
@@ -718,7 +718,7 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                            <label className="text-sm font-medium text-foreground mb-1 flex items-center gap-1.5">
                                 <CalendarClock className="w-4 h-4" />
                                 {t('projects.detail.tasks.form.dueDate')}
                             </label>

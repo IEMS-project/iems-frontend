@@ -50,7 +50,7 @@ export default function PermissionModal({
 						{t('documents.permission.currentStatus')} <span className="font-medium">{item?.permission === 'PUBLIC' ? t('documents.permission.public') : t('documents.permission.private')}</span>
 					</label>
 					<div className="space-y-2">
-						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-muted ">
 							<input
 								type="radio"
 								name="permission"
@@ -64,7 +64,7 @@ export default function PermissionModal({
 								<div className="text-sm text-gray-500">{t('documents.permission.publicDesc')}</div>
 							</div>
 						</label>
-						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-muted">
 							<input
 								type="radio"
 								name="permission"

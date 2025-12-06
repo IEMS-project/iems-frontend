@@ -9,7 +9,7 @@ export default function PhaseSelect({ phases = [], value, onChange, placeholder 
         <select
             value={value || ""}
             onChange={(e) => onChange(e.target.value || null)}
-            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
         >
             <option value="">{defaultPlaceholder}</option>
             {phases.map((phase) => (

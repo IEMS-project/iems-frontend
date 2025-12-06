@@ -136,7 +136,7 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                 <div className="lg:col-span-2 space-y-6">
                     {task.description && (
                         <div>
-                            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('tasks.detail.fields.description')}</div>
+                            <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.description')}</div>
                             <RichTextEditor
                                 value={task.description}
                                 readOnly={true}
@@ -146,7 +146,7 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.attachments && task.attachments.length > 0 && (
                         <div>
-                            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                            <div className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                                 <Paperclip className="w-4 h-4" />
                                 {t('tasks.detail.fields.attachments') || 'File đính kèm'} ({task.attachments.length})
                             </div>
@@ -192,10 +192,10 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                                         return (
                                             <div
                                                 key={attachment.id}
-                                                className="col-span-3 flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md text-sm"
+                                                className="col-span-3 flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
                                             >
-                                                <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                                                <span className="truncate text-gray-700 dark:text-gray-300 flex-1" title={fileName}>
+                                                <Paperclip className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                <span className="truncate text-foreground flex-1" title={fileName}>
                                                     {fileName}
                                                 </span>
                                                 <a
@@ -217,25 +217,25 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                 {/* Right side - Details */}
                 <div className="lg:col-span-1 space-y-4">
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('tasks.detail.fields.details')}</div>
+                    <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.details')}</div>
 
                     {task.id && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <Hash className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.taskId')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">{task.id}</div>
+                            <div className="text-sm text-foreground mt-1">{task.id}</div>
                         </div>
                     )}
 
                     {task.type && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <Layers className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.type')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-sm text-foreground mt-1">
                                 <Badge variant={getTaskTypeVariant(task.type)} className="inline-flex items-center gap-1.5">
                                     {React.createElement(getTaskTypeIcon(task.type), { className: "w-3.5 h-3.5" })}
                                     {translateTaskType(task.type)}
@@ -245,11 +245,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                     )}
 
                     <div>
-                        <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                        <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                             <FolderKanban className="w-3.5 h-3.5" />
                             {t('tasks.detail.fields.project')}
                         </div>
-                        <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                        <div className="text-sm text-foreground mt-1">
                             <Badge variant="black" className="font-normal">
                                 {(task.project && task.project.name) || task.projectName || task.project || '-'}
                             </Badge>
@@ -258,11 +258,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.priority && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <Flag className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.priority')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1 inline-flex items-center gap-1.5">
+                            <div className="text-sm text-foreground mt-1 inline-flex items-center gap-1.5">
                                 {(() => {
                                     const iconData = getPriorityIcon(task.priority);
                                     if (iconData) {
@@ -278,11 +278,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {(task.userName || task.assignedToName || task.assigneeName || task.assignedTo) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <User className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.assignee')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-sm text-foreground mt-1">
                                 {task.userName || task.assignedToName || task.assigneeName ||
                                     (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.name : task.assignedTo) ||
                                     task.assignedToEmail || task.assigneeEmail || '-'}
@@ -292,11 +292,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.startDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <CalendarDays className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.startDate')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-sm text-foreground mt-1">
                                 {new Date(task.startDate).toLocaleDateString('vi-VN')}
                             </div>
                         </div>
@@ -304,11 +304,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <CalendarClock className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.dueDate')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-sm text-foreground mt-1">
                                 {formatDueDate(task.dueDate)}
                             </div>
                         </div>
@@ -316,11 +316,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && getTimeRemaining(task.dueDate) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold flex items-center gap-1.5">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.timeRemaining')}
                             </div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-sm text-foreground mt-1">
                                 {getTimeRemaining(task.dueDate)}
                             </div>
                         </div>

@@ -6,6 +6,7 @@ import { documentService } from "../../services/documentService";
 import Avatar from "../ui/Avatar";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
+import { selectColors, textColors, borderColors, cn } from "../../theme/colors";
 
 export default function SharedUsersModal({
 	isOpen,
@@ -22,6 +23,7 @@ export default function SharedUsersModal({
 		if (isOpen && item) {
 			loadSharedUsers();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen, item]);
 
 	async function loadSharedUsers() {
@@ -82,7 +84,7 @@ export default function SharedUsersModal({
 		>
 			<div className="space-y-4">
 				{item && (
-					<div className="text-sm text-gray-600 mb-4">
+					<div className={cn("text-sm mb-4", textColors.secondary)}>
 						{t('documents.sharedUsers.item', {
 							type: item.type === 'folder' ? t('documents.sharedUsers.folder') : t('documents.sharedUsers.file'),
 							name: item.name
@@ -93,7 +95,7 @@ export default function SharedUsersModal({
 				{loading ? (
 					<div className="space-y-2">
 						{Array.from({ length: 3 }).map((_, idx) => (
-							<div key={idx} className="flex items-center justify-between rounded-md border border-dashed border-gray-200 p-3 dark:border-gray-700">
+							<div key={idx} className={cn("flex items-center justify-between rounded-md border border-dashed p-3", borderColors.light)}>
 								<div className="flex items-center gap-3">
 									<Skeleton className="h-10 w-10 rounded-full" />
 									<div className="space-y-2">
@@ -109,20 +111,20 @@ export default function SharedUsersModal({
 						))}
 					</div>
 				) : sharedUsers.length === 0 ? (
-					<div className="text-center py-8 text-gray-500">
+					<div className={cn("text-center py-8", textColors.secondary)}>
 						{t('documents.sharedUsers.noUsers')}
 					</div>
 				) : (
 					<div className="space-y-2">
 						{sharedUsers.map((user) => (
-							<div key={user.shareId} className="flex items-center justify-between p-3 border rounded-md">
+							<div key={user.shareId} className={cn("flex items-center justify-between p-3 border rounded-md", borderColors.default)}>
 								<div className="flex items-center gap-3">
 									<Avatar user={user} size="sm" />
 									<div>
-										<div className="font-medium">
+										<div className={cn("font-medium", textColors.primary)}>
 											{user.firstName} {user.lastName}
 										</div>
-										<div className="text-sm text-gray-500">
+										<div className={cn("text-sm", textColors.secondary)}>
 											{user.email}
 										</div>
 									</div>
@@ -132,7 +134,11 @@ export default function SharedUsersModal({
 										value={user.permission}
 										onChange={(e) => updatePermission(user.shareId, e.target.value)}
 										disabled={actionLoading === user.shareId}
-										className="px-2 py-1 border border-gray-300 rounded text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+										className={cn(
+											"px-2 py-1 rounded text-sm",
+											selectColors.base,
+											selectColors.focus
+										)}
 									>
 										<option value="VIEWER">{t('documents.share.viewer')}</option>
 										<option value="EDITOR">{t('documents.share.editor')}</option>

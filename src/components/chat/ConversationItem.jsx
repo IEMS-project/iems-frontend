@@ -3,18 +3,18 @@ import { FaTrash, FaEdit, FaClock, FaComments } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-const ConversationItem = ({ 
-  conversation, 
-  isActive, 
-  onSelect, 
-  onDelete, 
-  onEdit 
+const ConversationItem = ({
+  conversation,
+  isActive,
+  onSelect,
+  onDelete,
+  onEdit
 }) => {
   const formatDate = (dateString) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { 
-        addSuffix: true, 
-        locale: vi 
+      return formatDistanceToNow(new Date(dateString), {
+        addSuffix: true,
+        locale: vi
       });
     } catch (error) {
       return 'Không xác định';
@@ -27,11 +27,11 @@ const ConversationItem = ({
   };
 
   return (
-    <div 
+    <div
       className={`
         group relative px-3 py-2 cursor-pointer transition-all duration-200
-        ${isActive 
-          ? 'bg-gray-100 dark:bg-gray-700' 
+        ${isActive
+          ? 'bg-gray-100 dark:bg-gray-700'
           : 'hover:bg-gray-50 dark:hover:bg-gray-700'
         }
       `}
@@ -43,7 +43,7 @@ const ConversationItem = ({
             {truncateText(conversation.name || conversation.title || 'Cuộc trò chuyện mới', 40)}
           </h4>
         </div>
-        
+
         {/* Action buttons - show on hover */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button

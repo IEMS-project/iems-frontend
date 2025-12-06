@@ -64,8 +64,8 @@ export default function RolesTable({
                                     <TableRow
                                         key={role.id}
                                         onClick={() => onSelectRole(role.id)}
-                                        className={`cursor-pointer ${isActive ? "bg-blue-50 dark:bg-blue-500/10" : ""
-                                            }`}
+                                        className="cursor-pointer"
+                                        data-state={isActive ? "selected" : undefined}
                                     >
                                         <TableCell>
                                             <div className="font-medium">{role.name}</div>
@@ -84,7 +84,6 @@ export default function RolesTable({
                                                     icon={PencilLine}
                                                     label={t("admin.accessControl.roles.editRole")}
                                                     variant="edit"
-                                                    className="text-black dark:text-white"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onEditRole(role);

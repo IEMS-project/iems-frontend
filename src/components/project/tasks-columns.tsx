@@ -38,12 +38,12 @@ const priorityDisplayMap: Record<
   string,
   { icon: React.ComponentType<{ className?: string }>; label: string; color: string }
 > = {
-  "Cao nhất": { icon: ChevronsUp, label: "Cao nhất", color: "text-red-700 dark:text-red-400" },
+  "Cao nhất": { icon: ChevronsUp, label: "Cao nhất", color: "text-red-600 dark:text-red-400" },
   "Cao": { icon: ChevronUp, label: "Cao", color: "text-red-600 dark:text-red-400" },
   "Trung bình": { icon: Minus, label: "Trung bình", color: "text-yellow-600 dark:text-yellow-400" },
   "Thấp": { icon: ChevronDown, label: "Thấp", color: "text-blue-600 dark:text-blue-400" },
-  "Thấp nhất": { icon: ChevronsDown, label: "Thấp nhất", color: "text-blue-700 dark:text-blue-400" },
-  "Không ưu tiên": { icon: Circle, label: "Không ưu tiên", color: "text-gray-500 dark:text-gray-400" },
+  "Thấp nhất": { icon: ChevronsDown, label: "Thấp nhất", color: "text-blue-600 dark:text-blue-400" },
+  "Không ưu tiên": { icon: Circle, label: "Không ưu tiên", color: "text-muted-foreground" },
 }
 
 export const taskColumns: ColumnDef<Task>[] = [
@@ -68,7 +68,7 @@ export const taskColumns: ColumnDef<Task>[] = [
       return (
         <div className="w-[200px] flex items-center gap-2">
           <TaskIcon className={`w-4 h-4 flex-shrink-0 ${iconColor}`} />
-          <span className="text-gray-900 dark:text-gray-100 truncate">{row.getValue("title")}</span>
+          <span className="text-foreground truncate">{row.getValue("title")}</span>
         </div>
       )
     },
@@ -103,8 +103,8 @@ export const taskColumns: ColumnDef<Task>[] = [
               size="xs"
             />
             <div className="flex flex-col min-w-0">
-              <span className="font-medium truncate text-gray-900 dark:text-gray-100">{assignedName || "-"}</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              <span className="font-medium truncate text-foreground">{assignedName || "-"}</span>
+              <span className="text-sm text-muted-foreground truncate">
                 {assignedEmail || ""}
               </span>
             </div>
@@ -174,7 +174,7 @@ export const taskColumns: ColumnDef<Task>[] = [
       const Icon = display.icon || Circle
       
       return (
-        <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-gray-900 dark:text-gray-100">
+        <div className="min-w-[140px] whitespace-nowrap flex items-center gap-2 text-foreground">
           <Icon className={`h-4 w-4 ${display.color}`} aria-hidden />
           <span>{priorityLabel}</span>
         </div>
@@ -191,7 +191,7 @@ export const taskColumns: ColumnDef<Task>[] = [
       const task = row.original
       const phaseName = task.phaseName || ""
       return (
-        <div className="min-w-[150px] whitespace-nowrap text-gray-900 dark:text-gray-100">
+        <div className="min-w-[150px] whitespace-nowrap text-foreground">
           {phaseName || "-"}
         </div>
       )
@@ -206,7 +206,7 @@ export const taskColumns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       const date = row.getValue("startDate") as string | null
       return (
-        <div className="min-w-[110px] whitespace-nowrap text-gray-900 dark:text-gray-100">
+        <div className="min-w-[110px] whitespace-nowrap text-foreground">
           {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
         </div>
       )
@@ -221,7 +221,7 @@ export const taskColumns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       const date = row.getValue("dueDate") as string | null
       return (
-        <div className="min-w-[110px] whitespace-nowrap text-gray-900 dark:text-gray-100">
+        <div className="min-w-[110px] whitespace-nowrap text-foreground">
           {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
         </div>
       )
@@ -253,8 +253,8 @@ export const taskColumns: ColumnDef<Task>[] = [
               size="xs"
             />
             <div className="flex flex-col min-w-0">
-              <span className="font-medium truncate text-gray-900 dark:text-gray-100">{createdName || "-"}</span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              <span className="font-medium truncate text-foreground">{createdName || "-"}</span>
+              <span className="text-sm text-muted-foreground truncate">
                 {createdEmail || ""}
               </span>
             </div>

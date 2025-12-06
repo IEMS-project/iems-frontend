@@ -216,15 +216,15 @@ export default function Members() {
                                     </li>
                                 ))
                             ) : members.length === 0 ? (
-                                <li className="text-center text-gray-500 py-4">Chưa có thành viên</li>
+                                <li className="text-center text-muted-foreground py-4">Chưa có thành viên</li>
                             ) : (
                                 members.map(m => (
                                     <li key={m.id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <Avatar user={m} size={9} />
                                             <div>
-                                                <div className="text-sm font-medium">{m.userName || m.userEmail}</div>
-                                                <div className="text-xs text-gray-500">{m.roleName || m.role || "N/A"}</div>
+                                                <div className="text-sm font-medium text-foreground">{m.userName || m.userEmail}</div>
+                                                <div className="text-xs text-muted-foreground">{m.roleName || m.role || "N/A"}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -235,7 +235,7 @@ export default function Members() {
                                                 icon={PencilLine}
                                                 label={t('projects.detail.members.edit')}
                                                 variant="edit"
-                                                className="text-black dark:text-white"
+                                                className="hover:bg-gray-200 dark:hover:bg-gray-700 text-muted-foreground dark:text-gray-300"
                                                 onClick={(e) => { e.stopPropagation(); handleEditMember(m); }}
                                             />
                                         </div>
@@ -262,7 +262,7 @@ export default function Members() {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.detail.members.form.user')}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t('projects.detail.members.form.user')}</label>
                         {/* When editing, prevent changing the user: show static display instead of UserSelect */}
                         {editingMember ? (
                             <div className="w-full rounded-md border bg-background px-3 py-2 text-sm flex items-center gap-2 text-foreground">
@@ -281,11 +281,11 @@ export default function Members() {
                         )}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.detail.members.form.role')}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t('projects.detail.members.form.role')}</label>
                         <Select
                             value={formData.roleId}
                             onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         >
                             <option value="">{t('projects.detail.members.form.selectRole')}</option>
                             {projectRoles.map(r => (
@@ -294,11 +294,11 @@ export default function Members() {
                         </Select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.detail.members.form.status')}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t('projects.detail.members.form.status')}</label>
                         <Select
                             value={formData.status}
                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         >
                             <option value="ACTIVE">{t('projects.detail.members.statuses.active')}</option>
                             <option value="INACTIVE">{t('projects.detail.members.statuses.inactive')}</option>

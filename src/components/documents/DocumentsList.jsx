@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIcon, getFolderIcon } from "./fileIconUtils";
+import { bgColors } from "@/theme/colors";
 
 function humanSize(bytes) {
   if (bytes == null) return "-";
@@ -86,7 +87,7 @@ export default function DocumentsList({
             className={cn(
               "hover:bg-muted flex cursor-pointer items-center justify-between border-b p-2 lg:p-4",
               selectedItem?.id === item.id && "bg-muted",
-              selectedItems.has(item.id) && "bg-blue-50"
+              selectedItems.has(item.id) && " dark:bg-blue-900/50 dark:border-blue-700"
             )}
             onClick={(e) => {
               if (e.ctrlKey || e.metaKey) {

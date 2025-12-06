@@ -50,15 +50,15 @@ export default function StatsCard({
 		(helperTone === "accent"
 			? helperToneMap.accent
 			: helperTone === "positive"
-			? helperToneMap.positive
-			: helperTone === "negative"
-			? helperToneMap.negative
-			: helperToneMap.muted);
+				? helperToneMap.positive
+				: helperTone === "negative"
+					? helperToneMap.negative
+					: helperToneMap.muted);
 
 	return (
 		<div
 			className={cn(
-				"rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition sm:p-5 dark:border-gray-800 dark:bg-gray-900",
+				"rounded-xl border border-border bg-card p-4 shadow-sm transition sm:p-5",
 				className
 			)}
 		>
@@ -70,7 +70,7 @@ export default function StatsCard({
 				) : null}
 				<div>
 					<p className="text-sm text-muted-foreground">{title}</p>
-					<p className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">{value}</p>
+					<p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
 					{helperText ? <p className={cn("mt-1", helperClass)}>{helperText}</p> : null}
 				</div>
 			</div>

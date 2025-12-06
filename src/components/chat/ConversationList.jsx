@@ -5,15 +5,16 @@ import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
 import { toast } from 'sonner';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { navColors, inputColors, buttonColors, textColors, borderColors, cn } from '../../theme/colors';
 
-const ConversationList = ({ 
-  activeConversationId, 
-  onConversationSelect, 
+const ConversationList = ({
+  activeConversationId,
+  onConversationSelect,
   onNewConversation,
   showSidebar = true,
   onToggleSidebar,
   refreshTrigger,
-  className = "" 
+  className = ""
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,11 +139,15 @@ const ConversationList = ({
       <div className="px-4 py-2">
         <button
           onClick={onNewConversation}
-          className={`w-full flex items-center gap-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors ${showSidebar ? 'text-left' : 'justify-center'
-            }`}
+          className={cn(
+            'w-full flex items-center gap-3 px-3 py-2 rounded transition-colors',
+            navColors.text,
+            navColors.hover,
+            showSidebar ? 'text-left' : 'justify-center'
+          )}
           title={showSidebar ? undefined : "Cuộc trò chuyện mới"}
         >
-          <FaPlus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <FaPlus className={cn('w-4 h-4', textColors.muted)} />
           {showSidebar && <span className="text-sm font-medium">Cuộc trò chuyện mới</span>}
         </button>
       </div>
@@ -151,22 +156,31 @@ const ConversationList = ({
       <div className="px-4 py-2">
         {showSidebar ? (
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <FaSearch className={cn('absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4', textColors.placeholder)} />
             <input
               type="text"
               placeholder="Tìm kiếm đoạn chat"
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white dark:focus:bg-gray-600 transition-colors text-sm"
+              className={cn(
+                'w-full pl-10 pr-4 py-2 rounded text-sm transition-colors',
+                inputColors.base,
+                inputColors.focus,
+                textColors.placeholder
+              )}
             />
           </div>
         ) : (
           <button
             onClick={onToggleSidebar}
-            className="w-full flex items-center justify-center p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors"
+            className={cn(
+              'w-full flex items-center justify-center p-2 rounded transition-colors',
+              navColors.text,
+              navColors.hover
+            )}
             title="Tìm kiếm đoạn chat"
           >
-            <FaSearch className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <FaSearch className={cn('w-4 h-4', textColors.muted)} />
           </button>
         )}
       </div>
@@ -175,7 +189,7 @@ const ConversationList = ({
       {showSidebar && (
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 py-2">
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <div className={cn('flex items-center gap-2 text-xs mb-2', textColors.secondary)}>
               <span>Đoạn chat</span>
             </div>
           </div>
@@ -183,10 +197,10 @@ const ConversationList = ({
           <div className="px-4">
             {error ? (
               <div className="text-center py-8">
-                <p className="text-red-500 mb-2 text-sm">{error}</p>
+                <p className={cn('mb-2 text-sm text-red-600 dark:text-red-400')}>{error}</p>
                 <button
                   onClick={loadConversations}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                  className={cn('px-4 py-2 rounded text-sm transition-colors', buttonColors.primary)}
                 >
                   Thử lại
                 </button>
@@ -194,7 +208,7 @@ const ConversationList = ({
             ) : loading ? (
               <div className="space-y-2">
                 {Array.from({ length: 6 }).map((_, idx) => (
-                  <div key={idx} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-700">
+                  <div key={idx} className={cn('rounded-lg border border-dashed p-3', borderColors.medium)}>
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-10 w-10 rounded-full" />
                       <div className="flex-1 space-y-2">
@@ -207,8 +221,8 @@ const ConversationList = ({
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="text-center py-8">
-                <FaHistory className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">
+                <FaHistory className={cn('w-6 h-6 mx-auto mb-2', textColors.muted)} />
+                <p className={cn('text-sm', textColors.secondary)}>
                   {searchTerm ? 'Không tìm thấy đoạn chat nào' : 'Chưa có đoạn chat nào'}
                 </p>
               </div>

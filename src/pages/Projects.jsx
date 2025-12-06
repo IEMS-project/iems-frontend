@@ -195,20 +195,20 @@ export default function Projects() {
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.projectName")} {t("projects.form.required")}
                         </label>
                         <Input
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.form.projectNamePlaceholder")}
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.projectManager")} {t("projects.form.required")}
                         </label>
                         <UserSelect
@@ -218,31 +218,31 @@ export default function Projects() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("projects.form.startDate")}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.startDate")}</label>
                         <Input
                             type="date"
                             value={formData.startDate}
                             onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("projects.form.endDate")}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.endDate")}</label>
                         <Input
                             type="date"
                             value={formData.endDate}
                             onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.status")}
                         </label>
                         <select
                             value={formData.status}
                             onChange={e => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         >
                             <option value="PLANNING">{t("projects.status.planning")}</option>
                             <option value="IN_PROGRESS">{t("projects.status.inProgress")}</option>
@@ -252,12 +252,12 @@ export default function Projects() {
                         </select>
                     </div>
                     <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("projects.form.description")}</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.description")}</label>
                         <Textarea
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.form.descriptionPlaceholder")}
                         />
                     </div>

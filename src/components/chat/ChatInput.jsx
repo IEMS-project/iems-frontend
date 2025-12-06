@@ -35,18 +35,18 @@ const ChatInput = ({
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-950/60 backdrop-blur">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 backdrop-blur">
       <div className="p-4">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 px-4 py-3 shadow-sm"
+          className="flex flex-col gap-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 shadow-sm"
         >
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about development, coding, or technology..."
-            className="w-full resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none"
+            placeholder="Hỏi tôi bất cứ điều gì về dự án, công việc hoặc tài liệu..."
+            className="w-full resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
             rows={3}
             disabled={isTyping}
           />

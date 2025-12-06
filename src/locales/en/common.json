@@ -787,9 +787,13 @@
       "home": "Home",
       "loading": "Loading...",
       "noFolders": "No folders available",
+      "noSubfolders": "No subfolders",
+      "noSubfoldersDesc": "Select \"Move Here\" to move to this folder",
       "moveHere": "Move Here",
+      "moveToHere": "Move Here",
       "cancel": "Cancel",
       "processing": "Processing...",
+      "moving": "Moving...",
       "success": "Successfully moved"
     },
     "contextMenu": {

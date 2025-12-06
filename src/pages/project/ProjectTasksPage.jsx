@@ -153,12 +153,12 @@ export default function ProjectTasksPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('projects.detail.tasks.search')}
-                    className="flex-1 min-w-[200px]"
+                    className="flex-1 min-w-[200px] border-border bg-background text-foreground"
                 />
                 <Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange("status", e.target.value)}
-                    className="w-auto min-w-[130px]"
+                    className="w-auto min-w-[130px] border-border bg-background text-foreground"
                 >
                     <option value="">{t('projects.detail.tasks.filters.status')}</option>
                     {statuses.map(status => (
@@ -168,7 +168,7 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.assignee}
                     onChange={(e) => handleFilterChange("assignee", e.target.value)}
-                    className="w-auto min-w-[150px]"
+                    className="w-auto min-w-[150px] border-border bg-background text-foreground"
                 >
                     <option value="">{t('projects.detail.tasks.filters.assignee')}</option>
                     {assignees.map(assignee => (
@@ -178,7 +178,7 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.priority}
                     onChange={(e) => handleFilterChange("priority", e.target.value)}
-                    className="w-auto min-w-[120px]"
+                    className="w-auto min-w-[120px] border-border bg-background text-foreground"
                 >
                     <option value="">{t('projects.detail.tasks.filters.priority')}</option>
                     {priorities.map(priority => (
@@ -188,7 +188,7 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.phase}
                     onChange={(e) => handleFilterChange("phase", e.target.value)}
-                    className="w-auto min-w-[130px]"
+                    className="w-auto min-w-[130px] border-border bg-background text-foreground"
                 >
                     <option value="">{t('projects.detail.tasks.filters.phase')}</option>
                     {phases.map(phase => (
@@ -198,7 +198,7 @@ export default function ProjectTasksPage() {
                 <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-auto min-w-[140px]"
+                    className="w-auto min-w-[140px] border-border bg-background text-foreground"
                 >
                     <option value="title">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.title')}</option>
                     <option value="status">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.status')}</option>
@@ -208,7 +208,7 @@ export default function ProjectTasksPage() {
                 <Select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-auto min-w-[100px]"
+                    className="w-auto min-w-[100px] border-border bg-background text-foreground"
                 >
                     <option value="asc">↑ {t('projects.detail.tasks.sort.ascending')}</option>
                     <option value="desc">↓ {t('projects.detail.tasks.sort.descending')}</option>
@@ -222,7 +222,7 @@ export default function ProjectTasksPage() {
                         {t('projects.detail.tasks.actions.clearFilters')}
                     </Button>
                 )}
-                <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
                     {filteredAndSortedTasks.length} / {tasks.length}
                 </div>
             </div>

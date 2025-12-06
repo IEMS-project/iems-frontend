@@ -72,7 +72,7 @@ export default function DocumentsGrid({
             className={cn(
               "group relative flex flex-col rounded-lg border p-3 hover:border-primary hover:bg-muted/50 transition-colors",
               selectedItem?.id === item.id && "border-primary bg-muted",
-              selectedItems.has(item.id) && "bg-blue-50 border-blue-300"
+              selectedItems.has(item.id) && " border-blue-300"
             )}
           >
             <div className="mb-2 flex items-center justify-between">

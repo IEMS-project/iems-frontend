@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import Input from "../ui/Input";
 import Textarea from "../ui/Textarea";
 import Select from "../ui/select";
+import { textColors, inputColors, borderColors } from "@/theme/colors";
 
 export default function DepartmentForm({ formData, setFormData, isEdit = false, userOptions = [] }) {
     const { t } = useTranslation();
@@ -36,11 +37,11 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false, 
                 rows={3}
             />
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className={`block text-sm font-medium ${textColors.primary} mb-2`}>
                     {isEdit ? t("departments.form.managerOptional") : t("departments.form.managerCanBeEmpty")}
                 </label>
                 <select
-                    className="w-full h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-700"
+                    className={`w-full h-10 rounded-md ${inputColors.base} ${inputColors.focus} px-3 text-sm`}
                     value={formData.managerId || ""}
                     onChange={(e) => setFormData({ ...formData, managerId: e.target.value || null })}
                 >
@@ -53,7 +54,7 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false, 
                 </select>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className={`block text-sm font-medium ${textColors.primary} mb-2`}>
                     {t("departments.form.color")}
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -61,8 +62,8 @@ export default function DepartmentForm({ formData, setFormData, isEdit = false, 
                         <div
                             key={option.value}
                             className={`w-8 h-8 rounded-full ${option.color} cursor-pointer border-2 ${formData.color === option.value
-                                ? 'border-gray-900 dark:border-white'
-                                : 'border-gray-300 dark:border-gray-600'
+                                ? `${textColors.primary} border-current`
+                                : `${borderColors.medium}`
                                 }`}
                             onClick={() => setFormData({ ...formData, color: option.value })}
                             title={t(option.labelKey)}

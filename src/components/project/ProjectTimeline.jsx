@@ -350,7 +350,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                         <div className="space-y-3">
                             {Array.from({ length: 4 }).map((_, idx) => (
                                 <div key={idx} className="grid" style={{ gridTemplateColumns: `240px 1fr` }}>
-                                    <div className="sticky left-0 bg-white dark:bg-gray-900 border-b py-3 px-3">
+                                    <div className="sticky left-0 bg-background border-b py-3 px-3">
                                         <Skeleton className="h-4 w-3/4" />
                                     </div>
                                     <div className="relative border-b py-3">
@@ -361,7 +361,7 @@ export default function ProjectTimeline({ tasks = [], loading = false }) {
                         </div>
                     </div>
                 ) : features.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-gray-500 p-6">
+                    <div className="py-12 text-center text-sm text-muted-foreground p-6">
                         {t('projects.detail.timeline.noTasks')}
                     </div>
                 ) : (

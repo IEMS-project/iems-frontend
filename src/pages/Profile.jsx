@@ -10,6 +10,7 @@ import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
 import ImageCropModal from "../components/ui/ImageCropModal";
+import { textColors, borderColors, buttonColors, cn } from "../theme/colors";
 
 export default function Profile() {
 	const { t } = useTranslation();
@@ -214,46 +215,49 @@ export default function Profile() {
 									size={24}
 									className="mx-auto"
 								/>
-								<label className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors cursor-pointer">
+								<label className={cn(
+									"absolute bottom-0 right-0 h-10 w-10 rounded-full flex items-center justify-center transition-colors cursor-pointer",
+									buttonColors.primary
+								)}>
 									<FaEdit className="h-5 w-5" />
 									<input type="file" accept="image/*" className="hidden" onChange={handlePickAvatar} disabled={avatarUploading} />
 								</label>
 							</div>
-							<h2 className="mt-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+							<h2 className={cn("mt-6 text-2xl font-semibold", textColors.primary)}>
 								{fullName}
 							</h2>
-							<p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
+							<p className={cn("text-lg mt-2", textColors.secondary)}>
 								{profile?.role || ""}
 							</p>
-							<p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+							<p className={cn("text-sm mt-2", textColors.muted)}>
 								{profile?.startDate ? `${t('profile.fields.joinedFrom')} ${new Date(profile.startDate).toLocaleDateString()}` : null}
 							</p>
 						</div>
 
 						<div className="mt-8 space-y-4">
 							<div className="flex items-center gap-4 text-base">
-								<FaEnvelope className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.email}</span>
+								<FaEnvelope className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.email}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaPhone className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.phone}</span>
+								<FaPhone className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.phone}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.address}</span>
+								<FaMapMarkerAlt className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.address}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaCalendarAlt className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
+								<FaCalendarAlt className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaUsers className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
+								<FaUsers className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaBuilding className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{
+								<FaBuilding className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{
 									profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
 										profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
 											profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
@@ -261,8 +265,8 @@ export default function Profile() {
 							</div>
 						</div>
 
-						<div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-							<div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+						<div className={cn("mt-8 pt-6 border-t", borderColors.default)}>
+							<div className={cn("flex items-center justify-between text-sm", textColors.muted)}>
 								<span>{t('profile.fields.lastUpdated')}</span>
 								<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
 							</div>
@@ -274,7 +278,7 @@ export default function Profile() {
 				<div className="lg:col-span-8">
 					<Card className="p-8 h-full">
 						<div className="flex items-center justify-between mb-8">
-							<h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+							<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
 								{t('profile.detailInfo')}
 							</h3>
 							{!isEditing ? (
@@ -289,7 +293,7 @@ export default function Profile() {
 								<div className="flex gap-3">
 									<Button
 										onClick={handleSave}
-										className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-base px-6 py-3"
+										className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}
 									>
 										<FaSave className="h-5 w-5" />
 										{t('profile.actions.save')}
@@ -307,13 +311,13 @@ export default function Profile() {
 						</div>						<div className="space-y-8">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.fullName')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.firstName} {formData.lastName}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.fullName')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{formData.firstName} {formData.lastName}</p>
 								</div>
 
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.email')}</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.email')}</label>
 									{isEditing ? (
 										<Input
 											type="email"
@@ -323,10 +327,10 @@ export default function Profile() {
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.email}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
 									)}
 								</div>							<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
 										{t('profile.fields.phone')}
 									</label>
 									{isEditing ? (
@@ -337,17 +341,17 @@ export default function Profile() {
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.phone}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.phone}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.personalID')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.personalID || ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.personalID')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.personalID || ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankAccountNumber')}</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankAccountNumber')}</label>
 									{isEditing ? (
 										<Input
 											value={formData.bankAccountNumber}
@@ -356,12 +360,12 @@ export default function Profile() {
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankAccountNumber}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.bankAccountNumber}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.bankName')}</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankName')}</label>
 									{isEditing ? (
 										<Input
 											value={formData.bankName}
@@ -370,10 +374,10 @@ export default function Profile() {
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankName}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.bankName}</p>
 									)}
 								</div>							<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
 										{t('profile.fields.address')}
 									</label>
 									{isEditing ? (
@@ -384,23 +388,23 @@ export default function Profile() {
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.address}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.address}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.dob')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.dob')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.gender')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.gender')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.contractType')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.contractType')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{
 										profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
 											profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
 												profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
@@ -408,13 +412,13 @@ export default function Profile() {
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.startDate')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.startDate')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">{t('profile.fields.role')}</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.role || ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.role')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.role || ''}</p>
 								</div>
 							</div>
 
@@ -425,13 +429,13 @@ export default function Profile() {
 			</div>
 
 			{(loading || avatarUploading) && (
-				<p className="text-sm text-gray-500">{t('profile.messages.loading')}</p>
+				<p className={cn("text-sm", textColors.muted)}>{t('profile.messages.loading')}</p>
 			)}
 			{error && (
-				<p className="text-sm text-red-600">{error}</p>
+				<p className="text-sm text-red-600 dark:text-red-400">{error}</p>
 			)}
 			{success && (
-				<p className="text-sm text-green-600">{success}</p>
+				<p className="text-sm text-green-600 dark:text-green-400">{success}</p>
 			)}
 
 			<ImageCropModal

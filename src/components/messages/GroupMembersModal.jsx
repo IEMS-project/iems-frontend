@@ -5,6 +5,7 @@ import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
 import { chatService } from "../../services/chatService";
 import { useTranslation } from "react-i18next";
+import { textColors, bgColors, borderColors, cn } from '../../theme/colors';
 
 export default function GroupMembersModal({ open, onClose, conversationId, allUsers = [], currentUserId, onChanged }) {
     const { t } = useTranslation();
@@ -85,8 +86,8 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
             onClose={onClose}
             title={t('messages.group.membersTitle')}
             footer={
-                <div className="flex items-center justify-between w-full">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">{t('messages.group.selected', { count: selectedIds.size })}</div>
+                <div className={cn("flex items-center justify-between w-full p-4", bgColors.primary, borderColors.default, "border-t")}>
+                    <div className={cn("text-sm", textColors.secondary)}>{t('messages.group.selected', { count: selectedIds.size })}</div>
                     <div className="flex gap-2">
                         <Button variant="secondary" onClick={onClose} disabled={saving || loadingMembers}>{t('messages.group.close')}</Button>
                         <Button onClick={handleSave} disabled={saving || loadingMembers}>{t('messages.group.saveChanges')}</Button>

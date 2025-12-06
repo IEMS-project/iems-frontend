@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import IconActionButton from "../ui/IconActionButton";
 import { PencilLine, Trash2 } from "lucide-react";
+import { textColors, bgColors, statusColors } from "@/theme/colors";
 
 export default function DepartmentListItem({ department, onEdit, onDelete }) {
     const { t } = useTranslation();
@@ -28,7 +29,7 @@ export default function DepartmentListItem({ department, onEdit, onDelete }) {
     return (
         <div
             onClick={handleRowClick}
-            className="group cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors duration-150"
+            className={`group cursor-pointer ${bgColors.hover} transition-colors duration-150`}
         >
             <div className="flex items-center px-4 py-3 gap-4">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center">
@@ -38,15 +39,15 @@ export default function DepartmentListItem({ department, onEdit, onDelete }) {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                         <div className="truncate">
-                            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{department.name}</div>
+                            <div className={`text-sm font-semibold ${textColors.primary} truncate`}>{department.name}</div>
                             {department.description && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{department.description}</div>
+                                <div className={`text-xs ${textColors.muted} truncate`}>{department.description}</div>
                             )}
                         </div>
 
                         <div className="ml-4 text-right hidden sm:block">
-                            <div className="text-lg font-bold text-blue-600">{department.memberCount}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{t("departments.members")}</div>
+                            <div className={`text-lg font-bold ${statusColors.infoText}`}>{department.memberCount}</div>
+                            <div className={`text-xs ${textColors.muted}`}>{t("departments.members")}</div>
                         </div>
                     </div>
                 </div>

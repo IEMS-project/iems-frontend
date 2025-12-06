@@ -4,6 +4,7 @@ import Input from "../ui/Input";
 import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
 import { useTranslation } from "react-i18next";
+import { textColors, cn } from '../../theme/colors';
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
     const { t } = useTranslation();
@@ -47,7 +48,7 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
             title={t('messages.group.createTitle')}
             footer={
                 <div className="flex justify-between items-center w-full">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">{t('messages.group.selected', { count: selectedIds.size })}</div>
+                    <div className={cn("text-sm", textColors.secondary)}>{t('messages.group.selected', { count: selectedIds.size })}</div>
                     <div className="flex gap-2">
                         <Button variant="secondary" onClick={onClose}>{t('messages.group.cancel')}</Button>
                         <Button onClick={handleSubmit} disabled={!name.trim() || selectedIds.size < 2}>{t('messages.group.create')}</Button>
