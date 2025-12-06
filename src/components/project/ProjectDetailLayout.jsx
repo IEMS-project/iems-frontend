@@ -8,6 +8,7 @@ import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
+import { getStatusTranslationKey } from "../../lib/i18n";
 
 const tabs = [
     { id: "overview", label: "overview", path: "overview" },
@@ -93,7 +94,7 @@ export default function ProjectDetailLayout() {
                                 <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
                                     <span className=" text-xl font-bold ">-</span>
                                     <Badge variant="blue" className="whitespace-nowrap">
-                                        {projectData?.status ? t(`dashboard.status.${projectData.status.toLowerCase().replace(/\s+/g, '')}`) : t('dashboard.status.unknown')}
+                                        {projectData?.status ? t(getStatusTranslationKey(projectData.status)) : t('dashboard.status.unknown')}
                                     </Badge>
                                 </div>
                             </>

@@ -154,3 +154,29 @@ export const reverseTranslatePriority = (vietnameseValue) => {
   return priorityMapping[vietnameseValue] || vietnameseValue;
 };
 
+// Map API status to translation keys
+export const getStatusTranslationKey = (apiStatus) => {
+  if (!apiStatus) return "dashboard.status.unknown";
+  
+  const statusKeyMap = {
+    "PLANNING": "planning",
+    "PENDING": "pending",
+    "TODO": "todo",
+    "TO_DO": "todo",
+    "IN_PROGRESS": "inProgress",
+    "IN_REVIEW": "inReview",
+    "REVIEW": "review",
+    "COMPLETED": "completed",
+    "DONE": "done",
+    "ON_HOLD": "onHold",
+    "BLOCKED": "blocked",
+    "CANCELLED": "cancelled",
+    "CANCELED": "cancelled",
+  };
+  
+  const normalized = apiStatus.toString().toUpperCase().replace(/\s+/g, "_");
+  const key = statusKeyMap[normalized];
+  
+  return key ? `dashboard.status.${key}` : "dashboard.status.unknown";
+};
+
