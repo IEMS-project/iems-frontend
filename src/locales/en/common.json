@@ -388,7 +388,8 @@
         "timeline": "Timeline",
         "phases": "Phases",
         "tasks": "Tasks",
-        "members": "Members"
+        "members": "Members",
+        "code": "Source Code"
       },
       "overview": {
         "title": "Project Overview",

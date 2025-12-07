@@ -388,7 +388,8 @@
         "timeline": "Tiến độ",
         "phases": "Giai đoạn",
         "tasks": "Nhiệm vụ",
-        "members": "Thành viên"
+        "members": "Thành viên",
+        "code": "Mã nguồn"
       },
       "overview": {
         "title": "Tổng quan dự án",

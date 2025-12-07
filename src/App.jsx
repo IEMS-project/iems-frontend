@@ -8,6 +8,7 @@ import ProjectTimelinePage from "./pages/project/ProjectTimelinePage";
 import ProjectPhasesPage from "./pages/ProjectPhasesPage";
 import ProjectTasksPage from "./pages/project/ProjectTasksPage";
 import ProjectMembersPage from "./pages/project/ProjectMembersPage";
+import ProjectCode from "./components/project/ProjectCode";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import Departments from "./pages/Departments";
@@ -55,6 +56,7 @@ export default function App() {
                                     <Route path="phases" element={<ProjectPhasesPage />} />
                                     <Route path="tasks" element={<ProjectTasksPage />} />
                                     <Route path="members" element={<ProjectMembersPage />} />
+                                    <Route path="code/*" element={<ProjectCode />} />
                                 </Route>
                                 <Route path="/tasks" element={<Tasks />} />
                                 <Route path="/departments" element={<Departments />} />

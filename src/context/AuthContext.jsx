@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   // Load user profile when authenticated
   const loadUserProfile = useCallback(async () => {
     if (!isAuthenticated) return;
-    
+
     setLoadingProfile(true);
     try {
       const profile = await userService.getMyProfile();
@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (usernameOrEmail, password) => {
     const payload = await authService.login(usernameOrEmail, password);
     setSession(payload);
-    
+
     // Load user profile after login
     try {
       const profile = await userService.getMyProfile();
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Failed to load user profile after login:", error);
     }
-    
+
     navigate("/dashboard", { replace: true });
     return payload;
   }, [navigate]);
@@ -56,17 +56,19 @@ export function AuthProvider({ children }) {
     authService.logout();
     setSession(null);
     setUserProfile(null);
+    // Remove GitHub token on logout
+    localStorage.removeItem("github_access_token");
     navigate("/login", { replace: true });
   }, [navigate]);
 
-  const value = useMemo(() => ({ 
-    session, 
-    isAuthenticated, 
-    userProfile, 
+  const value = useMemo(() => ({
+    session,
+    isAuthenticated,
+    userProfile,
     loadingProfile,
     loadUserProfile,
-    login, 
-    logout 
+    login,
+    logout
   }), [session, isAuthenticated, userProfile, loadingProfile, loadUserProfile, login, logout]);
 
   return (
