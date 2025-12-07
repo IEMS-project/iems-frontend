@@ -16,6 +16,7 @@ const tabs = [
     { id: "phases", label: "phases", path: "phases" },
     { id: "tasks", label: "tasks", path: "tasks" },
     { id: "members", label: "members", path: "members" },
+    { id: "code", label: "code", path: "code" },
 ];
 
 export default function ProjectDetailLayout() {
@@ -34,6 +35,7 @@ export default function ProjectDetailLayout() {
         if (path.includes("/tasks")) return "tasks";
         if (path.includes("/timeline")) return "timeline";
         if (path.includes("/phases")) return "phases";
+        if (path.includes("/code")) return "code";
         return "overview";
     }, [location.pathname]);
 
