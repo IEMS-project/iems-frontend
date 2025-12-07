@@ -1,7 +1,9 @@
 import React from "react";
 import Button from "../ui/Button";
+import { useTranslation } from "react-i18next";
 
 export default function MessageInput({ messageInput, setMessageInput, onSendMessage }) {
+    const { t } = useTranslation();
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -16,16 +18,16 @@ export default function MessageInput({ messageInput, setMessageInput, onSendMess
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder={t('messages.composer.placeholder')}
                     className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400"
                     rows={2}
                 />
-                <Button 
+                <Button
                     onClick={onSendMessage}
                     disabled={!messageInput.trim()}
                     className="px-6"
                 >
-                    Gửi
+                    {t('messages.composer.send')}
                 </Button>
             </div>
         </div>

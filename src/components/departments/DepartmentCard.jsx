@@ -1,10 +1,13 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "../ui/Card";
 import { useNavigate } from "react-router-dom";
 import IconActionButton from "@/components/ui/IconActionButton";
 import { PencilLine, Trash2 } from "lucide-react";
+import { textColors, statusColors } from "@/theme/colors";
 
 export default function DepartmentCard({ department, onEdit, onDelete }) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const handleCardClick = (e) => {
@@ -32,28 +35,28 @@ export default function DepartmentCard({ department, onEdit, onDelete }) {
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
                         <IconActionButton
                             icon={PencilLine}
-                            label="Sửa phòng ban"
+                            label={t("departments.tooltips.editDepartment")}
                             variant="edit"
                             onClick={handleEdit}
                             className="shadow-md"
                         />
                         <IconActionButton
                             icon={Trash2}
-                            label="Xóa phòng ban"
+                            label={t("departments.tooltips.deleteDepartment")}
                             variant="danger"
                             onClick={handleDelete}
                             className="shadow-md"
                         />
                     </div>
-                    
+
                     {/* Department content */}
                     <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <div className={`w-3 h-3 rounded-full ${department.color || 'bg-blue-500'}`}></div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{department.name}</h3>
+                            <h3 className={`text-lg font-semibold ${textColors.primary}`}>{department.name}</h3>
                         </div>
-                        <div className="text-2xl font-bold text-blue-600">{department.memberCount}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">thành viên</div>                        
+                        <div className={`text-2xl font-bold ${statusColors.infoText}`}>{department.memberCount}</div>
+                        <div className={`text-sm ${textColors.muted}`}>{t("departments.members")}</div>
                     </div>
                 </CardContent>
             </Card>

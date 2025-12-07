@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
@@ -7,17 +8,18 @@ import { projectService } from "../../services/projectService";
 import { useErrorHandler } from "../common/ErrorBoundary";
 import Skeleton from "../ui/Skeleton";
 import { toast } from "sonner";
-import { translateStatus } from "../../lib/i18n";
+import { getStatusTranslationKey } from "../../lib/i18n";
 
 const tabs = [
-    { id: "overview", label: "Tổng quan", path: "overview" },
-    { id: "timeline", label: "Tiến độ", path: "timeline" },
-    { id: "phases", label: "Giai đoạn", path: "phases" },
-    { id: "tasks", label: "Nhiệm vụ", path: "tasks" },
-    { id: "members", label: "Thành viên", path: "members" },
+    { id: "overview", label: "overview", path: "overview" },
+    { id: "timeline", label: "timeline", path: "timeline" },
+    { id: "phases", label: "phases", path: "phases" },
+    { id: "tasks", label: "tasks", path: "tasks" },
+    { id: "members", label: "members", path: "members" },
 ];
 
 export default function ProjectDetailLayout() {
+    const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -77,7 +79,7 @@ export default function ProjectDetailLayout() {
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* Project Header with Tab Navigation - Fixed */}
-            <div className="shrink-0 border-b border-gray-200 dark:border-gray-800 bg-background z-10">
+            <div className="shrink-0 border-b border-border bg-background z-10">
                 <div className="flex items-center justify-between gap-4 px-4 py-3">
                     {/* Project Info */}
                     <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -88,11 +90,11 @@ export default function ProjectDetailLayout() {
                             </div>
                         ) : (
                             <>
-                                <h1 className="text-xl font-bold truncate">{projectData?.name || '-'}</h1>
-                                <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                                <h1 className="text-xl font-bold truncate text-foreground">{projectData?.name || '-'}</h1>
+                                <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
                                     <span className=" text-xl font-bold ">-</span>
                                     <Badge variant="blue" className="whitespace-nowrap">
-                                        {translateStatus(projectData?.status) || 'Chưa xác định'}
+                                        {projectData?.status ? t(getStatusTranslationKey(projectData.status)) : t('dashboard.status.unknown')}
                                     </Badge>
                                 </div>
                             </>
@@ -111,11 +113,11 @@ export default function ProjectDetailLayout() {
                                         whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors
                                         ${isActive
                                             ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                                            : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                                            : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                                         }
                                     `}
                                 >
-                                    {tab.label}
+                                    {t(`projects.detail.tabs.${tab.label}`)}
                                 </button>
                             );
                         })}

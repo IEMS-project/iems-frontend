@@ -3,17 +3,18 @@ import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import UserSelectionPanel from "../ui/UserSelectionPanel";
+import { useTranslation } from "react-i18next";
+import { textColors, cn } from '../../theme/colors';
 
 export default function CreateGroupModal({ open, onClose, allUsers = [], currentUserId, onSubmit }) {
+    const { t } = useTranslation();
     const [name, setName] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState("");
     const [query, setQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState(new Set());
 
     useEffect(() => {
         if (open) {
             setName("");
-            setAvatarUrl("");
             setQuery("");
             const init = new Set();
             if (currentUserId) init.add(currentUserId);
@@ -37,7 +38,6 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
         const memberIds = Array.from(selectedIds);
         if (!name.trim() || memberIds.length < 2) return;
         const payload = { name: name.trim(), members: memberIds, type: 'GROUP' };
-        if (avatarUrl && avatarUrl.trim()) payload.avatarUrl = avatarUrl.trim();
         if (onSubmit) await onSubmit(payload);
     }
 
@@ -45,34 +45,28 @@ export default function CreateGroupModal({ open, onClose, allUsers = [], current
         <Modal
             open={open}
             onClose={onClose}
-            title="Tạo nhóm mới"
+            title={t('messages.group.createTitle')}
             footer={
                 <div className="flex justify-between items-center w-full">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Đã chọn {selectedIds.size}/100</div>
+                    <div className={cn("text-sm", textColors.secondary)}>{t('messages.group.selected', { count: selectedIds.size })}</div>
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={onClose}>Hủy</Button>
-                        <Button onClick={handleSubmit} disabled={!name.trim() || selectedIds.size < 2}>Tạo nhóm</Button>
+                        <Button variant="secondary" onClick={onClose}>{t('messages.group.cancel')}</Button>
+                        <Button onClick={handleSubmit} disabled={!name.trim() || selectedIds.size < 2}>{t('messages.group.create')}</Button>
                     </div>
                 </div>
             }
         >
             <div className="space-y-4">
                 <Input
-                    label="Tên nhóm"
+                    label={t('messages.group.groupName')}
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Nhập tên nhóm"
-                />
-                <Input
-                    label="Ảnh nhóm (URL)"
-                    value={avatarUrl}
-                    onChange={e => setAvatarUrl(e.target.value)}
-                    placeholder="Dán URL ảnh nhóm (tùy chọn)"
+                    placeholder={t('messages.group.groupNamePlaceholder')}
                 />
                 <Input
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="Tìm kiếm thành viên..."
+                    placeholder={t('messages.group.searchMembers')}
                     className="w-full"
                 />
                 <UserSelectionPanel

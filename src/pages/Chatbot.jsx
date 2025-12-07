@@ -363,12 +363,10 @@ const Chatbot = () => {
                   )}
 
                   {/* Chat Input */}
-                  <div className="p-4 md:p-6">
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      isLoading={isLoading}
-                    />
-                  </div>
+                  <ChatInput
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                  />
                 </>
               )
             ) : (
@@ -431,13 +429,10 @@ const Chatbot = () => {
                   </div>
                 )}
 
-                {/* Chat Input */}
-                <div className="p-4 md:p-6">
-                  <ChatInput
-                    onSendMessage={handleSendMessage}
-                    isLoading={isLoading}
-                  />
-                </div>
+                <ChatInput
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                />
               </>
             )}
           </div>

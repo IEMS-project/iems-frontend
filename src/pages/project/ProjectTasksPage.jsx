@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -10,6 +11,7 @@ import { projectService } from "../../services/projectService";
 import { translatePriority, translateStatus } from "../../lib/i18n";
 
 export default function ProjectTasksPage() {
+    const { t } = useTranslation();
     const { projectId } = useParams();
     const [tasks, setTasks] = useState([]);
     const [tasksLoading, setTasksLoading] = useState(true);
@@ -150,15 +152,15 @@ export default function ProjectTasksPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Tìm kiếm..."
-                    className="flex-1 min-w-[200px]"
+                    placeholder={t('projects.detail.tasks.search')}
+                    className="flex-1 min-w-[200px] border-border bg-background text-foreground"
                 />
                 <Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange("status", e.target.value)}
-                    className="w-auto min-w-[130px]"
+                    className="w-auto min-w-[130px] border-border bg-background text-foreground"
                 >
-                    <option value="">Trạng thái</option>
+                    <option value="">{t('projects.detail.tasks.filters.status')}</option>
                     {statuses.map(status => (
                         <option key={status} value={status}>{status}</option>
                     ))}
@@ -166,9 +168,9 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.assignee}
                     onChange={(e) => handleFilterChange("assignee", e.target.value)}
-                    className="w-auto min-w-[150px]"
+                    className="w-auto min-w-[150px] border-border bg-background text-foreground"
                 >
-                    <option value="">Người phụ trách</option>
+                    <option value="">{t('projects.detail.tasks.filters.assignee')}</option>
                     {assignees.map(assignee => (
                         <option key={assignee} value={assignee}>{assignee}</option>
                     ))}
@@ -176,9 +178,9 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.priority}
                     onChange={(e) => handleFilterChange("priority", e.target.value)}
-                    className="w-auto min-w-[120px]"
+                    className="w-auto min-w-[120px] border-border bg-background text-foreground"
                 >
-                    <option value="">Ưu tiên</option>
+                    <option value="">{t('projects.detail.tasks.filters.priority')}</option>
                     {priorities.map(priority => (
                         <option key={priority} value={priority}>{priority}</option>
                     ))}
@@ -186,9 +188,9 @@ export default function ProjectTasksPage() {
                 <Select
                     value={filters.phase}
                     onChange={(e) => handleFilterChange("phase", e.target.value)}
-                    className="w-auto min-w-[130px]"
+                    className="w-auto min-w-[130px] border-border bg-background text-foreground"
                 >
-                    <option value="">Giai đoạn</option>
+                    <option value="">{t('projects.detail.tasks.filters.phase')}</option>
                     {phases.map(phase => (
                         <option key={phase.id} value={phase.id}>{phase.name}</option>
                     ))}
@@ -196,20 +198,20 @@ export default function ProjectTasksPage() {
                 <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-auto min-w-[140px]"
+                    className="w-auto min-w-[140px] border-border bg-background text-foreground"
                 >
-                    <option value="title">Sắp xếp: Tiêu đề</option>
-                    <option value="status">Sắp xếp: Trạng thái</option>
-                    <option value="priority">Sắp xếp: Ưu tiên</option>
-                    <option value="dueDate">Sắp xếp: Hạn</option>
+                    <option value="title">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.title')}</option>
+                    <option value="status">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.status')}</option>
+                    <option value="priority">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.priority')}</option>
+                    <option value="dueDate">{t('projects.detail.tasks.sort.label')}: {t('projects.detail.tasks.sort.dueDate')}</option>
                 </Select>
                 <Select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-auto min-w-[100px]"
+                    className="w-auto min-w-[100px] border-border bg-background text-foreground"
                 >
-                    <option value="asc">↑ Tăng</option>
-                    <option value="desc">↓ Giảm</option>
+                    <option value="asc">↑ {t('projects.detail.tasks.sort.ascending')}</option>
+                    <option value="desc">↓ {t('projects.detail.tasks.sort.descending')}</option>
                 </Select>
                 {hasActiveFilters && (
                     <Button
@@ -217,10 +219,10 @@ export default function ProjectTasksPage() {
                         size="sm"
                         onClick={clearFilters}
                     >
-                        Xóa
+                        {t('projects.detail.tasks.actions.clearFilters')}
                     </Button>
                 )}
-                <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
                     {filteredAndSortedTasks.length} / {tasks.length}
                 </div>
             </div>

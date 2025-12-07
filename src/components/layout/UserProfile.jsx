@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { User2, ChevronUp, CreditCard, Bell, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
 	SidebarMenu,
 	SidebarMenuItem,
@@ -18,6 +19,7 @@ import Avatar from "../ui/Avatar";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function UserProfile() {
+	const { t } = useTranslation();
 	const { logout, userProfile } = useAuth();
 
 	// Format user data from API response
@@ -74,25 +76,25 @@ export default function UserProfile() {
 						<DropdownMenuItem asChild>
 							<Link to="/profile" className="cursor-pointer">
 								<User2 className="mr-2 h-4 w-4" />
-								<span>Tài khoản</span>
+								<span>{t('userProfile.account')}</span>
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>
 							<Link to="/settings" className="cursor-pointer">
 								<CreditCard className="mr-2 h-4 w-4" />
-								<span>Cài đặt</span>
+								<span>{t('userProfile.settings')}</span>
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>
 							<Link to="/notifications" className="cursor-pointer">
 								<Bell className="mr-2 h-4 w-4" />
-								<span>Thông báo</span>
+								<span>{t('userProfile.notifications')}</span>
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
 							<LogOut className="mr-2 h-4 w-4" />
-							<span>Đăng xuất</span>
+							<span>{t('userProfile.logout')}</span>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

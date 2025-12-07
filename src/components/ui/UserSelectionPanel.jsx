@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
+import { textColors, bgColors, borderColors, cn } from '../../theme/colors';
 
 /**
  * UserSelectionPanel - Component UI chung để chọn người dùng
@@ -25,12 +27,13 @@ export default function UserSelectionPanel({
     onRemove,
     query = "",
     loading = false,
-    emptyMessage = "Không tìm thấy người dùng",
-    emptySelectedMessage = "Chưa chọn ai",
+    emptyMessage,
+    emptySelectedMessage,
     currentUserId,
     maxHeight = 24,
     preselectedUsers = []
 }) {
+    const { t } = useTranslation();
     // Ensure selectedIds is a Set
     const selectedSet = useMemo(() => {
         if (selectedIds instanceof Set) return selectedIds;
@@ -78,7 +81,7 @@ export default function UserSelectionPanel({
         <div className="flex gap-4">
             {/* Danh sách bên trái - Tất cả người dùng */}
             <div
-                className="flex-1 border rounded-md overflow-auto divide-y divide-gray-100 dark:divide-gray-800"
+                className={cn("flex-1 rounded-md overflow-auto", bgColors.primary, borderColors.default, borderColors.divider, "border")}
                 style={{ maxHeight: `${maxHeight}rem` }}
             >
                 {loading ? (
@@ -104,7 +107,7 @@ export default function UserSelectionPanel({
                                 <div
                                     key={userId}
                                     onClick={() => handleToggle(userId)}
-                                    className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                                    className={cn("flex items-center gap-3 p-3 cursor-pointer", bgColors.hover)}
                                 >
                                     <input
                                         type="checkbox"
@@ -119,10 +122,10 @@ export default function UserSelectionPanel({
                                         size="sm"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate">
+                                        <div className={cn("font-medium truncate", textColors.primary)}>
                                             {fullName || u.email || userId}
                                         </div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                        <div className={cn("text-sm truncate", textColors.secondary)}>
                                             {u.email}
                                         </div>
                                     </div>
@@ -130,8 +133,8 @@ export default function UserSelectionPanel({
                             );
                         })}
                         {filtered.length === 0 && (
-                            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                                {emptyMessage}
+                            <div className={cn("p-6 text-center", textColors.secondary)}>
+                                {emptyMessage || t("ui.userSelection.emptyMessage")}
                             </div>
                         )}
                     </>
@@ -140,7 +143,7 @@ export default function UserSelectionPanel({
 
             {/* Danh sách đã chọn bên phải */}
             <div
-                className="w-80 border rounded-md p-2 bg-gray-50 dark:bg-gray-900 space-y-2 overflow-auto"
+                className={cn("w-80 rounded-md p-2 space-y-2 overflow-auto border", bgColors.primary, borderColors.default)}
                 style={{ maxHeight: `${maxHeight}rem` }}
             >
                 {selectedList.map((u) => {
@@ -150,7 +153,7 @@ export default function UserSelectionPanel({
                     return (
                         <div
                             key={userId}
-                            className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-md shadow-sm"
+                            className={cn("flex items-center gap-2 p-2 rounded-md shadow-sm border", bgColors.secondary, borderColors.light)}
                         >
                             <Avatar
                                 user={u}
@@ -159,18 +162,18 @@ export default function UserSelectionPanel({
                                 size="xs"
                             />
                             <div className="flex flex-col flex-1 min-w-0">
-                                <span className="font-medium truncate">
+                                <span className={cn("font-medium truncate", textColors.primary)}>
                                     {fullName || u.email || userId}
                                 </span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                <span className={cn("text-sm truncate", textColors.secondary)}>
                                     {u.email}
                                 </span>
                             </div>
                             {!isCurrentUser && (
                                 <button
                                     onClick={() => handleRemove(userId)}
-                                    className="ml-1 hover:text-red-600 text-xl leading-none"
-                                    title="Bỏ chọn"
+                                    className={cn("ml-1 text-xl leading-none", textColors.secondary, "hover:text-red-600 dark:hover:text-red-400")}
+                                    title={t("ui.userSelection.deselect")}
                                 >
                                     ×
                                 </button>
@@ -179,8 +182,8 @@ export default function UserSelectionPanel({
                     );
                 })}
                 {selectedList.length === 0 && (
-                    <div className="text-sm text-gray-500 text-center py-4">
-                        {emptySelectedMessage}
+                    <div className={cn("text-sm text-center py-4", textColors.secondary)}>
+                        {emptySelectedMessage || t("ui.userSelection.emptySelected")}
                     </div>
                 )}
             </div>

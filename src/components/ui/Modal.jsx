@@ -37,7 +37,7 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
 			/>
 			<div className={`relative z-10 w-full max-w-4xl max-h-[90vh] mx-4 my-auto flex flex-col rounded-lg border border-border bg-card text-foreground shadow-2xl ${className}`}>
 				{title && (
-					<div className="border-b border-border px-4 py-3 text-base font-semibold flex-shrink-0">
+					<div className="border-b border-border px-4 py-3 text-base font-semibold flex-shrink-0 break-words">
 						{title}
 					</div>
 				)}

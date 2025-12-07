@@ -3,62 +3,97 @@ import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 
 const RichTextEditor = ({ value, onChange, placeholder, className = '', readOnly = false }) => {
-    const editorRef = useRef(null);
-    const quillRef = useRef(null);
+  const editorRef = useRef(null);
+  const quillRef = useRef(null);
+  const containerRef = useRef(null);
 
-    useEffect(() => {
-        if (!editorRef.current || quillRef.current) return;
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-        const quill = new Quill(editorRef.current, {
-            theme: 'snow',
-            readOnly,
-            placeholder: placeholder || '',
-            modules: {
-                toolbar: readOnly
-                    ? false
-                    : [
-                        [{ header: [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        [{ color: [] }, { background: [] }],
-                        ['link', 'code-block'],
-                        ['clean'],
-                    ],
-            },
-            formats: [
-                'header',
-                'bold',
-                'italic',
-                'underline',
-                'strike',
-                'list',
-                'bullet',
-                'color',
-                'background',
-                'link',
-                'code-block',
-            ],
-        });
+    // Clear any existing content to prevent duplicates
+    containerRef.current.innerHTML = '';
 
-        quillRef.current = quill;
+    // Create editor div
+    const editorDiv = document.createElement('div');
+    containerRef.current.appendChild(editorDiv);
+    editorRef.current = editorDiv;
 
-        // Set initial value
-        if (value) quill.root.innerHTML = value;
+    const quill = new Quill(editorDiv, {
+      theme: 'snow',
+      readOnly,
+      placeholder: placeholder || '',
+      modules: {
+        toolbar: readOnly
+          ? false
+          : [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ color: [] }, { background: [] }],
+            ['link', 'code-block'],
+            ['clean'],
+          ],
+      },
+      formats: [
+        'header',
+        'bold',
+        'italic',
+        'underline',
+        'strike',
+        'list',
+        'bullet',
+        'color',
+        'background',
+        'link',
+        'code-block',
+      ],
+    });
 
-        // On change
-        if (!readOnly && onChange) {
-            quill.on('text-change', () => {
-                const html = quill.root.innerHTML;
-                onChange(html === '<p><br></p>' ? '' : html);
-            });
-        }
+    quillRef.current = quill;
 
-    }, [])
+    // Set initial value
+    if (value) quill.root.innerHTML = value;
 
-    return (
-        <div className={`rich-text-editor ${className}`}>
-            <div ref={editorRef} />
-            <style>{`
+    // On change
+    if (!readOnly && onChange) {
+      quill.on('text-change', () => {
+        const html = quill.root.innerHTML;
+        const newValue = html === '<p><br></p>' ? '' : html;
+        onChange(newValue);
+      });
+    }
+
+    return () => {
+      if (quillRef.current) {
+        quillRef.current = null;
+      }
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    };
+  }, []);
+
+  // Update editor content when value changes from outside
+  useEffect(() => {
+    if (!quillRef.current) return;
+
+    const currentContent = quillRef.current.root.innerHTML;
+    const normalizedCurrent = currentContent === '<p><br></p>' ? '' : currentContent;
+    const normalizedValue = value || '';
+
+    if (normalizedCurrent !== normalizedValue) {
+      const selection = quillRef.current.getSelection();
+      quillRef.current.root.innerHTML = value || '';
+      if (selection) {
+        quillRef.current.setSelection(selection);
+      }
+    }
+  }, [value])
+
+  return (
+    <div className={`rich-text-editor ${className}`}>
+      <div ref={containerRef} />
+      <style>{`
         .rich-text-editor :global(.ql-container) {
           font-family: inherit;
           font-size: 14px;
@@ -115,8 +150,8 @@ const RichTextEditor = ({ value, onChange, placeholder, className = '', readOnly
           padding: 0;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default RichTextEditor;

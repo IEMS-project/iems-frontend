@@ -74,6 +74,57 @@ export const iamService = {
     });
     return data?.data || data;
   },
+
+  // Accounts & user access
+  async getAccounts() {
+    const data = await request("/iam-service/api/accounts");
+    return data?.data || data || [];
+  },
+
+  async getAccountById(id) {
+    const data = await request(`/iam-service/api/accounts/${id}`);
+    return data?.data || null;
+  },
+
+  async updateAccount(id, payload) {
+    const data = await request(`/iam-service/api/accounts/${id}`, {
+      method: "PUT",
+      body: payload,
+    });
+    return data?.data || data;
+  },
+
+  async lockAccount(userId, locked, reason) {
+    const data = await request(`/iam-service/api/accounts/${userId}/lock`, {
+      method: "PUT",
+      body: { locked, reason },
+    });
+    return data?.data || data;
+  },
+
+  async updateAccountRoles(userId, roleCodes) {
+    const data = await request(`/iam-service/api/accounts/${userId}/roles`, {
+      method: "PUT",
+      body: { roleCodes },
+    });
+    return data?.data || data;
+  },
+
+  async updateAccountPermissions(userId, permissionCodes) {
+    const data = await request(`/iam-service/api/accounts/${userId}/permissions`, {
+      method: "PUT",
+      body: { permissionCodes },
+    });
+    return data?.data || data;
+  },
+
+  async resetAccountPassword(userId, newPassword) {
+    const data = await request(`/iam-service/api/accounts/${userId}/password`, {
+      method: "PUT",
+      body: { newPassword },
+    });
+    return data?.data || data;
+  },
 };
 
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from "rea
 import { chatService } from "../../services/chatService";
 import { FaTimes, FaChevronDown, FaChevronUp, FaEllipsisV } from "react-icons/fa";
 import { Pin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
     conversationId,
@@ -11,6 +12,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
     onUnpinMessage,
     currentUserId
 }, ref) {
+    const { t } = useTranslation();
     const [pinnedMessages, setPinnedMessages] = useState([]);
     const [isVisible, setIsVisible] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -62,21 +64,21 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
             {!isCollapsed && (
                 <div className="flex items-center justify-between px-4 py-2 bg-muted">
                     <div className="text-sm font-medium text-foreground">
-                        Danh sách ghim ({pinnedMessages.length})
+                        {t('messages.pinnedMessages.pinnedList', { count: pinnedMessages.length })}
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsCollapsed(c => !c)}
                             className="flex items-center gap-1 font-medium text-sm text-muted-foreground hover:text-foreground"
-                            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+                            title={isCollapsed ? t('messages.pinnedMessages.expand', 'Mở rộng') : t('messages.pinnedMessages.collapse', 'Thu gọn')}
                         >
-                            {isCollapsed ? 'Mở rộng' : 'Thu gọn'}
+                            {isCollapsed ? t('messages.pinnedMessages.expand', 'Mở rộng') : t('messages.pinnedMessages.collapse', 'Thu gọn')}
                             {isCollapsed ? <FaChevronDown className="w-4 h-4" /> : <FaChevronUp className="w-4 h-4" />}
                         </button>
                         <button
                             onClick={closeBanner}
                             className="p-1 hover:bg-muted/80 rounded"
-                            title="Đóng"
+                            title={t('ui.common.close')}
                         >
                             <FaTimes className="w-4 h-4 text-muted-foreground" />
                         </button>
@@ -90,7 +92,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                     {(() => {
                         const m = pinnedMessages[0];
                         const key = m.id || m._id;
-                        const preview = m.recalled ? 'Tin nhắn đã được thu hồi' : (m.content || '');
+                        const preview = m.recalled ? t('messages.messageItem.recalled') : (m.content || '');
                         const extra = pinnedMessages.length - 1;
                         return (
                             <div className="flex items-center gap-3">
@@ -100,7 +102,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-0" onClick={() => onMessageClick?.(m)}>
-                                    <div className="text-sm font-medium text-foreground">Tin nhắn</div>
+                                    <div className="text-sm font-medium text-foreground">{t('messages.pinnedMessages.message', 'Tin nhắn')}</div>
                                     <div className="text-sm text-muted-foreground truncate">
                                         {getUserName?.(m.senderId)}: {preview}
                                     </div>
@@ -109,9 +111,9 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                     <button
                                         onClick={() => setIsCollapsed(false)}
                                         className="text-sm font-semibold px-3 py-1 rounded border border-border text-foreground hover:bg-muted"
-                                        title="Mở danh sách ghim"
+                                        title={t('messages.pinnedMessages.openPinnedList', 'Mở danh sách ghim')}
                                     >
-                                        +{extra} ghim
+                                        {t('messages.pinnedMessages.morePinned', { count: extra })}
                                         <FaChevronDown className="w-4 h-4 inline-block ml-1" />
                                     </button>
                                 )}
@@ -119,7 +121,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                     <button
                                         onClick={() => setOpenMenuId(openMenuId === key ? null : key)}
                                         className="p-1 hover:bg-muted rounded"
-                                        title="Tùy chọn"
+                                        title={t('ui.common.actions', 'Tùy chọn')}
                                     >
                                         <FaEllipsisV className="w-5 h-5 text-muted-foreground" />
                                     </button>
@@ -133,7 +135,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                                     loadPinnedMessages();
                                                 }}
                                             >
-                                                Bỏ ghim
+                                                {t('messages.messageItem.unpin')}
                                             </button>
                                         </div>
                                     )}
@@ -149,7 +151,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                 <div className="divide-y divide-border">
                     {pinnedMessages.map((m) => {
                         const key = m.id || m._id;
-                        const preview = m.recalled ? 'Tin nhắn đã được thu hồi' : (m.content || '');
+                        const preview = m.recalled ? t('messages.messageItem.recalled') : (m.content || '');
                         return (
                             <div
                                 key={key}
@@ -164,7 +166,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onMessageClick?.(m)}>
-                                    <div className="text-sm font-medium text-foreground">Tin nhắn</div>
+                                    <div className="text-sm font-medium text-foreground">{t('messages.pinnedMessages.message', 'Tin nhắn')}</div>
                                     <div className="text-sm text-muted-foreground truncate">
                                         {getUserName?.(m.senderId)}: {preview}
                                     </div>
@@ -175,7 +177,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === key ? null : key); }}
                                         className="p-1 hover:bg-muted rounded"
-                                        title="Tùy chọn"
+                                        title={t('ui.common.actions', 'Tùy chọn')}
                                     >
                                         <FaEllipsisV className="w-5 h-5 text-muted-foreground" />
                                     </button>
@@ -198,7 +200,7 @@ const PinnedMessagesBanner = forwardRef(function PinnedMessagesBanner({
                                                     }
                                                 }}
                                             >
-                                                Bỏ ghim
+                                                {t('messages.messageItem.unpin')}
                                             </button>
                                         </div>
                                     )}

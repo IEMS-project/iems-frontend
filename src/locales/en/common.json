@@ -1,0 +1,1208 @@
+{
+  "sidebar": {
+    "appName": "IEMS",
+    "appDescription": "Intelligent EMS",
+    "mainFeatures": "Main Features",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "allProjects": "All Projects",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "chatbot": "Virtual Assistant",
+    "documents": "Documents",
+    "departments": "Departments",
+    "accessControl": "Access Control",
+    "loading": "Loading...",
+    "noProjects": "No projects",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "projectDetail": "Project Detail",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "chatbot": "AI Assistant",
+    "documents": "Documents",
+    "departments": "Departments",
+    "departmentDetail": "Department Detail",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "admin": "Admin",
+    "accessControl": "Access Control",
+    "overview": "Overview",
+    "timeline": "Timeline",
+    "members": "Members",
+    "settings": "Settings",
+    "detail": "Detail"
+  },
+  "dashboard": {
+    "projectOverview": {
+      "title": "Project Overview",
+      "project": "Project",
+      "status": "Status",
+      "deadline": "Deadline",
+      "progress": "Progress",
+      "noProjects": "No projects available",
+      "na": "N/A"
+    },
+    "myTasks": {
+      "title": "My Tasks",
+      "noTasks": "No tasks available",
+      "noDueDate": "No due date",
+      "overdue": "Overdue {{days}} days",
+      "dueToday": "Due today",
+      "dueTomorrow": "Due tomorrow",
+      "dueInDays": "Due in {{days}} days",
+      "na": "N/A"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "weekdays": {
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun"
+      },
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "status": {
+      "planning": "Planning",
+      "pending": "Pending",
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "inReview": "In Review",
+      "completed": "Completed",
+      "done": "Done",
+      "onHold": "On Hold",
+      "blocked": "Blocked",
+      "cancelled": "Cancelled",
+      "review": "In Review",
+      "unknown": "Unknown"
+    },
+    "priority": {
+      "highest": "Highest",
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "normal": "Normal",
+      "low": "Low",
+      "lowest": "Lowest",
+      "none": "None"
+    }
+  },
+  "ui": {
+    "confirmDialog": {
+      "title": "Confirm",
+      "description": "Are you sure you want to perform this action?",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "userSelection": {
+      "emptyMessage": "No users found",
+      "emptySelected": "No one selected",
+      "deselect": "Deselect"
+    },
+    "addExistingUsersModal": {
+      "title": "Add Members",
+      "searchPlaceholder": "Enter name...",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "selected": "Selected {{count}}/{{total}}",
+      "addNewMember": "Add New Member",
+      "cancel": "Cancel",
+      "add": "Add"
+    },
+    "imageCrop": {
+      "title": "Crop Profile Picture",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "search": "Search",
+      "filter": "Filter",
+      "sort": "Sort",
+      "actions": "Actions",
+      "close": "Close",
+      "back": "Back",
+      "next": "Next",
+      "previous": "Previous",
+      "loading": "Loading...",
+      "noData": "No data",
+      "error": "Error",
+      "success": "Success",
+      "of": "of",
+      "processing": "processing",
+      "created": "created",
+      "dueSoon": "Due soon",
+      "inNext7Days": "in the next 7 days"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "firstPage": "First page",
+      "lastPage": "Last page",
+      "goToPrevious": "Go to previous page",
+      "goToNext": "Go to next page",
+      "morePages": "More pages",
+      "pageOf": "Page {{current}} of {{total}}",
+      "totalItems": "Total {{count}}",
+      "rowsPerPage": "Rows per page:"
+    }
+  },
+  "departments": {
+    "title": "Departments",
+    "overview": "Department Overview",
+    "addDepartment": "Add Department",
+    "addNewDepartment": "Add New Department",
+    "editDepartment": "Edit Department",
+    "deleteDepartment": "Delete Department",
+    "departmentDetails": "Department Details",
+    "totalMembers": "Total Members",
+    "activeMembers": "Active",
+    "manager": "Manager",
+    "notAssigned": "Not Assigned",
+    "members": "members",
+    "memberList": "Member List",
+    "addMember": "Add Member",
+    "addNewMember": "Add New Member",
+    "editMember": "Edit Member",
+    "deleteMember": "Delete Member",
+    "viewDetails": "View Details",
+    "memberDetails": "Member Details",
+    "searchMember": "Search member...",
+    "noDepartments": "No departments yet",
+    "noMembers": "This department has no members yet",
+    "noMatchingMembers": "No members match the search criteria",
+    "confirmDelete": "Confirm Delete Department",
+    "confirmDeleteMember": "Confirm Delete Member",
+    "deleteDescription": "Are you sure you want to delete department \"{{name}}\"?",
+    "deleteWarning": "⚠️ This department has {{count}} members. All members will be removed from this department.",
+    "deleteMemberDescription": "Are you sure you want to remove this member from the department?",
+    "columns": {
+      "name": "Name",
+      "role": "Role",
+      "contractType": "Contract Type",
+      "dob": "Date of Birth",
+      "address": "Address",
+      "phone": "Phone",
+      "actions": "Actions"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "dob": "Date of Birth",
+      "gender": "Gender",
+      "role": "Role",
+      "contractType": "Contract Type",
+      "bankName": "Bank Name",
+      "bankAccount": "Bank Account Number",
+      "personalId": "Personal ID",
+      "startDate": "Start Date",
+      "address": "Address"
+    },
+    "actions": {
+      "view": "View Details",
+      "edit": "Update",
+      "delete": "Delete",
+      "close": "Close",
+      "cancel": "Cancel",
+      "update": "Update",
+      "add": "Add"
+    },
+    "form": {
+      "departmentName": "Department Name",
+      "departmentNamePlaceholder": "Enter department name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter department description",
+      "managerOptional": "Manager (optional)",
+      "managerCanBeEmpty": "Manager (can be empty)",
+      "notSelected": "Not selected",
+      "color": "Color"
+    },
+    "colors": {
+      "blue": "Blue",
+      "purple": "Purple",
+      "green": "Green",
+      "orange": "Orange",
+      "red": "Red",
+      "pink": "Pink",
+      "indigo": "Indigo",
+      "teal": "Teal"
+    },
+    "tooltips": {
+      "editDepartment": "Edit Department",
+      "deleteDepartment": "Delete Department"
+    },
+    "memberForm": {
+      "firstNameLabel": "First Name",
+      "firstNamePlaceholder": "Enter first name",
+      "lastNameLabel": "Last Name",
+      "lastNamePlaceholder": "Enter last name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter email",
+      "phoneLabel": "Phone Number",
+      "phonePlaceholder": "Enter phone number",
+      "dobLabel": "Date of Birth",
+      "genderLabel": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
+      "roleLabel": "Role",
+      "selectRole": "Select role",
+      "loadingRoles": "Loading roles...",
+      "noRoles": "No roles available",
+      "contractTypeLabel": "Contract Type",
+      "fullTime": "Full-time",
+      "partTime": "Part-time",
+      "remote": "Remote",
+      "contract": "Contract",
+      "internship": "Internship",
+      "bankNameLabel": "Bank Name",
+      "bankNamePlaceholder": "Enter bank name",
+      "bankAccountLabel": "Bank Account Number",
+      "bankAccountPlaceholder": "Enter bank account number",
+      "personalIdLabel": "Personal ID",
+      "personalIdPlaceholder": "Enter personal ID number",
+      "startDateLabel": "Start Date",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Enter username",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter password",
+      "addressLabel": "Address",
+      "addressPlaceholder": "Enter address"
+    }
+  },
+  "projects": {
+    "title": "Projects List",
+    "createProject": "Create Project",
+    "editProject": "Edit Project",
+    "deleteProject": "Delete Project",
+    "createNew": "Create New Project",
+    "noProjects": "No projects yet",
+    "viewProject": "View Project",
+    "projectCount": "{{count}} projects",
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "manager": "Manager",
+      "actions": "Actions"
+    },
+    "form": {
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "Enter project name",
+      "projectManager": "Project Manager",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Project Status",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter project description",
+      "required": "*"
+    },
+    "status": {
+      "planning": "Planning",
+      "inProgress": "In Progress",
+      "onHold": "On Hold",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "undefined": "Undefined"
+    },
+    "actions": {
+      "openMenu": "Open actions menu",
+      "copyId": "Copy project ID",
+      "view": "View project",
+      "edit": "Edit project",
+      "delete": "Delete project"
+    },
+    "messages": {
+      "created": "Project created successfully",
+      "updated": "Project updated successfully",
+      "deleted": "Project deleted successfully",
+      "nameRequired": "Please enter project name",
+      "managerRequired": "Please select project manager",
+      "deleteConfirm": "Are you sure you want to delete project {{name}}? This action cannot be undone."
+    },
+    "filter": {
+      "placeholder": "Filter by project name...",
+      "columns": "Columns"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "phases": {
+      "title": "Project Phases",
+      "create": "Create Phase",
+      "edit": "Edit Phase",
+      "delete": "Delete Phase",
+      "createNew": "Create New Phase",
+      "noPhases": "No phases yet. Create your first phase!",
+      "loading": "Loading...",
+      "form": {
+        "name": "Phase Name",
+        "namePlaceholder": "E.g: Phase 1: Requirements Gathering",
+        "goal": "Goal",
+        "goalPlaceholder": "E.g: Complete requirements documentation",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "description": "Description",
+        "descriptionPlaceholder": "Detailed description of this phase"
+      },
+      "fields": {
+        "goal": "Goal:",
+        "startDate": "Start:",
+        "endDate": "End:",
+        "undefined": "Undefined"
+      },
+      "messages": {
+        "created": "Phase created successfully",
+        "updated": "Phase updated successfully",
+        "deleted": "Phase deleted successfully",
+        "nameRequired": "Please enter phase name",
+        "loadError": "Unable to load phases list",
+        "deleteConfirm": "Are you sure you want to delete phase {{name}}? This action cannot be undone."
+      }
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Overview",
+        "timeline": "Timeline",
+        "phases": "Phases",
+        "tasks": "Tasks",
+        "members": "Members"
+      },
+      "overview": {
+        "title": "Project Overview",
+        "statistics": {
+          "totalTasks": "Total Tasks",
+          "completed": "Completed",
+          "inProgress": "In Progress",
+          "pending": "Pending",
+          "completionRate": "Completion Rate"
+        },
+        "charts": {
+          "statusBreakdown": "Status Breakdown",
+          "priorityBreakdown": "Priority Breakdown",
+          "workTypesBreakdown": "Work Types Breakdown",
+          "taskType": "Task Type"
+        },
+        "loading": "Loading data...",
+        "noData": "No data available"
+      },
+      "tasks": {
+        "title": "Task List",
+        "search": "Search tasks...",
+        "columns": {
+          "title": "Task",
+          "assignee": "Assignee",
+          "status": "Status",
+          "priority": "Priority",
+          "phase": "Phase",
+          "startDate": "Start",
+          "dueDate": "Due",
+          "createdBy": "Created By"
+        },
+        "filters": {
+          "status": "Status",
+          "assignee": "Assignee",
+          "priority": "Priority",
+          "phase": "Phase",
+          "all": "All"
+        },
+        "sort": {
+          "label": "Sort by",
+          "title": "Title",
+          "status": "Status",
+          "priority": "Priority",
+          "dueDate": "Due Date",
+          "ascending": "Ascending",
+          "descending": "Descending"
+        },
+        "actions": {
+          "clearFilters": "Clear Filters",
+          "addTask": "Add Task"
+        },
+        "form": {
+          "title": "Title",
+          "titlePlaceholder": "Enter task title",
+          "description": "Description",
+          "descriptionPlaceholder": "Enter detailed description",
+          "assignee": "Assignee",
+          "status": "Status",
+          "priority": "Priority",
+          "taskType": "Task Type",
+          "phase": "Phase",
+          "parentTask": "Parent Task",
+          "startDate": "Start Date",
+          "dueDate": "Due Date",
+          "attachments": "Attachments",
+          "selectMember": "Select member",
+          "selectPhase": "Select phase",
+          "selectParentTask": "Select parent task",
+          "noParentTask": "No parent task"
+        },
+        "taskTypes": {
+          "epic": "Epic",
+          "task": "Task",
+          "story": "User story",
+          "bug": "Bug"
+        },
+        "priorities": {
+          "highest": "Highest",
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low",
+          "lowest": "Lowest",
+          "none": "No priority"
+        },
+        "statuses": {
+          "pending": "Pending",
+          "inProgress": "In Progress",
+          "inReview": "In Review",
+          "completed": "Completed",
+          "cancelled": "Cancelled"
+        },
+        "messages": {
+          "created": "Task created successfully",
+          "updated": "Task updated successfully",
+          "deleted": "Task deleted successfully",
+          "titleRequired": "Please enter task title",
+          "assigneeRequired": "Please select an assignee",
+          "dueDateRequired": "Please select a due date"
+        },
+        "modal": {
+          "addTitle": "Add Task",
+          "editTitle": "Edit Task"
+        },
+        "empty": "No tasks available",
+        "loading": "Loading tasks..."
+      },
+      "timeline": {
+        "title": "Gantt Chart",
+        "range": {
+          "daily": "Daily",
+          "monthly": "Monthly",
+          "quarterly": "Quarterly"
+        },
+        "zoom": {
+          "in": "Zoom In",
+          "out": "Zoom Out",
+          "reset": "Reset"
+        },
+        "actions": {
+          "scrollToToday": "Go to Today",
+          "clearFilters": "Clear Filters"
+        },
+        "filters": {
+          "assignee": "Assignee",
+          "status": "Status",
+          "tag": "Tag",
+          "all": "All"
+        },
+        "noTasks": "No tasks available",
+        "loading": "Loading chart...",
+        "statusColors": "Status Colors"
+      },
+      "members": {
+        "title": "Project Members",
+        "add": "Add Member",
+        "edit": "Edit Member",
+        "delete": "Delete Member",
+        "form": {
+          "user": "User",
+          "role": "Role",
+          "status": "Status",
+          "selectUser": "Select user",
+          "selectRole": "Select role"
+        },
+        "statuses": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "messages": {
+          "added": "Member added successfully",
+          "updated": "Member information updated",
+          "deleted": "Member deleted",
+          "userRequired": "Please select user",
+          "roleRequired": "Please select role",
+          "loadError": "Unable to load members list"
+        },
+        "noMembers": "No members yet",
+        "loading": "Loading members list..."
+      },
+      "roles": {
+        "title": "Project Roles",
+        "add": "Add Role",
+        "edit": "Edit Role",
+        "delete": "Delete Role",
+        "form": {
+          "role": "Role",
+          "roleName": "Role Name",
+          "selectRole": "Select role",
+          "selectRoleFromUserService": "Select role from User-service"
+        },
+        "messages": {
+          "added": "Role added successfully",
+          "updated": "Role updated",
+          "deleted": "Role deleted",
+          "deleteSuccess": "Role deleted successfully",
+          "addSuccess": "Role added successfully",
+          "roleRequired": "Please select role",
+          "loadError": "Unable to load roles list",
+          "deleteConfirm": "Are you sure you want to delete this role?",
+          "deleteError": "Error deleting role",
+          "addError": "Error adding role",
+          "roleAlreadyAssigned": "Cannot delete role that is already assigned to members"
+        },
+        "noRoles": "No roles yet",
+        "loading": "Loading roles list...",
+        "modal": {
+          "addTitle": "Add Role",
+          "editTitle": "Re-add Role",
+          "deleteTitle": "Confirm Delete Role"
+        }
+      }
+    },
+    "tables": {
+      "filter": "Filter",
+      "columns": "Columns",
+      "previous": "Previous",
+      "next": "Next",
+      "noResults": "No results found",
+      "loading": "Loading...",
+      "searchPlaceholder": "Search..."
+    },
+    "select": {
+      "search": "Search...",
+      "noResults": "No results found",
+      "selectPlaceholder": "Select..."
+    }
+  },
+  "tasks": {
+    "title": "Tasks List",
+    "filters": {
+      "project": "Project",
+      "allProjects": "All projects",
+      "noProjects": "No projects",
+      "projectCount": "{{count}} projects",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "statusCount": "{{count}} statuses",
+      "priority": "Priority",
+      "allPriorities": "All priorities",
+      "priorityCount": "{{count}} priorities",
+      "dateFrom": "From date",
+      "dateTo": "To date"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "priorities": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "types": {
+      "task": "Task",
+      "bug": "Bug",
+      "userStory": "User Story",
+      "epic": "Epic",
+      "subTask": "Sub-task"
+    },
+    "actions": {
+      "save": "Save changes",
+      "saving": "Saving...",
+      "reset": "Reset",
+      "unsavedChanges": "Unsaved changes"
+    },
+    "timeRemaining": {
+      "overdue": "Overdue {{days}}d {{hours}}h {{minutes}}m",
+      "remaining": "{{days}}d {{hours}}h {{minutes}}m left",
+      "remainingMinutes": "{{minutes}} minutes remaining",
+      "remainingHours": "{{hours}} hours {{minutes}} minutes remaining",
+      "remainingDays": "{{days}} days {{hours}} hours {{minutes}} minutes remaining"
+    },
+    "detail": {
+      "title": "Task Details",
+      "fields": {
+        "description": "Description",
+        "details": "Details",
+        "taskId": "Task ID",
+        "type": "Type",
+        "project": "Project",
+        "status": "Status",
+        "priority": "Priority",
+        "assignee": "Assignee",
+        "startDate": "Start Date",
+        "dueDate": "Due Date",
+        "timeRemaining": "Time Remaining",
+        "attachments": "Attachments"
+      },
+      "overdue": "Overdue by {{days}} days {{hours}} hours {{minutes}} minutes"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "toolbar": {
+      "newFolder": "New Folder",
+      "upload": "Upload",
+      "move": "Move",
+      "delete": "Delete",
+      "selected": "{{count}} items selected"
+    },
+    "header": {
+      "searchPlaceholder": "Search files and folders...",
+      "sort": "Sort",
+      "sortByName": "By name",
+      "sortByDate": "By date",
+      "sortBySize": "By size"
+    },
+    "list": {
+      "name": "Name",
+      "dateCreated": "Date Created",
+      "size": "Size"
+    },
+    "emptyState": {
+      "title": "This folder is empty.",
+      "noResults": "No files or folders matching \"{{search}}\""
+    },
+    "createFolder": {
+      "title": "New Folder",
+      "placeholder": "Folder name",
+      "create": "Create",
+      "cancel": "Cancel",
+      "success": "Folder created successfully",
+      "error": "Error creating folder"
+    },
+    "upload": {
+      "title": "Upload Files",
+      "dragDrop": "Drag and drop files here or click to select files",
+      "dragDropOr": "or drag and drop",
+      "dragActive": "Drop files here...",
+      "selectedFiles": "Selected Files",
+      "removeFile": "Remove",
+      "upload": "Upload",
+      "cancel": "Cancel",
+      "uploading": "Uploading...",
+      "success": "Upload successful",
+      "startUpload": "Start Upload",
+      "fileTypes": "PNG, JPG, GIF up to 10MB"
+    },
+    "delete": {
+      "title": "Confirm Delete",
+      "confirmFolder": "Are you sure you want to delete the folder <strong>{{name}}</strong> and all its contents?",
+      "confirmFile": "Are you sure you want to delete the file <strong>{{name}}</strong>?",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "success": "Successfully deleted",
+      "error": "Error deleting"
+    },
+    "rename": {
+      "title": "Rename",
+      "titleFolder": "Rename Folder",
+      "titleFile": "Rename File",
+      "label": "Name",
+      "labelFolder": "Folder name",
+      "labelFile": "File name",
+      "placeholder": "Enter name...",
+      "currentName": "Current name:",
+      "save": "Save",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "success": "Successfully renamed"
+    },
+    "permission": {
+      "title": "Update Permission",
+      "titleFolder": "Update Folder Permission",
+      "titleFile": "Update File Permission",
+      "currentStatus": "Current status:",
+      "public": "Public",
+      "publicDesc": "Everyone can view and access",
+      "private": "Private",
+      "privateDesc": "Only you and shared users can view",
+      "update": "Update",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "success": "Permission updated successfully"
+    },
+    "share": {
+      "title": "Share",
+      "shareItem": "Share {{type}}: <strong>{{name}}</strong>",
+      "folder": "folder",
+      "file": "file",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied",
+      "searchPlaceholder": "Enter name...",
+      "permission": "Permission",
+      "viewer": "Viewer",
+      "editor": "Editor",
+      "selected": "Selected {{count}}/{{total}}",
+      "share": "Share",
+      "cancel": "Cancel",
+      "success": "Shared successfully",
+      "error": "Error sharing"
+    },
+    "sharedUsers": {
+      "title": "Shared Users",
+      "item": "{{type}}: <strong>{{name}}</strong>",
+      "folder": "Folder",
+      "file": "File",
+      "noUsers": "Not shared with anyone yet",
+      "remove": "Remove",
+      "close": "Close",
+      "loading": "Loading...",
+      "permissionUpdated": "Permission updated successfully",
+      "updateError": "Error updating permission",
+      "removeSuccess": "Share permission removed",
+      "removeError": "Error removing permission"
+    },
+    "move": {
+      "title": "Move",
+      "titleBatch": "Move Multiple Items",
+      "selectDestination": "Select destination folder",
+      "currentFolder": "Current folder:",
+      "movingItems": "Moving {{count}} items",
+      "movingItem": "Moving: <strong>{{name}}</strong>",
+      "home": "Home",
+      "loading": "Loading...",
+      "noFolders": "No folders available",
+      "noSubfolders": "No subfolders",
+      "noSubfoldersDesc": "Select \"Move Here\" to move to this folder",
+      "moveHere": "Move Here",
+      "moveToHere": "Move Here",
+      "cancel": "Cancel",
+      "processing": "Processing...",
+      "moving": "Moving...",
+      "success": "Successfully moved"
+    },
+    "contextMenu": {
+      "rename": "Rename",
+      "permission": "Permission",
+      "share": "Share",
+      "sharedUsers": "Shared Users",
+      "move": "Move",
+      "delete": "Delete",
+      "download": "Download",
+      "noPermission": "No edit permission"
+    },
+    "fileDetail": {
+      "details": "Details",
+      "name": "Name:",
+      "type": "Type:",
+      "size": "Size:",
+      "created": "Created:",
+      "modified": "Modified:",
+      "owner": "Owner:",
+      "permission": "Permission:",
+      "folder": "Folder",
+      "file": "File",
+      "public": "Public",
+      "private": "Private",
+      "unknown": "Unknown",
+      "location": "Location:",
+      "myFiles": "My Files",
+      "settings": "Settings",
+      "shareFile": "Share file",
+      "favorite": "Favorite"
+    },
+    "types": {
+      "folder": "folder",
+      "file": "file"
+    },
+    "favorite": {
+      "added": "Added to favorites",
+      "removed": "Removed from favorites",
+      "error": "Error updating favorite"
+    },
+    "batchDelete": {
+      "success": "Successfully deleted {{count}} items",
+      "partial": "Deleted {{success}}/{{total}} items. {{failed}} items could not be deleted.",
+      "error": "Error deleting items"
+    },
+    "batchMove": {
+      "success": "Successfully moved {{count}} items",
+      "partial": "Moved {{success}}/{{total}} items. {{failed}} items could not be moved.",
+      "error": "Error moving items"
+    }
+  },
+  "admin": {
+    "accessControl": {
+      "title": "Access Control",
+      "tabs": {
+        "accounts": "Account Management",
+        "rolesPermissions": "Roles & Permissions"
+      },
+      "accounts": {
+        "title": "Accounts",
+        "searchPlaceholder": "Search by email, username or role...",
+        "noAccounts": "No accounts",
+        "selectAccount": "Select an account from the table to view details",
+        "status": "Status",
+        "active": "Active",
+        "locked": "Locked",
+        "roles": "Roles",
+        "permissions": "Permissions",
+        "details": "Account Details",
+        "username": "Username",
+        "email": "Email",
+        "createdAt": "Created At",
+        "lastLogin": "Last Login",
+        "accountRoles": "Account Roles",
+        "accountPermissions": "Account Permissions",
+        "directPermissions": "Direct Permissions",
+        "resetPassword": "Reset Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "passwordMismatch": "Passwords do not match",
+        "passwordResetSuccess": "Password reset successfully",
+        "passwordResetError": "Failed to reset password",
+        "saving": "Saving...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "lockAccount": "Lock Account",
+        "unlockAccount": "Unlock Account",
+        "accountLocked": "Account locked successfully",
+        "accountUnlocked": "Account unlocked successfully",
+        "rolesUpdated": "Roles updated successfully",
+        "permissionsUpdated": "Permissions updated successfully",
+        "error": "An error occurred",
+        "selectRole": "Select roles for account",
+        "selectPermission": "Additional permissions outside role",
+        "noChanges": "No changes to save",
+        "hasChanges": "You have unsaved changes",
+        "totalAccounts": "Total Accounts",
+        "activeAccounts": "Active Accounts",
+        "lockedAccounts": "Locked Accounts",
+        "accountManagement": "Account Management & Permissions",
+        "accountManagementDescription": "View and edit access permissions for each user account",
+        "resetPasswordDescription": "Set a new password for this account"
+      },
+      "roles": {
+        "title": "Roles",
+        "searchPlaceholder": "Search by name or code...",
+        "noRoles": "No roles",
+        "createRole": "Create Role",
+        "editRole": "Edit Role",
+        "deleteRole": "Delete Role",
+        "roleName": "Role Name",
+        "roleCode": "Role Code",
+        "description": "Description",
+        "permissions": "Permissions",
+        "permissionCount": "{{count}} permissions",
+        "selectRole": "Select a role from the left table to configure permissions",
+        "roleInfo": "Role Information",
+        "name": "Name",
+        "code": "Code",
+        "createdAt": "Created At",
+        "notUpdated": "Not updated",
+        "filterPermissions": "Filter permissions by name or code...",
+        "noMatchingPermissions": "No matching permissions.",
+        "createSuccess": "Role created successfully",
+        "updateSuccess": "Role updated successfully",
+        "deleteSuccess": "Role deleted successfully",
+        "deleteConfirm": "Are you sure you want to delete the role \"{{name}}\"?",
+        "saving": "Saving...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete",
+        "permissionsAssigned": "{{count}} / {{total}} permissions",
+        "assignPermissions": "Assign Permissions",
+        "selectAll": "Select All",
+        "clearAll": "Clear All",
+        "permissionsUpdated": "Permissions updated successfully",
+        "error": "An error occurred",
+        "atLeastOnePermission": "Role must have at least one permission",
+        "totalRoles": "Total Roles",
+        "avgPermissionsPerRole": "Avg Permissions/Role",
+        "rolesList": "Roles List",
+        "rolesListDescription": "Manage access permission groups",
+        "roleCodePlaceholder": "E.g: ADMIN",
+        "roleNamePlaceholder": "Display name",
+        "descriptionPlaceholder": "Notes about this role",
+        "savePermissions": "Save Permissions",
+        "saveBeforeAssign": "Save role information before assigning permissions"
+      },
+      "permissions": {
+        "title": "Permissions",
+        "searchPlaceholder": "Search permission...",
+        "noPermissions": "No permissions",
+        "createPermission": "Create Permission",
+        "editPermission": "Edit Permission",
+        "deletePermission": "Delete Permission",
+        "updatePermission": "Update Permission",
+        "permissionCode": "Permission Code",
+        "permissionName": "Permission Name",
+        "code": "Code",
+        "name": "Name",
+        "codePlaceholder": "E.g: PROJECT_VIEW",
+        "namePlaceholder": "Display name",
+        "createSuccess": "Permission created successfully",
+        "updateSuccess": "Permission updated successfully",
+        "deleteSuccess": "Permission deleted successfully",
+        "deleteConfirm": "Are you sure you want to delete the permission \"{{name}}\"? This will remove it from all roles.",
+        "saving": "Saving...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit permission",
+        "delete": "Delete permission",
+        "error": "An error occurred",
+        "codeRequired": "Code is required",
+        "nameRequired": "Name is required",
+        "totalPermissions": "Total Permissions",
+        "permissionsList": "Permissions List",
+        "permissionsListDescription": "Define detailed operation permissions"
+      },
+      "common": {
+        "loading": "Loading...",
+        "refresh": "Refresh",
+        "search": "Search",
+        "actions": "Actions",
+        "close": "Close",
+        "confirm": "Confirm",
+        "loadingData": "Loading data...",
+        "errorLoadingData": "Error loading data",
+        "noData": "No data available"
+      }
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "emptyChat": {
+      "title": "Select a conversation",
+      "description": "Choose a conversation from the left list to start messaging"
+    },
+    "header": {
+      "active": "Active",
+      "members": "{{count}} members",
+      "searchMessages": "Search messages",
+      "manageMembers": "Manage members",
+      "conversationInfo": "Conversation info"
+    },
+    "composer": {
+      "placeholder": "Type a message...",
+      "replyPlaceholder": "Reply to message...",
+      "send": "Send",
+      "file": "File",
+      "fileSizeWarning": "Some files exceed size limits (Images ≤ 5MB, Videos/Files ≤ 20MB)."
+    },
+    "reply": {
+      "replyTo": "Reply to {{name}}",
+      "cancelReply": "Cancel reply",
+      "image": "[Image]",
+      "video": "[Video]",
+      "file": "[File] {{fileName}}",
+      "fileShort": "[File]"
+    },
+    "conversation": {
+      "createGroup": "Create group",
+      "search": "Search...",
+      "searchPlaceholder": "Search people to message...",
+      "noConversations": "No conversations",
+      "loadingConversations": "Loading conversations...",
+      "conversations": "Conversations",
+      "noUsersFound": "No users found",
+      "yesterday": "Yesterday",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "markAsUnread": "Mark as unread",
+      "manuallyMarkedUnread": "Manually marked as unread",
+      "muteNotifications": "Mute notifications",
+      "unmuteNotifications": "Unmute notifications",
+      "deleteGroup": "Delete group",
+      "onlyOwnerCanDelete": "Only the group creator can delete this group",
+      "deleteGroupConfirm": "Are you sure you want to delete this group?",
+      "groupDeleted": "Group deleted successfully",
+      "deleteGroupError": "Unable to delete group. Please try again.",
+      "confirmDeleteTitle": "Confirm delete group",
+      "confirmDeleteDescription": "Are you sure you want to delete group \"{{name}}\"?\n\nAll messages and data in the group will be permanently deleted and cannot be recovered.",
+      "thisGroup": "This group"
+    },
+    "group": {
+      "createTitle": "Create new group",
+      "groupName": "Group name",
+      "groupNamePlaceholder": "Enter group name",
+      "searchMembers": "Search members...",
+      "selected": "Selected {{count}}/100",
+      "cancel": "Cancel",
+      "create": "Create group",
+      "membersTitle": "Group members",
+      "saveChanges": "Save changes",
+      "close": "Close"
+    },
+    "sidebar": {
+      "searchMessages": "Search messages",
+      "members": "Members ({{count}})",
+      "groupName": "Group name",
+      "groupAvatar": "Group avatar",
+      "editGroupName": "Edit group name",
+      "notificationsEnabled": "Notifications enabled",
+      "notificationsDisabled": "Notifications disabled",
+      "pinned": "Pinned",
+      "unpinned": "Unpinned",
+      "media": "Photos & Videos",
+      "files": "Files",
+      "links": "Links",
+      "clearMessages": "Clear messages",
+      "clearMessagesConfirm": "Are you sure you want to clear all messages in this conversation?",
+      "loadMore": "Load more",
+      "viewAll": "View all",
+      "noMedia": "No photos or videos yet",
+      "noFiles": "No files yet",
+      "noMore": "No more",
+      "messagesCleared": "Deleted {{count}} messages on your device",
+      "clearMessagesError": "Cannot clear history at the moment",
+      "confirmClearTitle": "Confirm clear messages",
+      "confirmClearDescription": "Clear all messages in this conversation on your device?"
+    },
+    "messageItem": {
+      "reply": "Reply",
+      "forward": "Forward",
+      "copy": "Copy message",
+      "pin": "Pin message",
+      "unpin": "Unpin",
+      "delete": "Delete",
+      "deleteForMe": "Delete for me only",
+      "recall": "Recall message",
+      "edit": "Edit",
+      "edited": "(edited)",
+      "recalled": "Message was recalled",
+      "deleted": "Message was deleted",
+      "reactions": "Reactions",
+      "user": "User",
+      "clickToViewOriginal": "Click to view original message",
+      "fileAttachment": "File attachment",
+      "react": "React",
+      "reactWith": "React with {{emoji}}",
+      "removeAllMyReactions": "Remove all my reactions"
+    },
+    "messageList": {
+      "loadingOlder": "Loading older messages...",
+      "loadingNewer": "Loading newer messages...",
+      "returnToLatest": "Return to latest",
+      "noMessages": "No messages"
+    },
+    "search": {
+      "title": "Search messages",
+      "placeholder": "Enter keyword...",
+      "search": "Search",
+      "results": "{{count}} results",
+      "noResults": "No results found",
+      "loadMore": "Load more",
+      "emptyKeyword": "Enter a keyword to search messages"
+    },
+    "pinnedMessages": {
+      "title": "Pinned messages",
+      "viewAll": "View all",
+      "noPinned": "No pinned messages",
+      "unpin": "Unpin",
+      "pinnedList": "Pinned list ({{count}})",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "message": "Message",
+      "openPinnedList": "Open pinned list",
+      "morePinned": "+{{count}} pinned"
+    },
+    "typing": {
+      "typing": "typing",
+      "and": "and",
+      "others": "others"
+    },
+    "media": {
+      "preview": "Preview",
+      "download": "Download",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "rotateLeft": "Rotate left",
+      "rotateRight": "Rotate right",
+      "reset": "Reset",
+      "previous": "Previous",
+      "next": "Next",
+      "close": "Close"
+    }
+  },
+  "profile": {
+    "title": "Personal Profile",
+    "stats": {
+      "projectsCompleted": "Projects Completed",
+      "tasksCompleted": "Tasks Completed",
+      "departmentsJoined": "Departments Joined",
+      "hoursWorked": "Hours Worked"
+    },
+    "basicInfo": "Basic Information",
+    "detailInfo": "Detailed Information",
+    "fields": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "address": "Address",
+      "bankAccountNumber": "Bank Account Number",
+      "bankName": "Bank Name",
+      "personalID": "Personal ID",
+      "dob": "Date of Birth",
+      "gender": "Gender",
+      "contractType": "Contract Type",
+      "startDate": "Start Date",
+      "role": "Role",
+      "joinedFrom": "Joined from",
+      "lastUpdated": "Last Updated"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "contractType": {
+      "fulltime": "Full-time",
+      "parttime": "Part-time",
+      "contract": "Contract"
+    },
+    "actions": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "changeAvatar": "Change Avatar"
+    },
+    "messages": {
+      "loading": "Processing...",
+      "loadFailed": "Failed to load profile",
+      "updateSuccess": "Profile updated successfully",
+      "updateFailed": "Update failed",
+      "avatarUploadSuccess": "Avatar updated successfully",
+      "avatarUploadFailed": "Failed to upload avatar"
+    },
+    "placeholders": {
+      "enterEmail": "Enter email",
+      "enterPhone": "Enter phone number",
+      "enterAddress": "Enter address",
+      "enterBankAccount": "Enter bank account number",
+      "enterBankName": "Enter bank name"
+    }
+  },
+  "userProfile": {
+    "account": "Account",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "logout": "Logout"
+  }
+}

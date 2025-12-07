@@ -1,13 +1,86 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import { getPriorityVariant, getStatusVariant, translatePriority, translateStatus } from "../../lib/i18n";
 import RichTextEditor from "../ui/RichTextEditor";
-import { getTaskTypeIcon, getTaskTypeColor, translateTaskType, getTaskTypeVariant } from "../../lib/taskTypeUtils";
-import { ChevronUp, ChevronDown, Equal } from 'lucide-react';
+import { getTaskTypeVariant } from "../../lib/taskTypeUtils";
+import { useTaskType } from "../../hooks/useTaskType";
+import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle, Paperclip, Download, Hash, Layers, FolderKanban, Flag, User, CalendarDays, CalendarClock, Clock } from 'lucide-react';
 
 export default function TaskDetailModal({ open, onClose, task, onEdit }) {
+    const { t } = useTranslation();
+    const { getTaskTypeIcon, translateTaskType } = useTaskType();
+
+    const getPriorityLabel = (priority) => {
+        if (!priority) return t('dashboard.priority.medium');
+
+        // Normalize priority - trim and handle variations
+        const normalizedPriority = priority.toString().trim();
+
+        const priorityMap = {
+            'Cao nhất': 'highest',
+            'Cao': 'high',
+            'Trung bình': 'medium',
+            'Thấp': 'low',
+            'Thấp nhất': 'lowest',
+            'Không ưu tiên': 'none',
+            // English mappings
+            'Highest': 'highest',
+            'Critical': 'highest',
+            'High': 'high',
+            'Medium': 'medium',
+            'Normal': 'medium',
+            'Low': 'low',
+            'Lowest': 'lowest',
+            'None': 'none'
+        };
+
+        const key = priorityMap[normalizedPriority];
+        if (key) {
+            return t(`dashboard.priority.${key}`);
+        }
+
+        // Fallback: try case-insensitive match
+        const lowerPriority = normalizedPriority.toLowerCase();
+        for (const [mapKey, mapValue] of Object.entries(priorityMap)) {
+            if (mapKey.toLowerCase() === lowerPriority) {
+                return t(`dashboard.priority.${mapValue}`);
+            }
+        }
+
+        return t('dashboard.priority.medium');
+    };
+
+    const getPriorityIcon = (priority) => {
+        if (!priority) return null;
+
+        const normalized = priority.toString().trim().toUpperCase();
+
+        // Highest/Critical
+        if (normalized.includes('CAO NHẤT') || normalized === 'HIGHEST' || normalized === 'CRITICAL') {
+            return { icon: ChevronsUp, color: 'text-red-700 dark:text-red-400' };
+        }
+        // High
+        if (normalized === 'CAO' || normalized === 'HIGH') {
+            return { icon: ChevronUp, color: 'text-red-600 dark:text-red-400' };
+        }
+        // Medium
+        if (normalized.includes('TRUNG BÌNH') || normalized.includes('TRUNG BINH') || normalized === 'MEDIUM' || normalized === 'NORMAL') {
+            return { icon: Minus, color: 'text-yellow-600 dark:text-yellow-400' };
+        }
+        // Low
+        if (normalized.includes('THẤP') || normalized.includes('THAP') || normalized === 'LOW') {
+            return { icon: ChevronDown, color: 'text-blue-600 dark:text-blue-400' };
+        }
+        // Lowest
+        if (normalized.includes('THẤP NHẤT') || normalized.includes('THAP NHAT') || normalized === 'LOWEST') {
+            return { icon: ChevronsDown, color: 'text-blue-700 dark:text-blue-400' };
+        }
+        // None/Default
+        return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
+    };
+
     const getTimeRemaining = (dueDate) => {
         if (!dueDate) return null;
         const today = new Date();
@@ -18,13 +91,13 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
 
         if (diffTime < 0) {
-            return `Quá hạn ${Math.abs(diffDays)} ngày ${Math.abs(diffHours)} giờ ${Math.abs(diffMinutes)} phút`;
+            return t('tasks.timeRemaining.overdue', { days: Math.abs(diffDays), hours: Math.abs(diffHours), minutes: Math.abs(diffMinutes) });
         } else if (diffDays === 0 && diffHours === 0) {
-            return `Còn ${diffMinutes} phút`;
+            return t('tasks.timeRemaining.remainingMinutes', { minutes: diffMinutes });
         } else if (diffDays === 0) {
-            return `Còn ${diffHours} giờ ${diffMinutes} phút`;
+            return t('tasks.timeRemaining.remainingHours', { hours: diffHours, minutes: diffMinutes });
         } else {
-            return `Còn ${diffDays} ngày ${diffHours} giờ ${diffMinutes} phút`;
+            return t('tasks.timeRemaining.remainingDays', { days: diffDays, hours: diffHours, minutes: diffMinutes });
         }
     };
 
@@ -46,47 +119,123 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         <Modal
             open={open}
             onClose={onClose}
-            title={task.title || "Chi tiết nhiệm vụ"}
+            title={task.title || t('tasks.detail.title')}
             footer={
                 <div className="flex justify-end gap-2">
                     {onEdit && (
                         <Button variant="secondary" onClick={() => onEdit(task)}>
-                            Chỉnh sửa
+                            {t('ui.common.edit')}
                         </Button>
                     )}
-                    <Button variant="secondary" onClick={onClose}>Đóng</Button>
+                    <Button variant="secondary" onClick={onClose}>{t('ui.common.close')}</Button>
                 </div>
             }
         >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left side - Description */}
-                <div className="lg:col-span-2">
+                {/* Left side - Description & Attachments */}
+                <div className="lg:col-span-2 space-y-6">
                     {task.description && (
                         <div>
-                            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Mô tả</div>
+                            <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.description')}</div>
                             <RichTextEditor
                                 value={task.description}
                                 readOnly={true}
                             />
                         </div>
                     )}
+
+                    {task.attachments && task.attachments.length > 0 && (
+                        <div>
+                            <div className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                                <Paperclip className="w-4 h-4" />
+                                {t('tasks.detail.fields.attachments') || 'File đính kèm'} ({task.attachments.length})
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {/* Hiển thị ảnh trước */}
+                                {task.attachments
+                                    .filter(attachment => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+                                    })
+                                    .map((attachment) => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return (
+                                            <div key={attachment.id} className="relative group aspect-square">
+                                                <img
+                                                    src={attachment.fileUrl}
+                                                    alt={fileName}
+                                                    className="w-full h-full object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                                                    onClick={() => window.open(attachment.fileUrl, '_blank')}
+                                                    title="Nhấn để xem ảnh"
+                                                />
+                                                <a
+                                                    href={attachment.fileUrl}
+                                                    download
+                                                    className="absolute top-1 right-1 p-1 bg-white/90 dark:bg-gray-800/90 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                    title={t('ui.common.download') || 'Tải xuống'}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <Download className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+
+                                {/* Hiển thị file thường sau */}
+                                {task.attachments
+                                    .filter(attachment => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return !/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fileName);
+                                    })
+                                    .map((attachment) => {
+                                        const fileName = attachment.fileName || attachment.name || '';
+                                        return (
+                                            <div
+                                                key={attachment.id}
+                                                className="col-span-3 flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
+                                            >
+                                                <Paperclip className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                <span className="truncate text-foreground flex-1" title={fileName}>
+                                                    {fileName}
+                                                </span>
+                                                <a
+                                                    href={attachment.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                                    title={t('ui.common.download') || 'Tải xuống'}
+                                                >
+                                                    <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right side - Details */}
                 <div className="lg:col-span-1 space-y-4">
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Chi tiết</div>
+                    <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.details')}</div>
 
                     {task.id && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Mã nhiệm vụ</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">{task.id}</div>
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <Hash className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.taskId')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">{task.id}</div>
                         </div>
                     )}
 
                     {task.type && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Loại</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <Layers className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.type')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
                                 <Badge variant={getTaskTypeVariant(task.type)} className="inline-flex items-center gap-1.5">
                                     {React.createElement(getTaskTypeIcon(task.type), { className: "w-3.5 h-3.5" })}
                                     {translateTaskType(task.type)}
@@ -96,41 +245,44 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                     )}
 
                     <div>
-                        <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Dự án</div>
-                        <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                        <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                            <FolderKanban className="w-3.5 h-3.5" />
+                            {t('tasks.detail.fields.project')}
+                        </div>
+                        <div className="text-sm text-foreground mt-1">
                             <Badge variant="black" className="font-normal">
                                 {(task.project && task.project.name) || task.projectName || task.project || '-'}
                             </Badge>
                         </div>
                     </div>
 
-                    {task.status && (
-                        <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Trạng thái</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
-                                <Badge variant={getStatusVariant(task.status)}>
-                                    {translateStatus(task.status)}
-                                </Badge>
-                            </div>
-                        </div>
-                    )}
-
                     {task.priority && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Ưu tiên</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1 inline-flex items-center gap-1.5">
-                                {translatePriority(task.priority) === 'Cao' && <ChevronUp className="w-4 h-4 text-red-600 dark:text-red-400" />}
-                                {translatePriority(task.priority) === 'Trung bình' && <Equal className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />}
-                                {translatePriority(task.priority) === 'Thấp' && <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                                <span>{translatePriority(task.priority)}</span>
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <Flag className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.priority')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1 inline-flex items-center gap-1.5">
+                                {(() => {
+                                    const iconData = getPriorityIcon(task.priority);
+                                    if (iconData) {
+                                        const Icon = iconData.icon;
+                                        return <Icon className={`w-4 h-4 ${iconData.color}`} />;
+                                    }
+                                    return null;
+                                })()}
+                                <span>{getPriorityLabel(task.priority)}</span>
                             </div>
                         </div>
                     )}
 
                     {(task.userName || task.assignedToName || task.assigneeName || task.assignedTo) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Người thực hiện</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.assignee')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
                                 {task.userName || task.assignedToName || task.assigneeName ||
                                     (task.assignedTo && typeof task.assignedTo === 'object' ? task.assignedTo.name : task.assignedTo) ||
                                     task.assignedToEmail || task.assigneeEmail || '-'}
@@ -140,8 +292,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.startDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Bắt đầu</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <CalendarDays className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.startDate')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
                                 {new Date(task.startDate).toLocaleDateString('vi-VN')}
                             </div>
                         </div>
@@ -149,8 +304,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Hạn hoàn thành</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <CalendarClock className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.dueDate')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
                                 {formatDueDate(task.dueDate)}
                             </div>
                         </div>
@@ -158,8 +316,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
 
                     {task.dueDate && getTimeRemaining(task.dueDate) && (
                         <div>
-                            <div className="text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">Thời gian còn lại</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                {t('tasks.detail.fields.timeRemaining')}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
                                 {getTimeRemaining(task.dueDate)}
                             </div>
                         </div>

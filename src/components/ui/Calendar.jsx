@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from "react-icons/fa";
 import { taskService } from "../../services/taskService";
 
@@ -12,13 +13,22 @@ function addMonths(date, count) {
 	return new Date(date.getFullYear(), date.getMonth() + count, 1);
 }
 
-const weekdays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-
 export default function Calendar({ onDateClick, projectId }) {
+	const { t, i18n } = useTranslation();
 	const [current, setCurrent] = useState(startOfMonth(new Date()));
 	const [tasks, setTasks] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const today = new Date();
+
+	const weekdays = useMemo(() => [
+		t("dashboard.calendar.weekdays.monday"),
+		t("dashboard.calendar.weekdays.tuesday"),
+		t("dashboard.calendar.weekdays.wednesday"),
+		t("dashboard.calendar.weekdays.thursday"),
+		t("dashboard.calendar.weekdays.friday"),
+		t("dashboard.calendar.weekdays.saturday"),
+		t("dashboard.calendar.weekdays.sunday")
+	], [t]);
 
 	const grid = useMemo(() => {
 		const start = startOfMonth(current);
@@ -57,7 +67,7 @@ export default function Calendar({ onDateClick, projectId }) {
 		loadTasks();
 	}, [projectId]);
 
-	const monthLabel = current.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+	const monthLabel = current.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'vi-VN', { month: "long", year: "numeric" });
 
 	// Hàm lấy tất cả các ngày trong khoảng từ startDate đến endDate
 	const getDatesInRange = (startDateStr, endDateStr) => {
@@ -151,7 +161,8 @@ export default function Calendar({ onDateClick, projectId }) {
 		let max = 0;
 		grid.forEach((date) => {
 			if (date) {
-				const counts = getTasksCountForDate(date);
+				const dateStr = date.toISOString().split("T")[0];
+				const counts = tasksByDate[dateStr] || { high: 0, medium: 0, low: 0 };
 				const score = counts.high * 3 + counts.medium * 2 + counts.low * 1;
 				if (score > max) max = score;
 			}
@@ -195,10 +206,10 @@ export default function Calendar({ onDateClick, projectId }) {
 					<span className="font-semibold capitalize">{monthLabel}</span>
 				</div>
 				<div className="flex items-center gap-1">
-					<button aria-label="Prev" className="rounded-md border border-border p-1 text-foreground hover:bg-muted/80" onClick={() => setCurrent(prev => addMonths(prev, -1))}>
+					<button aria-label={t("dashboard.calendar.prevMonth")} className="rounded-md border border-border p-1 text-foreground hover:bg-muted/80" onClick={() => setCurrent(prev => addMonths(prev, -1))}>
 						<FaChevronLeft className="h-3.5 w-3.5" />
 					</button>
-					<button aria-label="Next" className="rounded-md border border-border p-1 text-foreground hover:bg-muted/80" onClick={() => setCurrent(prev => addMonths(prev, 1))}>
+					<button aria-label={t("dashboard.calendar.nextMonth")} className="rounded-md border border-border p-1 text-foreground hover:bg-muted/80" onClick={() => setCurrent(prev => addMonths(prev, 1))}>
 						<FaChevronRight className="h-3.5 w-3.5" />
 					</button>
 				</div>
@@ -223,16 +234,16 @@ export default function Calendar({ onDateClick, projectId }) {
 						<div
 							key={idx}
 							className={`min-h-[60px] p-1.5 text-right text-xs transition-colors ${loading
-									? 'bg-background animate-pulse'
-									: heatmapColor || (isWeekend ? 'bg-muted/50' : 'bg-background')
+								? 'bg-background animate-pulse'
+								: heatmapColor || (isWeekend ? 'bg-muted/50' : 'bg-background')
 								} ${isToday ? 'outline outline-2 outline-blue-500 -outline-offset-1' : ''} ${d ? 'cursor-pointer hover:opacity-80' : ''}`}
 							onClick={() => handleDateClick(d)}
 						>
 							<div className={`text-right ${isToday
-									? 'font-bold text-blue-500 dark:text-blue-400'
-									: intensity > 0
-										? (intensity / maxIntensity >= 0.15 ? 'text-white' : 'text-foreground')
-										: ''
+								? 'font-bold text-blue-500 dark:text-blue-400'
+								: intensity > 0
+									? (intensity / maxIntensity >= 0.15 ? 'text-white' : 'text-foreground')
+									: ''
 								}`}>
 								{d ? d.getDate() : ''}
 							</div>

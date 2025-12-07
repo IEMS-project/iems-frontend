@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-    getTaskTypeIcon,
-    getTaskTypeColor,
     getTaskTypeBgColor,
-    translateTaskType,
     getTaskTypeVariant,
     TASK_TYPES
 } from '../../lib/taskTypeUtils';
+import { useTaskType } from '../../hooks/useTaskType';
 import Badge from '../ui/Badge';
 
 /**
@@ -14,6 +12,8 @@ import Badge from '../ui/Badge';
  * Có thể sử dụng để test hoặc tham khảo
  */
 export default function TaskTypeIconDemo() {
+    const { getTaskTypeIcon, getTaskTypeColor, translateTaskType } = useTaskType();
+
     const taskTypes = [
         { type: 'TASK', name: 'Task' },
         { type: 'BUG', name: 'Bug' },

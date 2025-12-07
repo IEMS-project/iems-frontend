@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBuilding, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaProjectDiagram, FaTasks, FaTrophy, FaChartLine, FaClock, FaUsers } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 import Avatar from "../components/ui/Avatar.jsx";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -8,8 +9,11 @@ import { Card } from "../components/ui/Card";
 import StatsCard from "../components/ui/StatsCard";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
+import ImageCropModal from "../components/ui/ImageCropModal";
+import { textColors, borderColors, buttonColors, cn } from "../theme/colors";
 
 export default function Profile() {
+	const { t } = useTranslation();
 	const [isEditing, setIsEditing] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [avatarUploading, setAvatarUploading] = useState(false);
@@ -25,6 +29,8 @@ export default function Profile() {
 		bankAccountNumber: "",
 		bankName: "",
 	});
+	const [cropModalOpen, setCropModalOpen] = useState(false);
+	const [imageSrcForCrop, setImageSrcForCrop] = useState(null);
 
 	// Mock data for statistics
 	const userStats = {
@@ -52,7 +58,7 @@ export default function Profile() {
 					bankName: data?.bankName || "",
 				});
 			} catch (e) {
-				setError(e?.message || "Tải hồ sơ thất bại");
+				setError(e?.message || t('profile.messages.loadFailed'));
 			} finally {
 				setLoading(false);
 			}
@@ -80,10 +86,10 @@ export default function Profile() {
 			};
 			const updated = await userService.updateMyProfile(payload);
 			setProfile(updated);
-			setSuccess("Cập nhật hồ sơ thành công");
+			setSuccess(t('profile.messages.updateSuccess'));
 			setIsEditing(false);
 		} catch (e) {
-			setError(e?.message || "Cập nhật thất bại");
+			setError(e?.message || t('profile.messages.updateFailed'));
 		} finally {
 			setLoading(false);
 		}
@@ -97,18 +103,38 @@ export default function Profile() {
 	const handlePickAvatar = async (e) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
+
+		// Read file and show crop modal
+		const reader = new FileReader();
+		reader.onload = () => {
+			setImageSrcForCrop(reader.result);
+			setCropModalOpen(true);
+		};
+		reader.readAsDataURL(file);
+
+		// Reset input
+		e.target.value = '';
+	};
+
+	const handleCropComplete = async (croppedImageBlob) => {
 		try {
 			setAvatarUploading(true);
 			setError("");
 			setSuccess("");
-			await userService.uploadAvatar(file);
+			setCropModalOpen(false);
+
+			// Create File from Blob
+			const croppedFile = new File([croppedImageBlob], 'avatar.jpg', { type: 'image/jpeg' });
+
+			await userService.uploadAvatar(croppedFile);
 			const fresh = await userService.getMyProfile();
 			setProfile(fresh);
-			setSuccess("Cập nhật ảnh đại diện thành công");
+			setSuccess(t('profile.messages.avatarUploadSuccess'));
 		} catch (e) {
-			setError(e?.message || "Tải ảnh thất bại");
+			setError(e?.message || t('profile.messages.avatarUploadFailed'));
 		} finally {
 			setAvatarUploading(false);
+			setImageSrcForCrop(null);
 		}
 	};
 
@@ -142,9 +168,9 @@ export default function Profile() {
 	return (
 		<div className="space-y-6">
 			{/* Statistics Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+			{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
-					title="Dự án hoàn thành"
+					title={t('profile.stats.projectsCompleted')}
 					value={userStats.projectsCompleted}
 					icon={<FaProjectDiagram className="h-5 w-5" />}
 					trend="+12%"
@@ -152,7 +178,7 @@ export default function Profile() {
 					accent="indigo"
 				/>
 				<StatsCard
-					title="Nhiệm vụ hoàn thành"
+					title={t('profile.stats.tasksCompleted')}
 					value={userStats.tasksCompleted}
 					icon={<FaTasks className="h-5 w-5" />}
 					trend="+8%"
@@ -160,7 +186,7 @@ export default function Profile() {
 					accent="green"
 				/>
 				<StatsCard
-					title="Phòng ban tham gia"
+					title={t('profile.stats.departmentsJoined')}
 					value={userStats.departmentsJoined}
 					icon={<FaBuilding className="h-5 w-5" />}
 					trend="+1"
@@ -168,14 +194,14 @@ export default function Profile() {
 					accent="orange"
 				/>
 				<StatsCard
-					title="Giờ làm việc"
+					title={t('profile.stats.hoursWorked')}
 					value={userStats.hoursWorked}
 					icon={<FaClock className="h-5 w-5" />}
 					trend="+15%"
 					trendUp={true}
 					accent="purple"
 				/>
-			</div>
+			</div> */}
 
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 				{/* Thông tin cơ bản - Chiếm 4/12 cột */}
@@ -189,56 +215,59 @@ export default function Profile() {
 									size={24}
 									className="mx-auto"
 								/>
-								<label className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors cursor-pointer">
+								<label className={cn(
+									"absolute bottom-0 right-0 h-10 w-10 rounded-full flex items-center justify-center transition-colors cursor-pointer",
+									buttonColors.primary
+								)}>
 									<FaEdit className="h-5 w-5" />
 									<input type="file" accept="image/*" className="hidden" onChange={handlePickAvatar} disabled={avatarUploading} />
 								</label>
 							</div>
-							<h2 className="mt-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+							<h2 className={cn("mt-6 text-2xl font-semibold", textColors.primary)}>
 								{fullName}
 							</h2>
-							<p className="text-lg text-gray-500 dark:text-gray-400 mt-2">
+							<p className={cn("text-lg mt-2", textColors.secondary)}>
 								{profile?.role || ""}
 							</p>
-							<p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-								{profile?.startDate ? `Tham gia từ ${new Date(profile.startDate).toLocaleDateString()}` : null}
+							<p className={cn("text-sm mt-2", textColors.muted)}>
+								{profile?.startDate ? `${t('profile.fields.joinedFrom')} ${new Date(profile.startDate).toLocaleDateString()}` : null}
 							</p>
 						</div>
 
 						<div className="mt-8 space-y-4">
 							<div className="flex items-center gap-4 text-base">
-								<FaEnvelope className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.email}</span>
+								<FaEnvelope className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.email}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaPhone className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.phone}</span>
+								<FaPhone className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.phone}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaMapMarkerAlt className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{formData.address}</span>
+								<FaMapMarkerAlt className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{formData.address}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaCalendarAlt className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
+								<FaCalendarAlt className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaUsers className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{profile?.gender === 'MALE' ? 'Nam' : profile?.gender === 'FEMALE' ? 'Nữ' : (profile?.gender || '')}</span>
+								<FaUsers className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
 							</div>
 							<div className="flex items-center gap-4 text-base">
-								<FaBuilding className="h-5 w-5 text-gray-400" />
-								<span className="text-gray-600 dark:text-gray-300">{
-									profile?.contractType === 'FULLTIME' ? 'Toàn thời gian' :
-										profile?.contractType === 'PARTTIME' ? 'Bán thời gian' :
-											profile?.contractType === 'CONTRACT' ? 'Hợp đồng' : (profile?.contractType || '')
+								<FaBuilding className={cn("h-5 w-5", textColors.muted)} />
+								<span className={textColors.secondary}>{
+									profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
+										profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
+											profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
 								}</span>
 							</div>
 						</div>
 
-						<div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-							<div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-								<span>Cập nhật lần cuối</span>
+						<div className={cn("mt-8 pt-6 border-t", borderColors.default)}>
+							<div className={cn("flex items-center justify-between text-sm", textColors.muted)}>
+								<span>{t('profile.fields.lastUpdated')}</span>
 								<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
 							</div>
 						</div>
@@ -249,8 +278,8 @@ export default function Profile() {
 				<div className="lg:col-span-8">
 					<Card className="p-8 h-full">
 						<div className="flex items-center justify-between mb-8">
-							<h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-								Thông tin chi tiết
+							<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
+								{t('profile.detailInfo')}
 							</h3>
 							{!isEditing ? (
 								<Button
@@ -258,16 +287,16 @@ export default function Profile() {
 									className="flex items-center gap-2 text-base px-6 py-3"
 								>
 									<FaEdit className="h-5 w-5" />
-									Chỉnh sửa
+									{t('profile.actions.edit')}
 								</Button>
 							) : (
 								<div className="flex gap-3">
 									<Button
 										onClick={handleSave}
-										className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-base px-6 py-3"
+										className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}
 									>
 										<FaSave className="h-5 w-5" />
-										Lưu
+										{t('profile.actions.save')}
 									</Button>
 									<Button
 										onClick={handleCancel}
@@ -275,127 +304,121 @@ export default function Profile() {
 										className="flex items-center gap-2 text-base px-6 py-3"
 									>
 										<FaTimes className="h-5 w-5" />
-										Hủy
+										{t('profile.actions.cancel')}
 									</Button>
 								</div>
 							)}
-						</div>
-
-						<div className="space-y-8">
+						</div>						<div className="space-y-8">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Họ và tên</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{formData.firstName} {formData.lastName}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.fullName')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{formData.firstName} {formData.lastName}</p>
 								</div>
 
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Email</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.email')}</label>
 									{isEditing ? (
 										<Input
 											type="email"
 											value={formData.email}
 											onChange={(e) => handleInputChange('email', e.target.value)}
-											placeholder="Nhập email"
+											placeholder={t('profile.placeholders.enterEmail')}
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.email}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
 									)}
-								</div>
-
-								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Số điện thoại
+								</div>							<div>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
+										{t('profile.fields.phone')}
 									</label>
 									{isEditing ? (
 										<Input
 											value={formData.phone}
 											onChange={(e) => handleInputChange('phone', e.target.value)}
-											placeholder="Nhập số điện thoại"
+											placeholder={t('profile.placeholders.enterPhone')}
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.phone}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.phone}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">CMND/CCCD</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.personalID || ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.personalID')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.personalID || ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Số tài khoản</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankAccountNumber')}</label>
 									{isEditing ? (
 										<Input
 											value={formData.bankAccountNumber}
 											onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
-											placeholder="Nhập số tài khoản"
+											placeholder={t('profile.placeholders.enterBankAccount')}
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankAccountNumber}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.bankAccountNumber}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngân hàng</label>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankName')}</label>
 									{isEditing ? (
 										<Input
 											value={formData.bankName}
 											onChange={(e) => handleInputChange('bankName', e.target.value)}
-											placeholder="Nhập ngân hàng"
+											placeholder={t('profile.placeholders.enterBankName')}
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.bankName}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.bankName}</p>
 									)}
-								</div>
-
-								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">
-										Địa chỉ
+								</div>							<div>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
+										{t('profile.fields.address')}
 									</label>
 									{isEditing ? (
 										<Input
 											value={formData.address}
 											onChange={(e) => handleInputChange('address', e.target.value)}
-											placeholder="Nhập địa chỉ"
+											placeholder={t('profile.placeholders.enterAddress')}
 											className="text-base py-3"
 										/>
 									) : (
-										<p className="text-lg text-gray-900 dark:text-gray-100">{formData.address}</p>
+										<p className={cn("text-lg", textColors.primary)}>{formData.address}</p>
 									)}
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngày sinh</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.dob')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Giới tính</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.gender === 'MALE' ? 'Nam' : profile?.gender === 'FEMALE' ? 'Nữ' : (profile?.gender || '')}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.gender')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Loại hợp đồng</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{
-										profile?.contractType === 'FULLTIME' ? 'Toàn thời gian' :
-											profile?.contractType === 'PARTTIME' ? 'Bán thời gian' :
-												profile?.contractType === 'CONTRACT' ? 'Hợp đồng' : (profile?.contractType || '')
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.contractType')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{
+										profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
+											profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
+												profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
 									}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Ngày bắt đầu</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.startDate')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
 								</div>
 
 								<div>
-									<label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Chức vụ</label>
-									<p className="text-lg text-gray-900 dark:text-gray-100">{profile?.role || ''}</p>
+									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.role')}</label>
+									<p className={cn("text-lg", textColors.primary)}>{profile?.role || ''}</p>
 								</div>
 							</div>
 
@@ -406,14 +429,24 @@ export default function Profile() {
 			</div>
 
 			{(loading || avatarUploading) && (
-				<p className="text-sm text-gray-500">Đang xử lý...</p>
+				<p className={cn("text-sm", textColors.muted)}>{t('profile.messages.loading')}</p>
 			)}
 			{error && (
-				<p className="text-sm text-red-600">{error}</p>
+				<p className="text-sm text-red-600 dark:text-red-400">{error}</p>
 			)}
 			{success && (
-				<p className="text-sm text-green-600">{success}</p>
+				<p className="text-sm text-green-600 dark:text-green-400">{success}</p>
 			)}
+
+			<ImageCropModal
+				isOpen={cropModalOpen}
+				onClose={() => {
+					setCropModalOpen(false);
+					setImageSrcForCrop(null);
+				}}
+				imageSrc={imageSrcForCrop}
+				onCropComplete={handleCropComplete}
+			/>
 		</div>
 	);
 }

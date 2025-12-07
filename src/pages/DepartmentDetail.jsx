@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
@@ -14,9 +15,24 @@ import Skeleton from "../components/ui/Skeleton";
 import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import {
+    User,
+    Mail,
+    Phone,
+    Calendar,
+    IdCard,
+    MapPin,
+    Building2,
+    CreditCard,
+    Shield,
+    FileText,
+} from "lucide-react";
 
+
+import { textColors, statusColors, bgColors, borderColors, inputColors } from "../theme/colors";
 
 export default function DepartmentDetail() {
+    const { t } = useTranslation();
     const { departmentId } = useParams();
     const navigate = useNavigate();
     const [department, setDepartment] = useState(null);
@@ -516,7 +532,7 @@ export default function DepartmentDetail() {
                     <div className="text-center">
                         <p className="text-red-600">{error}</p>
                         <Button onClick={() => navigate("/departments")} className="mt-4">
-                            Quay lại danh sách
+                            {t("ui.common.back")}
                         </Button>
                     </div>
                 </div>
@@ -543,8 +559,8 @@ export default function DepartmentDetail() {
                                     </svg>
                                 </div>
                                 <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Tổng thành viên</p>
-                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.totalUsers || 0}</p>
+                                    <p className={`text-sm font-medium ${textColors.secondary}`}>{t("departments.totalMembers")}</p>
+                                    <p className={`text-2xl font-semibold ${textColors.primary}`}>{department.totalUsers || 0}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -553,14 +569,14 @@ export default function DepartmentDetail() {
                     <Card>
                         <CardContent className="p-6">
                             <div className="flex items-center">
-                                <div className="p-3 bg-green-100 rounded-lg">
-                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className={`p-3 ${statusColors.successBg} rounded-lg`}>
+                                    <svg className={`w-6 h-6 ${statusColors.successText}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Đang hoạt động</p>
-                                    <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.activeUsers || 0}</p>
+                                    <p className={`text-sm font-medium ${textColors.secondary}`}>{t("departments.activeMembers")}</p>
+                                    <p className={`text-2xl font-semibold ${textColors.primary}`}>{department.activeUsers || 0}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -570,19 +586,19 @@ export default function DepartmentDetail() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <div className="p-3 bg-blue-100 rounded-lg">
-                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className={`p-3 ${statusColors.infoBg} rounded-lg`}>
+                                        <svg className={`w-6 h-6 ${statusColors.infoText}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
                                     </div>
                                     <div className="ml-4">
-                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-50">Quản lý</p>
-                                        <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">{department.managerName || 'Chưa gán'}</p>
+                                        <p className={`text-sm font-medium ${textColors.secondary}`}>{t("departments.manager")}</p>
+                                        <p className={`text-2xl font-semibold ${textColors.primary}`}>{department.managerName || t("departments.notAssigned")}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <select
-                                        className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-700"
+                                        className={`h-10 rounded-md px-3 text-sm ${inputColors.base} ${inputColors.focus}`}
                                         value={department.managerId || ''}
                                         onChange={async (e) => {
                                             try {
@@ -594,7 +610,7 @@ export default function DepartmentDetail() {
                                             }
                                         }}
                                     >
-                                        <option value="">Chưa gán</option>
+                                        <option value="">{t("departments.notAssigned")}</option>
                                         {(allBasicUsers || []).map(u => (
                                             <option key={u.id} value={u.id}>
                                                 {u.fullName}
@@ -614,21 +630,21 @@ export default function DepartmentDetail() {
                             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            Danh sách thành viên
+                            {t("departments.memberList")}
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             <Input
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Tìm thành viên..."
+                                placeholder={t("departments.searchMember")}
                                 className="h-10 rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                             <Button onClick={() => setShowAddExistingModal(true)} className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3M8 9l3 3-3 3M5 12h6" />
                                 </svg>
-                                Thêm thành viên
+                                {t("departments.addMember")}
                             </Button>
                         </div>
                     </CardHeader>
@@ -636,30 +652,30 @@ export default function DepartmentDetail() {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Tên</th>
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Vai trò</th>
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Loại hợp đồng</th>
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Ngày sinh</th>
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Địa chỉ</th>
-                                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">SĐT</th>
-                                        <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Hành động</th>
+                                    <tr className={`border-b ${borderColors.medium}`}>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.name")}</th>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.role")}</th>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.contractType")}</th>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.dob")}</th>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.address")}</th>
+                                        <th className={`text-left py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.phone")}</th>
+                                        <th className={`text-center py-3 px-4 font-medium ${textColors.primary}`}>{t("departments.columns.actions")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {paginatedMembers.map((member) => (
-                                        <tr key={member.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                        <tr key={member.id} className={`border-b ${borderColors.light} ${bgColors.hover}`}>
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar user={member} size="sm" />
                                                     <div>
-                                                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                                                        <div className={`font-medium ${textColors.primary}`}>
                                                             {member.firstName && member.lastName
                                                                 ? `${member.firstName} ${member.lastName}`
                                                                 : `User ID: ${member.userId}`}
                                                         </div>
                                                         {member.email && (
-                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                            <div className={`text-sm ${textColors.muted}`}>
                                                                 {member.email}
                                                             </div>
                                                         )}
@@ -667,27 +683,27 @@ export default function DepartmentDetail() {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-gray-900 dark:text-gray-100">
+                                                <span className={textColors.primary}>
                                                     {member.role || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-gray-900 dark:text-gray-100">
+                                                <span className={textColors.primary}>
                                                     {member.contractType || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-gray-900 dark:text-gray-100">
+                                                <span className={textColors.primary}>
                                                     {member.dob ? new Date(member.dob).toLocaleDateString('vi-VN') : "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-gray-900 dark:text-gray-100">
+                                                <span className={textColors.primary}>
                                                     {member.address || "N/A"}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-4">
-                                                <span className="text-gray-900 dark:text-gray-100">
+                                                <span className={textColors.primary}>
                                                     {member.phone || "N/A"}
                                                 </span>
                                             </td>
@@ -695,8 +711,8 @@ export default function DepartmentDetail() {
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
                                                         onClick={() => handleViewMember(member)}
-                                                        className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                                        title="Xem chi tiết"
+                                                        className={`p-2 ${statusColors.infoText} hover:${statusColors.infoBg} rounded-lg transition-colors`}
+                                                        title={t("departments.viewDetails")}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -705,8 +721,8 @@ export default function DepartmentDetail() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleEditMember(member)}
-                                                        className="p-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                                        title="Cập nhật"
+                                                        className={`p-2 ${statusColors.successText} hover:${statusColors.successBg} rounded-lg transition-colors`}
+                                                        title={t("departments.actions.edit")}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -714,8 +730,8 @@ export default function DepartmentDetail() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteMember(member)}
-                                                        className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                        title="Xóa"
+                                                        className={`p-2 ${statusColors.dangerText} hover:${statusColors.dangerBg} rounded-lg transition-colors`}
+                                                        title={t("departments.actions.delete")}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -727,10 +743,10 @@ export default function DepartmentDetail() {
                                     ))}
                                     {paginatedMembers.length === 0 && (
                                         <tr>
-                                            <td colSpan="7" className="py-8 px-4 text-center text-gray-500 dark:text-gray-400">
+                                            <td colSpan="7" className={`py-8 px-4 text-center ${textColors.muted}`}>
                                                 {department.users && department.users.length === 0
-                                                    ? "Phòng ban này chưa có thành viên nào"
-                                                    : "Không có thành viên phù hợp với từ khóa tìm kiếm"}
+                                                    ? t("departments.noMembers")
+                                                    : t("departments.noMatchingMembers")}
                                             </td>
                                         </tr>
                                     )}
@@ -755,11 +771,11 @@ export default function DepartmentDetail() {
             <Modal
                 open={showAddModal}
                 onClose={() => setShowAddModal(false)}
-                title="Thêm thành viên mới"
+                title={t("departments.addNewMember")}
                 footer={
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => setShowAddModal(false)}>Hủy</Button>
-                        <Button onClick={handleSubmitAddMember}>Thêm thành viên</Button>
+                        <Button variant="secondary" onClick={() => setShowAddModal(false)}>{t("departments.actions.cancel")}</Button>
+                        <Button onClick={handleSubmitAddMember}>{t("departments.addMember")}</Button>
                     </div>
                 }
             >
@@ -820,11 +836,11 @@ export default function DepartmentDetail() {
             <Modal
                 open={showEditModal}
                 onClose={() => setShowEditModal(false)}
-                title="Chỉnh sửa thành viên"
+                title={t("departments.editMember")}
                 footer={
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>Hủy</Button>
-                        <Button onClick={handleSubmitEditMember}>Cập nhật</Button>
+                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>{t("departments.actions.cancel")}</Button>
+                        <Button onClick={handleSubmitEditMember}>{t("departments.actions.update")}</Button>
                     </div>
                 }
             >
@@ -835,14 +851,14 @@ export default function DepartmentDetail() {
             <Modal
                 open={showViewModal}
                 onClose={() => setShowViewModal(false)}
-                title="Chi tiết thành viên"
+                title={t("departments.memberDetails")}
                 footer={
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => setShowViewModal(false)}>Đóng</Button>
+                        <Button variant="secondary" onClick={() => setShowViewModal(false)}>{t("departments.actions.close")}</Button>
                         <Button onClick={() => {
                             setShowViewModal(false);
                             handleEditMember(viewingMember);
-                        }}>Chỉnh sửa</Button>
+                        }}>{t("departments.actions.edit")}</Button>
                     </div>
                 }
             >
@@ -852,14 +868,14 @@ export default function DepartmentDetail() {
                         <div className="flex items-center gap-4">
                             <Avatar user={viewingMember} size="2xl" />
                             <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                                <h3 className={`text-xl font-semibold ${textColors.primary}`}>
                                     {viewingMember.firstName && viewingMember.lastName
                                         ? `${viewingMember.firstName} ${viewingMember.lastName}`
                                         : `User ID: ${viewingMember.userId}`}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-400">{viewingMember.email || "N/A"}</p>
+                                <p className={textColors.secondary}>{viewingMember.email || "N/A"}</p>
                                 {viewingMember.phone && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{viewingMember.phone}</p>
+                                    <p className={`text-sm ${textColors.muted}`}>{viewingMember.phone}</p>
                                 )}
                             </div>
                         </div>
@@ -867,60 +883,99 @@ export default function DepartmentDetail() {
                         {/* Personal Information */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.firstName || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.firstName")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.firstName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.lastName || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.lastName")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.lastName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.phone || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.phone")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.phone || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày sinh</label>
-                                <p className="text-gray-900 dark:text-gray-100">
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.dob")}</span>
+                                </label>
+                                <p className={textColors.primary}>
                                     {viewingMember.dob ? new Date(viewingMember.dob).toLocaleDateString('vi-VN') : "N/A"}
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giới tính</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.gender || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.gender")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.gender || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.email || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.email")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.email || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vai trò</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.role || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Shield className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.role")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.role || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại hợp đồng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.contractType || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.contractType")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.contractType || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên ngân hàng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankName || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.bankName")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.bankName || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số tài khoản ngân hàng</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.bankAccountNumber || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.bankAccount")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.bankAccountNumber || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CCCD</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.personalID || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <IdCard className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.personalId")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.personalID || "N/A"}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày vào làm</label>
-                                <p className="text-gray-900 dark:text-gray-100">
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.startDate")}</span>
+                                </label>
+                                <p className={textColors.primary}>
                                     {viewingMember.startDate ? new Date(viewingMember.startDate).toLocaleDateString('vi-VN') : "N/A"}
                                 </p>
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
-                                <p className="text-gray-900 dark:text-gray-100">{viewingMember.address || "N/A"}</p>
+                                <label className={`flex items-center gap-2 text-sm font-medium ${textColors.secondary} mb-1`}>
+                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                    <span>{t("departments.fields.address")}</span>
+                                </label>
+                                <p className={textColors.primary}>{viewingMember.address || "N/A"}</p>
                             </div>
                         </div>
                     </div>
@@ -935,10 +990,10 @@ export default function DepartmentDetail() {
                     if (!open) setMemberToDelete(null);
                 }}
                 onConfirm={confirmDeleteMember}
-                title="Xác nhận xóa thành viên"
-                description="Bạn có chắc muốn xóa thành viên này khỏi phòng ban?"
-                confirmText="Xóa"
-                cancelText="Hủy"
+                title={t("departments.confirmDeleteMember")}
+                description={t("departments.deleteMemberDescription")}
+                confirmText={t("departments.actions.delete")}
+                cancelText={t("departments.actions.cancel")}
                 variant="destructive"
             />
         </>

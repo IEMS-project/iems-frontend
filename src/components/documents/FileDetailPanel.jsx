@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { X } from "lucide-react";
@@ -22,6 +23,8 @@ function formatDate(dateStr) {
 }
 
 export default function FileDetailPanel({ selectedItem, currentPath, onClose }) {
+  const { t } = useTranslation();
+
   if (!selectedItem) return null;
 
   return (
@@ -47,45 +50,45 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose }) 
         </div>
         <div>
           <h3 className="text-foreground mb-4 text-xs font-semibold tracking-wider uppercase">
-            Thông tin
+            {t('documents.fileDetail.details')}
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-muted-foreground text-sm">Loại</span>
+              <span className="text-muted-foreground text-sm">{t('documents.fileDetail.type')}</span>
               <span className="text-foreground text-sm capitalize">
-                {selectedItem.type === "folder" ? "Thư mục" : selectedItem.type || "Tệp"}
+                {selectedItem.type === "folder" ? t('documents.fileDetail.folder') : selectedItem.type || t('documents.fileDetail.file')}
               </span>
             </div>
             {selectedItem.type === "file" && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground text-sm">Dung lượng</span>
+                <span className="text-muted-foreground text-sm">{t('documents.fileDetail.size')}</span>
                 <span className="text-foreground text-sm">
                   {humanSize(selectedItem.size)}
                 </span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-muted-foreground text-sm">Chủ sở hữu</span>
+              <span className="text-muted-foreground text-sm">{t('documents.fileDetail.owner')}</span>
               <span className="text-foreground text-sm">
-                {selectedItem.ownerName || "Không rõ"}
+                {selectedItem.ownerName || t('documents.fileDetail.unknown')}
               </span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">Vị trí</span>
+              <span className="text-muted-foreground text-sm">{t('documents.fileDetail.location')}</span>
               <span className="text-sm text-foreground break-words">
                 {currentPath.length > 0
-                  ? `Tệp của tôi/${currentPath.map((f) => f.name).join("/")}`
-                  : "Tệp của tôi"}
+                  ? `${t('documents.fileDetail.myFiles')}/${currentPath.map((f) => f.name).join("/")}`
+                  : t('documents.fileDetail.myFiles')}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground text-sm">Sửa đổi</span>
+              <span className="text-muted-foreground text-sm">{t('documents.fileDetail.modified')}</span>
               <span className="text-foreground text-sm">
                 {formatDate(selectedItem.updatedAt || selectedItem.createdAt)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground text-sm">Tạo lúc</span>
+              <span className="text-muted-foreground text-sm">{t('documents.fileDetail.created')}</span>
               <span className="text-foreground text-sm">
                 {formatDate(selectedItem.createdAt)}
               </span>
@@ -94,15 +97,15 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose }) 
         </div>
         <div>
           <h3 className="text-foreground mb-4 text-xs font-semibold tracking-wider uppercase">
-            Cài đặt
+            {t('documents.fileDetail.settings')}
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-foreground text-sm">Chia sẻ tệp</span>
+              <span className="text-foreground text-sm">{t('documents.fileDetail.shareFile')}</span>
               <Switch checked={selectedItem.permission === "PUBLIC"} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-foreground text-sm">Yêu thích</span>
+              <span className="text-foreground text-sm">{t('documents.fileDetail.favorite')}</span>
               <Switch checked={!!selectedItem.favorite} />
             </div>
           </div>
@@ -111,6 +114,9 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose }) 
     </div>
   );
 }
+
+
+
 
 
 

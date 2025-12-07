@@ -1,6 +1,7 @@
 import React from "react";
 import Avatar from "../ui/Avatar.jsx";
 import { Search, Users, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ChatHeader({
   selectedConversation,
@@ -16,6 +17,7 @@ export default function ChatHeader({
   getConversationDisplayName,
   onToggleSidebar,
 }) {
+  const { t } = useTranslation();
   const conv = selectedConversation;
   const showGroupButton = conv && !isDirect(conv);
   const headerContent = (() => {
@@ -29,7 +31,7 @@ export default function ChatHeader({
           <div className="min-w-0">
             <div className="font-semibold truncate text-foreground">{dn}</div>
             <div className="text-xs text-muted-foreground truncate">
-              {dir ? 'Đang hoạt động' : `${(conv?.members || []).length} thành viên`}
+              {dir ? t('messages.header.active') : t('messages.header.members', { count: (conv?.members || []).length })}
             </div>
           </div>
         </>
@@ -43,7 +45,7 @@ export default function ChatHeader({
         </>
       );
     }
-    return <div className="font-semibold truncate text-muted-foreground">Chọn cuộc trò chuyện</div>;
+    return <div className="font-semibold truncate text-muted-foreground">{t('messages.emptyChat.title')}</div>;
   })();
 
   return (
@@ -56,7 +58,7 @@ export default function ChatHeader({
           <button
             onClick={onShowMessageSearch}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-            title="Tìm kiếm tin nhắn"
+            title={t('messages.header.searchMessages')}
           >
             <Search className="w-5 h-5" />
           </button>
@@ -66,7 +68,7 @@ export default function ChatHeader({
           <button
             onClick={onShowGroupMembers}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-            title="Quản lý thành viên"
+            title={t('messages.header.manageMembers')}
           >
             <Users className="w-5 h-5" />
           </button>
@@ -75,7 +77,7 @@ export default function ChatHeader({
           <button
             onClick={onToggleSidebar}
             className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-            title="Thông tin cuộc trò chuyện"
+            title={t('messages.header.conversationInfo')}
           >
             <Info className="w-5 h-5" />
           </button>
