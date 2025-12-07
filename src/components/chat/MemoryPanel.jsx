@@ -4,6 +4,7 @@ import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
 import { toast } from 'sonner';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { borderColors, bgColors, textColors, buttonColors } from '../../theme/colors';
 
 const MemoryPanel = ({ className = "" }) => {
   const [memory, setMemory] = useState(null);
@@ -68,10 +69,10 @@ const MemoryPanel = ({ className = "" }) => {
 
   if (loading) {
     return (
-      <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${className}`}>
+      <div className={`p-4 border border-border rounded-lg ${className}`}>
         <div className="flex items-center gap-2 mb-3">
           <FaBrain className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Memory AI</h3>
+          <h3 className="text-lg font-semibold text-foreground">Memory AI</h3>
         </div>
         <div className="space-y-4">
           <Skeleton className="h-16 w-full rounded-lg" />
@@ -86,15 +87,15 @@ const MemoryPanel = ({ className = "" }) => {
   }
 
   return (
-    <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${className}`}>
+    <div className={`p-4 border border-border rounded-lg ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <FaBrain className="w-5 h-5 text-purple-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Memory AI</h3>
+          <h3 className="text-lg font-semibold text-foreground">Memory AI</h3>
         </div>
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
           title={showDetails ? 'Ẩn chi tiết' : 'Hiện chi tiết'}
         >
           {showDetails ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
@@ -116,15 +117,15 @@ const MemoryPanel = ({ className = "" }) => {
         <div className="space-y-4">
           {/* Memory Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Tổng số items</div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="bg-muted p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground">Tổng số items</div>
+              <div className="text-lg font-semibold text-foreground">
                 {memory.totalItems || 0}
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Kích thước</div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="bg-muted p-3 rounded-lg">
+              <div className="text-sm text-muted-foreground">Kích thước</div>
+              <div className="text-lg font-semibold text-foreground">
                 {formatMemorySize(memory.size)}
               </div>
             </div>
@@ -133,17 +134,17 @@ const MemoryPanel = ({ className = "" }) => {
           {/* Memory Details */}
           {showDetails && (
             <div className="space-y-3">
-              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Cập nhật lần cuối</div>
-                <div className="text-sm text-gray-900 dark:text-white">
+              <div className="bg-muted p-3 rounded-lg">
+                <div className="text-sm text-muted-foreground mb-1">Cập nhật lần cuối</div>
+                <div className="text-sm text-foreground">
                   {formatDate(memory.lastUpdated)}
                 </div>
               </div>
 
               {memory.conversations && (
-                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                  <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Cuộc trò chuyện</div>
-                  <div className="text-sm text-gray-900 dark:text-white">
+                <div className="bg-muted p-3 rounded-lg">
+                  <div className="text-sm text-muted-foreground mb-2">Cuộc trò chuyện</div>
+                  <div className="text-sm text-foreground">
                     {memory.conversations} cuộc trò chuyện được lưu
                   </div>
                 </div>

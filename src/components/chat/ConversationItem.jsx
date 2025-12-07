@@ -2,6 +2,7 @@ import React from 'react';
 import { FaTrash, FaEdit, FaClock, FaComments } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { bgColors, textColors } from '../../theme/colors';
 
 const ConversationItem = ({
   conversation,
@@ -31,15 +32,15 @@ const ConversationItem = ({
       className={`
         group relative px-3 py-2 cursor-pointer transition-all duration-200
         ${isActive
-          ? 'bg-gray-100 dark:bg-gray-700'
-          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+          ? 'bg-muted'
+          : 'hover:bg-muted/50'
         }
       `}
       onClick={() => onSelect(conversation.id)}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm text-gray-700 dark:text-gray-300 truncate">
+          <h4 className="text-sm text-foreground truncate">
             {truncateText(conversation.name || conversation.title || 'Cuộc trò chuyện mới', 40)}
           </h4>
         </div>
@@ -51,7 +52,7 @@ const ConversationItem = ({
               e.stopPropagation();
               onEdit(conversation);
             }}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
             title="Chỉnh sửa"
           >
             <FaEdit className="w-3 h-3" />
@@ -61,7 +62,7 @@ const ConversationItem = ({
               e.stopPropagation();
               onDelete(conversation.id);
             }}
-            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
             title="Xóa"
           >
             <FaTrash className="w-3 h-3" />

@@ -5,7 +5,7 @@ import chatbotService from '../../services/chatbotService';
 import Skeleton from '../ui/Skeleton';
 import { toast } from 'sonner';
 import ConfirmDialog from '../ui/ConfirmDialog';
-import { navColors, inputColors, buttonColors, textColors, borderColors, cn } from '../../theme/colors';
+import { navColors, buttonColors, textColors, borderColors, statusColors, cn } from '../../theme/colors';
 
 const ConversationList = ({
   activeConversationId,
@@ -156,18 +156,13 @@ const ConversationList = ({
       <div className="px-4 py-2">
         {showSidebar ? (
           <div className="relative">
-            <FaSearch className={cn('absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4', textColors.placeholder)} />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Tìm kiếm đoạn chat"
               value={searchTerm}
               onChange={handleSearchChange}
-              className={cn(
-                'w-full pl-10 pr-4 py-2 rounded text-sm transition-colors',
-                inputColors.base,
-                inputColors.focus,
-                textColors.placeholder
-              )}
+              className="w-full pl-10 pr-4 py-2 rounded text-sm transition-colors bg-background border border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400 focus:outline-none"
             />
           </div>
         ) : (
@@ -197,7 +192,7 @@ const ConversationList = ({
           <div className="px-4">
             {error ? (
               <div className="text-center py-8">
-                <p className={cn('mb-2 text-sm text-red-600 dark:text-red-400')}>{error}</p>
+                <p className={cn('mb-2 text-sm', statusColors.dangerText)}>{error}</p>
                 <button
                   onClick={loadConversations}
                   className={cn('px-4 py-2 rounded text-sm transition-colors', buttonColors.primary)}
