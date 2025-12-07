@@ -39,7 +39,10 @@ export default function MessageItem({
     stompClient,
     conversationId,
     onMessageUpdate,
-    onJumpToMessage
+    onJumpToMessage,
+    showAvatar = true,
+    showName = true,
+    showTime = true
 }) {
     const { t } = useTranslation();
     const [showMenu, setShowMenu] = useState(false);
@@ -401,14 +404,17 @@ export default function MessageItem({
 
             {/* Regular message render */}
             {!isSystemLog && !shouldHide && (
-                <div className={`group relative ${elevated ? 'z-50' : ''} flex ${isMe ? 'justify-end' : 'justify-start'} mb-2 px-4`}>
-                    <div className={`flex items-end max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
+                <div className={`group relative ${elevated ? 'z-50' : ''} flex ${isMe ? 'justify-end' : 'justify-start'} ${showAvatar ? 'mb-2' : 'mb-1'} px-4`}>
+                    <div className={`flex  items-start max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
                         {/* Avatar for others */}
-                        {!isMe && (
+                        {!isMe && showAvatar && (
                             <Avatar src={senderImg} name={senderName} size={8} className="mb-1" />
                         )}
+                        {!isMe && !showAvatar && (
+                            <div className="w-8 mb-1" />
+                        )}
 
-                        <div className={`relative mt-2 ${isMe ? 'mr-2' : 'ml-2'}`}>
+                        <div className={`relative ${isMe ? 'mr-2' : 'ml-2'}`}>
                             {/* Reply indicator */}
                             {message.replyToMessageId && !isRecalled && (
                                 <div className={`text-xs mb-1 ${isMe ? 'text-right' : 'text-left'}`}>
@@ -456,7 +462,7 @@ export default function MessageItem({
                                     ) : (
                                         <>
                                             {/* Sender name inside message bubble for others */}
-                                            {!isMe && (
+                                            {!isMe && showName && (
                                                 <div className="text-xs font-medium mb-1 text-foreground">
                                                     {senderName}
                                                 </div>
@@ -524,7 +530,7 @@ export default function MessageItem({
                                                 <span className="text-xs opacity-70 ml-2">{t('messages.messageItem.edited')}</span>
                                             )}
                                             {/* Time inside message bubble (hidden for my IMAGE/VIDEO) */}
-                                            {!(isMe && ['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase())) && (
+                                            {showTime && !(isMe && ['IMAGE', 'VIDEO'].includes((message.type || '').toUpperCase())) && (
                                                 <div className={`text-xs mt-1 ${isRecalled
                                                     ? 'text-muted-foreground'
                                                     : isMe

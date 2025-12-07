@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Languages } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,11 +15,25 @@ export default function LanguageSwitcher() {
         i18n.changeLanguage(lng);
     };
 
+    // Get current language flag
+    const getCurrentFlag = () => {
+        const flagSrc = i18n.language === 'vi' ? '/vietnam.png' : '/england.png';
+        const altText = i18n.language === 'vi' ? 'Vietnam Flag' : 'England Flag';
+
+        return (
+            <img
+                src={flagSrc}
+                alt={altText}
+                className="h-5 w-auto object-contain rounded-sm"
+            />
+        );
+    };
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Languages className="h-4 w-4" />
+                    {getCurrentFlag()}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
