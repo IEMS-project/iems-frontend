@@ -19,10 +19,10 @@ export default function LanguageSwitcher() {
     const getCurrentFlag = () => {
         const flagSrc = i18n.language === 'vi' ? '/vietnam.png' : '/england.png';
         const altText = i18n.language === 'vi' ? 'Vietnam Flag' : 'England Flag';
-        
+
         return (
-            <img 
-                src={flagSrc} 
+            <img
+                src={flagSrc}
                 alt={altText}
                 className="h-5 w-auto object-contain rounded-sm"
             />
