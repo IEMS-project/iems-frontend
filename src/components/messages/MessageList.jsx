@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import MessageItem from "../messages/MessageItem";
+import MessageTimestamp from "../messages/MessageTimestamp";
 import { FaChevronDown, FaSpinner } from "react-icons/fa";
 
 function generateMessageKey(message, index) {
@@ -28,6 +29,23 @@ export default function MessageList({
   loadOlderById,
   loadNewerById,
 }) {
+  // Helper function to determine if messages should be grouped
+  const shouldGroupMessages = (currentMsg, previousMsg) => {
+    if (!previousMsg || !currentMsg) return false;
+
+    // Don't group system messages
+    if (currentMsg.type === 'SYSTEM_LOG' || previousMsg.type === 'SYSTEM_LOG') return false;
+
+    // Check if same sender
+    if (currentMsg.senderId !== previousMsg.senderId) return false;
+
+    // Check if within 5 minutes (300000 ms)
+    const timeDiff = new Date(currentMsg.sentAt) - new Date(previousMsg.sentAt);
+    if (timeDiff > 300000) return false; // 5 minutes
+
+    return true;
+  };
+
   useEffect(() => {
     const container = messagesContainerRef?.current;
     if (!container) return;
@@ -86,20 +104,46 @@ export default function MessageList({
         </div>
       )}
 
-      {messages.map((m, idx) => (
-        <div key={generateMessageKey(m, idx)} data-message-id={m.id || m._id}>
-          <MessageItem
-            message={m}
-            currentUserId={currentUserId}
-            getUserName={getUserName}
-            getUserImage={getUserImage}
-            onReply={onReply}
-            conversationId={selectedConversationId}
-            onMessageUpdate={onMessageUpdate}
-            onJumpToMessage={(messageId) => onJumpToMessage(selectedConversationId, messageId)}
-          />
-        </div>
-      ))}
+      {messages.map((m, idx) => {
+        const previousMsg = idx > 0 ? messages[idx - 1] : null;
+        const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
+        const shouldGroup = shouldGroupMessages(m, previousMsg);
+        const isLastInGroup = !shouldGroupMessages(nextMsg, m);
+
+        // Show timestamp if:
+        // 1. First message
+        // 2. More than 30 minutes from previous message
+        // 3. Different day from previous message
+        let showTimestamp = false;
+        if (!previousMsg) {
+          showTimestamp = true;
+        } else if (m.sentAt && previousMsg.sentAt) {
+          const timeDiff = new Date(m.sentAt) - new Date(previousMsg.sentAt);
+          const diffDays = new Date(m.sentAt).toDateString() !== new Date(previousMsg.sentAt).toDateString();
+          showTimestamp = timeDiff > 1800000 || diffDays; // 30 minutes or different day
+        }
+
+        return (
+          <React.Fragment key={generateMessageKey(m, idx)}>
+            {showTimestamp && <MessageTimestamp date={m.sentAt} />}
+            <div data-message-id={m.id || m._id}>
+              <MessageItem
+                message={m}
+                currentUserId={currentUserId}
+                getUserName={getUserName}
+                getUserImage={getUserImage}
+                onReply={onReply}
+                conversationId={selectedConversationId}
+                onMessageUpdate={onMessageUpdate}
+                onJumpToMessage={(messageId) => onJumpToMessage(selectedConversationId, messageId)}
+                showAvatar={!shouldGroup}
+                showName={!shouldGroup}
+                showTime={isLastInGroup}
+              />
+            </div>
+          </React.Fragment>
+        );
+      })}
 
       {loadingNewerMessages && (
         <div className="flex justify-center py-4 bg-muted/50">

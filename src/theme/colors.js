@@ -128,12 +128,14 @@ export const inputColors = {
 };
 
 /**
- * Màu cho select dropdown (bao gồm cả option)
+ * Màu cho select và dropdown
  */
 export const selectColors = {
-    base: 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100',
-    focus: 'focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400 focus:outline-none',
-    option: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
+    base: 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100',
+    focus: 'focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400',
+    disabled: 'bg-gray-100 dark:bg-gray-900 text-gray-400 dark:text-gray-600 cursor-not-allowed',
+    option: 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700',
+    optionSelected: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
 };
 
 /**
@@ -167,19 +169,6 @@ export const badgeColors = {
     success: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
     danger: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-};
-
-/**
- * Màu cho stats card accent
- */
-export const statsCardColors = {
-    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300',
-    indigo: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300',
-    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-300',
-    green: 'bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-300',
-    orange: 'bg-orange-100 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300',
-    red: 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-300',
-    gray: 'bg-gray-100 text-gray-600 dark:bg-gray-700/30 dark:text-gray-200',
 };
 
 /**
@@ -231,7 +220,6 @@ export default {
     navColors,
     buttonColors,
     badgeColors,
-    statsCardColors,
     priorityColors,
     taskStatusColors,
     cn,
