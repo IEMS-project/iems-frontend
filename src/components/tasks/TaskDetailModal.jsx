@@ -4,6 +4,7 @@ import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import RichTextEditor from "../ui/RichTextEditor";
+import TaskComments from "./TaskComments";
 import { getTaskTypeVariant } from "../../lib/taskTypeUtils";
 import { useTaskType } from "../../hooks/useTaskType";
 import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle, Paperclip, Download, Hash, Layers, FolderKanban, Flag, User, CalendarDays, CalendarClock, Clock } from 'lucide-react';
@@ -81,8 +82,22 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
         return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
     };
 
-    const getTimeRemaining = (dueDate) => {
+    const getTimeRemaining = (dueDate, status, updatedAt) => {
         if (!dueDate) return null;
+        
+        // Check if task is done
+        const isDone = status && ["Done", "DONE", "COMPLETED", "Completed"].includes(status.toString().trim());
+        
+        if (isDone && updatedAt) {
+            const updated = new Date(updatedAt);
+            const due = new Date(dueDate);
+            // If updated before due date, show as done
+            if (updated <= due) {
+                return t('tasks.detail.fields.completed');
+            }
+            // If updated after due date, still show overdue
+        }
+        
         const today = new Date();
         const due = new Date(dueDate);
         const diffTime = due - today;
@@ -213,21 +228,18 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                             </div>
                         </div>
                     )}
+
+                    {/* Comments Section */}
+                    <div className="mt-6 pt-6 border-t border-border">
+                        <TaskComments taskId={task.id} />
+                    </div>
                 </div>
 
                 {/* Right side - Details */}
                 <div className="lg:col-span-1 space-y-4">
                     <div className="text-sm font-semibold text-foreground mb-3">{t('tasks.detail.fields.details')}</div>
 
-                    {task.id && (
-                        <div>
-                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
-                                <Hash className="w-3.5 h-3.5" />
-                                {t('tasks.detail.fields.taskId')}
-                            </div>
-                            <div className="text-sm text-foreground mt-1">{task.id}</div>
-                        </div>
-                    )}
+                    {/* Hide task.id (UUID) - not user-friendly */}
 
                     {task.type && (
                         <div>
@@ -302,26 +314,38 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
                         </div>
                     )}
 
-                    {task.dueDate && (
-                        <div>
-                            <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
-                                <CalendarClock className="w-3.5 h-3.5" />
-                                {t('tasks.detail.fields.dueDate')}
+                    {task.dueDate && (() => {
+                        // Check if task is done before due date
+                        const isDone = task.status && ["Done", "DONE", "COMPLETED", "Completed"].includes(task.status.toString().trim());
+                        if (isDone && task.updatedAt) {
+                            const updated = new Date(task.updatedAt);
+                            const due = new Date(task.dueDate);
+                            // If done before due date, don't show dueDate
+                            if (updated <= due) {
+                                return null;
+                            }
+                        }
+                        return (
+                            <div>
+                                <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
+                                    <CalendarClock className="w-3.5 h-3.5" />
+                                    {t('tasks.detail.fields.dueDate')}
+                                </div>
+                                <div className="text-sm text-foreground mt-1">
+                                    {formatDueDate(task.dueDate)}
+                                </div>
                             </div>
-                            <div className="text-sm text-foreground mt-1">
-                                {formatDueDate(task.dueDate)}
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
-                    {task.dueDate && getTimeRemaining(task.dueDate) && (
+                    {task.dueDate && getTimeRemaining(task.dueDate, task.status, task.updatedAt) && (
                         <div>
                             <div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5" />
                                 {t('tasks.detail.fields.timeRemaining')}
                             </div>
                             <div className="text-sm text-foreground mt-1">
-                                {getTimeRemaining(task.dueDate)}
+                                {getTimeRemaining(task.dueDate, task.status, task.updatedAt)}
                             </div>
                         </div>
                     )}
