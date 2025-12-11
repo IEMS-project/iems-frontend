@@ -185,6 +185,7 @@
     "viewDetails": "Xem chi tiết",
     "memberDetails": "Chi tiết thành viên",
     "searchMember": "Tìm thành viên...",
+    "noMembersFound": "Không tìm thấy thành viên",
     "noDepartments": "Chưa có phòng ban nào",
     "noMembers": "Phòng ban này chưa có thành viên nào",
     "noMatchingMembers": "Không có thành viên phù hợp với từ khóa tìm kiếm",
@@ -582,21 +583,23 @@
           "deleteTitle": "Xác nhận xóa vai trò"
         }
       }
-    },
-    "tables": {
-      "filter": "Lọc",
-      "columns": "Cột",
-      "previous": "Trước",
-      "next": "Sau",
-      "noResults": "Không có kết quả nào",
-      "loading": "Đang tải...",
-      "searchPlaceholder": "Tìm kiếm..."
-    },
-    "select": {
-      "search": "Tìm kiếm...",
-      "noResults": "Không tìm thấy kết quả",
-      "selectPlaceholder": "Chọn..."
     }
+  },
+  "tables": {
+    "filter": "Lọc",
+    "columns": "Cột",
+    "previous": "Trước",
+    "next": "Sau",
+    "noResults": "Không có kết quả nào",
+    "loading": "Đang tải...",
+    "searchPlaceholder": "Tìm kiếm...",
+    "showing": "Hiển thị {{from}} - {{to}} trong {{total}} kết quả",
+    "page": "Trang {{current}} / {{total}}"
+  },
+  "select": {
+    "search": "Tìm kiếm...",
+    "noResults": "Không tìm thấy kết quả",
+    "selectPlaceholder": "Chọn..."
   },
   "tasks": {
     "title": "Danh sách nhiệm vụ",
@@ -658,6 +661,7 @@
         "startDate": "Bắt đầu",
         "dueDate": "Hạn hoàn thành",
         "timeRemaining": "Thời gian còn lại",
+        "completed": "Đã kết thúc",
         "attachments": "File đính kèm"
       },
       "overdue": "Quá hạn {{days}} ngày {{hours}} giờ {{minutes}} phút"
@@ -1205,5 +1209,37 @@
     "settings": "Cài đặt",
     "notifications": "Thông báo",
     "logout": "Đăng xuất"
+  },
+  "comments": {
+    "title": "Bình luận",
+    "placeholder": "Viết bình luận...",
+    "editPlaceholder": "Chỉnh sửa bình luận...",
+    "replyPlaceholder": "Viết phản hồi...",
+    "send": "Gửi",
+    "sendReply": "Gửi phản hồi",
+    "sending": "Đang gửi...",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "cancel": "Hủy",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "deleting": "Đang xóa...",
+    "reply": "Trả lời",
+    "replyTo": "trả lời",
+    "replyingTo": "Đang trả lời",
+    "showReplies": "Xem {{count}} phản hồi",
+    "hideReplies": "Ẩn {{count}} phản hồi",
+    "edited": "đã chỉnh sửa",
+    "anonymous": "Ẩn danh",
+    "noComments": "Chưa có bình luận nào",
+    "loading": "Đang tải bình luận...",
+    "fetchError": "Không thể tải bình luận",
+    "addError": "Không thể thêm bình luận",
+    "updateError": "Không thể cập nhật bình luận",
+    "deleteError": "Không thể xóa bình luận",
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{count}} phút trước",
+    "hoursAgo": "{{count}} giờ trước",
+    "daysAgo": "{{count}} ngày trước"
   }
 }

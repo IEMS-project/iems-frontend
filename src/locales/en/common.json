@@ -185,6 +185,7 @@
     "viewDetails": "View Details",
     "memberDetails": "Member Details",
     "searchMember": "Search member...",
+    "noMembersFound": "No members found",
     "noDepartments": "No departments yet",
     "noMembers": "This department has no members yet",
     "noMatchingMembers": "No members match the search criteria",
@@ -582,21 +583,23 @@
           "deleteTitle": "Confirm Delete Role"
         }
       }
-    },
-    "tables": {
-      "filter": "Filter",
-      "columns": "Columns",
-      "previous": "Previous",
-      "next": "Next",
-      "noResults": "No results found",
-      "loading": "Loading...",
-      "searchPlaceholder": "Search..."
-    },
-    "select": {
-      "search": "Search...",
-      "noResults": "No results found",
-      "selectPlaceholder": "Select..."
     }
+  },
+  "tables": {
+    "filter": "Filter",
+    "columns": "Columns",
+    "previous": "Previous",
+    "next": "Next",
+    "noResults": "No results found",
+    "loading": "Loading...",
+    "searchPlaceholder": "Search...",
+    "showing": "Showing {{from}} - {{to}} of {{total}} results",
+    "page": "Page {{current}} of {{total}}"
+  },
+  "select": {
+    "search": "Search...",
+    "noResults": "No results found",
+    "selectPlaceholder": "Select..."
   },
   "tasks": {
     "title": "Tasks List",
@@ -658,6 +661,7 @@
         "startDate": "Start Date",
         "dueDate": "Due Date",
         "timeRemaining": "Time Remaining",
+        "completed": "Completed",
         "attachments": "Attachments"
       },
       "overdue": "Overdue by {{days}} days {{hours}} hours {{minutes}} minutes"
@@ -1205,5 +1209,37 @@
     "settings": "Settings",
     "notifications": "Notifications",
     "logout": "Logout"
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment...",
+    "editPlaceholder": "Edit comment...",
+    "replyPlaceholder": "Write a reply...",
+    "send": "Send",
+    "sendReply": "Send Reply",
+    "sending": "Sending...",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "reply": "Reply",
+    "replyTo": "replied to",
+    "replyingTo": "Replying to",
+    "showReplies": "Show {{count}} replies",
+    "hideReplies": "Hide {{count}} replies",
+    "edited": "edited",
+    "anonymous": "Anonymous",
+    "noComments": "No comments yet",
+    "loading": "Loading comments...",
+    "fetchError": "Failed to load comments",
+    "addError": "Failed to add comment",
+    "updateError": "Failed to update comment",
+    "deleteError": "Failed to delete comment",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago"
   }
 }

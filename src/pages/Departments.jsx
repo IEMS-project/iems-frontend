@@ -11,6 +11,7 @@ import { departmentService } from "../services/departmentService";
 import { userService } from "../services/userService";
 import Skeleton from "../components/ui/Skeleton";
 import { textColors, statusColors, bgColors, borderColors } from "../theme/colors";
+import { Users, Building2, Plus, LayoutGrid, List } from "lucide-react";
 
 export default function Teams() {
     const { t } = useTranslation();
@@ -184,9 +185,7 @@ export default function Teams() {
                                 {loading ? (
                                     <Skeleton className="h-6 w-6 bg-blue-200/80" />
                                 ) : (
-                                    <svg className={`w-6 h-6 ${statusColors.infoText}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
+                                    <Users className={`w-6 h-6 ${statusColors.infoText}`} />
                                 )}
                             </div>
                             <div className="ml-4">
@@ -208,9 +207,7 @@ export default function Teams() {
                                 {loading ? (
                                     <Skeleton className="h-6 w-6 bg-purple-200/80" />
                                 ) : (
-                                    <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
+                                    <Building2 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                                 )}
                             </div>
                             <div className="ml-4">
@@ -232,9 +229,7 @@ export default function Teams() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
+                            <Building2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             {t("departments.overview")}
                         </CardTitle>
                         <div className="flex items-center gap-3">
@@ -246,9 +241,7 @@ export default function Teams() {
                                     onClick={() => setViewMode('grid')}
                                     className={`px-2 py-2 ${viewMode === 'grid' ? 'bg-gray-100 dark:bg-slate-900' : ''}`}
                                 >
-                                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
-                                    </svg>
+                                    <LayoutGrid className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                                 </button>
 
                                 <button
@@ -257,9 +250,7 @@ export default function Teams() {
                                     onClick={() => setViewMode('list')}
                                     className={`px-2 py-2 ${viewMode === 'list' ? 'bg-gray-100 dark:bg-slate-900' : ''}`}
                                 >
-                                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                    </svg>
+                                    <List className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                                 </button>
                             </div>
 
@@ -270,9 +261,7 @@ export default function Teams() {
                                 }}
                                 className="flex items-center gap-2"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
+                                <Plus className="w-4 h-4" />
                                 {t("departments.addDepartment")}
                             </Button>
                         </div>

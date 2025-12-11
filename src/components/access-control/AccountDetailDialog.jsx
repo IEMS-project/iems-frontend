@@ -81,7 +81,6 @@ export default function AccountDetailDialog({
                                         <Badge variant={accountEnabledDraft ? "green" : "red"}>
                                             {accountEnabledDraft ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                         </Badge>
-                                        <Badge variant="outline">ID: {account.userId}</Badge>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
