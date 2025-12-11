@@ -228,8 +228,22 @@ export default function Tasks() {
     };
 
     // Helper functions for task card rendering
-    const getTimeRemaining = (dueDate) => {
+    const getTimeRemaining = (dueDate, status, updatedAt) => {
         if (!dueDate) return null;
+        
+        // Check if task is done
+        const isDone = status && ["Done", "DONE", "COMPLETED", "Completed"].includes(status.toString().trim());
+        
+        if (isDone && updatedAt) {
+            const updated = new Date(updatedAt);
+            const due = new Date(dueDate);
+            // If updated before due date, show as done, not overdue
+            if (updated <= due) {
+                return null; // Don't show time remaining for completed on-time tasks
+            }
+            // If updated after due date, still show overdue
+        }
+        
         const today = new Date();
         const due = new Date(dueDate);
         const diffTime = due - today;
@@ -238,7 +252,7 @@ export default function Tasks() {
         const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
 
         if (diffTime < 0) {
-            return t('tasks.timeRemaining.overdue', { days: Math.abs(diffDays), hours: 0, minutes: 0 }).replace(' 0h 0m', 'd');
+            return t('tasks.timeRemaining.overdue', { days: Math.abs(diffDays), hours: 0, minutes: 0 }).replace(' 0h 0m', '');
         } else if (diffDays === 0 && diffHours === 0) {
             return `${diffMinutes}m`;
         } else if (diffDays === 0) {
@@ -287,8 +301,8 @@ export default function Tasks() {
     }, []);
 
     // Jira-style date badge component: calendar icon for normal dates,
-    // warning triangle + red styling only when overdue.
-    const JiraDateBadge = ({ date, overdue }) => {
+    // warning triangle + red styling only when overdue, or check mark for done.
+    const JiraDateBadge = ({ date, overdue, isDone, updatedAt }) => {
         if (!date) return null;
         let formatted = "";
         try {
@@ -298,13 +312,28 @@ export default function Tasks() {
             formatted = date;
         }
 
+        // Check if done before due date
+        let showDone = false;
+        if (isDone && updatedAt) {
+            const updated = new Date(updatedAt);
+            const due = new Date(date);
+            if (updated <= due) {
+                showDone = true;
+            }
+        }
+
         const baseClass = 'inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium select-none';
         const normalClass = cn(baseClass, borderColors.medium, bgColors.primary, textColors.primary);
         const overdueClass = cn(baseClass, statusColors.dangerBorder, statusColors.dangerBg, statusColors.dangerText);
+        const doneClass = cn(baseClass, 'border border-green-300 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700');
 
         return (
-            <span className={overdue ? overdueClass : normalClass}>
-                {overdue ? (
+            <span className={showDone ? doneClass : (overdue ? overdueClass : normalClass)}>
+                {showDone ? (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="20 6 9 17 4 12" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                ) : overdue ? (
                     <svg className={cn("w-4 h-4", statusColors.dangerText)} viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12 9v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -316,7 +345,7 @@ export default function Tasks() {
                         <path d="M16 2v4M8 2v4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 )}
-                <span>{formatted}</span>
+                <span>{showDone ? 'Done' : formatted}</span>
             </span>
         );
     };
@@ -729,8 +758,9 @@ export default function Tasks() {
                                         </KanbanHeader>
                                         <KanbanCards id={column.id} className="min-h-[400px]">
                                             {(item) => {
-                                                const timeRemaining = getTimeRemaining(item.dueDate);
+                                                const timeRemaining = getTimeRemaining(item.dueDate, item.status, item.updatedAt);
                                                 const isOverdue = timeRemaining && (timeRemaining.includes(t('tasks.timeRemaining.overdue', { days: 0, hours: 0, minutes: 0 }).split(' ')[0]) || timeRemaining.startsWith('Overdue'));
+                                                const isDone = item.status && ["Done", "DONE", "COMPLETED", "Completed"].includes(item.status.toString().trim());
                                                 const isSelected = selectedIds.has(item.id);
 
                                                 return (
@@ -793,7 +823,7 @@ export default function Tasks() {
                                                             </div>
                                                             {item.dueDate && (
                                                                 <div className="pt-1">
-                                                                    <JiraDateBadge date={item.dueDate} overdue={isOverdue} />
+                                                                    <JiraDateBadge date={item.dueDate} overdue={isOverdue} isDone={isDone} updatedAt={item.updatedAt} />
                                                                 </div>
                                                             )}
                                                             <div className="flex items-center justify-between gap-2">

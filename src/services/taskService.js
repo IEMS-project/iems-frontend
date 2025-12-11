@@ -152,10 +152,25 @@ export const taskService = {
     return data?.data || data || [];
   },
 
-  async addComment(taskId, content) {
+  async addComment(taskId, content, parentCommentId = null) {
     const data = await request(`/task-service/tasks/${taskId}/comments`, {
       method: "POST",
+      body: { content, parentCommentId },
+    });
+    return data?.data || data;
+  },
+
+  async updateComment(commentId, content) {
+    const data = await request(`/task-service/tasks/comments/${commentId}`, {
+      method: "PUT",
       body: { content },
+    });
+    return data?.data || data;
+  },
+
+  async deleteComment(commentId) {
+    const data = await request(`/task-service/tasks/comments/${commentId}`, {
+      method: "DELETE",
     });
     return data?.data || data;
   },
