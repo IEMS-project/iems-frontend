@@ -32,6 +32,11 @@ export const userService = {
     return data?.data || data || [];
   },
 
+  async getProjectManagerCandidates() {
+    const data = await request("/user-service/users/project-manager-candidates");
+    return data?.data || data || [];
+  },
+
   async getAssignableUsers() {
     const list = await this.getAllUserBasicInfos();
     return (list || []).map((u) => ({

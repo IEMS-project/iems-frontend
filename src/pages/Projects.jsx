@@ -38,7 +38,7 @@ export default function Projects() {
                 setLoading(true);
                 const [projectsData, usersData] = await Promise.all([
                     projectService.getProjectsTable(),
-                    userService.getAllUserBasicInfos()
+                    userService.getProjectManagerCandidates()
                 ]);
                 setProjects(projectsData);
                 setUsers(usersData);

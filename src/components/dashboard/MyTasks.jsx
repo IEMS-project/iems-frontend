@@ -16,7 +16,14 @@ export default function MyTasks() {
 			try {
 				setLoading(true);
 				const data = await taskService.getMyTasks();
-				setTasks(Array.isArray(data) ? data : []);
+				// Lọc chỉ hiển thị các task chưa hoàn thành
+				const incompleteTasks = (Array.isArray(data) ? data : []).filter(
+					(task) => {
+						const status = (task.status || "").toString().toUpperCase();
+						return !["COMPLETED", "HOÀN THÀNH", "HOAN THANH", "COMPLETE"].includes(status);
+					}
+				);
+				setTasks(incompleteTasks);
 			} catch (error) {
 				console.error("Error loading tasks:", error);
 				setTasks([]);
@@ -93,7 +100,7 @@ export default function MyTasks() {
 						{t("dashboard.myTasks.noTasks")}
 					</div>
 				) : (
-					<ul className="space-y-3">
+					<ul className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
 						{tasks.map((task) => {
 							const dueText = getDueDateText(task.dueDate);
 							const isOverdue = dueText.includes(t("dashboard.myTasks.overdue", { days: "" }).split(" ")[0]) || dueText === t("dashboard.myTasks.dueToday");
