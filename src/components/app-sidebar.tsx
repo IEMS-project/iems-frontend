@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -36,6 +36,7 @@ import Toggle from "@/components/ui/Toggle";
 import UserProfile from "@/components/layout/UserProfile";
 import { projectService } from "@/services/projectService";
 import { useUnreadCounts } from "@/context/UnreadCountsContext";
+import { getStoredTokens } from "@/lib/api";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -48,8 +49,15 @@ export function AppSidebar() {
   const { getTotal, refreshUnreadCounts } = useUnreadCounts();
   const hasUnread = getTotal() > 0;
 
+  // Check if user has IAM ADMIN role
+  const isIamAdmin = useMemo(() => {
+    const tokens = getStoredTokens();
+    const roles = tokens?.userInfo?.roles || [];
+    return Array.isArray(roles) && roles.includes("ADMIN");
+  }, []);
+
   // Menu items (excluding Projects as it's handled separately)
-  const items = [
+  const allItems = [
     {
       title: t('sidebar.dashboard'),
       url: "/dashboard",
@@ -85,8 +93,19 @@ export function AppSidebar() {
       title: t('sidebar.accessControl'),
       url: "/admin/access-control",
       icon: Shield,
+      requiresAdmin: true, // Only show for IAM ADMIN
     },
   ];
+
+  // Filter items based on user role
+  const items = useMemo(() => {
+    return allItems.filter(item => {
+      if (item.requiresAdmin) {
+        return isIamAdmin;
+      }
+      return true;
+    });
+  }, [isIamAdmin, t]);
 
   // Load projects
   useEffect(() => {
