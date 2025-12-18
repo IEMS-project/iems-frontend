@@ -25,6 +25,7 @@ import Chatbot from "./pages/Chatbot";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import { useAuth } from "./context/AuthContext.jsx";
+import { getStoredTokens } from "./lib/api";
 
 function Protected({ children }) {
     const { isAuthenticated } = useAuth();
@@ -32,6 +33,26 @@ function Protected({ children }) {
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
+    return children;
+}
+
+function AdminProtected({ children }) {
+    const { isAuthenticated } = useAuth();
+    const location = useLocation();
+    
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    
+    // Check if user has IAM ADMIN role
+    const tokens = getStoredTokens();
+    const roles = tokens?.userInfo?.roles || [];
+    const isIamAdmin = Array.isArray(roles) && roles.includes("ADMIN");
+    
+    if (!isIamAdmin) {
+        return <Navigate to="/permission-denied" replace />;
+    }
+    
     return children;
 }
 
@@ -68,7 +89,11 @@ export default function App() {
                                 <Route path="/notifications" element={<Notifications />} />
                                 <Route path="/profile" element={<Profile />} />
                                 <Route path="/admin" element={<AdminAnalytics />} />
-                                <Route path="/admin/access-control" element={<AdminAccessControl />} />
+                                <Route path="/admin/access-control" element={
+                                    <AdminProtected>
+                                        <AdminAccessControl />
+                                    </AdminProtected>
+                                } />
                                 <Route path="/permission-denied" element={<PermissionDenied />} />
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                             </Routes>
