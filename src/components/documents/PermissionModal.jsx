@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -11,8 +11,21 @@ export default function PermissionModal({
 	onConfirm
 }) {
 	const { t } = useTranslation();
-	const [permission, setPermission] = useState(item?.permission || "PUBLIC");
+	const [permission, setPermission] = useState("PRIVATE");
 	const [loading, setLoading] = useState(false);
+
+	// Reset permission when item changes
+	useEffect(() => {
+		if (item?.data?.permission) {
+			setPermission(item.data.permission);
+		} else {
+			setPermission("PRIVATE");
+		}
+	}, [item]);
+
+	const currentPermission = item?.data?.permission || "PRIVATE";
+	const itemName = item?.data?.name || "";
+	const itemType = item?.type || "file";
 
 	const handleSubmit = async () => {
 		setLoading(true);
@@ -32,7 +45,7 @@ export default function PermissionModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={item?.type === 'folder' ? t('documents.permission.titleFolder') : t('documents.permission.titleFile')}
+			title={itemType === 'folder' ? t('documents.permission.titleFolder') : t('documents.permission.titleFile')}
 			footer={
 				<div className="flex justify-end gap-2">
 					<Button variant="secondary" onClick={onClose}>
@@ -47,7 +60,7 @@ export default function PermissionModal({
 			<div className="space-y-4">
 				<div>
 					<label className="block text-sm font-medium text-gray-700 mb-2">
-						{t('documents.permission.currentStatus')} <span className="font-medium">{item?.permission === 'PUBLIC' ? t('documents.permission.public') : t('documents.permission.private')}</span>
+						{t('documents.permission.currentStatus')} <span className="font-medium">{currentPermission === 'PUBLIC' ? t('documents.permission.public') : t('documents.permission.private')}</span>
 					</label>
 					<div className="space-y-2">
 						<label className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-muted ">
@@ -80,9 +93,9 @@ export default function PermissionModal({
 						</label>
 					</div>
 				</div>
-				{item && (
+				{itemName && (
 					<div className="text-sm text-gray-500">
-						{item.type === 'folder' ? t('documents.types.folder') : t('documents.types.file')}: <span className="font-medium">{item.name}</span>
+						{itemType === 'folder' ? t('documents.types.folder') : t('documents.types.file')}: <span className="font-medium">{itemName}</span>
 					</div>
 				)}
 			</div>

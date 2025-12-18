@@ -676,6 +676,11 @@
       "delete": "Xóa",
       "selected": "{{count}} mục đã chọn"
     },
+    "filter": {
+      "all": "Tất cả",
+      "favorites": "Yêu thích",
+      "trash": "Thùng rác"
+    },
     "header": {
       "searchPlaceholder": "Tìm kiếm tệp và thư mục...",
       "sort": "Sắp xếp",
@@ -690,7 +695,11 @@
     },
     "emptyState": {
       "title": "Thư mục này trống.",
-      "noResults": "Không tìm thấy tệp hoặc thư mục phù hợp với \"{{search}}\""
+      "noResults": "Không tìm thấy tệp hoặc thư mục phù hợp với \"{{search}}\"",
+      "noFavorites": "Chưa có mục yêu thích nào",
+      "noFavoritesHint": "Nhấn vào biểu tượng ⭐ trên tệp hoặc thư mục để thêm vào danh sách yêu thích",
+      "noTrash": "Thùng rác trống",
+      "noTrashHint": "Các tệp và thư mục đã xóa sẽ xuất hiện ở đây"
     },
     "createFolder": {
       "title": "Thư mục mới",
@@ -809,7 +818,20 @@
       "move": "Di chuyển",
       "delete": "Xóa",
       "download": "Tải xuống",
-      "noPermission": "Không có quyền chỉnh sửa"
+      "noPermission": "Không có quyền chỉnh sửa",
+      "restore": "Khôi phục",
+      "permanentDelete": "Xóa vĩnh viễn"
+    },
+    "trash": {
+      "restoreSuccess": "Đã khôi phục thành công",
+      "restoreError": "Lỗi khi khôi phục",
+      "permanentDeleteSuccess": "Đã xóa vĩnh viễn",
+      "permanentDeleteError": "Lỗi khi xóa vĩnh viễn",
+      "emptySuccess": "Đã dọn sạch thùng rác",
+      "emptyError": "Lỗi khi dọn sạch thùng rác",
+      "emptyTrash": "Dọn sạch thùng rác",
+      "emptyConfirmTitle": "Dọn sạch thùng rác",
+      "emptyConfirmMessage": "Bạn có chắc muốn xóa vĩnh viễn tất cả các mục trong thùng rác? Hành động này không thể hoàn tác."
     },
     "fileDetail": {
       "details": "Thông tin",

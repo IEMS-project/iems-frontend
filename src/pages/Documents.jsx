@@ -34,6 +34,8 @@ export default function Documents() {
     setSearch,
     isDragging,
     setIsDragging,
+    filterMode,
+    setFilterMode,
     shareItem,
     setShareItem,
     deleteItem,
@@ -90,6 +92,10 @@ export default function Documents() {
     isOwner,
     handleBatchDelete,
     handleBatchMove,
+    // Trash handlers
+    handleRestore,
+    handlePermanentDelete,
+    handleEmptyTrash,
   } = useDocuments();
 
   return (
@@ -118,6 +124,10 @@ export default function Documents() {
           getSortLabel={getSortLabel}
           viewMode={viewMode}
           setViewMode={setViewMode}
+          filterMode={filterMode}
+          setFilterMode={setFilterMode}
+          onEmptyTrash={handleEmptyTrash}
+          hasTrashItems={sortedItems.length > 0}
         />
 
         {/* File List Container */}
@@ -162,7 +172,7 @@ export default function Documents() {
                 </div>
               )
             ) : sortedItems.length === 0 ? (
-              <EmptyState search={search} onUpload={onUploadFiles} />
+              <EmptyState search={search} onUpload={onUploadFiles} filterMode={filterMode} />
             ) : viewMode === "grid" ? (
               <DocumentsGrid
                 sortedItems={sortedItems}
@@ -179,6 +189,9 @@ export default function Documents() {
                 onMove={handleMove}
                 onDelete={confirmDelete}
                 isOwner={isOwner}
+                filterMode={filterMode}
+                onRestore={handleRestore}
+                onPermanentDelete={handlePermanentDelete}
               />
             ) : (
               <DocumentsList
@@ -197,6 +210,9 @@ export default function Documents() {
                 onMove={handleMove}
                 onDelete={confirmDelete}
                 isOwner={isOwner}
+                filterMode={filterMode}
+                onRestore={handleRestore}
+                onPermanentDelete={handlePermanentDelete}
               />
             )}
           </div>

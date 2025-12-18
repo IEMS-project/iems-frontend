@@ -676,6 +676,11 @@
       "delete": "Delete",
       "selected": "{{count}} items selected"
     },
+    "filter": {
+      "all": "All",
+      "favorites": "Favorites",
+      "trash": "Trash"
+    },
     "header": {
       "searchPlaceholder": "Search files and folders...",
       "sort": "Sort",
@@ -690,7 +695,11 @@
     },
     "emptyState": {
       "title": "This folder is empty.",
-      "noResults": "No files or folders matching \"{{search}}\""
+      "noResults": "No files or folders matching \"{{search}}\"",
+      "noFavorites": "No favorites yet",
+      "noFavoritesHint": "Click the ⭐ icon on a file or folder to add it to your favorites",
+      "noTrash": "Trash is empty",
+      "noTrashHint": "Deleted files and folders will appear here"
     },
     "createFolder": {
       "title": "New Folder",
@@ -809,7 +818,20 @@
       "move": "Move",
       "delete": "Delete",
       "download": "Download",
-      "noPermission": "No edit permission"
+      "noPermission": "No edit permission",
+      "restore": "Restore",
+      "permanentDelete": "Permanent Delete"
+    },
+    "trash": {
+      "restoreSuccess": "Restored successfully",
+      "restoreError": "Error restoring",
+      "permanentDeleteSuccess": "Permanently deleted",
+      "permanentDeleteError": "Error permanently deleting",
+      "emptySuccess": "Trash emptied successfully",
+      "emptyError": "Error emptying trash",
+      "emptyTrash": "Empty Trash",
+      "emptyConfirmTitle": "Empty Trash",
+      "emptyConfirmMessage": "Are you sure you want to permanently delete all items in the trash? This action cannot be undone."
     },
     "fileDetail": {
       "details": "Details",
