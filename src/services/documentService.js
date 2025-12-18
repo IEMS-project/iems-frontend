@@ -177,4 +177,45 @@ export const documentService = {
     });
     return data?.data || data;
   },
+
+  // Trash APIs
+  async getTrash() {
+    const data = await request("/document-service/api/trash");
+    return data?.data || data || [];
+  },
+
+  async restoreFile(fileId) {
+    const data = await request(`/document-service/api/trash/files/${fileId}/restore`, {
+      method: "POST",
+    });
+    return data?.data || data;
+  },
+
+  async restoreFolder(folderId) {
+    const data = await request(`/document-service/api/trash/folders/${folderId}/restore`, {
+      method: "POST",
+    });
+    return data?.data || data;
+  },
+
+  async permanentDeleteFile(fileId) {
+    const data = await request(`/document-service/api/trash/files/${fileId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+
+  async permanentDeleteFolder(folderId) {
+    const data = await request(`/document-service/api/trash/folders/${folderId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
+
+  async emptyTrash() {
+    const data = await request("/document-service/api/trash/empty", {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
 };

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { documentService } from "../services/documentService";
 import { getStoredTokens } from "../lib/api";
 import { toast } from "sonner";
@@ -7,12 +8,14 @@ import { useBreadcrumb } from "../context/BreadcrumbContext";
 
 export function useDocuments() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [folders, setFolders] = useState([]);
   const [allFolders, setAllFolders] = useState([]);
   const [files, setFiles] = useState([]);
-  const [currentFolderId, setCurrentFolderId] = useState(null);
   const [search, setSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [filterMode, setFilterMode] = useState("all"); // "all" | "favorites"
+  const [favorites, setFavorites] = useState([]);
   const [shareItem, setShareItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -30,6 +33,18 @@ export function useDocuments() {
   const [moveItem, setMoveItem] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const { setCustomBreadcrumbs } = useBreadcrumb();
+
+  // Get currentFolderId from URL params
+  const currentFolderId = searchParams.get("folderId") || null;
+
+  // Function to navigate to a folder (updates URL)
+  const setCurrentFolderId = useCallback((folderId) => {
+    if (folderId) {
+      setSearchParams({ folderId });
+    } else {
+      setSearchParams({});
+    }
+  }, [setSearchParams]);
 
   // Load folder contents
   const loadFolderContents = useCallback(async () => {
@@ -61,9 +76,45 @@ export function useDocuments() {
     }
   }, [currentFolderId]);
 
+  // Load favorites
+  const loadFavorites = useCallback(async () => {
+    try {
+      setLoading(true);
+      const favoritesData = await documentService.getFavorites();
+      setFavorites(favoritesData || []);
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load trash items
+  const [trashItems, setTrashItems] = useState([]);
+  
+  const loadTrash = useCallback(async () => {
+    try {
+      setLoading(true);
+      const trashData = await documentService.getTrash();
+      setTrashItems(trashData || []);
+    } catch (error) {
+      console.error("Error loading trash:", error);
+      setTrashItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    loadFolderContents();
-  }, [loadFolderContents]);
+    if (filterMode === "favorites") {
+      loadFavorites();
+    } else if (filterMode === "trash") {
+      loadTrash();
+    } else {
+      loadFolderContents();
+    }
+  }, [filterMode, loadFavorites, loadTrash, loadFolderContents]);
 
   useEffect(() => {
     setSelectedItem(null);
@@ -93,7 +144,13 @@ export function useDocuments() {
   useEffect(() => {
     const breadcrumbs = [
       { label: t('breadcrumb.home'), to: "/" },
-      { label: t('documents.title'), to: "/documents" },
+      { 
+        label: t('documents.title'), 
+        onClick: currentFolderId ? () => {
+          setCurrentFolderId(null);
+          setFilterMode("all");
+        } : undefined 
+      },
     ];
 
     if (currentPath.length > 0) {
@@ -146,8 +203,36 @@ export function useDocuments() {
     [files, currentFolderId, search]
   );
 
-  // Combine folders and files for sorting
+  // Combine folders and files for sorting (or show favorites)
   const allItems = useMemo(() => {
+    // If showing favorites, display favorite items
+    if (filterMode === "favorites") {
+      return favorites
+        .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+        .map((f) => ({
+          ...f,
+          type: f.targetType === "FOLDER" ? "folder" : "file",
+          id: f.targetId,
+          size: f.size || 0,
+          date: f.createdAt || f.updatedAt,
+          favorite: true,
+        }));
+    }
+
+    // If showing trash, display deleted items
+    if (filterMode === "trash") {
+      return trashItems
+        .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+        .map((f) => ({
+          ...f,
+          type: f.itemType === "FOLDER" ? "folder" : "file",
+          size: f.size || 0,
+          date: f.deletedAt,
+          isTrash: true,
+        }));
+    }
+
+    // Normal view - show folders and files
     const folderItems = visibleFolders.map((f) => ({
       ...f,
       type: "folder",
@@ -160,7 +245,7 @@ export function useDocuments() {
       date: f.createdAt || f.updatedAt,
     }));
     return [...folderItems, ...fileItems];
-  }, [visibleFolders, visibleFiles]);
+  }, [visibleFolders, visibleFiles, filterMode, favorites, trashItems, search]);
 
   // Sorting logic
   const parseFileSize = (sizeStr) => {
@@ -225,7 +310,20 @@ export function useDocuments() {
   };
 
   const handleItemClick = (item) => {
+    // Don't allow navigation in trash mode
+    if (filterMode === "trash") {
+      setSelectedItem(item);
+      if (showMobileDetails !== undefined) {
+        setShowMobileDetails(true);
+      }
+      return;
+    }
+    
     if (item.type === "folder") {
+      // If in favorites mode, switch back to all mode first
+      if (filterMode === "favorites") {
+        setFilterMode("all");
+      }
       setCurrentFolderId(item.id);
     } else {
       setSelectedItem(item);
@@ -236,7 +334,16 @@ export function useDocuments() {
   };
 
   const handleItemDoubleClick = (item) => {
+    // Don't allow navigation/opening in trash mode
+    if (filterMode === "trash") {
+      return;
+    }
+    
     if (item.type === "folder") {
+      // If in favorites mode, switch back to all mode first
+      if (filterMode === "favorites") {
+        setFilterMode("all");
+      }
       setCurrentFolderId(item.id);
     } else if (item.path) {
       // Open file in new tab
@@ -315,6 +422,11 @@ export function useDocuments() {
       setFolders((prev) => updateItem(prev));
       setFiles((prev) => updateItem(prev));
 
+      // If in favorites mode and item was unfavorited, refresh the list
+      if (filterMode === "favorites" && !result) {
+        loadFavorites();
+      }
+
       const action = result ? t('documents.favorite.added') : t('documents.favorite.removed');
       const itemType = type === "folder" ? t('documents.types.folder') : t('documents.types.file');
       toast.success(
@@ -353,6 +465,48 @@ export function useDocuments() {
     } catch (error) {
       console.error("Error deleting item:", error);
       toast.error(error?.message || t('documents.delete.error'));
+    }
+  }
+
+  // Trash handlers
+  async function handleRestore(item) {
+    try {
+      if (item.type === "folder") {
+        await documentService.restoreFolder(item.id);
+      } else {
+        await documentService.restoreFile(item.id);
+      }
+      loadTrash();
+      toast.success(t('documents.trash.restoreSuccess'));
+    } catch (error) {
+      console.error("Error restoring item:", error);
+      toast.error(error?.message || t('documents.trash.restoreError'));
+    }
+  }
+
+  async function handlePermanentDelete(item) {
+    try {
+      if (item.type === "folder") {
+        await documentService.permanentDeleteFolder(item.id);
+      } else {
+        await documentService.permanentDeleteFile(item.id);
+      }
+      loadTrash();
+      toast.success(t('documents.trash.permanentDeleteSuccess'));
+    } catch (error) {
+      console.error("Error permanently deleting item:", error);
+      toast.error(error?.message || t('documents.trash.permanentDeleteError'));
+    }
+  }
+
+  async function handleEmptyTrash() {
+    try {
+      await documentService.emptyTrash();
+      loadTrash();
+      toast.success(t('documents.trash.emptySuccess'));
+    } catch (error) {
+      console.error("Error emptying trash:", error);
+      toast.error(error?.message || t('documents.trash.emptyError'));
     }
   }
 
@@ -531,6 +685,8 @@ export function useDocuments() {
     setSearch,
     isDragging,
     setIsDragging,
+    filterMode,
+    setFilterMode,
     shareItem,
     setShareItem,
     deleteItem,
@@ -589,6 +745,10 @@ export function useDocuments() {
     goUpOneLevel,
     handleBatchDelete,
     handleBatchMove,
+    // Trash handlers
+    handleRestore,
+    handlePermanentDelete,
+    handleEmptyTrash,
   };
 }
 

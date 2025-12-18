@@ -19,6 +19,7 @@ import {
   Globe,
   Move,
   MoreHorizontalIcon,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIcon, getFolderIcon } from "./fileIconUtils";
@@ -57,8 +58,12 @@ export default function DocumentsList({
   onMove,
   onDelete,
   isOwner,
+  filterMode,
+  onRestore,
+  onPermanentDelete,
 }) {
   const { t } = useTranslation();
+  const isTrashMode = filterMode === "trash";
 
   return (
     <>
@@ -135,6 +140,7 @@ export default function DocumentsList({
                     e.stopPropagation();
                     onToggleFavorite(item, item.type);
                   }}
+                  disabled={isTrashMode}
                 >
                   {item.favorite ? (
                     <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
@@ -155,44 +161,63 @@ export default function DocumentsList({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {itemIsOwner && (
+                    {isTrashMode ? (
                       <>
-                        <DropdownMenuItem onClick={() => onRename(item, item.type)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.rename')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
-                          <Lock className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.permission')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onShare(item, item.type)}>
-                          <Share2 className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.share')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
-                          <Users className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.sharedUsers')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onMove(item, item.type)}>
-                          <Move className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.move')}
+                        <DropdownMenuItem onClick={() => onRestore(item)}>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          {t('documents.contextMenu.restore')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => onDelete(item, item.type)}
+                          onClick={() => onPermanentDelete(item)}
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          {t('documents.contextMenu.delete')}
+                          {t('documents.contextMenu.permanentDelete')}
                         </DropdownMenuItem>
                       </>
-                    )}
-                    {!itemIsOwner && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        {t('documents.contextMenu.noPermission')}
-                      </div>
+                    ) : (
+                      <>
+                        {itemIsOwner && (
+                          <>
+                            <DropdownMenuItem onClick={() => onRename(item, item.type)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.rename')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
+                              <Lock className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.permission')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onShare(item, item.type)}>
+                              <Share2 className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.share')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
+                              <Users className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.sharedUsers')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onMove(item, item.type)}>
+                              <Move className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.move')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onDelete(item, item.type)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('documents.contextMenu.delete')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {!itemIsOwner && (
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                            {t('documents.contextMenu.noPermission')}
+                          </div>
+                        )}
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
