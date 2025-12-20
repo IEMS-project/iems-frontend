@@ -441,7 +441,8 @@
         },
         "actions": {
           "clearFilters": "Clear Filters",
-          "addTask": "Add Task"
+          "addTask": "Add Task",
+          "deleteTask": "Delete Task"
         },
         "form": {
           "title": "Title",
@@ -489,7 +490,9 @@
           "deleted": "Task deleted successfully",
           "titleRequired": "Please enter task title",
           "assigneeRequired": "Please select an assignee",
-          "dueDateRequired": "Please select a due date"
+          "dueDateRequired": "Please select a due date",
+          "deleteConfirm": "Are you sure you want to delete task \"{{name}}\"? This action cannot be undone.",
+          "deleteError": "An error occurred while deleting the task"
         },
         "modal": {
           "addTitle": "Add Task",

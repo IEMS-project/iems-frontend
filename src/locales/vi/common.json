@@ -441,7 +441,8 @@
         },
         "actions": {
           "clearFilters": "Xóa bộ lọc",
-          "addTask": "Thêm nhiệm vụ"
+          "addTask": "Thêm nhiệm vụ",
+          "deleteTask": "Xóa nhiệm vụ"
         },
         "form": {
           "title": "Tiêu đề",
@@ -489,7 +490,9 @@
           "deleted": "Nhiệm vụ đã được xóa thành công",
           "titleRequired": "Vui lòng nhập tiêu đề nhiệm vụ",
           "assigneeRequired": "Vui lòng chọn người thực hiện",
-          "dueDateRequired": "Vui lòng chọn hạn hoàn thành"
+          "dueDateRequired": "Vui lòng chọn hạn hoàn thành",
+          "deleteConfirm": "Bạn có chắc chắn muốn xóa nhiệm vụ \"{{name}}\"? Hành động này không thể hoàn tác.",
+          "deleteError": "Có lỗi xảy ra khi xóa nhiệm vụ"
         },
         "modal": {
           "addTitle": "Thêm nhiệm vụ",

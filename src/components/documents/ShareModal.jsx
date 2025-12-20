@@ -91,25 +91,6 @@ export default function ShareModal({
 						<span className={cn("font-medium", textColors.primary)}> {shareItem.data.name}</span>
 					</div>
 
-					{/* Copy Link Section */}
-					<div className="space-y-2">
-						<div className={cn("text-sm font-medium", textColors.primary)}>{t('documents.share.copyLink')}</div>
-						<div className="flex items-center gap-2">
-							<Input
-								readOnly
-								value={`${window.location.origin}/share/${shareItem.type}/${shareItem.data.id}`}
-								className="flex-1"
-							/>
-							<Button
-								onClick={() => {
-									navigator.clipboard.writeText(`${window.location.origin}/share/${shareItem.type}/${shareItem.data.id}`);
-								}}
-							>
-								{t('documents.share.copyLink')}
-							</Button>
-						</div>
-					</div>
-
 					{/* Search input and permission selection */}
 					<div className="flex items-center gap-3">
 						<Input

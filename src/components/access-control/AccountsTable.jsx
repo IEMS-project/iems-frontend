@@ -37,14 +37,6 @@ export default function AccountsTable({
         );
     }
 
-    if (accounts.length === 0) {
-        return (
-            <div className="p-4 text-sm text-muted-foreground">
-                {t("admin.accessControl.accounts.noAccounts")}
-            </div>
-        );
-    }
-
     return (
         <>
             <div className="mb-3 flex items-center justify-between gap-2">
@@ -58,9 +50,14 @@ export default function AccountsTable({
                 </Button>
             </div>
             {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-            <div className="rounded-md border">
-                <ScrollArea className="h-[360px]">
-                    <Table>
+            {accounts.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground rounded-md border">
+                    {t("admin.accessControl.accounts.noAccounts")}
+                </div>
+            ) : (
+                <div className="rounded-md border">
+                    <ScrollArea className="h-[360px]">
+                        <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t("admin.accessControl.accounts.username")}</TableHead>
@@ -108,6 +105,7 @@ export default function AccountsTable({
                     </Table>
                 </ScrollArea>
             </div>
+            )}
         </>
     );
 }
