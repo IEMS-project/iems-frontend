@@ -40,6 +40,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [existingAttachments, setExistingAttachments] = useState([]);
     const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState(null);
 
     const taskTypeOptions = [
         { value: 'EPIC', label: t('projects.detail.tasks.taskTypes.epic'), icon: Zap, color: getTaskTypeColor('EPIC') },
@@ -288,6 +290,42 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const handleRowClick = (task) => {
         setDetailTask(task);
         setShowDetail(true);
+    };
+
+    const handleDeleteTask = (task) => {
+        setTaskToDelete(task);
+        setShowDeleteConfirm(true);
+        setShowDetail(false);
+    };
+
+    const confirmDeleteTask = async () => {
+        if (!taskToDelete) return;
+        try {
+            setLoading(true);
+            await taskService.deleteTask(taskToDelete.id);
+            toast.success(t('projects.detail.tasks.messages.deleted'));
+            
+            const refreshed = await taskService.getTasksByProject(projectId);
+            const list = Array.isArray(refreshed) ? refreshed : [];
+            setTasksData(list);
+            if (onTasksChange) onTasksChange(list);
+        } catch (e) {
+            console.error("Error deleting task:", e);
+            if (e.status === 403 ||
+                e.message?.includes("PERMISSION_DENIED") ||
+                e.message?.includes("permission") ||
+                e.message?.includes("quyền") ||
+                e.message?.includes("Permission denied")) {
+                navigate("/permission-denied");
+                return;
+            } else {
+                toast.error(e?.message || t('projects.detail.tasks.messages.deleteError'));
+            }
+        } finally {
+            setLoading(false);
+            setShowDeleteConfirm(false);
+            setTaskToDelete(null);
+        }
     };
 
     const isImageFile = (file) => {
@@ -741,10 +779,29 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     setShowDetail(false);
                     handleEditTask(task);
                 }}
+                onDelete={handleDeleteTask}
             />
 
-
-
+            {/* Delete Confirmation Modal */}
+            <Modal
+                open={showDeleteConfirm}
+                onClose={() => { setShowDeleteConfirm(false); setTaskToDelete(null); }}
+                title={t('projects.detail.tasks.actions.deleteTask')}
+                footer={
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => { setShowDeleteConfirm(false); setTaskToDelete(null); }}>
+                            {t('ui.common.cancel')}
+                        </Button>
+                        <Button variant="destructive" onClick={confirmDeleteTask}>
+                            {t('ui.common.delete')}
+                        </Button>
+                    </div>
+                }
+            >
+                <p className="text-foreground">
+                    {t('projects.detail.tasks.messages.deleteConfirm', { name: taskToDelete?.title || '' })}
+                </p>
+            </Modal>
 
 
         </>

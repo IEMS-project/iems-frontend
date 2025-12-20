@@ -9,7 +9,7 @@ import { getTaskTypeVariant } from "../../lib/taskTypeUtils";
 import { useTaskType } from "../../hooks/useTaskType";
 import { ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus, Circle, Paperclip, Download, Hash, Layers, FolderKanban, Flag, User, CalendarDays, CalendarClock, Clock } from 'lucide-react';
 
-export default function TaskDetailModal({ open, onClose, task, onEdit }) {
+export default function TaskDetailModal({ open, onClose, task, onEdit, onDelete }) {
     const { t } = useTranslation();
     const { getTaskTypeIcon, translateTaskType } = useTaskType();
 
@@ -136,13 +136,22 @@ export default function TaskDetailModal({ open, onClose, task, onEdit }) {
             onClose={onClose}
             title={task.title || t('tasks.detail.title')}
             footer={
-                <div className="flex justify-end gap-2">
-                    {onEdit && (
-                        <Button variant="secondary" onClick={() => onEdit(task)}>
-                            {t('ui.common.edit')}
-                        </Button>
-                    )}
-                    <Button variant="secondary" onClick={onClose}>{t('ui.common.close')}</Button>
+                <div className="flex justify-between gap-2">
+                    <div>
+                        {onDelete && (
+                            <Button variant="destructive" onClick={() => onDelete(task)}>
+                                {t('ui.common.delete')}
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        {onEdit && (
+                            <Button variant="secondary" onClick={() => onEdit(task)}>
+                                {t('ui.common.edit')}
+                            </Button>
+                        )}
+                        <Button variant="secondary" onClick={onClose}>{t('ui.common.close')}</Button>
+                    </div>
                 </div>
             }
         >

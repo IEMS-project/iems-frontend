@@ -181,6 +181,13 @@ export const taskService = {
     });
     return data?.data || data;
   },
+
+  async deleteTask(taskId) {
+    const data = await request(`/task-service/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+    return data?.data || data;
+  },
 };
 
 

@@ -177,12 +177,6 @@ export const columns: ColumnDef<Project>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t('projects.columns.actions')}</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(project.id)}
-            >
-              {t('projects.actions.copyId')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to={`/projects/${project.id}/overview`}>{t('projects.actions.view')}</Link>
             </DropdownMenuItem>
