@@ -1,34 +1,47 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
-import { Table, THead, TBody, TR, TH, TD } from "../components/ui/Table";
-import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
-import PageHeader from "../components/common/PageHeader";
+import UserSelect from "../components/project/UserSelect";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { projectService } from "../services/projectService";
-import UserAvatar from "../components/ui/UserAvatar";
+import { userService } from "../services/userService";
+import { toast } from "sonner";
+import { columns } from "../components/project/projects-columns";
+import { ProjectsDataTable } from "../components/project/projects-data-table";
 
 export default function Projects() {
+    const { t } = useTranslation();
     const [projects, setProjects] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [editingProject, setEditingProject] = useState(null);
+    const [deletingProject, setDeletingProject] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
         description: "",
         startDate: "",
         endDate: "",
-        managerId: ""
+        managerId: "",
+        status: ""
     });
 
-    // Load projects on component mount
+    // Load projects and users on component mount
     useEffect(() => {
         const loadData = async () => {
             try {
                 setLoading(true);
-                const projectsData = await projectService.getProjectsTable();
+                const [projectsData, usersData] = await Promise.all([
+                    projectService.getProjectsTable(),
+                    userService.getProjectManagerCandidates()
+                ]);
                 setProjects(projectsData);
+                setUsers(usersData);
             } catch (error) {
                 console.error("Error loading data:", error);
             } finally {
@@ -39,23 +52,61 @@ export default function Projects() {
     }, []);
 
     const handleCreateProject = () => {
+        setEditingProject(null);
         setFormData({
             name: "",
             description: "",
             startDate: "",
             endDate: "",
-            managerId: ""
+            managerId: "",
+            status: "PLANNING"
         });
         setShowModal(true);
     };
 
+    const handleEditProject = (project) => {
+        setEditingProject(project);
+        setFormData({
+            name: project.name,
+            description: project.description || "",
+            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "",
+            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "",
+            managerId: project.managerId,
+            status: project.status || "PLANNING"
+        });
+        setShowModal(true);
+    };
+
+    const handleDeleteProject = (project) => {
+        setDeletingProject(project);
+        setShowDeleteDialog(true);
+    };
+
+    const confirmDeleteProject = async () => {
+        if (!deletingProject) return;
+
+        try {
+            await projectService.deleteProject(deletingProject.id);
+            toast.success(t("projects.messages.deleted"));
+
+            // Reload projects
+            const updatedProjects = await projectService.getProjectsTable();
+            setProjects(updatedProjects);
+        } catch (error) {
+            console.error("Error deleting project:", error);
+            toast.error(error?.message || t("ui.common.error"));
+        } finally {
+            setDeletingProject(null);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!formData.name.trim()) {
-            alert("Vui lòng nhập tên dự án");
+            toast.warning(t("projects.messages.nameRequired"));
             return;
         }
         if (!formData.managerId) {
-            alert("Vui lòng chọn quản lý dự án");
+            toast.warning(t("projects.messages.managerRequired"));
             return;
         }
 
@@ -66,121 +117,63 @@ export default function Projects() {
                 endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null
             };
 
-            await projectService.createProject(projectData);
+            if (editingProject) {
+                await projectService.updateProject(editingProject.id, projectData);
+                toast.success(t("projects.messages.updated"));
+            } else {
+                await projectService.createProject(projectData);
+                toast.success(t("projects.messages.created"));
+            }
 
             // Reload projects
             const updatedProjects = await projectService.getProjectsTable();
             setProjects(updatedProjects);
 
             setShowModal(false);
+            setEditingProject(null);
             setFormData({
                 name: "",
                 description: "",
                 startDate: "",
                 endDate: "",
-                managerId: ""
+                managerId: "",
+                status: ""
             });
         } catch (error) {
-            console.error("Error creating project:", error);
-            alert("Có lỗi xảy ra khi tạo dự án. Vui lòng thử lại.");
+            console.error("Error saving project:", error);
+            toast.error(error?.message || t("ui.common.error"));
         }
     };
 
     const handleClose = () => {
         setShowModal(false);
+        setEditingProject(null);
         setFormData({
             name: "",
             description: "",
             startDate: "",
             endDate: "",
-            managerId: ""
+            managerId: "",
+            status: ""
         });
     };
-
-    // Lấy danh sách manager từ dự án hiện có (unique)
-    const managers = Array.from(
-        new Map(
-            projects.map(p => [p.managerId, { id: p.managerId, name: p.managerName, email: p.managerEmail, image: p.managerImage }])
-        ).values()
-    );
 
     return (
         <>
             <div className="space-y-6">
-                <PageHeader breadcrumbs={[{ label: "Dự án", to: "/projects" }]} />
-
                 <Card>
-                    <CardHeader className="flex items-center justify-between">
-                        <CardTitle>Danh sách dự án</CardTitle>
-                        <Button onClick={handleCreateProject}>Tạo dự án</Button>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>{t("projects.title")}</CardTitle>
+                        <Button onClick={handleCreateProject}>{t("projects.createProject")}</Button>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <div className="flex justify-center items-center py-8">
-                                <div className="text-gray-500">Đang tải dữ liệu...</div>
-                            </div>
-                        ) : (
-                            <Table>
-                                <THead>
-                                    <TR>
-                                        <TH>Tên</TH>
-                                        <TH>Mô tả</TH>
-                                        <TH>Trạng thái</TH>
-                                        <TH>Ngày bắt đầu</TH>
-                                        <TH>Ngày kết thúc</TH>
-                                        <TH>Quản lý</TH>
-                                        <TH></TH>
-                                    </TR>
-                                </THead>
-                                <TBody>
-                                    {projects.length === 0 ? (
-                                        <TR>
-                                            <TD colSpan="7" className="text-center py-8 text-gray-500">
-                                                Chưa có dự án nào
-                                            </TD>
-                                        </TR>
-                                    ) : (
-                                        projects.map(project => (
-                                            <TR key={project.id}>
-
-                                                <TD className="max-w-sm">
-                                                    <Link
-                                                        to={`/projects/${project.id}`}
-                                                        className="font-bold text-dark hover:underline"
-                                                    >
-                                                        {project.name}
-                                                    </Link>
-                                                </TD>
-                                                <TD className="max-w-xs truncate">{project.description}</TD>
-                                                <TD>{project.status || "Chưa xác định"}</TD>
-                                                <TD>
-                                                    {project.startDate
-                                                        ? new Date(project.startDate).toLocaleDateString("vi-VN")
-                                                        : "-"}
-                                                </TD>
-                                                <TD>
-                                                    {project.endDate
-                                                        ? new Date(project.endDate).toLocaleDateString("vi-VN")
-                                                        : "-"}
-                                                </TD>
-                                                <TD className="flex items-center gap-2">
-                                                    <UserAvatar user={project} size="xs" />
-                                                    <div className="flex flex-col flex-1 min-w-0">
-                                                        <span className="font-medium truncate">
-                                                            {project.managerName || project.managerEmail || project.managerId}
-                                                        </span>
-                                                        <span className="text-sm text-gray-500 truncate">
-                                                            {project.managerEmail}
-                                                        </span>
-                                                    </div>
-                                                </TD>
-                                                <TD></TD>
-                                            </TR>
-                                        ))
-                                    )}
-                                </TBody>
-                            </Table>
-                        )}
+                        <ProjectsDataTable
+                            columns={columns}
+                            data={projects}
+                            loading={loading}
+                            onEdit={handleEditProject}
+                            onDelete={handleDeleteProject}
+                        />
                     </CardContent>
                 </Card>
             </div>
@@ -188,78 +181,99 @@ export default function Projects() {
             <Modal
                 open={showModal}
                 onClose={handleClose}
-                title="Tạo dự án mới"
+                title={editingProject ? t("projects.editProject") : t("projects.createNew")}
                 footer={
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={handleClose}>
-                            Hủy
+                            {t("ui.common.cancel")}
                         </Button>
-                        <Button onClick={handleSubmit}>Tạo dự án</Button>
+                        <Button onClick={handleSubmit}>
+                            {editingProject ? t("ui.common.save") : t("projects.createProject")}
+                        </Button>
                     </div>
                 }
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tên dự án *
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            {t("projects.form.projectName")} {t("projects.form.required")}
                         </label>
                         <Input
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập tên dự án"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
+                            placeholder={t("projects.form.projectNamePlaceholder")}
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quản lý dự án *
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            {t("projects.form.projectManager")} {t("projects.form.required")}
                         </label>
-                        <select
+                        <UserSelect
+                            assignableUsers={users}
                             value={formData.managerId}
-                            onChange={e => setFormData({ ...formData, managerId: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            required
-                        >
-                            <option value="">Chọn quản lý dự án</option>
-                            {managers.map(manager => (
-                                <option key={manager.id} value={manager.id}>
-                                    {manager.name} ({manager.email})
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(userId) => setFormData({ ...formData, managerId: userId })}
+                        />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.startDate")}</label>
                         <Input
                             type="date"
                             value={formData.startDate}
                             onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.endDate")}</label>
                         <Input
                             type="date"
                             value={formData.endDate}
                             onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                            {t("projects.form.status")}
+                        </label>
+                        <select
+                            value={formData.status}
+                            onChange={e => setFormData({ ...formData, status: e.target.value })}
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
+                        >
+                            <option value="PLANNING">{t("projects.status.planning")}</option>
+                            <option value="IN_PROGRESS">{t("projects.status.inProgress")}</option>
+                            <option value="ON_HOLD">{t("projects.status.onHold")}</option>
+                            <option value="COMPLETED">{t("projects.status.completed")}</option>
+                            <option value="CANCELLED">{t("projects.status.cancelled")}</option>
+                        </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-foreground mb-1">{t("projects.form.description")}</label>
                         <Textarea
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            placeholder="Nhập mô tả dự án"
+                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
+                            placeholder={t("projects.form.descriptionPlaceholder")}
                         />
                     </div>
                 </div>
             </Modal>
+
+            <ConfirmDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                onConfirm={confirmDeleteProject}
+                title={t("projects.deleteProject")}
+                description={t("projects.messages.deleteConfirm", { name: deletingProject?.name })}
+                confirmText={t("ui.common.delete")}
+                cancelText={t("ui.common.cancel")}
+                variant="destructive"
+            />
         </>
     );
 }

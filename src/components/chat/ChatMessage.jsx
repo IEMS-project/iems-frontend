@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { bgColors, textColors, buttonColors } from '../../theme/colors';
 
 // CodeBlock component with copy functionality
 const CodeBlock = ({ language, children }) => {
@@ -25,7 +26,7 @@ const CodeBlock = ({ language, children }) => {
       <div className="absolute top-2 right-2 z-10">
         <button
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-md text-xs flex items-center gap-1"
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white p-2 rounded-md text-xs flex items-center gap-1"
           title="Copy code"
         >
           {copied ? (
@@ -63,19 +64,18 @@ const ChatMessage = ({ message, isUser = false, timestamp }) => {
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`${isUser ? 'max-w-[85%] sm:max-w-[80%] order-first' : 'w-full'}`}>
-        <div className={`${
-          isUser 
-            ? 'rounded-lg px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' 
-            : 'text-gray-900 dark:text-gray-100'
-        }`}>
+        <div className={`${isUser
+          ? 'rounded-lg px-4 py-3 bg-muted text-foreground'
+          : 'text-foreground'
+          }`}>
           {isUser ? (
             <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
           ) : (
-            <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
-              <ReactMarkdown 
+            <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-p:text-foreground prose-headings:text-foreground prose-li:text-foreground prose-strong:text-foreground">
+              <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+                  p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed text-foreground">{children}</p>,
                   ul: ({ children }) => <ul className="mb-3 pl-4 list-disc space-y-1">{children}</ul>,
                   ol: ({ children }) => <ol className="mb-3 pl-4 list-decimal space-y-1">{children}</ol>,
                   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
@@ -84,10 +84,10 @@ const ChatMessage = ({ message, isUser = false, timestamp }) => {
                   code: ({ node, inline, className, children, ...props }) => {
                     const match = /language-(\w+)/.exec(className || '');
                     const language = match ? match[1] : '';
-                    
+
                     // Check if this is a code block (not inline code)
                     const isCodeBlock = !inline && (language || (node && node.tagName === 'pre'));
-                    
+
                     if (isCodeBlock) {
                       return (
                         <CodeBlock language={language} {...props}>
@@ -95,7 +95,7 @@ const ChatMessage = ({ message, isUser = false, timestamp }) => {
                         </CodeBlock>
                       );
                     }
-                    
+
                     return (
                       <code className="bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
                         {children}
@@ -108,7 +108,7 @@ const ChatMessage = ({ message, isUser = false, timestamp }) => {
                     const className = children?.props?.className || '';
                     const match = /language-(\w+)/.exec(className);
                     const language = match ? match[1] : 'text';
-                    
+
                     if (codeElement && typeof codeElement === 'string') {
                       return (
                         <div className="mb-3">

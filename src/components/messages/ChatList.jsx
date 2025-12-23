@@ -1,5 +1,5 @@
 import React from "react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import Input from "../ui/Input";
 import { FaSearch } from "react-icons/fa";
 

@@ -1,146 +1,104 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
+import { User2, ChevronUp, CreditCard, Bell, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+	SidebarMenu,
+	SidebarMenuItem,
+	SidebarMenuButton,
+} from "@/components/ui/sidebar";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Avatar from "../ui/Avatar";
-import { FaUser, FaCog, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext.jsx";
 
-export default function UserProfile({ collapsed = false }) {
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-	const { logout } = useAuth();
-	
-	// Mock user data - trong thực tế sẽ lấy từ context hoặc API
-	const user = {
-		name: "Nguyễn Văn A",
-		email: "nguyenvana@example.com",
-		role: "Quản lý dự án",
-		avatar: null, // URL ảnh đại diện nếu có
+export default function UserProfile() {
+	const { t } = useTranslation();
+	const { logout, userProfile } = useAuth();
+
+	// Format user data from API response
+	const user = userProfile ? {
+		firstName: userProfile.firstName || '',
+		lastName: userProfile.lastName || '',
+		name: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
+		email: userProfile.email || '',
+		role: userProfile.role || '',
+		avatar: userProfile.image || null,
+	} : {
+		firstName: '',
+		lastName: '',
+		name: "User",
+		email: "",
+		role: "",
+		avatar: null,
 	};
 
 	const handleLogout = () => {
 		logout();
-		setIsDropdownOpen(false);
 	};
 
-	if (collapsed) {
-		return (
-			<div className="relative">
-				<button
-					onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-					className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-				>
-					<Avatar src={user.avatar} name={user.name} size={8} />
-				</button>
-				
-				{isDropdownOpen && (
-					<>
-						<div 
-							className="fixed inset-0 z-10" 
-							onClick={() => setIsDropdownOpen(false)}
-						/>
-						<div className="absolute bottom-0 left-full mb-2 ml-2 w-64 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-20">
-							<div className="p-4 border-b border-gray-200 dark:border-gray-700">
-								<div className="flex items-center gap-3">
-									<Avatar src={user.avatar} name={user.name} size={12} />
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-											{user.name}
-										</p>
-										<p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-											{user.email}
-										</p>
-									</div>
-								</div>
-							</div>
-							<div className="p-2">
-								<Link
-									to="/profile"
-									onClick={() => setIsDropdownOpen(false)}
-									className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-								>
-									<FaUser className="h-4 w-4" />
-									Xem hồ sơ
-								</Link>
-								<button
-									onClick={handleLogout}
-									className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-								>
-									<FaSignOutAlt className="h-4 w-4" />
-									Đăng xuất
-								</button>
-							</div>
-						</div>
-					</>
-				)}
-			</div>
-		);
-	}
-
 	return (
-		<div className="relative">
-			<button
-				onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-				className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-			>
-				<Avatar src={user.avatar} name={user.name} size={10} />
-				<div className="flex-1 min-w-0">
-					<p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-						{user.name}
-					</p>
-					<p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-						{user.role}
-					</p>
-				</div>
-				<FaChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-			</button>
-			
-			{isDropdownOpen && (
-				<>
-					<div 
-						className="fixed inset-0 z-10" 
-						onClick={() => setIsDropdownOpen(false)}
-					/>
-					<div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-20">
-						<div className="p-4 border-b border-gray-200 dark:border-gray-700">
-							<div className="flex items-center gap-3">
-								<Avatar src={user.avatar} name={user.name} size={12} />
-								<div className="flex-1 min-w-0">
-									<p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-										{user.name}
-									</p>
-									<p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-										{user.email}
-									</p>
+		<SidebarMenu>
+			<SidebarMenuItem>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+							<Avatar user={user} size="sm" />
+							<div className="grid flex-1 text-left text-sm leading-tight">
+								<span className="truncate font-semibold">{user.name}</span>
+								<span className="truncate text-xs text-sidebar-foreground/70">{user.email}</span>
+							</div>
+							<ChevronUp className="ml-auto size-4" />
+						</SidebarMenuButton>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+						side="bottom"
+						align="end"
+						sideOffset={4}
+					>
+						<DropdownMenuLabel className="p-0 font-normal">
+							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+								<Avatar user={user} size="sm" />
+								<div className="grid flex-1 text-left text-sm leading-tight">
+									<span className="truncate font-semibold">{user.name}</span>
+									<span className="truncate text-xs text-muted-foreground">{user.email}</span>
 								</div>
 							</div>
-						</div>
-						<div className="p-2">
-							<Link
-								to="/profile"
-								onClick={() => setIsDropdownOpen(false)}
-								className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-							>
-								<FaUser className="h-4 w-4" />
-								Xem hồ sơ
+						</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem asChild>
+							<Link to="/profile" className="cursor-pointer">
+								<User2 className="mr-2 h-4 w-4" />
+								<span>{t('userProfile.account')}</span>
 							</Link>
-							<Link
-								to="/settings"
-								onClick={() => setIsDropdownOpen(false)}
-								className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-							>
-								<FaCog className="h-4 w-4" />
-								Cài đặt
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<Link to="/settings" className="cursor-pointer">
+								<CreditCard className="mr-2 h-4 w-4" />
+								<span>{t('userProfile.settings')}</span>
 							</Link>
-							<button
-								onClick={handleLogout}
-								className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-							>
-								<FaSignOutAlt className="h-4 w-4" />
-								Đăng xuất
-							</button>
-						</div>
-					</div>
-				</>
-			)}
-		</div>
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<Link to="/notifications" className="cursor-pointer">
+								<Bell className="mr-2 h-4 w-4" />
+								<span>{t('userProfile.notifications')}</span>
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+							<LogOut className="mr-2 h-4 w-4" />
+							<span>{t('userProfile.logout')}</span>
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</SidebarMenuItem>
+		</SidebarMenu>
 	);
 }

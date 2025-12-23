@@ -1,13 +1,17 @@
 import React from "react";
 import {
-  FaSmile,
-  FaPaperPlane,
-  FaPaperclip,
-  FaThumbsUp,
-  FaImage,
-  FaStickyNote
-} from "react-icons/fa";
+  Smile,
+  Send,
+  Paperclip,
+  ThumbsUp,
+  Image as ImageIcon,
+  StickyNote
+} from "lucide-react";
 import ReplyInput from "../messages/ReplyInput";
+import { toast } from "sonner";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import { useTranslation } from "react-i18next";
 
 export default function MessageComposer({
   content,
@@ -19,6 +23,7 @@ export default function MessageComposer({
   onCancelReply,
   getUserName,
 }) {
+  const { t } = useTranslation();
   const textareaRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -32,6 +37,7 @@ export default function MessageComposer({
     }
   }, [replyingTo]);
   const [selectedFiles, setSelectedFiles] = React.useState([]);
+  const fileInputRef = React.useRef(null);
 
   const handlePickFiles = (files) => {
     const list = Array.from(files || []);
@@ -42,6 +48,10 @@ export default function MessageComposer({
 
   const handleRemoveFile = (id) => {
     setSelectedFiles(prev => prev.filter(x => x.id !== id));
+  };
+
+  const handleFileInputClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleUnifiedSend = async () => {
@@ -59,43 +69,68 @@ export default function MessageComposer({
         onCancelReply={onCancelReply}
         getUserName={getUserName}
       />
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div className="p-4 border-t border-border bg-background">
         <div className="flex items-end gap-3">
           {/* Sticker button */}
-          <button className="p-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 rounded-full transition-colors">
-            <FaSmile className="w-5 h-5" />
-          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+          >
+            <Smile className="w-5 h-5" />
+          </Button>
 
           {/* Danh thiếp button */}
-          <button className="p-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 rounded-full transition-colors">
-            <FaStickyNote className="w-5 h-5" />
-          </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+          >
+            <StickyNote className="w-5 h-5" />
+          </Button>
 
           {/* Phương tiện button */}
-          <label className="p-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 rounded-full transition-colors cursor-pointer">
-            <FaImage className="w-5 h-5" />
-            <input type="file" accept="image/jpeg,image/png,video/mp4,video/quicktime,application/pdf,application/zip,*/*" multiple className="hidden" onChange={(e)=>{
-              const files = Array.from(e.target.files || []);
-              // FE validation: up to 5MB for image, 20MB for video, 20MB for others
-              const valid = files.filter(f => {
-                const sizeMB = f.size / (1024 * 1024);
-                if (f.type.startsWith('image')) return sizeMB <= 5;
-                if (f.type.startsWith('video')) return sizeMB <= 20;
-                return sizeMB <= 20;
-              });
-              if (valid.length < files.length) {
-                alert('Một số tệp vượt quá giới hạn kích thước (Ảnh ≤ 5MB, Video/Tệp ≤ 20MB).');
-              }
-              handlePickFiles(valid);
-              e.target.value = '';
-            }} />
-          </label>
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,video/mp4,video/quicktime,application/pdf,application/zip,*/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                // FE validation: up to 5MB for image, 20MB for video, 20MB for others
+                const valid = files.filter(f => {
+                  const sizeMB = f.size / (1024 * 1024);
+                  if (f.type.startsWith('image')) return sizeMB <= 5;
+                  if (f.type.startsWith('video')) return sizeMB <= 20;
+                  return sizeMB <= 20;
+                });
+                if (valid.length < files.length) {
+                  toast.warning(t('messages.composer.fileSizeWarning', 'Some files exceed size limit (Images ≤ 5MB, Videos/Files ≤ 20MB)'));
+                }
+                handlePickFiles(valid);
+                e.target.value = '';
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={handleFileInputClick}
+            >
+              <ImageIcon className="w-5 h-5" />
+            </Button>
+          </>
 
           <div className="flex-1 relative">
             {selectedFiles.length > 0 && (
               <div className="mb-2 flex gap-2 flex-wrap">
                 {selectedFiles.map((x) => (
-                  <div key={x.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                  <div key={x.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
                     {x.file.type.startsWith('image') ? (
                       <img src={x.preview} alt="preview" className="w-full h-full object-cover" />
                     ) : x.file.type.startsWith('video') ? (
@@ -103,8 +138,8 @@ export default function MessageComposer({
                         <source src={x.preview} />
                       </video>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] px-1 text-center text-gray-600 dark:text-gray-300 break-all">
-                        {(x.file.name || 'Tệp')}
+                      <div className="w-full h-full flex items-center justify-center text-[10px] px-1 text-center text-muted-foreground break-all">
+                        {(x.file.name || t('messages.composer.file', 'Tệp'))}
                       </div>
                     )}
                     <button onClick={() => handleRemoveFile(x.id)} className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded">x</button>
@@ -112,10 +147,10 @@ export default function MessageComposer({
                 ))}
               </div>
             )}
-            <textarea
+            <Textarea
               ref={textareaRef}
-              className="w-full px-4 py-2 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:ring-1 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              placeholder={replyingTo ? "Trả lời tin nhắn..." : "Nhập tin nhắn..."}
+              className="w-full px-4 py-2 pr-12 rounded-xl resize-none min-h-[48px] max-h-[96px]"
+              placeholder={replyingTo ? t('messages.composer.replyPlaceholder') : t('messages.composer.placeholder')}
               value={content}
               rows={1}
               onChange={(e) => {
@@ -136,22 +171,29 @@ export default function MessageComposer({
             />
             <div className="absolute right-2 bottom-2 flex items-center gap-2">
               {/* Emoji button */}
-              <button className="p-2 text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 rounded-full transition-colors">
-                <FaSmile className="w-5 h-5" />
-              </button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+              >
+                <Smile className="w-5 h-5" />
+              </Button>
 
               {/* Send button - luôn hiện */}
-              <button
+              <Button
+                type="button"
+                size="icon"
                 onClick={() => {
                   handleUnifiedSend();
                   // Reset height sau khi gửi
                   const textarea = textareaRef.current;
                   if (textarea) textarea.style.height = "auto";
                 }}
-                className="p-2 mr-2 bg-blue-600 text-white hover:bg-blue-700 rounded-full transition-colors"
+                className="rounded-full mr-2"
               >
-                <FaPaperPlane className="w-4 h-4" />
-              </button>
+                <Send className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>

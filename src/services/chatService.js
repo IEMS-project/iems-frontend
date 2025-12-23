@@ -1,4 +1,4 @@
-import { api, GATEWAY_BASE_URL, getStoredTokens } from "../lib/api";
+import { GATEWAY_BASE_URL, getStoredTokens } from "../lib/api";
 
 // REST calls align with backend static demo HTML, prefixed with chat-service behind gateway
 export const chatService = {

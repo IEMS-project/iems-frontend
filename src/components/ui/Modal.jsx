@@ -18,46 +18,34 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
 	}, [visible]);
 
 	if (!visible) return null;
-    
+
 	return (
-		<div 
-			className="fixed z-[9999] flex items-center justify-center" 
-			style={{ 
-				top: 0, 
-				left: 0, 
-				right: 0, 
-				bottom: 0,
-				width: '100vw',
-				height: '100vh',
-				minHeight: '100vh',
-				position: 'fixed'
+		<div
+			className="fixed inset-0 z-[9999] flex items-center justify-center m-0 p-0"
+			style={{
+				margin: 0,
+				padding: 0
 			}}
 		>
-			<div 
-				className="absolute bg-black/50" 
+			<div
+				className="absolute inset-0 bg-black/60 backdrop-blur-sm m-0 p-0"
 				onClick={onClose}
-				style={{ 
-					top: 0, 
-					left: 0, 
-					right: 0, 
-					bottom: 0,
-					width: '100vw',
-					height: '100vh',
-					minHeight: '100vh',
-					position: 'absolute'
+				style={{
+					margin: 0,
+					padding: 0
 				}}
 			/>
-			<div className={`relative z-10 w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 ${className}`}>
+			<div className={`relative z-10 w-full max-w-4xl max-h-[90vh] mx-4 my-auto flex flex-col rounded-lg border border-border bg-card text-foreground shadow-2xl ${className}`}>
 				{title && (
-					<div className="border-b border-gray-200 px-4 py-3 text-base font-semibold dark:border-gray-800">
+					<div className="border-b border-border px-4 py-3 text-base font-semibold flex-shrink-0 break-words">
 						{title}
 					</div>
 				)}
-				<div className="p-4">
+				<div className="p-4 overflow-y-auto flex-1">
 					{children}
 				</div>
 				{footer && (
-					<div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
+					<div className="border-t border-border px-4 py-3 flex-shrink-0">
 						{footer}
 					</div>
 				)}

@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
-import { FaPaperPlane, FaSpinner, FaPlus, FaMicrophone, FaEllipsisV } from 'react-icons/fa';
+import { Loader2, Mic, Paperclip, Send } from 'lucide-react';
+import { borderColors, bgColors, textColors, inputColors } from '../../theme/colors';
 
-const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }) => {
+const DEFAULT_MODELS = [
+  { id: 'Qwen2.5', name: 'Qwen 2.5' },
+];
+
+const ChatInput = ({
+  onSendMessage,
+  isLoading = false,
+  disabled = false,
+  models = DEFAULT_MODELS,
+}) => {
   const [message, setMessage] = useState('');
+  const [selectedModel, setSelectedModel] = useState(models[0]?.id ?? '');
+
+  const isTyping = isLoading || disabled;
+  const isSubmitDisabled = !message.trim() || isTyping;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (message.trim() && !isLoading && !disabled) {
+    if (message.trim() && !isTyping) {
       onSendMessage(message.trim());
       setMessage('');
     }
@@ -20,67 +34,80 @@ const ChatInput = ({ onSendMessage, isLoading = false, disabled = false }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-3">
-      <div className="flex-1 relative">
-        {/* Plus icon on the left */}
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-          <button
-            type="button"
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            title="Thêm tệp đính kèm"
-          >
-            <FaPlus className="w-4 h-4" />
-          </button>
-        </div>
-        
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Hỏi bất kỳ điều gì..."
-          className="w-full pl-10 pr-20 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white resize-none transition-colors"
-          rows="1"
-          disabled={isLoading || disabled}
-          style={{ minHeight: '48px', maxHeight: '120px' }}
-        />
-        
-        {/* Right side icons */}
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-          {/* Microphone icon */}
-          <button
-            type="button"
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            title="Ghi âm"
-          >
-            <FaMicrophone className="w-4 h-4" />
-          </button>
-          
-          {/* Send button or loading */}
-          {message.trim() ? (
-            <button
-              type="submit"
-              disabled={isLoading || disabled}
-              className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-              title="Gửi tin nhắn"
-            >
-              {isLoading ? (
-                <FaSpinner className="w-4 h-4 animate-spin" />
-              ) : (
-                <FaPaperPlane className="w-4 h-4" />
+    <div className=" border-border bg-background backdrop-blur">
+      <div className="p-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm"
+        >
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Hỏi tôi bất cứ điều gì về dự án, công việc hoặc tài liệu..."
+            className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            rows={3}
+            disabled={isTyping}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                disabled={isTyping}
+              >
+                <Paperclip className="h-4 w-4" />
+                Attachment
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                disabled={isTyping}
+              >
+                <Mic className="h-4 w-4" />
+                Voice
+              </button>
+
+              <div className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium">
+                <span className="text-muted-foreground">Model</span>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="bg-transparent text-foreground focus:outline-none"
+                  disabled={isTyping}
+                >
+                  {models.map((model) => (
+                    <option key={model.id} value={model.id} className="bg-background text-foreground">
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isTyping && (
+                <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang phản hồi...
+                </div>
               )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              title="Tùy chọn"
-            >
-              <FaEllipsisV className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              >
+                <Send className="h-4 w-4" />
+                Gửi
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 };
 

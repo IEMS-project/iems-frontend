@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaComments, FaCog, FaBrain, FaHistory, FaPlus, FaSpinner, FaChevronLeft, FaBars, FaSearch } from 'react-icons/fa';
+import { FaComments, FaCog, FaBrain, FaPlus, FaBars } from 'react-icons/fa';
 import ConversationList from './ConversationList';
 import MemoryPanel from './MemoryPanel';
 import ChatbotSettings from './ChatbotSettings';
 import chatbotService from '../../services/chatbotService';
+import Skeleton from '../ui/Skeleton';
+import { bgColors, textColors } from '../../theme/colors';
 
 const ConversationManager = ({
   activeConversationId,
@@ -83,33 +85,44 @@ const ConversationManager = ({
 
   if (loading) {
     return (
-      <div className={`flex flex-col h-full ${className}`}>
-        <div className="flex items-center justify-center h-full">
-          <div className="flex items-center gap-2 text-gray-500">
-            <FaSpinner className="w-4 h-4 animate-spin" />
-            <span>Đang tải...</span>
+      <div className={`flex flex-col h-full bg-card p-4 space-y-4 ${className}`}>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
           </div>
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div key={idx} className="rounded-lg border border-dashed border-border p-3">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="mt-2 h-3 w-1/2" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col h-full bg-white dark:bg-gray-800 relative ${className}`}>
+    <div className={`flex flex-col h-full bg-card relative ${className}`}>
       {/* Header - Only show when expanded */}
       {showSidebar && (
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">Q</span>
-            </div>
+            <img
+              src="/ppodong.png"
+              alt="Logo"
+              className="w-10 h-10 rounded object-cover"
+            />
             <div>
-              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">Qwen2.5</h2>
+              <h2 className="text-sm font-medium text-foreground">Ppodong</h2>
               <div className="flex items-center gap-2">
 
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-green-600 dark:text-green-400">Sẵn sàng</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">Ready</span>
                 </div>
               </div>
             </div>
@@ -119,10 +132,10 @@ const ConversationManager = ({
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="w-6 h-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded flex items-center justify-center transition-colors"
+              className="w-6 h-6 bg-muted hover:bg-muted/80 rounded flex items-center justify-center transition-colors"
               title="Thu nhỏ sidebar"
             >
-              <FaBars className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+              <FaBars className="w-3 h-3 text-muted-foreground" />
             </button>
           )}
         </div>
@@ -135,7 +148,7 @@ const ConversationManager = ({
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
               title="Mở rộng sidebar"
             >
               <FaBars className="w-4 h-4" />
@@ -144,7 +157,7 @@ const ConversationManager = ({
           {/* New Chat Button */}
           <button
             onClick={onNewConversation}
-            className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
             title="Cuộc trò chuyện mới"
           >
             <FaPlus className="w-4 h-4" />

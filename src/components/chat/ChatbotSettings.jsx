@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaCog, FaSave, FaSpinner, FaCheck, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaCog, FaSave, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '../../services/chatbotService';
+import Skeleton from '../ui/Skeleton';
+import { toast } from 'sonner';
+import { borderColors, bgColors, textColors, buttonColors } from '../../theme/colors';
 
 const ChatbotSettings = ({ className = "" }) => {
   const [settings, setSettings] = useState({
@@ -51,11 +54,11 @@ const ChatbotSettings = ({ className = "" }) => {
       setError(null);
       // TODO: Implement save settings API
       // await chatbotService.saveSettings(settings);
-      
+
       // Simulate save
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('Cài đặt đã được lưu thành công');
+
+      toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
       setError('Không thể lưu cài đặt');
@@ -85,30 +88,34 @@ const ChatbotSettings = ({ className = "" }) => {
 
   if (loading) {
     return (
-      <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${className}`}>
+      <div className={`p-4 border border-border rounded-lg ${className}`}>
         <div className="flex items-center gap-2 mb-4">
-          <FaCog className="w-5 h-5 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cài đặt Chatbot</h3>
+          <FaCog className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-foreground">Cài đặt Chatbot</h3>
         </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="flex items-center gap-2 text-gray-500">
-            <FaSpinner className="w-4 h-4 animate-spin" />
-            <span>Đang tải...</span>
-          </div>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="space-y-2 rounded-lg border border-dashed border-border p-4">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-3 w-3/5" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${className}`}>
+    <div className={`p-4 border border-border rounded-lg ${className}`}>
       <div className="flex items-center gap-2 mb-4">
-        <FaCog className="w-5 h-5 text-gray-600" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cài đặt Chatbot</h3>
+        <FaCog className="w-5 h-5 text-muted-foreground" />
+        <h3 className="text-lg font-semibold text-foreground">Cài đặt Chatbot</h3>
       </div>
 
       {/* Status */}
-      <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="mb-6 p-3 bg-muted rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <div className={`w-2 h-2 rounded-full ${status?.chatbot_ready ? 'bg-green-500' : 'bg-red-500'}`}></div>
           <span className={`text-sm font-medium ${getStatusColor()}`}>
@@ -116,7 +123,7 @@ const ChatbotSettings = ({ className = "" }) => {
           </span>
         </div>
         {status?.model && (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-muted-foreground">
             Model: {status.model} | Version: {status.version || 'N/A'}
           </div>
         )}
@@ -134,10 +141,10 @@ const ChatbotSettings = ({ className = "" }) => {
       <div className="space-y-6">
         {/* Model Settings */}
         <div>
-          <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Cấu hình Model</h4>
+          <h4 className="text-md font-medium text-foreground mb-3">Cấu hình Model</h4>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Model
               </label>
               <select
@@ -154,7 +161,7 @@ const ChatbotSettings = ({ className = "" }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Temperature: {settings.temperature}
+                Nhiệt độ: {settings.temperature}
               </label>
               <input
                 type="range"
@@ -166,15 +173,15 @@ const ChatbotSettings = ({ className = "" }) => {
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Conservative (0)</span>
-                <span>Balanced (1)</span>
-                <span>Creative (2)</span>
+                <span>Ổn định (0)</span>
+                <span>Cân bằng (1)</span>
+                <span>Sáng tạo (2)</span>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Max Tokens: {settings.maxTokens}
+                Số token tối đa: {settings.maxTokens}
               </label>
               <input
                 type="range"
@@ -186,9 +193,9 @@ const ChatbotSettings = ({ className = "" }) => {
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Short (512)</span>
-                <span>Medium (2048)</span>
-                <span>Long (4096)</span>
+                <span>Ngắn (512)</span>
+                <span>Trung bình (2048)</span>
+                <span>Dài (4096)</span>
               </div>
             </div>
           </div>
@@ -216,7 +223,7 @@ const ChatbotSettings = ({ className = "" }) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Streaming Response</div>
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Phản hồi dạng streaming</div>
                 <div className="text-xs text-gray-500">Hiển thị phản hồi theo thời gian thực</div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">

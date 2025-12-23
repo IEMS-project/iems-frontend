@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
 import {
   FaChevronLeft,
   FaChevronRight,

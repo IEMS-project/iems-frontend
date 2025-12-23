@@ -1,7 +1,9 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
-import { FaThumbtack, FaTimes, FaSpinner, FaBookmark } from "react-icons/fa";
+import Avatar from "../ui/Avatar.jsx";
+import Skeleton from "../ui/Skeleton";
+import { FaTimes, FaBookmark } from "react-icons/fa";
+import { Pin } from "lucide-react";
 
 const PinnedMessages = forwardRef(function PinnedMessages({ 
     conversationId, 
@@ -78,42 +80,53 @@ const PinnedMessages = forwardRef(function PinnedMessages({
     if (!isVisible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur">
+            <div className="bg-card border border-border rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col text-foreground">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between p-4 border-b border-border">
                     <div className="flex items-center gap-2">
-                        <FaThumbtack className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <Pin className="w-5 h-5 text-foreground" />
+                        <h3 className="text-lg font-semibold text-foreground">
                             Tin nhắn đã ghim
                         </h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                        className="p-1 hover:bg-muted rounded"
                     >
-                        <FaTimes className="w-5 h-5" />
+                        <FaTimes className="w-5 h-5 text-muted-foreground" />
                     </button>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
-                        <div className="text-center py-8">
-                            <FaSpinner className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
-                            <p className="text-gray-500 mt-2">Đang tải...</p>
+                        <div className="space-y-3">
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                                <div key={idx} className="rounded-lg border border-dashed border-border/70 p-3">
+                                    <div className="flex items-start gap-3">
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-1/3" />
+                                            <Skeleton className="h-3 w-1/5" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-3 w-2/3" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : pinnedMessages.length === 0 ? (
                         <div className="text-center py-8">
-                            <FaBookmark className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500">Chưa có tin nhắn nào được ghim</p>
+                            <FaBookmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground">Chưa có tin nhắn nào được ghim</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
                             {pinnedMessages.map((message) => (
                                 <div
                                     key={message.id}
-                                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-blue-500 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                                    className="bg-muted rounded-lg p-3 border-l-4 border-primary/40 hover:bg-muted/80 transition-colors cursor-pointer"
                                     onClick={() => onMessageClick?.(message)}
                                 >
                                     <div className="flex items-start gap-3">
@@ -127,22 +140,22 @@ const PinnedMessages = forwardRef(function PinnedMessages({
                                         <div className="flex-1 min-w-0">
                                             {/* Header with sender name and time */}
                                             <div className="flex items-center justify-between mb-1">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                <div className="text-sm font-medium text-foreground">
                                                     {getUserName(message.senderId)}
                                                 </div>
-                                                <div className="text-xs text-gray-500">
+                                                <div className="text-xs text-muted-foreground">
                                                     {formatTime(message.sentAt)}
                                                 </div>
                                             </div>
                                             
                                             {/* Message content */}
-                                            <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                            <div className="text-sm text-foreground mb-2">
                                                 {truncateContent(message.content)}
                                             </div>
                                             
                                             {/* Footer with pin info and actions */}
                                             <div className="flex items-center justify-between">
-                                                <div className="text-xs text-gray-500">
+                                                <div className="text-xs text-muted-foreground">
                                                     Ghim bởi {getUserName(message.pinnedBy)}
                                                 </div>
                                                 
@@ -154,7 +167,7 @@ const PinnedMessages = forwardRef(function PinnedMessages({
                                                             e.stopPropagation();
                                                             onMessageClick?.(message);
                                                         }}
-                                                        className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                        className="text-xs text-foreground hover:underline"
                                                     >
                                                         Đi tới tin nhắn
                                                     </button>
@@ -166,7 +179,7 @@ const PinnedMessages = forwardRef(function PinnedMessages({
                                                                 e.stopPropagation();
                                                                 handleUnpinMessage(message.id);
                                                             }}
-                                                            className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                                            className="text-xs text-destructive hover:underline"
                                                         >
                                                             Bỏ ghim
                                                         </button>

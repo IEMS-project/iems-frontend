@@ -1,6 +1,7 @@
 import React from "react";
-import Avatar from "../ui/Avatar";
-import { FaSearch, FaUsers, FaInfoCircle } from "react-icons/fa";
+import Avatar from "../ui/Avatar.jsx";
+import { Search, Users, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ChatHeader({
   selectedConversation,
@@ -16,6 +17,7 @@ export default function ChatHeader({
   getConversationDisplayName,
   onToggleSidebar,
 }) {
+  const { t } = useTranslation();
   const conv = selectedConversation;
   const showGroupButton = conv && !isDirect(conv);
   const headerContent = (() => {
@@ -27,9 +29,9 @@ export default function ChatHeader({
         <>
           <Avatar src={avatarSrc} name={dn} size={10} />
           <div className="min-w-0">
-            <div className="font-semibold truncate">{dn}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {dir ? 'Đang hoạt động' : `${(conv?.members || []).length} thành viên`}
+            <div className="font-semibold truncate text-foreground">{dn}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {dir ? t('messages.header.active') : t('messages.header.members', { count: (conv?.members || []).length })}
             </div>
           </div>
         </>
@@ -39,15 +41,15 @@ export default function ChatHeader({
       return (
         <>
           <Avatar src={getUserImage(selectedPeerId)} name={getUserName(selectedPeerId)} size={10} />
-          <div className="font-semibold truncate">{getUserName(selectedPeerId)}</div>
+          <div className="font-semibold truncate text-foreground">{getUserName(selectedPeerId)}</div>
         </>
       );
     }
-    return <div className="font-semibold truncate">Chọn cuộc trò chuyện</div>;
+    return <div className="font-semibold truncate text-muted-foreground">{t('messages.emptyChat.title')}</div>;
   })();
 
   return (
-    <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+    <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3 min-w-0">
         {headerContent}
       </div>
@@ -55,29 +57,29 @@ export default function ChatHeader({
         {conv && (
           <button
             onClick={onShowMessageSearch}
-            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Tìm kiếm tin nhắn"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            title={t('messages.header.searchMessages')}
           >
-            <FaSearch className="w-5 h-5" />
+            <Search className="w-5 h-5" />
           </button>
         )}
 
         {showGroupButton && (
           <button
             onClick={onShowGroupMembers}
-            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Quản lý thành viên"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            title={t('messages.header.manageMembers')}
           >
-            <FaUsers className="w-5 h-5" />
+            <Users className="w-5 h-5" />
           </button>
         )}
         {conv && (
           <button
             onClick={onToggleSidebar}
-            className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-            title="Thông tin cuộc trò chuyện"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            title={t('messages.header.conversationInfo')}
           >
-            <FaInfoCircle className="w-5 h-5" />
+            <Info className="w-5 h-5" />
           </button>
         )}
       </div>

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import MessageItem from "../messages/MessageItem";
+import MessageTimestamp from "../messages/MessageTimestamp";
 import { FaChevronDown, FaSpinner } from "react-icons/fa";
 
 function generateMessageKey(message, index) {
@@ -28,6 +29,23 @@ export default function MessageList({
   loadOlderById,
   loadNewerById,
 }) {
+  // Helper function to determine if messages should be grouped
+  const shouldGroupMessages = (currentMsg, previousMsg) => {
+    if (!previousMsg || !currentMsg) return false;
+
+    // Don't group system messages
+    if (currentMsg.type === 'SYSTEM_LOG' || previousMsg.type === 'SYSTEM_LOG') return false;
+
+    // Check if same sender
+    if (currentMsg.senderId !== previousMsg.senderId) return false;
+
+    // Check if within 5 minutes (300000 ms)
+    const timeDiff = new Date(currentMsg.sentAt) - new Date(previousMsg.sentAt);
+    if (timeDiff > 300000) return false; // 5 minutes
+
+    return true;
+  };
+
   useEffect(() => {
     const container = messagesContainerRef?.current;
     if (!container) return;
@@ -64,13 +82,13 @@ export default function MessageList({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 relative"
+      className="flex-1 overflow-y-auto bg-background relative"
     >
       {isJumpMode && (
         <button
           onClick={onReturnToLatest}
           title="Trở về hiện tại"
-          className="fixed right-4 bottom-4 z-50 w-10 h-10 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 flex items-center justify-center"
+          className="fixed right-4 bottom-4 z-50 w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 flex items-center justify-center"
           aria-label="Trở về hiện tại"
         >
           <FaChevronDown className="w-5 h-5" />
@@ -78,34 +96,60 @@ export default function MessageList({
       )}
 
       {loadingOlderMessages && (
-        <div className="flex justify-center py-4 bg-blue-50 dark:bg-blue-900/20">
+        <div className="flex justify-center py-4 bg-muted/50">
           <div className="flex items-center gap-2">
-            <FaSpinner className="animate-spin h-5 w-5 text-blue-600" />
-            <span className="text-sm text-blue-600 dark:text-blue-400">Đang tải tin nhắn cũ hơn...</span>
+            <FaSpinner className="animate-spin h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Đang tải tin nhắn cũ hơn...</span>
           </div>
         </div>
       )}
 
-      {messages.map((m, idx) => (
-        <div key={generateMessageKey(m, idx)} data-message-id={m.id || m._id}>
-          <MessageItem
-            message={m}
-            currentUserId={currentUserId}
-            getUserName={getUserName}
-            getUserImage={getUserImage}
-            onReply={onReply}
-            conversationId={selectedConversationId}
-            onMessageUpdate={onMessageUpdate}
-            onJumpToMessage={(messageId) => onJumpToMessage(selectedConversationId, messageId)}
-          />
-        </div>
-      ))}
+      {messages.map((m, idx) => {
+        const previousMsg = idx > 0 ? messages[idx - 1] : null;
+        const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
+        const shouldGroup = shouldGroupMessages(m, previousMsg);
+        const isLastInGroup = !shouldGroupMessages(nextMsg, m);
+
+        // Show timestamp if:
+        // 1. First message
+        // 2. More than 30 minutes from previous message
+        // 3. Different day from previous message
+        let showTimestamp = false;
+        if (!previousMsg) {
+          showTimestamp = true;
+        } else if (m.sentAt && previousMsg.sentAt) {
+          const timeDiff = new Date(m.sentAt) - new Date(previousMsg.sentAt);
+          const diffDays = new Date(m.sentAt).toDateString() !== new Date(previousMsg.sentAt).toDateString();
+          showTimestamp = timeDiff > 1800000 || diffDays; // 30 minutes or different day
+        }
+
+        return (
+          <React.Fragment key={generateMessageKey(m, idx)}>
+            {showTimestamp && <MessageTimestamp date={m.sentAt} />}
+            <div data-message-id={m.id || m._id}>
+              <MessageItem
+                message={m}
+                currentUserId={currentUserId}
+                getUserName={getUserName}
+                getUserImage={getUserImage}
+                onReply={onReply}
+                conversationId={selectedConversationId}
+                onMessageUpdate={onMessageUpdate}
+                onJumpToMessage={(messageId) => onJumpToMessage(selectedConversationId, messageId)}
+                showAvatar={!shouldGroup}
+                showName={!shouldGroup}
+                showTime={isLastInGroup}
+              />
+            </div>
+          </React.Fragment>
+        );
+      })}
 
       {loadingNewerMessages && (
-        <div className="flex justify-center py-4 bg-green-50 dark:bg-green-900/20">
+        <div className="flex justify-center py-4 bg-muted/50">
           <div className="flex items-center gap-2">
-            <FaSpinner className="animate-spin h-5 w-5 text-green-600" />
-            <span className="text-sm text-green-600 dark:text-green-400">Đang tải tin nhắn mới hơn...</span>
+            <FaSpinner className="animate-spin h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Đang tải tin nhắn mới hơn...</span>
           </div>
         </div>
       )}

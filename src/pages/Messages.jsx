@@ -1,17 +1,16 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import PageHeader from "../components/common/PageHeader";
 import { userService } from "../services/userService";
 import { chatService, chatWs } from "../services/chatService";
-import { UnreadCountsProvider, useUnreadCounts } from "../context/UnreadCountsContext";
+import { useUnreadCounts } from "../context/UnreadCountsContext";
 import { Client } from "@stomp/stompjs";
 import { getStoredTokens } from "../lib/api";
 import CreateGroupModal from "../components/messages/CreateGroupModal";
 import PinnedMessages from "../components/messages/PinnedMessages";
-import MessageSearch from "../components/messages/MessageSearch";
 import GroupMembersModal from "../components/messages/GroupMembersModal";
 import EmptyChat from "../components/messages/EmptyChat";
 import ConversationList from "../components/messages/ConversationList";
 import ChatArea from "../components/messages/ChatArea";
+import { toast } from "sonner";
 
 
 // Utility function to generate unique message keys
@@ -43,6 +42,7 @@ function Messages() {
     const lastMessagesByConvRef = useRef({});
     const [openCreateGroup, setOpenCreateGroup] = useState(false);
     const [uiTick, setUiTick] = useState(0);
+    const [loadingConversations, setLoadingConversations] = useState(true);
     const selectedConversationIdRef = useRef(null);
     // local fallback state for backwards compatibility (mostly unused now)
     const [unreadByConv, setUnreadByConv] = useState({});
@@ -52,7 +52,6 @@ function Messages() {
     // New states for advanced features
     const [replyingTo, setReplyingTo] = useState(null);
     const [showPinnedMessages, setShowPinnedMessages] = useState(false);
-    const [showMessageSearch, setShowMessageSearch] = useState(false);
     const [showGroupMembers, setShowGroupMembers] = useState(false);
     const [typingUsers, setTypingUsers] = useState({});
     const [isTyping, setIsTyping] = useState(false);
@@ -82,7 +81,15 @@ function Messages() {
 
     // Use global unread counts context
     // We'll wrap this component in UnreadCountsProvider at export
-    const { unreadCounts: unreadCountsCtx, setAll: setAllUnread, setCount: setUnreadCount, increment: incrementUnread, reset: resetUnread } = useUnreadCounts();
+    const {
+        unreadCounts: unreadCountsCtx,
+        setAll: setAllUnread,
+        setCount: setUnreadCount,
+        increment: incrementUnread,
+        reset: resetUnread,
+        setNotificationState: updateNotificationState,
+        setNotificationStates: setNotificationStatesBulk,
+    } = useUnreadCounts();
     const [globalUnreadCounts, setGlobalUnreadCounts] = useState({});
     const [unreadCounts, setUnreadCounts] = useState({});
 
@@ -175,7 +182,7 @@ function Messages() {
                             return updated;
                         });
                         try { resetUnread(payload.conversationId); } catch (e) { console.debug(e); }
-            } else if (payload.event === 'message') {
+                    } else if (payload.event === 'message') {
                         if (payload.conversationId && typeof payload.content === 'string') {
                             lastMessagesByConvRef.current[payload.conversationId] = {
                                 content: payload.content,
@@ -203,18 +210,22 @@ function Messages() {
                                 setUnreadByConv(prev => ({ ...prev, [payload.conversationId]: (prev[payload.conversationId] || 0) + 1 }));
                             }
                         }
-            } else if (payload.event === 'conversation_meta_updated') {
-                const { conversationId, name, avatarUrl, updatedAt } = payload;
-                if (conversationId) {
-                    setConversations(prev => prev.map(c => c.id === conversationId ? {
-                        ...c,
-                        name: name !== undefined ? name : c.name,
-                        avatarUrl: avatarUrl !== undefined ? avatarUrl : c.avatarUrl,
-                        updatedAt: updatedAt || c.updatedAt
-                    } : c));
-                    setUiTick(t => t + 1);
-                }
-            }
+                    } else if (payload.event === 'conversation_meta_updated') {
+                        const { conversationId, name, avatarUrl, updatedAt, notificationsEnabled } = payload;
+                        if (conversationId) {
+                            if (typeof notificationsEnabled === 'boolean') {
+                                try { updateNotificationState(conversationId, notificationsEnabled); } catch (e) { console.debug(e); }
+                            }
+                            setConversations(prev => prev.map(c => c.id === conversationId ? {
+                                ...c,
+                                name: name !== undefined ? name : c.name,
+                                avatarUrl: avatarUrl !== undefined ? avatarUrl : c.avatarUrl,
+                                updatedAt: updatedAt || c.updatedAt,
+                                notificationsEnabled: typeof notificationsEnabled === 'boolean' ? notificationsEnabled : c.notificationsEnabled
+                            } : c));
+                            setUiTick(t => t + 1);
+                        }
+                    }
                 } catch (_e) { }
             });
         });
@@ -576,6 +587,9 @@ function Messages() {
 
         // Update conversation data when there's a new message
         if (msg.conversationId) {
+            if (typeof msg.notificationsEnabled === 'boolean') {
+                try { updateNotificationState(msg.conversationId, msg.notificationsEnabled); } catch (e) { console.debug(e); }
+            }
             // Update last message
             if (msg.lastMessage && (msg.lastMessage.content || msg.lastMessage.recalled)) {
                 lastMessagesByConvRef.current[msg.conversationId] = {
@@ -603,7 +617,10 @@ function Messages() {
                                 ...conv,
                                 updatedAt: msg.updatedAt,
                                 lastMessage: msg.lastMessage,
-                                unreadCount: msg.unreadCount
+                                unreadCount: msg.unreadCount,
+                                notificationsEnabled: typeof msg.notificationsEnabled === 'boolean'
+                                    ? msg.notificationsEnabled
+                                    : conv.notificationsEnabled
                             };
                         }
                         return conv;
@@ -619,6 +636,11 @@ function Messages() {
     }
 
     async function loadConversations(userId) {
+        if (!userId) {
+            setLoadingConversations(false);
+            return;
+        }
+        setLoadingConversations(true);
         try {
             const data = await chatService.getConversationsByUser();
             const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
@@ -626,10 +648,13 @@ function Messages() {
 
             // Initialize unread counts and last messages from the enhanced API response
             const initialUnreadCounts = {};
+            const notificationMap = {};
             for (const c of list) {
                 if (c?.id) {
                     // Set unread count from API response
-                    initialUnreadCounts[c.id] = c.unreadCount || 0;
+                    const count = typeof c.actualUnreadCount === 'number' ? c.actualUnreadCount : (c.unreadCount || 0);
+                    initialUnreadCounts[c.id] = count;
+                    notificationMap[c.id] = c.notificationsEnabled !== false;
 
                     // Set last message from API response
                     if (c.lastMessage && c.lastMessage.content) {
@@ -645,10 +670,12 @@ function Messages() {
             setUnreadByConv(initialUnreadCounts);
             setGlobalUnreadCounts(initialUnreadCounts);
             // initialize global unread context as well
-            try { setAllUnread(initialUnreadCounts); } catch (e) { console.debug(e); }
+            try { setAllUnread(initialUnreadCounts, notificationMap); } catch (e) { console.debug(e); }
             setUiTick(t => t + 1);
         } catch (_e) {
             console.error('Error loading conversations:', _e);
+        } finally {
+            setLoadingConversations(false);
         }
     }
 
@@ -913,14 +940,14 @@ function Messages() {
             setLoadingOlderMessages(true);
             const oldest = messages[0];
             const oldestId = oldest.id || oldest._id;
-            
+
             // Skip if oldestId is a local/temp ID (not from server)
             if (!oldestId || oldestId.startsWith('local-') || oldestId.startsWith('temp-')) {
                 console.log('📥 Skipping loadOlderById - oldest message is local/temp:', oldestId);
                 setLoadingOlderMessages(false);
                 return;
             }
-            
+
             console.log('📥 Loading older-by-id before:', oldestId);
             const result = await chatService.getMessagesAround(oldestId, limit, 0);
             const older = (result?.beforeMessages || []).filter(msg => {
@@ -958,14 +985,14 @@ function Messages() {
             setLoadingNewerMessages(true);
             const newest = messages[messages.length - 1];
             const newestId = newest.id || newest._id;
-            
+
             // Skip if newestId is a local/temp ID (not from server)
             if (!newestId || newestId.startsWith('local-') || newestId.startsWith('temp-')) {
                 console.log('📥 Skipping loadNewerById - newest message is local/temp:', newestId);
                 setLoadingNewerMessages(false);
                 return;
             }
-            
+
             console.log('📥 Loading newer-by-id after:', newestId);
             const result = await chatService.getMessagesAround(newestId, 0, limit);
             const newer = (result?.afterMessages || []).filter(msg => {
@@ -1445,7 +1472,7 @@ function Messages() {
 
             if (!result || !result.targetMessage) {
                 console.log('❌ Message not found or deleted');
-                alert('Tin nhắn gốc đã bị xóa');
+                toast.warning('Original message has been deleted');
                 return;
             }
 
@@ -1463,7 +1490,7 @@ function Messages() {
                     return;
                 } else {
                     console.log('❌ Target conversation not found');
-                    alert('Cuộc trò chuyện không tồn tại');
+                    toast.warning('Conversation does not exist');
                     return;
                 }
             }
@@ -1498,7 +1525,7 @@ function Messages() {
 
         } catch (error) {
             console.error('❌ Error loading message with neighbors:', error);
-            alert('Không thể tải tin nhắn. Tin nhắn gốc có thể đã bị xóa.');
+            toast.error(error?.message || 'Failed to load message. Original message may have been deleted.');
         }
     }
 
@@ -1634,15 +1661,14 @@ function Messages() {
             await chatService.sendMedia({ conversationId: selectedConversationId, senderId: currentUserId, files });
         } catch (e) {
             console.error('❌ Error sending media:', e);
-            alert('Gửi tệp thất bại. Vui lòng thử lại.');
+            toast.error(e?.message || 'Failed to send file. Please try again.');
         }
     };
 
     return (
         <>
-            <div className="h-[calc(100vh-35px)] overflow-hidden flex flex-col space-y-6">
-                <PageHeader breadcrumbs={[{ label: "Tin nhắn", to: "/messages" }]} />
-                <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div className="h-full overflow-hidden flex flex-col">
+                <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
                     <ConversationList
                         conversations={conversations}
                         searchQuery={searchQuery}
@@ -1663,6 +1689,8 @@ function Messages() {
                         getUserName={getUserName}
                         getUserImage={getUserImage}
                         onConversationUpdate={() => loadConversations(currentUserId)}
+                        loadingConversations={loadingConversations}
+                        selectedConversationId={selectedConversationId}
                     />
                     {(selectedConversationId || pendingDirect) ? (
                         <ChatArea
@@ -1678,7 +1706,7 @@ function Messages() {
                             onMessageUpdate={handleMessageUpdate}
                             onJumpToMessage={jumpToMessage}
                             typingUsers={typingUsers}
-                            onShowMessageSearch={() => setShowMessageSearch(true)}
+                            onShowMessageSearch={() => { }}
                             onShowGroupMembers={() => setShowGroupMembers(true)}
                             isJumpMode={isJumpMode}
                             onReturnToLatest={returnToLatest}
@@ -1699,11 +1727,11 @@ function Messages() {
                             getPeerId={getPeerId}
                             getConversationDisplayName={getConversationDisplayName}
                             onShowPinnedMessages={() => setShowPinnedMessages(true)}
-                        onConversationMetaUpdated={(updated) => {
-                            if (!updated?.id) return;
-                            setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
-                            setUiTick(t => t + 1);
-                        }}
+                            onConversationMetaUpdated={(updated) => {
+                                if (!updated?.id) return;
+                                setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
+                                setUiTick(t => t + 1);
+                            }}
                         />
                     ) : (
                         <EmptyChat />
@@ -1730,15 +1758,6 @@ function Messages() {
                 currentUserId={currentUserId}
             />
 
-            <MessageSearch
-                conversationId={selectedConversationId}
-                isVisible={showMessageSearch}
-                onClose={() => setShowMessageSearch(false)}
-                getUserName={getUserName}
-                getUserImage={getUserImage}
-                onMessageClick={(message) => jumpToMessage(selectedConversationId, message.id || message._id)}
-                currentUserId={currentUserId}
-            />
 
             <GroupMembersModal
                 open={showGroupMembers}
@@ -1752,11 +1771,4 @@ function Messages() {
     );
 }
 
-// Wrap Messages with UnreadCountsProvider to provide global unread state
-export default function MessagesPage(props) {
-    return (
-        <UnreadCountsProvider>
-            <Messages {...props} />
-        </UnreadCountsProvider>
-    );
-}
+export default Messages;

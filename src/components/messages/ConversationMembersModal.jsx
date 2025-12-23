@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { chatService } from "../../services/chatService";
-import Avatar from "../ui/Avatar";
+import Avatar from "../ui/Avatar.jsx";
+import Skeleton from "../ui/Skeleton";
 
 export default function ConversationMembersModal({ open, onClose, conversationId }) {
     const [members, setMembers] = useState([]);
@@ -42,8 +43,16 @@ export default function ConversationMembersModal({ open, onClose, conversationId
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="space-y-3">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-2 rounded border border-dashed border-gray-200 dark:border-gray-700">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <Skeleton className="h-3 w-1/3" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="space-y-3">
