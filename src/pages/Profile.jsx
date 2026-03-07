@@ -26,8 +26,8 @@ export default function Profile() {
 		email: "",
 		phone: "",
 		address: "",
-		bankAccountNumber: "",
-		bankName: "",
+		dob: "",
+		gender: "",
 	});
 	const [cropModalOpen, setCropModalOpen] = useState(false);
 	const [imageSrcForCrop, setImageSrcForCrop] = useState(null);
@@ -54,8 +54,8 @@ export default function Profile() {
 					email: data?.email || "",
 					phone: data?.phone || "",
 					address: data?.address || "",
-					bankAccountNumber: data?.bankAccountNumber || "",
-					bankName: data?.bankName || "",
+					dob: data?.dob || "",
+					gender: data?.gender || "",
 				});
 			} catch (e) {
 				setError(e?.message || t('profile.messages.loadFailed'));
@@ -81,8 +81,6 @@ export default function Profile() {
 			const payload = {
 				address: formData.address,
 				phone: formData.phone,
-				bankAccountNumber: formData.bankAccountNumber,
-				bankName: formData.bankName,
 			};
 			const updated = await userService.updateMyProfile(payload);
 			setProfile(updated);
@@ -226,15 +224,7 @@ export default function Profile() {
 							<h2 className={cn("mt-6 text-2xl font-semibold", textColors.primary)}>
 								{fullName}
 							</h2>
-							<p className={cn("text-lg mt-2", textColors.secondary)}>
-								{profile?.role || ""}
-							</p>
-							<p className={cn("text-sm mt-2", textColors.muted)}>
-								{profile?.startDate ? `${t('profile.fields.joinedFrom')} ${new Date(profile.startDate).toLocaleDateString()}` : null}
-							</p>
-						</div>
-
-						<div className="mt-8 space-y-4">
+							{/* Role info removed - now in Account entity */}
 							<div className="flex items-center gap-4 text-base">
 								<FaEnvelope className={cn("h-5 w-5", textColors.muted)} />
 								<span className={textColors.secondary}>{formData.email}</span>
@@ -255,14 +245,7 @@ export default function Profile() {
 								<FaUsers className={cn("h-5 w-5", textColors.muted)} />
 								<span className={textColors.secondary}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
 							</div>
-							<div className="flex items-center gap-4 text-base">
-								<FaBuilding className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{
-									profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
-										profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
-											profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
-								}</span>
-							</div>
+							{/* Contract type removed - not in User entity */}
 						</div>
 
 						<div className={cn("mt-8 pt-6 border-t", borderColors.default)}>
@@ -276,177 +259,162 @@ export default function Profile() {
 
 				{/* Chi tiết thông tin - Chiếm 8/12 cột */}
 				<div className="lg:col-span-8">
-					<Card className="p-8 h-full">
-						<div className="flex items-center justify-between mb-8">
-							<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
-								{t('profile.detailInfo')}
-							</h3>
-							{!isEditing ? (
-								<Button
-									onClick={() => setIsEditing(true)}
-									className="flex items-center gap-2 text-base px-6 py-3"
-								>
-									<FaEdit className="h-5 w-5" />
-									{t('profile.actions.edit')}
-								</Button>
-							) : (
-								<div className="flex gap-3">
-									<Button
-										onClick={handleSave}
-										className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}
-									>
-										<FaSave className="h-5 w-5" />
-										{t('profile.actions.save')}
-									</Button>
-									<Button
-										onClick={handleCancel}
-										variant="outline"
-										className="flex items-center gap-2 text-base px-6 py-3"
-									>
-										<FaTimes className="h-5 w-5" />
-										{t('profile.actions.cancel')}
-									</Button>
-								</div>
-							)}
-						</div>						<div className="space-y-8">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.fullName')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{formData.firstName} {formData.lastName}</p>
-								</div>
-
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.email')}</label>
-									{isEditing ? (
-										<Input
-											type="email"
-											value={formData.email}
-											onChange={(e) => handleInputChange('email', e.target.value)}
-											placeholder={t('profile.placeholders.enterEmail')}
-											className="text-base py-3"
-										/>
-									) : (
-										<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
-									)}
-								</div>							<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
-										{t('profile.fields.phone')}
-									</label>
-									{isEditing ? (
-										<Input
-											value={formData.phone}
-											onChange={(e) => handleInputChange('phone', e.target.value)}
-											placeholder={t('profile.placeholders.enterPhone')}
-											className="text-base py-3"
-										/>
-									) : (
-										<p className={cn("text-lg", textColors.primary)}>{formData.phone}</p>
-									)}
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.personalID')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{profile?.personalID || ''}</p>
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankAccountNumber')}</label>
-									{isEditing ? (
-										<Input
-											value={formData.bankAccountNumber}
-											onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
-											placeholder={t('profile.placeholders.enterBankAccount')}
-											className="text-base py-3"
-										/>
-									) : (
-										<p className={cn("text-lg", textColors.primary)}>{formData.bankAccountNumber}</p>
-									)}
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankName')}</label>
-									{isEditing ? (
-										<Input
-											value={formData.bankName}
-											onChange={(e) => handleInputChange('bankName', e.target.value)}
-											placeholder={t('profile.placeholders.enterBankName')}
-											className="text-base py-3"
-										/>
-									) : (
-										<p className={cn("text-lg", textColors.primary)}>{formData.bankName}</p>
-									)}
-								</div>							<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
-										{t('profile.fields.address')}
-									</label>
-									{isEditing ? (
-										<Input
-											value={formData.address}
-											onChange={(e) => handleInputChange('address', e.target.value)}
-											placeholder={t('profile.placeholders.enterAddress')}
-											className="text-base py-3"
-										/>
-									) : (
-										<p className={cn("text-lg", textColors.primary)}>{formData.address}</p>
-									)}
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.dob')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.gender')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.contractType')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{
-										profile?.contractType === 'FULLTIME' ? t('profile.contractType.fulltime') :
-											profile?.contractType === 'PARTTIME' ? t('profile.contractType.parttime') :
-												profile?.contractType === 'CONTRACT' ? t('profile.contractType.contract') : (profile?.contractType || '')
-									}</p>
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.startDate')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{profile?.startDate ? new Date(profile.startDate).toLocaleDateString() : ''}</p>
-								</div>
-
-								<div>
-									<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.role')}</label>
-									<p className={cn("text-lg", textColors.primary)}>{profile?.role || ''}</p>
-								</div>
-							</div>
-
-							{/* Removed Giới thiệu bản thân section as requested */}
-						</div>
-					</Card>
-				</div>
+		<Card className="p-8 h-full">
+			<div className="flex items-center justify-between mb-8">
+				<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
+					{t('profile.detailInfo')}
+				</h3>
+				{!isEditing ? (
+					<Button
+						onClick={() => setIsEditing(true)}
+						className="flex items-center gap-2 text-base px-6 py-3"
+					>
+						<FaEdit className="h-5 w-5" />
+						{t('profile.actions.edit')}
+					</Button>
+				) : (
+					<div className="flex gap-3">
+						<Button
+							onClick={handleSave}
+							className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}
+						>
+							<FaSave className="h-5 w-5" />
+							{t('profile.actions.save')}
+						</Button>
+						<Button
+							onClick={handleCancel}
+							variant="outline"
+							className="flex items-center gap-2 text-base px-6 py-3"
+						>
+							<FaTimes className="h-5 w-5" />
+							{t('profile.actions.cancel')}
+						</Button>
+					</div>
+				)}
 			</div>
+			
+			<div className="space-y-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.fullName')}</label>
+						<p className={cn("text-lg", textColors.primary)}>{formData.firstName} {formData.lastName}</p>
+					</div>
 
-			{(loading || avatarUploading) && (
-				<p className={cn("text-sm", textColors.muted)}>{t('profile.messages.loading')}</p>
-			)}
-			{error && (
-				<p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-			)}
-			{success && (
-				<p className="text-sm text-green-600 dark:text-green-400">{success}</p>
-			)}
 
-			<ImageCropModal
-				isOpen={cropModalOpen}
-				onClose={() => {
-					setCropModalOpen(false);
-					setImageSrcForCrop(null);
-				}}
-				imageSrc={imageSrcForCrop}
-				onCropComplete={handleCropComplete}
-			/>
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.email')}</label>
+						{isEditing ? (
+							<Input
+								type="email"
+								value={formData.email}
+								onChange={(e) => handleInputChange('email', e.target.value)}
+								placeholder={t('profile.placeholders.enterEmail')}
+								className="text-base py-3"
+							/>
+						) : (
+							<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
+						)}
+					</div>							<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
+							{t('profile.fields.phone')}
+						</label>
+						{isEditing ? (
+							<Input
+								value={formData.phone}
+								onChange={(e) => handleInputChange('phone', e.target.value)}
+								placeholder={t('profile.placeholders.enterPhone')}
+								className="text-base py-3"
+							/>
+						) : (
+							<p className={cn("text-lg", textColors.primary)}>{formData.phone}</p>
+						)}
+					</div>
+
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.personalID')}</label>
+						<p className={cn("text-lg", textColors.primary)}>{profile?.personalID || ''}</p>
+					</div>
+
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankAccountNumber')}</label>
+						{isEditing ? (
+							<Input
+								value={formData.bankAccountNumber}
+								onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
+								placeholder={t('profile.placeholders.enterBankAccount')}
+								className="text-base py-3"
+							/>
+						) : (
+							<p className={cn("text-lg", textColors.primary)}>{formData.bankAccountNumber}</p>
+						)}
+					</div>
+
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankName')}</label>
+						{isEditing ? (
+							<Input
+								value={formData.bankName}
+								onChange={(e) => handleInputChange('bankName', e.target.value)}
+								placeholder={t('profile.placeholders.enterBankName')}
+								className="text-base py-3"
+							/>
+						) : (
+							<p className={cn("text-lg", textColors.primary)}>{formData.bankName}</p>
+						)}
+					</div>							<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
+							{t('profile.fields.address')}
+						</label>
+						{isEditing ? (
+							<Input
+								value={formData.address}
+								onChange={(e) => handleInputChange('address', e.target.value)}
+								placeholder={t('profile.placeholders.enterAddress')}
+								className="text-base py-3"
+							/>
+						) : (
+							<p className={cn("text-lg", textColors.primary)}>{formData.address}</p>
+						)}
+					</div>
+
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.dob')}</label>
+						<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
+					</div>
+
+					<div>
+						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.gender')}</label>
+						<p className={cn("text-lg", textColors.primary)}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
+					</div>
+
+					{/* Fields removed: contractType, startDate, role (not in User entity) */}
+				</div>
 		</div>
+
+		{/* Removed Giới thiệu bản thân section as requested */}
+			</Card>
+		</div>
+	</div>
+
+	{(loading || avatarUploading) && (
+		<p className={cn("text-sm", textColors.muted)}>{t('profile.messages.loading')}</p>
+	)}
+	{error && (
+		<p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+	)}
+	{success && (
+		<p className="text-sm text-green-600 dark:text-green-400">{success}</p>
+	)}
+
+	<ImageCropModal
+		isOpen={cropModalOpen}
+		onClose={() => {
+			setCropModalOpen(false);
+			setImageSrcForCrop(null);
+		}}
+		imageSrc={imageSrcForCrop}
+		onCropComplete={handleCropComplete}
+	/>
+</div>
 	);
 }

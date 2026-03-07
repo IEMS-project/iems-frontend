@@ -2,17 +2,17 @@ import { request } from "../lib/api";
 
 export const userService = {
   async getAllUsers() {
-    const data = await request("/user-service/users");
+    const data = await request("/iam-service/users");
     return data?.data || data || [];
   },
 
   async getMyProfile() {
-    const data = await request("/user-service/users/me");
+    const data = await request("/iam-service/users/me");
     return data?.data || data || null;
   },
 
   async updateMyProfile(payload) {
-    const data = await request("/user-service/users/me", {
+    const data = await request("/iam-service/users/me", {
       method: "PUT",
       body: payload,
     });
@@ -20,7 +20,7 @@ export const userService = {
   },
 
   async updateMyAvatar(imageUrl) {
-    const data = await request("/user-service/users/me/avatar", {
+    const data = await request("/iam-service/users/me/avatar", {
       method: "PUT",
       body: { imageUrl },
     });
@@ -28,12 +28,12 @@ export const userService = {
   },
 
   async getAllUserBasicInfos() {
-    const data = await request("/user-service/users/basic-infos");
+    const data = await request("/iam-service/users/basic-infos");
     return data?.data || data || [];
   },
 
   async getProjectManagerCandidates() {
-    const data = await request("/user-service/users/project-manager-candidates");
+    const data = await request("/iam-service/users/project-manager-candidates");
     return data?.data || data || [];
   },
 
@@ -54,12 +54,12 @@ export const userService = {
   },
 
   async getRoles() {
-    const data = await request("/user-service/roles");
+    const data = await request("/iam-service/api/roles");
     return data?.data || data || [];
   },
 
   async getUserById(userId) {
-    const data = await request(`/user-service/users/${userId}`);
+    const data = await request(`/iam-service/users/${userId}`);
     return data?.data || data || null;
   },
 
@@ -72,7 +72,7 @@ export const userService = {
   },
 
   async createUser(payload) {
-    const data = await request("/user-service/users", {
+    const data = await request("/iam-service/users", {
       method: "POST",
       body: payload,
     });
@@ -80,7 +80,7 @@ export const userService = {
   },
 
   async updateUser(userId, payload) {
-    const data = await request(`/user-service/users/${userId}`, {
+    const data = await request(`/iam-service/users/${userId}`, {
       method: "PUT",
       body: payload,
     });
@@ -88,7 +88,7 @@ export const userService = {
   },
 
   async deleteUser(userId) {
-    const data = await request(`/user-service/users/${userId}`, {
+    const data = await request(`/iam-service/users/${userId}`, {
       method: "DELETE",
     });
     return data?.data || data;
