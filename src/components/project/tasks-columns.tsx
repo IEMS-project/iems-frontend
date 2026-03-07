@@ -205,9 +205,12 @@ export const taskColumns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const date = row.getValue("startDate") as string | null
+      if (!date) return <div className="min-w-[110px] whitespace-nowrap text-foreground">-</div>
+      const [y, m, d] = date.split("T")[0].split("-").map(Number)
+      const localDate = new Date(y, m - 1, d)
       return (
         <div className="min-w-[110px] whitespace-nowrap text-foreground">
-          {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
+          {localDate.toLocaleDateString("vi-VN")}
         </div>
       )
     },
@@ -220,9 +223,12 @@ export const taskColumns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const date = row.getValue("dueDate") as string | null
+      if (!date) return <div className="min-w-[110px] whitespace-nowrap text-foreground">-</div>
+      const [y, m, d] = date.split("T")[0].split("-").map(Number)
+      const localDate = new Date(y, m - 1, d)
       return (
         <div className="min-w-[110px] whitespace-nowrap text-foreground">
-          {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
+          {localDate.toLocaleDateString("vi-VN")}
         </div>
       )
     },

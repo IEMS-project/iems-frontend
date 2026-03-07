@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card"
 import TaskDetailModal from "../components/tasks/TaskDetailModal";
 import Button from "../components/ui/Button";
 import Skeleton from "../components/ui/Skeleton";
-import Select from "../components/ui/select";
+import { toast } from 'sonner';
 import Input from "../components/ui/Input";
 import Checkbox from "../components/ui/Checkbox";
 import { taskService } from "../services/taskService";
@@ -198,8 +198,34 @@ export default function Tasks() {
     }, []);
 
 
+    // Valid status transitions (matching backend rules)
+    const isValidStatusTransition = (fromStatus, toStatus) => {
+        if (fromStatus === toStatus) return true;
+        const allowed = {
+            [STATUS_KEYS.PENDING]: [STATUS_KEYS.IN_PROGRESS, STATUS_KEYS.COMPLETED],
+            [STATUS_KEYS.IN_PROGRESS]: [STATUS_KEYS.COMPLETED],
+            [STATUS_KEYS.COMPLETED]: [STATUS_KEYS.IN_PROGRESS],
+        };
+        return (allowed[fromStatus] || []).includes(toStatus);
+    };
+
     // Handle kanban data change (drag and drop)
     const handleKanbanDataChange = (newData) => {
+        // Build a map of task id -> current column from existing tasks state
+        const currentColumnMap = {};
+        Object.entries(tasks).forEach(([column, list]) => {
+            list.forEach(t => { currentColumnMap[t.id] = column; });
+        });
+
+        // Check for invalid transitions
+        for (const item of newData) {
+            const prevColumn = currentColumnMap[item.id];
+            if (prevColumn && prevColumn !== item.column && !isValidStatusTransition(prevColumn, item.column)) {
+                toast.error(t('tasks.invalidStatusTransition', 'Không thể chuyển trạng thái từ {{from}} sang {{to}}').replace('{{from}}', getStatusName(prevColumn)).replace('{{to}}', getStatusName(item.column)));
+                return; // Reject the entire drag operation
+            }
+        }
+
         // Transform kanban data back to tasks object
         const newTasks = createEmptyTasks();
         newData.forEach(item => {
@@ -230,22 +256,25 @@ export default function Tasks() {
     // Helper functions for task card rendering
     const getTimeRemaining = (dueDate, status, updatedAt) => {
         if (!dueDate) return null;
-        
+
         // Check if task is done
         const isDone = status && ["Done", "DONE", "COMPLETED", "Completed"].includes(status.toString().trim());
-        
+
         if (isDone && updatedAt) {
             const updated = new Date(updatedAt);
-            const due = new Date(dueDate);
+            const [y2, m2, d2] = dueDate.toString().split("T")[0].split("-").map(Number);
+            const due = new Date(y2, m2 - 1, d2);
             // If updated before due date, show as done, not overdue
             if (updated <= due) {
                 return null; // Don't show time remaining for completed on-time tasks
             }
             // If updated after due date, still show overdue
         }
-        
+
         const today = new Date();
-        const due = new Date(dueDate);
+        // Parse due date as local end-of-day so same-day is not overdue
+        const [y, m, d] = dueDate.toString().split("T")[0].split("-").map(Number);
+        const due = new Date(y, m - 1, d, 23, 59, 59, 999);
         const diffTime = due - today;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -306,8 +335,9 @@ export default function Tasks() {
         if (!date) return null;
         let formatted = "";
         try {
-            const d = new Date(date);
-            formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const [y, m, d] = date.toString().split("T")[0].split("-").map(Number);
+            const localDate = new Date(y, m - 1, d);
+            formatted = localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         } catch {
             formatted = date;
         }
@@ -316,7 +346,8 @@ export default function Tasks() {
         let showDone = false;
         if (isDone && updatedAt) {
             const updated = new Date(updatedAt);
-            const due = new Date(date);
+            const [y, m, d] = date.toString().split("T")[0].split("-").map(Number);
+            const due = new Date(y, m - 1, d);
             if (updated <= due) {
                 showDone = true;
             }
@@ -497,6 +528,11 @@ export default function Tasks() {
             setHasUnsavedChanges(false);
         } catch (error) {
             console.error('Error saving tasks:', error);
+
+            const message =
+                error?.response?.data?.message || 'Bulk update failed';
+
+            toast.error(message);
         } finally {
             setIsSaving(false);
         }

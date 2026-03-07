@@ -190,7 +190,7 @@ export default function ProjectOverviewPage() {
                                 <div className="text-xs uppercase text-muted-foreground">{t('projects.form.startDate')}</div>
                                 <div className="text-foreground">
                                     {projectData.startDate
-                                        ? new Date(projectData.startDate).toLocaleDateString('vi-VN')
+                                        ? (() => { const [y,m,d] = projectData.startDate.split("T")[0].split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString('vi-VN'); })()
                                         : '-'}
                                 </div>
                             </div>
@@ -198,7 +198,7 @@ export default function ProjectOverviewPage() {
                                 <div className="text-xs uppercase text-muted-foreground">{t('projects.form.endDate')}</div>
                                 <div className="text-foreground">
                                     {projectData.endDate
-                                        ? new Date(projectData.endDate).toLocaleDateString('vi-VN')
+                                        ? (() => { const [y,m,d] = projectData.endDate.split("T")[0].split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString('vi-VN'); })()
                                         : '-'}
                                 </div>
                             </div>

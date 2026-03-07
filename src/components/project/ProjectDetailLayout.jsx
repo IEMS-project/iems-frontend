@@ -121,8 +121,8 @@ export default function ProjectDetailLayout() {
         setFormData({
             name: projectData?.name || "",
             description: projectData?.description || "",
-            startDate: projectData?.startDate ? new Date(projectData.startDate).toISOString().split('T')[0] : "",
-            endDate: projectData?.endDate ? new Date(projectData.endDate).toISOString().split('T')[0] : "",
+            startDate: projectData?.startDate ? projectData.startDate.toString().split('T')[0] : "",
+            endDate: projectData?.endDate ? projectData.endDate.toString().split('T')[0] : "",
             managerId: projectData?.managerId || "",
             status: projectData?.status || "PLANNING"
         });

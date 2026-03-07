@@ -64,8 +64,8 @@ export default function ProjectPhases({ projectId }) {
             name: phase.name,
             description: phase.description || "",
             goal: phase.goal || "",
-            startDate: phase.startDate ? new Date(phase.startDate).toISOString().split('T')[0] : "",
-            endDate: phase.endDate ? new Date(phase.endDate).toISOString().split('T')[0] : ""
+            startDate: phase.startDate ? phase.startDate.toString().split('T')[0] : "",
+            endDate: phase.endDate ? phase.endDate.toString().split('T')[0] : ""
         });
         setShowModal(true);
     };
@@ -136,7 +136,8 @@ export default function ProjectPhases({ projectId }) {
 
     const formatDate = (dateString) => {
         if (!dateString) return t("projects.phases.fields.undefined");
-        return new Date(dateString).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'vi-VN');
+        const [y, m, d] = dateString.toString().split("T")[0].split("-").map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'vi-VN');
     };
 
     if (loading) {

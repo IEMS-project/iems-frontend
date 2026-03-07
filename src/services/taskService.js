@@ -62,26 +62,20 @@ export const taskService = {
       dueDate: toLocalDate(payload.dueDate),
     };
 
-    // If files are provided, use FormData
+    // Always use FormData (backend expects multipart)
+    const formData = new FormData();
+    formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
     if (files && files.length > 0) {
-      const formData = new FormData();
-      formData.append('task', new Blob([JSON.stringify(body)], { type: 'application/json' }));
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-      const data = await request("/project-service/tasks", {
-        method: "POST",
-        body: formData,
-        isFormData: true,
-      });
-      return data?.data || data;
-    } else {
-      const data = await request("/project-service/tasks", {
-        method: "POST",
-        body,
-      });
-      return data?.data || data;
     }
+    const data = await request("/project-service/tasks", {
+      method: "POST",
+      body: formData,
+      isFormData: true,
+    });
+    return data?.data || data;
   },
 
   async updateTask(taskId, payload, files = null) {

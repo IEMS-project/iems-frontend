@@ -289,7 +289,7 @@ export default function Members() {
                         >
                             <option value="">{t('projects.detail.members.form.selectRole')}</option>
                             {projectRoles.map(r => (
-                                <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
+                                <option key={r.id} value={r.id}>{r.roleName}</option>
                             ))}
                         </Select>
                     </div>

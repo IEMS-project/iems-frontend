@@ -4,8 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
-import Select from "../ui/select";
-import { userService } from "../../services/userService";
 import { Trash2 } from "lucide-react";
 import IconActionButton from "../ui/IconActionButton";
 import { useParams } from "react-router-dom";
@@ -21,8 +19,7 @@ export default function ProjectRoles() {
     const [roles, setRoles] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ roleId: "", roleName: "" });
-    const [allRoles, setAllRoles] = useState([]);
+    const [form, setForm] = useState({ roleName: "" });
     const [deleteRoleDialogOpen, setDeleteRoleDialogOpen] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState(null);
 
@@ -41,25 +38,22 @@ export default function ProjectRoles() {
 
     const openAdd = async () => {
         setEditing(null);
-        setForm({ roleId: "", roleName: "" });
-        try {
-            const roles = await userService.getRoles();
-            setAllRoles(Array.isArray(roles) ? roles : []);
-        } catch { setAllRoles([]); }
+        setForm({ roleName: "" });
         setShowModal(true);
     };
     const openEdit = (r) => {
         setEditing(r);
-        setForm({ roleId: r.roleId || "", roleName: r.roleName || "" });
+        setForm({ roleName: r.roleName || "" });
         setShowModal(true);
     };
     const onSubmit = async () => {
         try {
-            if (!form.roleId) {
+            const roleName = form.roleName.trim();
+            if (!roleName) {
                 toast.warning(t('projects.detail.roles.messages.roleRequired'));
                 return;
             }
-            await projectService.addProjectRole(projectId, form);
+            await projectService.addProjectRole(projectId, { roleName });
             setShowModal(false);
             await load();
             toast.success(t('projects.detail.roles.messages.addSuccess'));
@@ -163,20 +157,14 @@ export default function ProjectRoles() {
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.detail.roles.form.selectRoleFromUserService')}</label>
-                        <Select
-                            value={form.roleId}
-                            onChange={(e) => {
-                                const selected = allRoles.find(r => (r.id === e.target.value || r.id === (e.target.value)));
-                                setForm({ roleId: e.target.value, roleName: selected?.name || "" });
-                            }}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('projects.detail.roles.form.roleName')}</label>
+                        <Input
+                            type="text"
+                            value={form.roleName}
+                            onChange={(e) => setForm({ roleName: e.target.value })}
                             className="w-full rounded border p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                            <option value="">{t('projects.detail.roles.form.selectRole')}</option>
-                            {allRoles.map(r => (
-                                <option key={r.id} value={r.id}>{r.name}</option>
-                            ))}
-                        </Select>
+                            placeholder={t('projects.detail.roles.form.roleNamePlaceholder') || 'Enter role name'}
+                        />
                     </div>
                 </div>
             </Modal>

@@ -69,21 +69,36 @@ export default function Calendar({ onDateClick, projectId }) {
 
 	const monthLabel = current.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'vi-VN', { month: "long", year: "numeric" });
 
+	// Format a Date object as "YYYY-MM-DD" using local timezone
+	const toLocalDateStr = (date) => {
+		const y = date.getFullYear();
+		const m = String(date.getMonth() + 1).padStart(2, '0');
+		const d = String(date.getDate()).padStart(2, '0');
+		return `${y}-${m}-${d}`;
+	};
+
 	// Hàm lấy tất cả các ngày trong khoảng từ startDate đến endDate
 	const getDatesInRange = (startDateStr, endDateStr) => {
 		if (!startDateStr && !endDateStr) return [];
 
-		const start = startDateStr ? new Date(startDateStr.split("T")[0]) : null;
-		const end = endDateStr ? new Date(endDateStr.split("T")[0]) : null;
+		// Parse date strings directly to avoid UTC shift
+		const parseDate = (str) => {
+			if (!str) return null;
+			const [y, m, d] = str.split("T")[0].split("-").map(Number);
+			return new Date(y, m - 1, d);
+		};
+
+		const start = parseDate(startDateStr);
+		const end = parseDate(endDateStr);
 
 		// Nếu chỉ có startDate, chỉ tính ngày đó
 		if (start && !end) {
-			return [start.toISOString().split("T")[0]];
+			return [toLocalDateStr(start)];
 		}
 
 		// Nếu chỉ có endDate/dueDate, chỉ tính ngày đó
 		if (!start && end) {
-			return [end.toISOString().split("T")[0]];
+			return [toLocalDateStr(end)];
 		}
 
 		// Nếu có cả hai, tính tất cả ngày trong khoảng
@@ -94,11 +109,11 @@ export default function Calendar({ onDateClick, projectId }) {
 
 			// Đảm bảo start <= end
 			if (current > endDate) {
-				return [end.toISOString().split("T")[0]];
+				return [toLocalDateStr(end)];
 			}
 
 			while (current <= endDate) {
-				dates.push(current.toISOString().split("T")[0]);
+				dates.push(toLocalDateStr(current));
 				current.setDate(current.getDate() + 1);
 			}
 			return dates;
@@ -144,7 +159,7 @@ export default function Calendar({ onDateClick, projectId }) {
 
 	const getTasksCountForDate = (date) => {
 		if (!date) return { high: 0, medium: 0, low: 0 };
-		const dateStr = date.toISOString().split("T")[0];
+		const dateStr = toLocalDateStr(date);
 		return tasksByDate[dateStr] || { high: 0, medium: 0, low: 0 };
 	};
 
@@ -161,7 +176,7 @@ export default function Calendar({ onDateClick, projectId }) {
 		let max = 0;
 		grid.forEach((date) => {
 			if (date) {
-				const dateStr = date.toISOString().split("T")[0];
+				const dateStr = toLocalDateStr(date);
 				const counts = tasksByDate[dateStr] || { high: 0, medium: 0, low: 0 };
 				const score = counts.high * 3 + counts.medium * 2 + counts.low * 1;
 				if (score > max) max = score;

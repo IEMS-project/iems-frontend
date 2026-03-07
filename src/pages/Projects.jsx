@@ -5,10 +5,8 @@ import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import Textarea from "../components/ui/Textarea";
-import UserSelect from "../components/project/UserSelect";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { projectService } from "../services/projectService";
-import { userService } from "../services/userService";
 import { toast } from "sonner";
 import { columns } from "../components/project/projects-columns";
 import { ProjectsDataTable } from "../components/project/projects-data-table";
@@ -16,7 +14,6 @@ import { ProjectsDataTable } from "../components/project/projects-data-table";
 export default function Projects() {
     const { t } = useTranslation();
     const [projects, setProjects] = useState([]);
-    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -27,7 +24,6 @@ export default function Projects() {
         description: "",
         startDate: "",
         endDate: "",
-        managerId: "",
         status: ""
     });
 
@@ -36,12 +32,8 @@ export default function Projects() {
         const loadData = async () => {
             try {
                 setLoading(true);
-                const [projectsData, usersData] = await Promise.all([
-                    projectService.getProjectsTable(),
-                    userService.getProjectManagerCandidates()
-                ]);
+                const projectsData = await projectService.getProjectsTable();
                 setProjects(projectsData);
-                setUsers(usersData);
             } catch (error) {
                 console.error("Error loading data:", error);
             } finally {
@@ -58,7 +50,6 @@ export default function Projects() {
             description: "",
             startDate: "",
             endDate: "",
-            managerId: "",
             status: "PLANNING"
         });
         setShowModal(true);
@@ -69,9 +60,8 @@ export default function Projects() {
         setFormData({
             name: project.name,
             description: project.description || "",
-            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "",
-            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "",
-            managerId: project.managerId,
+            startDate: project.startDate ? project.startDate.toString().split('T')[0] : "",
+            endDate: project.endDate ? project.endDate.toString().split('T')[0] : "",
             status: project.status || "PLANNING"
         });
         setShowModal(true);
@@ -105,10 +95,6 @@ export default function Projects() {
             toast.warning(t("projects.messages.nameRequired"));
             return;
         }
-        if (!formData.managerId) {
-            toast.warning(t("projects.messages.managerRequired"));
-            return;
-        }
 
         try {
             const projectData = {
@@ -136,7 +122,6 @@ export default function Projects() {
                 description: "",
                 startDate: "",
                 endDate: "",
-                managerId: "",
                 status: ""
             });
         } catch (error) {
@@ -153,7 +138,6 @@ export default function Projects() {
             description: "",
             startDate: "",
             endDate: "",
-            managerId: "",
             status: ""
         });
     };
@@ -194,7 +178,7 @@ export default function Projects() {
                 }
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
+                    <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.projectName")} {t("projects.form.required")}
                         </label>
@@ -205,16 +189,6 @@ export default function Projects() {
                             className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.form.projectNamePlaceholder")}
                             required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                            {t("projects.form.projectManager")} {t("projects.form.required")}
-                        </label>
-                        <UserSelect
-                            assignableUsers={users}
-                            value={formData.managerId}
-                            onChange={(userId) => setFormData({ ...formData, managerId: userId })}
                         />
                     </div>
                     <div>
@@ -246,9 +220,6 @@ export default function Projects() {
                         >
                             <option value="PLANNING">{t("projects.status.planning")}</option>
                             <option value="IN_PROGRESS">{t("projects.status.inProgress")}</option>
-                            <option value="ON_HOLD">{t("projects.status.onHold")}</option>
-                            <option value="COMPLETED">{t("projects.status.completed")}</option>
-                            <option value="CANCELLED">{t("projects.status.cancelled")}</option>
                         </select>
                     </div>
                     <div className="sm:col-span-2">

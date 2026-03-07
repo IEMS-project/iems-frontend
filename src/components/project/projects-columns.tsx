@@ -115,9 +115,11 @@ export const columns: ColumnDef<Project>[] = [
     },
     cell: ({ row }) => {
       const date = row.getValue("startDate") as string | null
+      if (!date) return <div className="text-foreground">-</div>
+      const [y, m, d] = date.split("T")[0].split("-").map(Number)
       return (
         <div className="text-foreground">
-          {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
+          {new Date(y, m - 1, d).toLocaleDateString("vi-VN")}
         </div>
       )
     },
@@ -130,9 +132,11 @@ export const columns: ColumnDef<Project>[] = [
     },
     cell: ({ row }) => {
       const date = row.getValue("endDate") as string | null
+      if (!date) return <div className="text-foreground">-</div>
+      const [y, m, d] = date.split("T")[0].split("-").map(Number)
       return (
         <div className="text-foreground">
-          {date ? new Date(date).toLocaleDateString("vi-VN") : "-"}
+          {new Date(y, m - 1, d).toLocaleDateString("vi-VN")}
         </div>
       )
     },
