@@ -61,10 +61,10 @@ export default function MyTasks() {
 	const getDueDateText = (dueDate) => {
 		if (!dueDate) return t("dashboard.myTasks.noDueDate");
 		try {
-			const due = new Date(dueDate);
+			const [y, m, d] = dueDate.toString().split("T")[0].split("-").map(Number);
+			const dueDateOnly = new Date(y, m - 1, d);
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
-			const dueDateOnly = new Date(due.getFullYear(), due.getMonth(), due.getDate());
 			const diffTime = dueDateOnly - today;
 			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 

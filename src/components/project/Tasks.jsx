@@ -153,8 +153,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                         : 'TASK',
             parentTaskId: task.parentTaskId || "",
             phaseId: task.phaseId || "",
-            startDate: task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : "",
-            dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : ""
+            startDate: task.startDate ? task.startDate.toString().split("T")[0] : "",
+            dueDate: task.dueDate ? task.dueDate.toString().split("T")[0] : ""
         });
         setExistingAttachments(task.attachments || []);
         setAttachmentsToDelete([]);
@@ -688,9 +688,19 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                 className="w-full"
                             >
-                                <option value="Đang chờ">{t('dashboard.status.pending')}</option>
-                                <option value="Đang thực hiện">{t('dashboard.status.inProgress')}</option>
-                                <option value="Hoàn thành">{t('dashboard.status.completed')}</option>
+                                {(() => {
+                                    const originalStatus = editingTask ? reverseTranslateStatus(translateStatus(editingTask.status)) : null;
+                                    const showTodo = !editingTask || originalStatus === 'TO_DO';
+                                    const showInProgress = !editingTask || originalStatus === 'TO_DO' || originalStatus === 'IN_PROGRESS' || originalStatus === 'COMPLETED';
+                                    const showCompleted = !editingTask || originalStatus === 'TO_DO' || originalStatus === 'IN_PROGRESS';
+                                    return (
+                                        <>
+                                            {showTodo && <option value="Đang chờ">{t('dashboard.status.pending')}</option>}
+                                            {showInProgress && <option value="Đang thực hiện">{t('dashboard.status.inProgress')}</option>}
+                                            {showCompleted && <option value="Hoàn thành">{t('dashboard.status.completed')}</option>}
+                                        </>
+                                    );
+                                })()}
                             </Select>
                         </div>
 

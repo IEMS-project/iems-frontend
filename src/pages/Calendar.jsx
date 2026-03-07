@@ -43,9 +43,9 @@ export default function CalendarPage() {
 
                 function addOneDay(dateStr) {
                     if (!dateStr) return undefined;
-                    const d = new Date(dateStr);
-                    d.setDate(d.getDate() + 1);
-                    return d.toISOString().slice(0, 10);
+                    const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
+                    const date = new Date(y, m - 1, d + 1);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                 }
 
                 const mapped = (Array.isArray(tasks) ? tasks : []).map((t) => {

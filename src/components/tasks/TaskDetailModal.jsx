@@ -82,6 +82,13 @@ export default function TaskDetailModal({ open, onClose, task, onEdit, onDelete 
         return { icon: Circle, color: 'text-gray-500 dark:text-gray-400' };
     };
 
+    // Parse a date-only string ("YYYY-MM-DD") as local midnight to avoid UTC timezone shift
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return null;
+        const [y, m, d] = dateStr.toString().split("T")[0].split("-").map(Number);
+        return new Date(y, m - 1, d);
+    };
+
     const getTimeRemaining = (dueDate, status, updatedAt) => {
         if (!dueDate) return null;
         
@@ -90,16 +97,16 @@ export default function TaskDetailModal({ open, onClose, task, onEdit, onDelete 
         
         if (isDone && updatedAt) {
             const updated = new Date(updatedAt);
-            const due = new Date(dueDate);
-            // If updated before due date, show as done
+            const due = parseLocalDate(dueDate);
             if (updated <= due) {
                 return t('tasks.detail.fields.completed');
             }
-            // If updated after due date, still show overdue
         }
         
         const today = new Date();
-        const due = new Date(dueDate);
+        // Parse due date as local end-of-day so it's not overdue until the next day
+        const [y, m, d] = dueDate.toString().split("T")[0].split("-").map(Number);
+        const due = new Date(y, m - 1, d, 23, 59, 59, 999);
         const diffTime = due - today;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -118,13 +125,11 @@ export default function TaskDetailModal({ open, onClose, task, onEdit, onDelete 
 
     const formatDueDate = (dueDate) => {
         if (!dueDate) return null;
-        const date = new Date(dueDate);
+        const date = parseLocalDate(dueDate);
         return date.toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric'
         });
     };
 
@@ -318,7 +323,7 @@ export default function TaskDetailModal({ open, onClose, task, onEdit, onDelete 
                                 {t('tasks.detail.fields.startDate')}
                             </div>
                             <div className="text-sm text-foreground mt-1">
-                                {new Date(task.startDate).toLocaleDateString('vi-VN')}
+                                {parseLocalDate(task.startDate)?.toLocaleDateString('vi-VN')}
                             </div>
                         </div>
                     )}
