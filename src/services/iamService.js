@@ -104,18 +104,15 @@ export const iamService = {
 
   async updateAccountRoles(userId, roleCodes) {
     const data = await request(`/iam-service/api/accounts/${userId}/roles`, {
-      method: "PUT",
+      method: "POST",
       body: { roleCodes },
     });
     return data?.data || data;
   },
 
-  async updateAccountPermissions(userId, permissionCodes) {
-    const data = await request(`/iam-service/api/accounts/${userId}/permissions`, {
-      method: "PUT",
-      body: { permissionCodes },
-    });
-    return data?.data || data;
+  async getUserPermissions(userId) {
+    const data = await request(`/iam-service/api/accounts/${userId}/permissions`);
+    return data?.data || null;
   },
 
   async resetAccountPassword(userId, newPassword) {

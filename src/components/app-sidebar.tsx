@@ -59,38 +59,39 @@ export function AppSidebar() {
   // Menu items (excluding Projects as it's handled separately)
   const allItems = [
     {
-      title: t('sidebar.dashboard'),
+      title: t("sidebar.dashboard"),
       url: "/dashboard",
       icon: Home,
     },
     {
-      title: t('sidebar.tasks'),
+      title: t("sidebar.tasks"),
       url: "/tasks",
       icon: CheckSquare,
     },
 
     {
-      title: t('sidebar.messages'),
+      title: t("sidebar.messages"),
       url: "/messages",
       icon: MessageSquare,
     },
     {
-      title: t('sidebar.chatbot'),
+      title: t("sidebar.chatbot"),
       url: "/chatbot",
       icon: Bot,
     },
     {
-      title: t('sidebar.documents'),
+      title: t("sidebar.documents"),
       url: "/documents",
       icon: FileText,
     },
+    // Departments removed from backend
+    // {
+    //   title: t('sidebar.departments'),
+    //   url: "/departments",
+    //   icon: Users,
+    // },
     {
-      title: t('sidebar.departments'),
-      url: "/departments",
-      icon: Users,
-    },
-    {
-      title: t('sidebar.accessControl'),
+      title: t("sidebar.accessControl"),
       url: "/admin/access-control",
       icon: Shield,
       requiresAdmin: true, // Only show for IAM ADMIN
@@ -99,7 +100,7 @@ export function AppSidebar() {
 
   // Filter items based on user role
   const items = useMemo(() => {
-    return allItems.filter(item => {
+    return allItems.filter((item) => {
       if (item.requiresAdmin) {
         return isIamAdmin;
       }
@@ -133,7 +134,9 @@ export function AppSidebar() {
   }, [refreshUnreadCounts]);
 
   // Check if current path is a project detail page
-  const isProjectDetailPage = location.pathname.startsWith("/projects/") && location.pathname !== "/projects";
+  const isProjectDetailPage =
+    location.pathname.startsWith("/projects/") &&
+    location.pathname !== "/projects";
 
   return (
     <Sidebar collapsible="icon">
@@ -148,10 +151,10 @@ export function AppSidebar() {
                 {!collapsed && (
                   <div className="flex flex-col">
                     <div className="text-base font-semibold leading-tight">
-                      {t('sidebar.appName')}
+                      {t("sidebar.appName")}
                     </div>
                     <div className="text-xs text-sidebar-foreground/70">
-                      {t('sidebar.appDescription')}
+                      {t("sidebar.appDescription")}
                     </div>
                   </div>
                 )}
@@ -163,7 +166,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{t('sidebar.mainFeatures')}</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("sidebar.mainFeatures")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Dashboard - always on top */}
@@ -179,7 +182,10 @@ export function AppSidebar() {
                         tooltip={item.title}
                         isActive={isActive}
                       >
-                        <NavLink to={item.url} className="flex items-center gap-2">
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-2"
+                        >
                           <item.icon />
                           <span>{item.title}</span>
                           {showUnreadBadge && (
@@ -195,12 +201,14 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  tooltip={t('sidebar.projects')}
-                  isActive={location.pathname === "/projects" || isProjectDetailPage}
+                  tooltip={t("sidebar.projects")}
+                  isActive={
+                    location.pathname === "/projects" || isProjectDetailPage
+                  }
                 >
                   <NavLink to="/projects">
                     <FolderKanban />
-                    <span>{t('sidebar.projects')}</span>
+                    <span>{t("sidebar.projects")}</span>
                   </NavLink>
                 </SidebarMenuButton>
                 <SidebarMenuSub>
@@ -211,31 +219,30 @@ export function AppSidebar() {
                       isActive={location.pathname === "/projects"}
                     >
                       <NavLink to="/projects">
-                        <span>{t('sidebar.allProjects')}</span>
+                        <span>{t("sidebar.allProjects")}</span>
                       </NavLink>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                   {loadingProjects ? (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton disabled>
-                        <span>{t('sidebar.loading')}</span>
+                        <span>{t("sidebar.loading")}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : projects.length === 0 ? (
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton disabled>
-                        <span>{t('sidebar.noProjects')}</span>
+                        <span>{t("sidebar.noProjects")}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : (
                     projects.map((project) => {
-                      const isActive = location.pathname.startsWith(`/projects/${project.id}`);
+                      const isActive = location.pathname.startsWith(
+                        `/projects/${project.id}`,
+                      );
                       return (
                         <SidebarMenuSubItem key={project.id}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={isActive}
-                          >
+                          <SidebarMenuSubButton asChild isActive={isActive}>
                             <NavLink to={`/projects/${project.id}/overview`}>
                               <span className="truncate">{project.name}</span>
                             </NavLink>
@@ -251,26 +258,29 @@ export function AppSidebar() {
               {items
                 .filter((item) => item.url !== "/dashboard")
                 .map((item) => {
-                const isActive = location.pathname === item.url;
-                const showUnreadBadge = item.url === "/messages" && hasUnread;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.title}
-                      isActive={isActive}
-                    >
-                      <NavLink to={item.url} className="flex items-center gap-2">
-                        <item.icon />
-                        <span>{item.title}</span>
-                        {showUnreadBadge && (
-                          <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+                  const isActive = location.pathname === item.url;
+                  const showUnreadBadge = item.url === "/messages" && hasUnread;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.title}
+                        isActive={isActive}
+                      >
+                        <NavLink
+                          to={item.url}
+                          className="flex items-center gap-2"
+                        >
+                          <item.icon />
+                          <span>{item.title}</span>
+                          {showUnreadBadge && (
+                            <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -284,7 +294,11 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 {collapsed ? (
                   <SidebarMenuButton
-                    tooltip={theme === "dark" ? t('sidebar.lightMode') : t('sidebar.darkMode')}
+                    tooltip={
+                      theme === "dark"
+                        ? t("sidebar.lightMode")
+                        : t("sidebar.darkMode")
+                    }
                     onClick={toggleTheme}
                   >
                     {theme === "dark" ? (
@@ -301,12 +315,9 @@ export function AppSidebar() {
                       ) : (
                         <Sun className="h-4 w-4" />
                       )}
-                      <span>{t('sidebar.darkMode')}</span>
+                      <span>{t("sidebar.darkMode")}</span>
                     </div>
-                    <Toggle
-                      checked={theme === "dark"}
-                      onChange={toggleTheme}
-                    />
+                    <Toggle checked={theme === "dark"} onChange={toggleTheme} />
                   </div>
                 )}
               </SidebarMenuItem>
@@ -326,4 +337,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

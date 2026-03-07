@@ -36,7 +36,7 @@ const toLocalDate = (input) => {
 
 export const taskService = {
   async getTasksByProject(projectId) {
-    const data = await request(`/task-service/tasks/project/${projectId}`);
+    const data = await request(`/project-service/tasks/project/${projectId}`);
     const payload = data?.data || data || [];
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.data)) return payload.data;
@@ -44,7 +44,7 @@ export const taskService = {
   },
 
   async getMyTasks() {
-    const data = await request("/task-service/tasks/my-tasks");
+    const data = await request("/project-service/tasks/my-tasks");
     return data?.data || data || [];
   },
 
@@ -69,14 +69,14 @@ export const taskService = {
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-      const data = await request("/task-service/tasks", {
+      const data = await request("/project-service/tasks", {
         method: "POST",
         body: formData,
         isFormData: true,
       });
       return data?.data || data;
     } else {
-      const data = await request("/task-service/tasks", {
+      const data = await request("/project-service/tasks", {
         method: "POST",
         body,
       });
@@ -105,14 +105,14 @@ export const taskService = {
       for (let i = 0; i < files.length; i++) {
         formData.append('files', files[i]);
       }
-      const data = await request(`/task-service/tasks/${taskId}`, {
+      const data = await request(`/project-service/tasks/${taskId}`, {
         method: "PATCH",
         body: formData,
         isFormData: true,
       });
       return data?.data || data;
     } else {
-      const data = await request(`/task-service/tasks/${taskId}`, {
+      const data = await request(`/project-service/tasks/${taskId}`, {
         method: "PATCH",
         body,
       });
@@ -121,14 +121,14 @@ export const taskService = {
   },
 
   async assignTask(taskId, newAssigneeId) {
-    const data = await request(`/task-service/tasks/${taskId}/assign?newAssigneeId=${encodeURIComponent(newAssigneeId)}`, {
+    const data = await request(`/project-service/tasks/${taskId}/assign?newAssigneeId=${encodeURIComponent(newAssigneeId)}`, {
       method: "PATCH",
     });
     return data?.data || data;
   },
 
   async bulkUpdateStatus(taskIds, newStatus) {
-    const data = await request(`/task-service/tasks/status-bulk?newStatus=${encodeURIComponent(newStatus)}`, {
+    const data = await request(`/project-service/tasks/status-bulk?newStatus=${encodeURIComponent(newStatus)}`, {
       method: "POST",
       body: { ids: taskIds },
     });
@@ -136,7 +136,7 @@ export const taskService = {
   },
 
   async updateTaskPriorityAndDates(taskId, { priority, startDate, dueDate }) {
-    const data = await request(`/task-service/tasks/${taskId}/priority-date`, {
+    const data = await request(`/project-service/tasks/${taskId}/priority-date`, {
       method: "PUT",
       body: {
         priority: mapPriority(priority),
@@ -148,12 +148,12 @@ export const taskService = {
   },
 
   async getComments(taskId) {
-    const data = await request(`/task-service/tasks/${taskId}/comments`);
+    const data = await request(`/project-service/tasks/${taskId}/comments`);
     return data?.data || data || [];
   },
 
   async addComment(taskId, content, parentCommentId = null) {
-    const data = await request(`/task-service/tasks/${taskId}/comments`, {
+    const data = await request(`/project-service/tasks/${taskId}/comments`, {
       method: "POST",
       body: { content, parentCommentId },
     });
@@ -161,7 +161,7 @@ export const taskService = {
   },
 
   async updateComment(commentId, content) {
-    const data = await request(`/task-service/tasks/comments/${commentId}`, {
+    const data = await request(`/project-service/tasks/comments/${commentId}`, {
       method: "PUT",
       body: { content },
     });
@@ -169,21 +169,21 @@ export const taskService = {
   },
 
   async deleteComment(commentId) {
-    const data = await request(`/task-service/tasks/comments/${commentId}`, {
+    const data = await request(`/project-service/tasks/comments/${commentId}`, {
       method: "DELETE",
     });
     return data?.data || data;
   },
 
   async deleteAttachment(taskId, attachmentId) {
-    const data = await request(`/task-service/tasks/${taskId}/attachments/${attachmentId}`, {
+    const data = await request(`/project-service/tasks/${taskId}/attachments/${attachmentId}`, {
       method: "DELETE",
     });
     return data?.data || data;
   },
 
   async deleteTask(taskId) {
-    const data = await request(`/task-service/tasks/${taskId}`, {
+    const data = await request(`/project-service/tasks/${taskId}`, {
       method: "DELETE",
     });
     return data?.data || data;

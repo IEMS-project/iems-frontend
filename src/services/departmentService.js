@@ -1,5 +1,11 @@
 import { getStoredTokens, request, requestNoAuth } from "../lib/api";
 
+/**
+ * DEPRECATED: Department service has been removed from the backend.
+ * This file is kept for reference only and should not be used.
+ * All department functionality has been removed in the backend refactoring.
+ */
+
 function requireUserId() {
   const tokens = getStoredTokens();
   const userId = tokens?.userInfo?.userId;

@@ -11,8 +11,8 @@ import ProjectMembersPage from "./pages/project/ProjectMembersPage";
 import ProjectCode from "./components/project/ProjectCode";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
-import Departments from "./pages/Departments";
-import DepartmentDetail from "./pages/DepartmentDetail";
+// import Departments from "./pages/Departments";
+// import DepartmentDetail from "./pages/DepartmentDetail";
 import Messages from "./pages/Messages.jsx";
 import Documents from "./pages/Documents";
 import AdminAnalytics from "./pages/AdminAnalytics";
@@ -39,20 +39,20 @@ function Protected({ children }) {
 function AdminProtected({ children }) {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
-    
+
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
-    
+
     // Check if user has IAM ADMIN role
     const tokens = getStoredTokens();
     const roles = tokens?.userInfo?.roles || [];
     const isIamAdmin = Array.isArray(roles) && roles.includes("ADMIN");
-    
+
     if (!isIamAdmin) {
         return <Navigate to="/permission-denied" replace />;
     }
-    
+
     return children;
 }
 
@@ -80,8 +80,9 @@ export default function App() {
                                     <Route path="code/*" element={<ProjectCode />} />
                                 </Route>
                                 <Route path="/tasks" element={<Tasks />} />
-                                <Route path="/departments" element={<Departments />} />
-                                <Route path="/departments/:departmentId" element={<DepartmentDetail />} />
+                                {/* Department routes commented out - department service removed from backend */}
+                                {/* <Route path="/departments" element={<Departments />} /> */}
+                                {/* <Route path="/departments/:departmentId" element={<DepartmentDetail />} /> */}
                                 <Route path="/messages" element={<Messages />} />
                                 <Route path="/documents" element={<Documents />} />
                                 <Route path="/chatbot" element={<Chatbot />} />
