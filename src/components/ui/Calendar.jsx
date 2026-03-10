@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from "react-icons/fa";
-import { taskService } from "../../services/taskService";
+import { taskService } from "@/features/tasks/api/taskService";
 
 function startOfMonth(date) {
 	return new Date(date.getFullYear(), date.getMonth(), 1);

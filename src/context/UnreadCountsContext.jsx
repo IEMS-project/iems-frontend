@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
-import { chatService, chatWs } from "../services/chatService";
-import { getStoredTokens } from "../lib/api";
+import { chatService, chatWs } from "@/features/messages/api/chatService";
+import { getStoredTokens } from "@/lib/api";
 import { useAuth } from "./AuthContext.jsx";
 
 const UnreadCountsContext = createContext();
