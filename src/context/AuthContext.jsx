@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredTokens } from "../lib/api";
-import { authService } from "../services/authService";
-import { userService } from "../services/userService";
+import { getStoredTokens } from "@/lib/api";
+import { authService } from "@/features/auth/api/authService";
+import { userService } from "@/features/profile/api/userService";
 
 const AuthContext = createContext(null);
 

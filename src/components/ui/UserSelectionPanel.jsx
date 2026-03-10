@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Avatar from "./Avatar";
 import Skeleton from "./Skeleton";
-import { textColors, bgColors, borderColors, cn } from '../../theme/colors';
+import { textColors, bgColors, borderColors, cn } from '@/theme/colors';
 
 /**
  * UserSelectionPanel - Component UI chung để chọn người dùng
