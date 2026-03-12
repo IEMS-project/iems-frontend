@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Calendar from "@/components/ui/Calendar";
 import Members from "@/features/projects/components/Members";
 import ProjectRoles from "@/features/projects/components/ProjectRoles";
-import { taskService } from "@/features/tasks/api/taskService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import Skeleton from "@/components/ui/Skeleton";
 import StatsCard from "@/components/ui/StatsCard";
 import Progress from "@/components/ui/Progress";
@@ -16,23 +16,9 @@ export default function ProjectOverviewPage() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const { projectData } = useOutletContext();
-    const [tasks, setTasks] = useState([]);
-    const [tasksLoading, setTasksLoading] = useState(true);
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setTasksLoading(true);
-                const data = await taskService.getTasksByProject(projectId);
-                setTasks(Array.isArray(data) ? data : []);
-            } catch {
-                setTasks([]);
-            } finally {
-                setTasksLoading(false);
-            }
-        };
-        if (projectId) load();
-    }, [projectId]);
+    
+    // Get tasks from context instead of loading separately
+    const { tasks, tasksLoading } = useProject();
 
     // Calculate statistics
     const stats = useMemo(() => {

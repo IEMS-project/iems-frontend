@@ -9,9 +9,11 @@ import AccountDetailDialog from "./AccountDetailDialog";
 
 const emptyAccountPasswordForm = { newPassword: "", confirmPassword: "" };
 
+// Available roles from UserRole enum in backend
+const AVAILABLE_ROLES = ["ADMIN", "USER"];
+
 export default function AccountManagementTab() {
     const { t } = useTranslation();
-    const [roles, setRoles] = useState([]);
     const [accounts, setAccounts] = useState([]);
     const [accountsLoading, setAccountsLoading] = useState(false);
     const [accountsError, setAccountsError] = useState("");
@@ -22,9 +24,9 @@ export default function AccountManagementTab() {
     const [accountDetailLoading, setAccountDetailLoading] = useState(false);
     const [accountSaveMessage, setAccountSaveMessage] = useState("");
     const [accountSaveError, setAccountSaveError] = useState("");
-    const [accountRolesDraft, setAccountRolesDraft] = useState(new Set());
+    const [accountRoleDraft, setAccountRoleDraft] = useState("");
     const [accountEnabledDraft, setAccountEnabledDraft] = useState(true);
-    const [accountRolesOriginal, setAccountRolesOriginal] = useState(new Set());
+    const [accountRoleOriginal, setAccountRoleOriginal] = useState("");
     const [accountRolesSaving, setAccountRolesSaving] = useState(false);
 
     // Reset password
@@ -33,25 +35,16 @@ export default function AccountManagementTab() {
     const [passwordError, setPasswordError] = useState("");
     const [passwordSuccess, setPasswordSuccess] = useState("");
 
+    // User profile
+    const [userProfile, setUserProfile] = useState(null);
+    const [userProfileDraft, setUserProfileDraft] = useState(null);
+    const [userProfileOriginal, setUserProfileOriginal] = useState(null);
+    const [userProfileSaving, setUserProfileSaving] = useState(false);
+    const [userProfileError, setUserProfileError] = useState("");
+    const [userProfileSuccess, setUserProfileSuccess] = useState("");
+
     // Account detail dialog
     const [accountDialogOpen, setAccountDialogOpen] = useState(false);
-
-    useEffect(() => {
-        let active = true;
-        const loadRoles = async () => {
-            try {
-                const data = await iamService.getRoles();
-                if (!active) return;
-                setRoles(Array.isArray(data) ? data : []);
-            } catch {
-                // Silent fail for roles when loading accounts tab
-            }
-        };
-        loadRoles();
-        return () => {
-            active = false;
-        };
-    }, []);
 
     useEffect(() => {
         let active = true;
@@ -94,27 +87,36 @@ export default function AccountManagementTab() {
         setAccountSaveError("");
         setPasswordError("");
         setPasswordSuccess("");
+        setUserProfileError("");
+        setUserProfileSuccess("");
         try {
             const detail = await iamService.getAccountById(account.userId).catch(() => account);
             const effective = detail || account;
             setSelectedAccount(effective);
             setAccountEnabledDraft(!!effective.enabled);
-            const rolesSet = new Set(effective.roles || []);
-            setAccountRolesDraft(rolesSet);
-            setAccountRolesOriginal(new Set(rolesSet));
+            const role = (effective.roles && effective.roles[0]) || "USER";
+            setAccountRoleDraft(role);
+            setAccountRoleOriginal(role);
             setPasswordForm(emptyAccountPasswordForm);
+
+            // Fetch user profile
+            try {
+                const userProfileData = await iamService.getUserByAccountId(account.userId);
+                setUserProfile(userProfileData);
+                setUserProfileDraft(userProfileData ? { ...userProfileData } : null);
+                setUserProfileOriginal(userProfileData ? { ...userProfileData } : null);
+            } catch (err) {
+                setUserProfile(null);
+                setUserProfileDraft(null);
+                setUserProfileOriginal(null);
+            }
         } finally {
             setAccountDetailLoading(false);
         }
     };
 
-    const toggleAccountRole = (code) => {
-        setAccountRolesDraft((prev) => {
-            const next = new Set(prev);
-            if (next.has(code)) next.delete(code);
-            else next.add(code);
-            return next;
-        });
+    const handleRoleChange = (role) => {
+        setAccountRoleDraft(role);
         setAccountSaveMessage("");
         setAccountSaveError("");
     };
@@ -127,18 +129,18 @@ export default function AccountManagementTab() {
         try {
             await iamService.updateAccountRoles(
                 selectedAccount.userId,
-                Array.from(accountRolesDraft)
+                [accountRoleDraft]
             );
 
             setSelectedAccount((prev) =>
                 prev
                     ? {
                         ...prev,
-                        roles: Array.from(accountRolesDraft),
+                        roles: [accountRoleDraft],
                     }
                     : prev
             );
-            setAccountRolesOriginal(new Set(accountRolesDraft));
+            setAccountRoleOriginal(accountRoleDraft);
 
             const refreshed = await iamService.getAccounts();
             setAccounts(Array.isArray(refreshed) ? refreshed : []);
@@ -196,13 +198,42 @@ export default function AccountManagementTab() {
         }
     };
 
-    const hasSetChanges = (draftSet, originalSet) => {
-        if (draftSet.size !== originalSet.size) return true;
-        for (const value of draftSet) {
-            if (!originalSet.has(value)) return true;
+    const handleSaveUserProfile = async () => {
+        if (!selectedAccount || !userProfileDraft) return;
+        setUserProfileError("");
+        setUserProfileSuccess("");
+        try {
+            setUserProfileSaving(true);
+            if (userProfile?.id) {
+                // Update existing profile
+                await iamService.updateUser(userProfile.id, userProfileDraft);
+            } else {
+                // Create new profile
+                const newProfile = {
+                    ...userProfileDraft,
+                    accountId: selectedAccount.userId,
+                    email: selectedAccount.email
+                };
+                const created = await iamService.createUser(newProfile);
+                setUserProfile(created);
+                setUserProfileDraft({ ...created });
+                setUserProfileOriginal({ ...created });
+                setUserProfileSuccess(t("admin.accessControl.accounts.userProfileSaveSuccess"));
+                return;
+            }
+            setUserProfile({ ...userProfileDraft });
+            setUserProfileOriginal({ ...userProfileDraft });
+            setUserProfileSuccess(t("admin.accessControl.accounts.userProfileSaveSuccess"));
+        } catch (error) {
+            setUserProfileError(error?.message || t("admin.accessControl.accounts.userProfileSaveError"));
+        } finally {
+            setUserProfileSaving(false);
         }
-        return false;
     };
+
+    const hasRoleChanges = accountRoleDraft !== accountRoleOriginal;
+    const hasUserProfileChanges = userProfileDraft && userProfileOriginal && 
+        JSON.stringify(userProfileDraft) !== JSON.stringify(userProfileOriginal);
 
     return (
         <div className="space-y-6">
@@ -267,10 +298,10 @@ export default function AccountManagementTab() {
                 onOpenChange={setAccountDialogOpen}
                 account={selectedAccount}
                 loading={accountDetailLoading}
-                roles={roles}
-                accountRolesDraft={accountRolesDraft}
+                roles={AVAILABLE_ROLES}
+                accountRoleDraft={accountRoleDraft}
                 accountEnabledDraft={accountEnabledDraft}
-                onToggleRole={toggleAccountRole}
+                onRoleChange={handleRoleChange}
                 onSaveRoles={handleSaveAccountRoles}
                 onToggleLock={handleToggleLock}
                 onResetPassword={handleResetPassword}
@@ -282,7 +313,15 @@ export default function AccountManagementTab() {
                 accountRolesSaving={accountRolesSaving}
                 saveMessage={accountSaveMessage}
                 saveError={accountSaveError}
-                hasRolesChanges={hasSetChanges(accountRolesDraft, accountRolesOriginal)}
+                hasRolesChanges={hasRoleChanges}
+                userProfile={userProfile}
+                userProfileDraft={userProfileDraft}
+                onUserProfileChange={setUserProfileDraft}
+                onSaveUserProfile={handleSaveUserProfile}
+                userProfileSaving={userProfileSaving}
+                userProfileError={userProfileError}
+                userProfileSuccess={userProfileSuccess}
+                hasUserProfileChanges={hasUserProfileChanges}
             />
         </div>
     );

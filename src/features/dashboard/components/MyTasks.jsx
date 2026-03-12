@@ -1,39 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { taskService } from "@/features/tasks/api/taskService";
+import { useDashboard } from "@/features/dashboard/context/DashboardContext";
 import Skeleton from "@/components/ui/Skeleton";
 import { getTaskTypeIcon, getTaskTypeColor } from "@/features/tasks/utils/taskTypeUtils";
 import { textColors, badgeColors, cn } from "@/theme/colors";
 
 export default function MyTasks() {
 	const { t } = useTranslation();
-	const [tasks, setTasks] = useState([]);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		const loadTasks = async () => {
-			try {
-				setLoading(true);
-				const data = await taskService.getMyTasks();
-				// Lọc chỉ hiển thị các task chưa hoàn thành
-				const incompleteTasks = (Array.isArray(data) ? data : []).filter(
-					(task) => {
-						const status = (task.status || "").toString().toUpperCase();
-						return !["COMPLETED", "HOÀN THÀNH", "HOAN THANH", "COMPLETE"].includes(status);
-					}
-				);
-				setTasks(incompleteTasks);
-			} catch (error) {
-				console.error("Error loading tasks:", error);
-				setTasks([]);
-			} finally {
-				setLoading(false);
+	
+	// Get tasks from context instead of loading separately
+	const { tasks: allTasks, tasksLoading: loading } = useDashboard();
+	
+	// Filter incomplete tasks
+	const tasks = useMemo(() => {
+		return (Array.isArray(allTasks) ? allTasks : []).filter(
+			(task) => {
+				const status = (task.status || "").toString().toUpperCase();
+				return !["COMPLETED", "HOÀN THÀNH", "HOAN THANH", "COMPLETE"].includes(status);
 			}
-		};
-
-		loadTasks();
-	}, []);
+		);
+	}, [allTasks]);
 
 	const priorityColor = (priority) => {
 		const priorityUpper = priority?.toString().toUpperCase() || "";

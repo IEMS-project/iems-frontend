@@ -53,9 +53,9 @@ export const userService = {
     return this.getAllUserBasicInfos();
   },
 
+  // Note: Roles are now enum-based (ADMIN, USER) - no API endpoint
   async getRoles() {
-    const data = await request("/iam-service/api/roles");
-    return data?.data || data || [];
+    return ["ADMIN", "USER"];
   },
 
   async getUserById(userId) {

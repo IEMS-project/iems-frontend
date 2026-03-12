@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/select";
 import Tasks from "@/features/projects/components/Tasks";
-import { taskService } from "@/features/tasks/api/taskService";
-import { projectService } from "@/features/projects/api/projectService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import { translatePriority, translateStatus } from "@/lib/i18n";
 
 export default function ProjectTasksPage() {
     const { t } = useTranslation();
-    const { projectId } = useParams();
-    const [tasks, setTasks] = useState([]);
-    const [tasksLoading, setTasksLoading] = useState(true);
-    const [phases, setPhases] = useState([]);
+    
+    // Get tasks and phases from context instead of loading
+    const { tasks, tasksLoading, phases, refreshTasks } = useProject();
+    
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState({
         status: "",
@@ -25,26 +23,6 @@ export default function ProjectTasksPage() {
     });
     const [sortBy, setSortBy] = useState("title");
     const [sortOrder, setSortOrder] = useState("asc");
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setTasksLoading(true);
-                const [data, phasesData] = await Promise.all([
-                    taskService.getTasksByProject(projectId),
-                    projectService.getPhases(projectId)
-                ]);
-                setTasks(Array.isArray(data) ? data : []);
-                setPhases(Array.isArray(phasesData) ? phasesData : []);
-            } catch (_e) {
-                setTasks([]);
-                setPhases([]);
-            } finally {
-                setTasksLoading(false);
-            }
-        };
-        if (projectId) load();
-    }, [projectId]);
 
     // Get unique values for filters
     const statuses = [...new Set(tasks.map(t => translateStatus(t.status)).filter(Boolean))];
@@ -231,7 +209,7 @@ export default function ProjectTasksPage() {
             <Tasks
                 tasks={filteredAndSortedTasks}
                 tasksLoading={tasksLoading}
-                onTasksChange={setTasks}
+                onTasksChange={refreshTasks}
             />
         </div>
     );
