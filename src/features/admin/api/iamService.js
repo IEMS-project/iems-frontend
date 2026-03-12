@@ -11,11 +11,6 @@ export const iamService = {
     return data?.data || null;
   },
 
-  async getRolePermissions(id) {
-    const data = await request(`/iam-service/api/roles/${id}/permissions`);
-    return data?.data || null;
-  },
-
   async createRole(payload) {
     const data = await request("/iam-service/api/roles", {
       method: "POST",
@@ -34,42 +29,6 @@ export const iamService = {
 
   async deleteRole(id) {
     const data = await request(`/iam-service/api/roles/${id}`, {
-      method: "DELETE",
-    });
-    return data?.data || data;
-  },
-
-  async assignPermissions(roleId, permissionCodes) {
-    const data = await request(`/iam-service/api/roles/${roleId}/permissions`, {
-      method: "POST",
-      body: { permissionCodes },
-    });
-    return data?.data || data;
-  },
-
-  async getPermissions() {
-    const data = await request("/iam-service/api/permissions");
-    return data?.data || data || [];
-  },
-
-  async createPermission(payload) {
-    const data = await request("/iam-service/api/permissions", {
-      method: "POST",
-      body: payload,
-    });
-    return data?.data || data;
-  },
-
-  async updatePermission(id, payload) {
-    const data = await request(`/iam-service/api/permissions/${id}`, {
-      method: "PUT",
-      body: payload,
-    });
-    return data?.data || data;
-  },
-
-  async deletePermission(id) {
-    const data = await request(`/iam-service/api/permissions/${id}`, {
       method: "DELETE",
     });
     return data?.data || data;
@@ -108,11 +67,6 @@ export const iamService = {
       body: { roleCodes },
     });
     return data?.data || data;
-  },
-
-  async getUserPermissions(userId) {
-    const data = await request(`/iam-service/api/accounts/${userId}/permissions`);
-    return data?.data || null;
   },
 
   async resetAccountPassword(userId, newPassword) {

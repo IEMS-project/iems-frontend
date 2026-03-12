@@ -1,9 +1,7 @@
 import React from "react";
-import { Plus, RefreshCw, PencilLine, Trash2 } from "lucide-react";
+import { PencilLine, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Badge from "@/components/ui/Badge";
 import IconActionButton from "@/components/ui/IconActionButton";
 import Skeleton from "@/components/ui/skeleton";
 import {
@@ -53,7 +51,6 @@ export default function RolesTable({
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t("admin.accessControl.roles.title")}</TableHead>
-                                <TableHead>{t("admin.accessControl.roles.permissions")}</TableHead>
                                 <TableHead className="text-right">{t("admin.accessControl.common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -72,11 +69,6 @@ export default function RolesTable({
                                             <div className="text-xs text-muted-foreground">
                                                 {role.code}
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="blue">
-                                                {t("admin.accessControl.roles.permissionCount", { count: role.permissions?.length || 0 })}
-                                            </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">

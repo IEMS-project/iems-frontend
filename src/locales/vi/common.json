@@ -881,6 +881,7 @@
       "title": "Quản lý phân quyền",
       "tabs": {
         "accounts": "Quản lý tài khoản",
+        "roles": "Roles",
         "rolesPermissions": "Roles & Permissions"
       },
       "accounts": {

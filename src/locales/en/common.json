@@ -881,6 +881,7 @@
       "title": "Access Control",
       "tabs": {
         "accounts": "Account Management",
+        "roles": "Roles",
         "rolesPermissions": "Roles & Permissions"
       },
       "accounts": {

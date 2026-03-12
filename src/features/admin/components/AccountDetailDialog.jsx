@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -21,14 +20,10 @@ export default function AccountDetailDialog({
     account,
     loading,
     roles,
-    permissions,
     accountRolesDraft,
-    accountPermissionsDraft,
     accountEnabledDraft,
     onToggleRole,
-    onTogglePermission,
     onSaveRoles,
-    onSavePermissions,
     onToggleLock,
     onResetPassword,
     passwordForm,
@@ -37,11 +32,9 @@ export default function AccountDetailDialog({
     passwordSuccess,
     passwordSaving,
     accountRolesSaving,
-    accountPermissionsSaving,
     saveMessage,
     saveError,
     hasRolesChanges,
-    hasPermissionsChanges,
 }) {
     const { t } = useTranslation();
 
@@ -107,7 +100,7 @@ export default function AccountDetailDialog({
                                 </div>
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-4 md:grid-cols-1">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <Label>{t("admin.accessControl.accounts.roles")}</Label>
@@ -154,57 +147,6 @@ export default function AccountDetailDialog({
                                             disabled={loading || accountRolesSaving || !hasRolesChanges}
                                         >
                                             {accountRolesSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.save")}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label>{t("admin.accessControl.accounts.directPermissions")}</Label>
-                                        <span className="text-xs text-muted-foreground">
-                                            {t("admin.accessControl.accounts.selectPermission")}
-                                        </span>
-                                    </div>
-                                    <div className="rounded-md border">
-                                        {permissions.length === 0 ? (
-                                            <div className="p-3 text-xs text-muted-foreground">
-                                                {t("admin.accessControl.permissions.noPermissions")}
-                                            </div>
-                                        ) : (
-                                            <ScrollArea className="h-[180px]">
-                                                <div className="divide-y">
-                                                    {permissions.map((permission) => {
-                                                        const checked = accountPermissionsDraft.has(permission.code);
-                                                        return (
-                                                            <label
-                                                                key={permission.id}
-                                                                className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-muted/50"
-                                                            >
-                                                                <Checkbox
-                                                                    checked={checked}
-                                                                    onCheckedChange={() => onTogglePermission(permission.code)}
-                                                                />
-                                                                <div>
-                                                                    <div className="font-medium">{permission.name}</div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {permission.code}
-                                                                    </div>
-                                                                </div>
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </ScrollArea>
-                                        )}
-                                    </div>
-                                    <div className="mt-2 flex justify-end">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={onSavePermissions}
-                                            disabled={loading || accountPermissionsSaving || !hasPermissionsChanges}
-                                        >
-                                            {accountPermissionsSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.save")}
                                         </Button>
                                     </div>
                                 </div>
