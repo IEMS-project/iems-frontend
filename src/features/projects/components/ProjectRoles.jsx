@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -8,6 +8,7 @@ import { Trash2 } from "lucide-react";
 import IconActionButton from "@/components/ui/IconActionButton";
 import { useParams } from "react-router-dom";
 import { projectService } from "@/features/projects/api/projectService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import Skeleton from "@/components/ui/Skeleton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { toast } from "sonner";
@@ -15,26 +16,15 @@ import { toast } from "sonner";
 export default function ProjectRoles() {
     const { t } = useTranslation();
     const { projectId } = useParams();
-    const [loading, setLoading] = useState(true);
-    const [roles, setRoles] = useState([]);
+    
+    // Get data from context
+    const { roles, rolesLoading: loading, refreshRoles } = useProject();
+    
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ roleName: "" });
     const [deleteRoleDialogOpen, setDeleteRoleDialogOpen] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState(null);
-
-    const load = async () => {
-        try {
-            setLoading(true);
-            const data = await projectService.getProjectRoles(projectId);
-            setRoles(Array.isArray(data) ? data : []);
-        } catch (_e) {
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { if (projectId) load(); }, [projectId]);
 
     const openAdd = async () => {
         setEditing(null);
@@ -55,7 +45,7 @@ export default function ProjectRoles() {
             }
             await projectService.addProjectRole(projectId, { roleName });
             setShowModal(false);
-            await load();
+            await refreshRoles();
             toast.success(t('projects.detail.roles.messages.addSuccess'));
             // Trigger event to notify other components about role changes
             window.dispatchEvent(new CustomEvent('projectRolesUpdated', { detail: { projectId } }));
@@ -74,7 +64,7 @@ export default function ProjectRoles() {
         if (!roleToDelete) return;
         try {
             await projectService.deleteProjectRole(projectId, roleToDelete.id);
-            await load();
+            await refreshRoles();
             toast.success(t('projects.detail.roles.messages.deleteSuccess'));
             setDeleteRoleDialogOpen(false);
             setRoleToDelete(null);

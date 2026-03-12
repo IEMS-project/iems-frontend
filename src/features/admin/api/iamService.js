@@ -1,38 +1,11 @@
 import { request } from "@/lib/api";
 
+// Available roles from UserRole enum in backend
+export const AVAILABLE_ROLES = ["ADMIN", "USER"];
+
 export const iamService = {
-  async getRoles() {
-    const data = await request("/iam-service/api/roles");
-    return data?.data || data || [];
-  },
-
-  async getRoleById(id) {
-    const data = await request(`/iam-service/api/roles/${id}`);
-    return data?.data || null;
-  },
-
-  async createRole(payload) {
-    const data = await request("/iam-service/api/roles", {
-      method: "POST",
-      body: payload,
-    });
-    return data?.data || data;
-  },
-
-  async updateRole(id, payload) {
-    const data = await request(`/iam-service/api/roles/${id}`, {
-      method: "PUT",
-      body: payload,
-    });
-    return data?.data || data;
-  },
-
-  async deleteRole(id) {
-    const data = await request(`/iam-service/api/roles/${id}`, {
-      method: "DELETE",
-    });
-    return data?.data || data;
-  },
+  // Note: Role management endpoints removed - now using UserRole enum
+  // Available roles: ADMIN, USER, MANAGER
 
   // Accounts & user access
   async getAccounts() {
@@ -73,6 +46,33 @@ export const iamService = {
     const data = await request(`/iam-service/api/accounts/${userId}/password`, {
       method: "PUT",
       body: { newPassword },
+    });
+    return data?.data || data;
+  },
+
+  // User profile management
+  async getUserByAccountId(accountId) {
+    const data = await request(`/iam-service/users/by-account/${accountId}`);
+    return data?.data || null;
+  },
+
+  async getUserById(userId) {
+    const data = await request(`/iam-service/users/${userId}`);
+    return data?.data || null;
+  },
+
+  async updateUser(userId, payload) {
+    const data = await request(`/iam-service/users/${userId}`, {
+      method: "PUT",
+      body: payload,
+    });
+    return data?.data || data;
+  },
+
+  async createUser(payload) {
+    const data = await request(`/iam-service/users`, {
+      method: "POST",
+      body: payload,
     });
     return data?.data || data;
   },

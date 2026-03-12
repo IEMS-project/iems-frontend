@@ -1,33 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { projectService } from "@/features/projects/api/projectService";
+import { useDashboard } from "@/features/dashboard/context/DashboardContext";
 import Skeleton from "@/components/ui/Skeleton";
 import { textColors, borderColors, bgColors, cn } from "@/theme/colors";
 
 export default function ProjectOverview() {
 	const { t } = useTranslation();
-	const [projects, setProjects] = useState([]);
-	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		const loadProjects = async () => {
-			try {
-				setLoading(true);
-				const data = await projectService.getMyProjects();
-				setProjects(Array.isArray(data) ? data : []);
-			} catch (error) {
-				console.error("Error loading projects:", error);
-				setProjects([]);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		loadProjects();
-	}, []);
+	
+	// Get projects from context instead of loading separately
+	const { projects, projectsLoading: loading } = useDashboard();
 
 	const formatDate = (dateString) => {
 		if (!dateString) return t("dashboard.projectOverview.na");

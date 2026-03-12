@@ -9,6 +9,7 @@ import Select from "@/components/ui/select";
 import { useParams, useNavigate } from "react-router-dom";
 import { taskService } from "@/features/tasks/api/taskService";
 import { projectService } from "@/features/projects/api/projectService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import UserSelect from "./UserSelect";
 import PhaseSelect from "./PhaseSelect";
 import TaskDetailModal from "@/features/tasks/components/TaskDetailModal";
@@ -25,8 +26,23 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [tasksData, setTasksData] = useState([]);
-    const [assignableUsers, setAssignableUsers] = useState([]);
-    const [phases, setPhases] = useState([]);
+    
+    // Get data from context instead of loading separately
+    const { members, phases, membersLoading, phasesLoading } = useProject();
+    
+    // Transform members to assignableUsers format
+    const assignableUsers = members.map(m => ({
+        id: m.userId || m.id,
+        userId: m.userId || m.id,
+        userName: m.userName || m.userName,
+        fullName: m.userName || m.userEmail,
+        email: m.userEmail,
+        userImage: m.userImage || m.image || m.avatar || null,
+        image: m.userImage || m.image || m.avatar || null,
+        avatar: m.userImage || m.image || m.avatar || null,
+        __raw: m
+    }));
+    
     const [showTaskTypeDropdown, setShowTaskTypeDropdown] = useState(false);
     const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
 
@@ -74,11 +90,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
         const load = async () => {
             try {
                 setLoading(true);
-                const [data, members, phasesData] = await Promise.all([
-                    tasksProp ? Promise.resolve(tasksProp) : taskService.getTasksByProject(projectId),
-                    projectService.getProjectMembers(projectId),
-                    projectService.getPhases(projectId)
-                ]);
+                // Only load tasks - members and phases come from context
+                const data = tasksProp ? tasksProp : await taskService.getTasksByProject(projectId);
 
                 // Check if response indicates permission error
                 if (data && data.status === "error" &&
@@ -91,25 +104,10 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
 
                 const nextTasks = Array.isArray(data) ? data : [];
                 setTasksData(nextTasks);
-                if (onTasksChange && !tasksProp) onTasksChange(nextTasks);
-
-                setPhases(Array.isArray(phasesData) ? phasesData : []);
-
-                const users = Array.isArray(members) ? members.map(m => ({
-                    // preserve original fields and also normalize common keys
-                    id: m.userId || m.id,
-                    userId: m.userId || m.id,
-                    userName: m.userName || m.userName,
-                    fullName: m.userName || m.userEmail,
-                    email: m.userEmail,
-                    // pass through possible image fields so Avatar can detect them
-                    userImage: m.userImage || m.image || m.avatar || null,
-                    image: m.userImage || m.image || m.avatar || null,
-                    avatar: m.userImage || m.image || m.avatar || null,
-                    // include original object for maximum flexibility
-                    __raw: m
-                })) : [];
-                setAssignableUsers(users);
+                // Notify parent to refresh if needed (parent manages data via context)
+                if (onTasksChange && !tasksProp) {
+                    onTasksChange();
+                }
             } catch (e) {
                 console.log("Tasks Error:", e);
                 console.log("Error status:", e.status);
@@ -123,7 +121,6 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                     e.message?.includes("quyền") ||
                     e.message?.includes("Permission denied")) {
                     console.log("Permission error detected in Tasks, redirecting...");
-                    // Redirect immediately to permission denied page
                     navigate("/permission-denied");
                     return;
                 } else {
@@ -134,7 +131,8 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             }
         };
         if (projectId) load();
-    }, [projectId, navigate, tasksProp]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId, tasksProp]); // Only depend on projectId and tasksProp, not onTasksChange
 
     const handleEditTask = (task) => {
         setEditingTask(task);
@@ -232,10 +230,16 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
                 toast.success(t('projects.detail.tasks.messages.created'));
             }
 
-            const refreshed = await taskService.getTasksByProject(projectId);
-            const list = Array.isArray(refreshed) ? refreshed : [];
-            setTasksData(list);
-            if (onTasksChange) onTasksChange(list);
+            // Refresh tasks list
+            if (tasksProp && onTasksChange) {
+                // If tasks come from parent (context), notify parent to refresh
+                onTasksChange();
+            } else {
+                // Otherwise refresh local state
+                const refreshed = await taskService.getTasksByProject(projectId);
+                const list = Array.isArray(refreshed) ? refreshed : [];
+                setTasksData(list);
+            }
 
             setShowModal(false);
             setFormData({
@@ -305,10 +309,16 @@ export default function Tasks({ tasks: tasksProp, onTasksChange, tasksLoading = 
             await taskService.deleteTask(taskToDelete.id);
             toast.success(t('projects.detail.tasks.messages.deleted'));
             
-            const refreshed = await taskService.getTasksByProject(projectId);
-            const list = Array.isArray(refreshed) ? refreshed : [];
-            setTasksData(list);
-            if (onTasksChange) onTasksChange(list);
+            // Refresh tasks list
+            if (tasksProp && onTasksChange) {
+                // If tasks come from parent (context), notify parent to refresh
+                onTasksChange();
+            } else {
+                // Otherwise refresh local state
+                const refreshed = await taskService.getTasksByProject(projectId);
+                const list = Array.isArray(refreshed) ? refreshed : [];
+                setTasksData(list);
+            }
         } catch (e) {
             console.error("Error deleting task:", e);
             if (e.status === 403 ||

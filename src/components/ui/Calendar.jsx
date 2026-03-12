@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FaChevronLeft, FaChevronRight, FaRegCalendarAlt } from "react-icons/fa";
 import { taskService } from "@/features/tasks/api/taskService";
+import { useDashboard } from "@/features/dashboard/context/DashboardContext";
 
 function startOfMonth(date) {
 	return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -16,9 +17,21 @@ function addMonths(date, count) {
 export default function Calendar({ onDateClick, projectId }) {
 	const { t, i18n } = useTranslation();
 	const [current, setCurrent] = useState(startOfMonth(new Date()));
-	const [tasks, setTasks] = useState([]);
-	const [loading, setLoading] = useState(true);
+	const [projectTasks, setProjectTasks] = useState([]);
+	const [projectTasksLoading, setProjectTasksLoading] = useState(false);
 	const today = new Date();
+	
+	// Get tasks from context when no projectId, otherwise load from API
+	const dashboardContext = (() => {
+		try {
+			return useDashboard();
+		} catch {
+			return null;
+		}
+	})();
+	
+	const tasks = projectId ? projectTasks : (dashboardContext?.tasks || []);
+	const loading = projectId ? projectTasksLoading : (dashboardContext?.tasksLoading || false);
 
 	const weekdays = useMemo(() => [
 		t("dashboard.calendar.weekdays.monday"),
@@ -43,28 +56,29 @@ export default function Calendar({ onDateClick, projectId }) {
 		return cells;
 	}, [current]);
 
+	// Only load tasks when projectId is provided (for project-specific calendar)
+	// When no projectId, use tasks from DashboardContext
 	useEffect(() => {
-		const loadTasks = async () => {
+		if (!projectId) return; // Use context data for dashboard calendar
+		
+		const loadProjectTasks = async () => {
 			try {
-				setLoading(true);
-				// Nếu có projectId thì chỉ load task của project đó, nếu không thì load tất cả task
-				const data = projectId
-					? await taskService.getTasksByProject(projectId)
-					: await taskService.getMyTasks();
-				// Lọc các task đang Đang chờ (status không phải COMPLETED)
+				setProjectTasksLoading(true);
+				const data = await taskService.getTasksByProject(projectId);
+				// Filter pending tasks (status not COMPLETED)
 				const pendingTasks = (Array.isArray(data) ? data : []).filter(
 					(task) => task.status?.toUpperCase() !== "COMPLETED"
 				);
-				setTasks(pendingTasks);
+				setProjectTasks(pendingTasks);
 			} catch (error) {
 				console.error("Error loading tasks for calendar:", error);
-				setTasks([]);
+				setProjectTasks([]);
 			} finally {
-				setLoading(false);
+				setProjectTasksLoading(false);
 			}
 		};
 
-		loadTasks();
+		loadProjectTasks();
 	}, [projectId]);
 
 	const monthLabel = current.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'vi-VN', { month: "long", year: "numeric" });

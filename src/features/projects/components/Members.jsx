@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar.jsx";
@@ -10,7 +10,7 @@ import Select from "@/components/ui/select";
 import UserSelect from "./UserSelect";
 import { useParams, useNavigate } from "react-router-dom";
 import { projectService } from "@/features/projects/api/projectService";
-import { userService } from "@/features/profile/api/userService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import Skeleton from "@/components/ui/Skeleton";
 import { PencilLine } from "lucide-react";
 import IconActionButton from "@/components/ui/IconActionButton";
@@ -22,8 +22,10 @@ export default function Members() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [members, setMembers] = useState([]);
+    
+    // Get data from context instead of fetching
+    const { members, roles: projectRoles, assignableUsers, membersLoading, rolesLoading, refreshMembers, refreshRoles } = useProject();
+    
     const [showModal, setShowModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
     const [formData, setFormData] = useState({
@@ -31,119 +33,35 @@ export default function Members() {
         roleId: "",
         status: "ACTIVE"
     });
-    const [assignableUsers, setAssignableUsers] = useState([]);
-    const [projectRoles, setProjectRoles] = useState([]);
-    const [rolesVersion, setRolesVersion] = useState(0); // Track roles changes
     const listSkeletons = useMemo(() => Array.from({ length: 4 }), []);
+    
+    const loading = membersLoading || rolesLoading;
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true);
-                const data = await projectService.getProjectMembers(projectId);
+    // Event listener removed - ProjectContext already handles 'projectRolesUpdated' event
+    // Members component will automatically re-render when roles update in context
 
-                // Check if response indicates permission error
-                if (data && data.status === "error" &&
-                    (data.message?.includes("Permission denied") ||
-                        data.message?.includes("PERMISSION_DENIED"))) {
-                    console.log("Permission error in Members response data, redirecting...");
-                    navigate("/permission-denied");
-                    return;
-                }
-
-                setMembers(Array.isArray(data) ? data : []);
-                // Load assignable users and project roles in parallel
-                const [users, roles] = await Promise.all([
-                    (async () => {
-                        try { return await userService.getAssignableUsers(); } catch { return []; }
-                    })(),
-                    (async () => {
-                        try { return await projectService.getProjectRoles(projectId); } catch { return []; }
-                    })()
-                ]);
-                setAssignableUsers(Array.isArray(users) ? users : []);
-                setProjectRoles(Array.isArray(roles) ? roles : []);
-            } catch (e) {
-                console.log("Members Error:", e);
-                console.log("Error status:", e.status);
-                console.log("Error message:", e.message);
-                console.log("Error data:", e.data);
-
-                // Check if it's a permission error
-                if (e.status === 403 ||
-                    e.message?.includes("PERMISSION_DENIED") ||
-                    e.message?.includes("permission") ||
-                    e.message?.includes("quyền") ||
-                    e.message?.includes("Permission denied")) {
-                    console.log("Permission error detected in Members, redirecting...");
-                    // Redirect immediately to permission denied page
-                    navigate("/permission-denied");
-                    return;
-                } else {
-                    console.error(e);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (projectId) load();
-    }, [projectId, navigate]);
-
-    // Listen for project roles updates
-    useEffect(() => {
-        const handleRolesUpdate = async (event) => {
-            if (event.detail.projectId === projectId) {
-                try {
-                    const roles = await projectService.getProjectRoles(projectId);
-                    setProjectRoles(Array.isArray(roles) ? roles : []);
-                } catch (e) {
-                    console.error("Failed to refresh project roles:", e);
-                }
-            }
-        };
-
-        window.addEventListener('projectRolesUpdated', handleRolesUpdate);
-        return () => window.removeEventListener('projectRolesUpdated', handleRolesUpdate);
-    }, [projectId]);
-
-    const handleEditMember = async (member) => {
+    const handleEditMember = (member) => {
         setEditingMember(member);
         setFormData({
             userId: member.userId || "",
             roleId: member.roleId || "",
             status: member.status === "ACTIVE" ? "Hoạt động" : "Không hoạt động"
         });
-        // Refresh project roles before opening modal
-        try {
-            const roles = await projectService.getProjectRoles(projectId);
-            setProjectRoles(Array.isArray(roles) ? roles : []);
-        } catch (e) {
-            console.error("Failed to load project roles:", e);
-        }
         setShowModal(true);
     };
 
-    const handleAddMember = async () => {
+    const handleAddMember = () => {
         setEditingMember(null);
         setFormData({
             userId: "",
             roleId: "",
             status: "ACTIVE"
         });
-        // Refresh project roles before opening modal
-        try {
-            const roles = await projectService.getProjectRoles(projectId);
-            setProjectRoles(Array.isArray(roles) ? roles : []);
-        } catch (e) {
-            console.error("Failed to load project roles:", e);
-        }
         setShowModal(true);
     };
 
     const handleSubmit = async () => {
         try {
-            setLoading(true);
-
             if (!formData.userId) {
                 toast.warning(t('projects.detail.members.messages.userRequired'));
                 return;
@@ -168,9 +86,8 @@ export default function Members() {
                 await projectService.updateMemberStatus(projectId, formData.userId, statusValue);
             }
 
-            // Refresh members list
-            const updated = await projectService.getProjectMembers(projectId);
-            setMembers(Array.isArray(updated) ? updated : []);
+            // Refresh members list using context
+            await refreshMembers();
 
             setShowModal(false);
             setFormData({ userId: "", roleId: "", status: "ACTIVE" });
@@ -179,8 +96,6 @@ export default function Members() {
             console.error("Error with project member:", e);
             const errorMessage = e?.message || t('projects.detail.members.messages.loadError');
             toast.error(errorMessage);
-        } finally {
-            setLoading(false);
         }
     };
 

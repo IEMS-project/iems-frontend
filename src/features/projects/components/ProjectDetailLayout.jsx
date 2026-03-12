@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
@@ -10,8 +10,8 @@ import Textarea from "@/components/ui/Textarea";
 import UserSelect from "./UserSelect";
 import { projectService } from "@/features/projects/api/projectService";
 import { userService } from "@/features/profile/api/userService";
-import { useErrorHandler } from "@/components/common/ErrorBoundary";
 import { useAuth } from "@/context/AuthContext";
+import { ProjectProvider, useProject } from "@/features/projects/context/ProjectContext";
 import Skeleton from "@/components/ui/Skeleton";
 import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
@@ -26,15 +26,15 @@ const tabs = [
     { id: "code", label: "code", path: "code" },
 ];
 
-export default function ProjectDetailLayout() {
+function ProjectDetailLayoutContent() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { handleError } = useErrorHandler();
     const { userProfile } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [projectData, setProjectData] = useState(null);
+    
+    // Get data from ProjectContext
+    const { projectData, loading, refreshProject } = useProject();
     
     // Edit project modal states
     const [showEditModal, setShowEditModal] = useState(false);
@@ -69,40 +69,6 @@ export default function ProjectDetailLayout() {
         if (path.includes("/code")) return "code";
         return "overview";
     }, [location.pathname]);
-
-    // Only load project data once when projectId changes, not on tab changes
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true);
-                const data = await projectService.getProjectById(projectId);
-
-                if (data && data.status === "error" &&
-                    (data.message?.includes("Permission denied") ||
-                        data.message?.includes("PERMISSION_DENIED"))) {
-                    navigate("/permission-denied");
-                    return;
-                }
-
-                setProjectData(data);
-            } catch (e) {
-                if (e.status === 403 ||
-                    e.message?.includes("PERMISSION_DENIED") ||
-                    e.message?.includes("permission") ||
-                    e.message?.includes("quyền") ||
-                    e.message?.includes("Permission denied")) {
-                    navigate("/permission-denied");
-                    return;
-                } else {
-                    handleError(e);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (projectId) load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [projectId]); // Only reload when projectId changes, not on tab navigation
 
     const handleTabClick = (tabPath) => {
         navigate(`/projects/${projectId}/${tabPath}`);
@@ -149,9 +115,8 @@ export default function ProjectDetailLayout() {
             await projectService.updateProject(projectId, projectDataToSave);
             toast.success(t("projects.messages.updated"));
 
-            // Reload project data
-            const updatedProject = await projectService.getProjectById(projectId);
-            setProjectData(updatedProject);
+            // Reload project data using context
+            await refreshProject();
 
             setShowEditModal(false);
         } catch (error) {
@@ -319,6 +284,15 @@ export default function ProjectDetailLayout() {
                 </div>
             </Modal>
         </div>
+    );
+}
+
+// Wrapper component that provides ProjectContext
+export default function ProjectDetailLayout() {
+    return (
+        <ProjectProvider>
+            <ProjectDetailLayoutContent />
+        </ProjectProvider>
     );
 }
 

@@ -927,7 +927,21 @@
         "lockedAccounts": "Locked Accounts",
         "accountManagement": "Account Management & Permissions",
         "accountManagementDescription": "View and edit access permissions for each user account",
-        "resetPasswordDescription": "Set a new password for this account"
+        "resetPasswordDescription": "Set a new password for this account",
+        "userProfileSaveSuccess": "User profile updated successfully",
+        "userProfileSaveError": "Failed to update user profile",
+        "userProfile": "User Profile",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phone": "Phone",
+        "gender": "Gender",
+        "address": "Address",
+        "saveProfile": "Save Profile",
+        "selectGender": "Select Gender",
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "noUserProfile": "No user profile found for this account"
       },
       "roles": {
         "title": "Roles",

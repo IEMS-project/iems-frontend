@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import Select from "@/components/ui/Select";
+import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -20,9 +21,9 @@ export default function AccountDetailDialog({
     account,
     loading,
     roles,
-    accountRolesDraft,
+    accountRoleDraft,
     accountEnabledDraft,
-    onToggleRole,
+    onRoleChange,
     onSaveRoles,
     onToggleLock,
     onResetPassword,
@@ -35,18 +36,28 @@ export default function AccountDetailDialog({
     saveMessage,
     saveError,
     hasRolesChanges,
+    // User profile props
+    userProfile,
+    userProfileDraft,
+    onUserProfileChange,
+    onSaveUserProfile,
+    userProfileSaving,
+    userProfileError,
+    userProfileSuccess,
+    hasUserProfileChanges,
 }) {
     const { t } = useTranslation();
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl">
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
                         {account ? `${t("admin.accessControl.accounts.details")}: ${account.username}` : t("admin.accessControl.accounts.details")}
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <ScrollArea className="max-h-[calc(90vh-100px)]">
+                <div className="space-y-6 pr-4">{/* Added padding for scrollbar */}
                     {!account ? (
                         <p className="text-sm text-muted-foreground">
                             {t("admin.accessControl.accounts.selectAccount")}
@@ -102,45 +113,23 @@ export default function AccountDetailDialog({
 
                             <div className="grid gap-4 md:grid-cols-1">
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label>{t("admin.accessControl.accounts.roles")}</Label>
-                                        <span className="text-xs text-muted-foreground">
-                                            {t("admin.accessControl.accounts.selectRole")}
-                                        </span>
-                                    </div>
-                                    <div className="rounded-md border">
-                                        {roles.length === 0 ? (
-                                            <div className="p-3 text-xs text-muted-foreground">
-                                                {t("admin.accessControl.roles.noRoles")}
-                                            </div>
-                                        ) : (
-                                            <ScrollArea className="h-[180px]">
-                                                <div className="divide-y">
-                                                    {roles.map((role) => {
-                                                        const checked = accountRolesDraft.has(role.code);
-                                                        return (
-                                                            <label
-                                                                key={role.id}
-                                                                className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-muted/50"
-                                                            >
-                                                                <Checkbox
-                                                                    checked={checked}
-                                                                    onCheckedChange={() => onToggleRole(role.code)}
-                                                                />
-                                                                <div>
-                                                                    <div className="font-medium">{role.name}</div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {role.code}
-                                                                    </div>
-                                                                </div>
-                                                            </label>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </ScrollArea>
+                                    <Label>{t("admin.accessControl.accounts.roles")}</Label>
+                                    <Select
+                                        value={accountRoleDraft}
+                                        onChange={(e) => onRoleChange(e.target.value)}
+                                    >
+                                        <option value="">{t("admin.accessControl.accounts.selectRole")}</option>
+                                        {roles.map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
+                                    </Select>
+                                    <div className="mt-2 flex justify-end gap-2">
+                                        {saveMessage && (
+                                            <p className="text-xs text-green-600 self-center">{saveMessage}</p>
                                         )}
-                                    </div>
-                                    <div className="mt-2 flex justify-end">
+                                        {saveError && (
+                                            <p className="text-xs text-red-600 self-center">{saveError}</p>
+                                        )}
                                         <Button
                                             size="sm"
                                             onClick={onSaveRoles}
@@ -151,7 +140,83 @@ export default function AccountDetailDialog({
                                     </div>
                                 </div>
                             </div>
-
+                            {/* User Profile Section */}
+                            <div className="space-y-3 rounded-md border p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-medium text-sm">{t("admin.accessControl.accounts.userProfile") || "User Profile"}</h3>
+                                </div>
+                                {!userProfile ? (
+                                    <div className="text-sm text-muted-foreground p-3 bg-muted/30 rounded">
+                                        {t("admin.accessControl.accounts.noUserProfile") || "No user profile found for this account"}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="grid gap-3 md:grid-cols-2">
+                                            <div>
+                                                <Label>{t("admin.accessControl.accounts.firstName") || "First Name"}</Label>
+                                                <Input
+                                                    value={userProfileDraft?.firstName || ""}
+                                                    onChange={(e) => onUserProfileChange({ ...userProfileDraft, firstName: e.target.value })}
+                                                    placeholder={t("admin.accessControl.accounts.firstName")}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>{t("admin.accessControl.accounts.lastName") || "Last Name"}</Label>
+                                                <Input
+                                                    value={userProfileDraft?.lastName || ""}
+                                                    onChange={(e) => onUserProfileChange({ ...userProfileDraft, lastName: e.target.value })}
+                                                    placeholder={t("admin.accessControl.accounts.lastName")}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-3 md:grid-cols-2">
+                                            <div>
+                                                <Label>{t("admin.accessControl.accounts.phone") || "Phone"}</Label>
+                                                <Input
+                                                    value={userProfileDraft?.phone || ""}
+                                                    onChange={(e) => onUserProfileChange({ ...userProfileDraft, phone: e.target.value })}
+                                                    placeholder={t("admin.accessControl.accounts.phone")}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>{t("admin.accessControl.accounts.gender") || "Gender"}</Label>
+                                                <Select
+                                                    value={userProfileDraft?.gender || ""}
+                                                    onChange={(e) => onUserProfileChange({ ...userProfileDraft, gender: e.target.value })}
+                                                >
+                                                    <option value="">{t("admin.accessControl.accounts.selectGender") || "Select Gender"}</option>
+                                                    <option value="MALE">{t("admin.accessControl.accounts.male")}</option>
+                                                    <option value="FEMALE">{t("admin.accessControl.accounts.female")}</option>
+                                                    <option value="OTHER">{t("admin.accessControl.accounts.other")}</option>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label>{t("admin.accessControl.accounts.address") || "Address"}</Label>
+                                            <Input
+                                                value={userProfileDraft?.address || ""}
+                                                onChange={(e) => onUserProfileChange({ ...userProfileDraft, address: e.target.value })}
+                                                placeholder={t("admin.accessControl.accounts.address")}
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            {userProfileError && (
+                                                <p className="text-xs text-red-600 self-center">{userProfileError}</p>
+                                            )}
+                                            {userProfileSuccess && (
+                                                <p className="text-xs text-green-600 self-center">{userProfileSuccess}</p>
+                                            )}
+                                            <Button
+                                                size="sm"
+                                                onClick={onSaveUserProfile}
+                                                disabled={loading || userProfileSaving || !hasUserProfileChanges}
+                                            >
+                                                {userProfileSaving ? t("admin.accessControl.accounts.saving") : t("admin.accessControl.accounts.saveProfile")}
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             <div className="space-y-3 rounded-md border p-3">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
@@ -218,6 +283,7 @@ export default function AccountDetailDialog({
                         </>
                     )}
                 </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
     );

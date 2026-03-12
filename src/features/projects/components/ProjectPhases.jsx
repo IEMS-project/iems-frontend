@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -7,13 +7,16 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { projectService } from "@/features/projects/api/projectService";
+import { useProject } from "@/features/projects/context/ProjectContext";
 import { toast } from "sonner";
 import { Calendar, Target, Trash2, Edit, Plus } from "lucide-react";
 
 export default function ProjectPhases({ projectId }) {
     const { t, i18n } = useTranslation();
-    const [phases, setPhases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    
+    // Get data from context
+    const { phases, phasesLoading: loading, refreshPhases } = useProject();
+    
     const [showModal, setShowModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [editingPhase, setEditingPhase] = useState(null);
@@ -25,26 +28,6 @@ export default function ProjectPhases({ projectId }) {
         startDate: "",
         endDate: ""
     });
-
-    const loadPhases = async () => {
-        try {
-            setLoading(true);
-            const data = await projectService.getPhases(projectId);
-            setPhases(data);
-        } catch (error) {
-            console.error("Error loading phases:", error);
-            toast.error(t("projects.phases.messages.loadError"));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (projectId) {
-            loadPhases();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [projectId]);
 
     const handleCreatePhase = () => {
         setEditingPhase(null);
@@ -81,7 +64,7 @@ export default function ProjectPhases({ projectId }) {
         try {
             await projectService.deletePhase(projectId, deletingPhase.id);
             toast.success(t("projects.phases.messages.deleted"));
-            await loadPhases();
+            await refreshPhases();
         } catch (error) {
             console.error("Error deleting phase:", error);
             toast.error(error?.message || t("ui.common.error"));
@@ -114,7 +97,7 @@ export default function ProjectPhases({ projectId }) {
                 toast.success(t("projects.phases.messages.created"));
             }
 
-            await loadPhases();
+            await refreshPhases();
             handleClose();
         } catch (error) {
             console.error("Error saving phase:", error);

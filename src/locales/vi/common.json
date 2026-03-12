@@ -927,7 +927,21 @@
         "lockedAccounts": "Tài khoản bị khóa",
         "accountManagement": "Quản lý tài khoản & phân quyền",
         "accountManagementDescription": "Xem và chỉnh sửa quyền truy cập theo từng tài khoản người dùng",
-        "resetPasswordDescription": "Thiết lập mật khẩu mới cho tài khoản này"
+        "resetPasswordDescription": "Thiết lập mật khẩu mới cho tài khoản này",
+        "userProfileSaveSuccess": "Cập nhật thông tin người dùng thành công",
+        "userProfileSaveError": "Lỗi khi cập nhật thông tin người dùng",
+        "userProfile": "Thông tin người dùng",
+        "firstName": "Tên",
+        "lastName": "Họ",
+        "phone": "Số điện thoại",
+        "gender": "Giới tính",
+        "address": "Địa chỉ",
+        "saveProfile": "Lưu thông tin",
+        "selectGender": "Chọn giới tính",
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác",
+        "noUserProfile": "Không tìm thấy thông tin người dùng cho tài khoản này"
       },
       "roles": {
         "title": "Roles",
