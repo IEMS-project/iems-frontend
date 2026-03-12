@@ -12,7 +12,6 @@ const emptyAccountPasswordForm = { newPassword: "", confirmPassword: "" };
 export default function AccountManagementTab() {
     const { t } = useTranslation();
     const [roles, setRoles] = useState([]);
-    const [permissions, setPermissions] = useState([]);
     const [accounts, setAccounts] = useState([]);
     const [accountsLoading, setAccountsLoading] = useState(false);
     const [accountsError, setAccountsError] = useState("");
@@ -24,12 +23,9 @@ export default function AccountManagementTab() {
     const [accountSaveMessage, setAccountSaveMessage] = useState("");
     const [accountSaveError, setAccountSaveError] = useState("");
     const [accountRolesDraft, setAccountRolesDraft] = useState(new Set());
-    const [accountPermissionsDraft, setAccountPermissionsDraft] = useState(new Set());
     const [accountEnabledDraft, setAccountEnabledDraft] = useState(true);
     const [accountRolesOriginal, setAccountRolesOriginal] = useState(new Set());
-    const [accountPermissionsOriginal, setAccountPermissionsOriginal] = useState(new Set());
     const [accountRolesSaving, setAccountRolesSaving] = useState(false);
-    const [accountPermissionsSaving, setAccountPermissionsSaving] = useState(false);
 
     // Reset password
     const [passwordForm, setPasswordForm] = useState(emptyAccountPasswordForm);
@@ -78,23 +74,6 @@ export default function AccountManagementTab() {
         };
     }, []);
 
-    useEffect(() => {
-        let active = true;
-        const loadPermissions = async () => {
-            try {
-                const data = await iamService.getPermissions();
-                if (!active) return;
-                setPermissions(Array.isArray(data) ? data : []);
-            } catch {
-                // Silent fail for permissions when loading accounts tab
-            }
-        };
-        loadPermissions();
-        return () => {
-            active = false;
-        };
-    }, []);
-
     const filteredAccounts = useMemo(() => {
         if (!accountSearch.trim()) return accounts;
         const q = accountSearch.toLowerCase();
@@ -121,11 +100,8 @@ export default function AccountManagementTab() {
             setSelectedAccount(effective);
             setAccountEnabledDraft(!!effective.enabled);
             const rolesSet = new Set(effective.roles || []);
-            const permissionsSet = new Set(effective.permissions || []);
             setAccountRolesDraft(rolesSet);
-            setAccountPermissionsDraft(permissionsSet);
             setAccountRolesOriginal(new Set(rolesSet));
-            setAccountPermissionsOriginal(new Set(permissionsSet));
             setPasswordForm(emptyAccountPasswordForm);
         } finally {
             setAccountDetailLoading(false);
@@ -134,17 +110,6 @@ export default function AccountManagementTab() {
 
     const toggleAccountRole = (code) => {
         setAccountRolesDraft((prev) => {
-            const next = new Set(prev);
-            if (next.has(code)) next.delete(code);
-            else next.add(code);
-            return next;
-        });
-        setAccountSaveMessage("");
-        setAccountSaveError("");
-    };
-
-    const toggleAccountPermission = (code) => {
-        setAccountPermissionsDraft((prev) => {
             const next = new Set(prev);
             if (next.has(code)) next.delete(code);
             else next.add(code);
@@ -184,39 +149,6 @@ export default function AccountManagementTab() {
             setAccountSaveError(error?.message || t("admin.accessControl.accounts.error"));
         } finally {
             setAccountRolesSaving(false);
-        }
-    };
-
-    const handleSaveAccountPermissions = async () => {
-        if (!selectedAccount) return;
-        setAccountPermissionsSaving(true);
-        setAccountSaveMessage("");
-        setAccountSaveError("");
-        try {
-            await iamService.updateAccountPermissions(
-                selectedAccount.userId,
-                Array.from(accountPermissionsDraft)
-            );
-
-            setSelectedAccount((prev) =>
-                prev
-                    ? {
-                        ...prev,
-                        permissions: Array.from(accountPermissionsDraft),
-                    }
-                    : prev
-            );
-            setAccountPermissionsOriginal(new Set(accountPermissionsDraft));
-
-            const refreshed = await iamService.getAccounts();
-            setAccounts(Array.isArray(refreshed) ? refreshed : []);
-
-            setAccountSaveMessage(t("admin.accessControl.accounts.permissionsUpdated"));
-            setAccountSaveError("");
-        } catch (error) {
-            setAccountSaveError(error?.message || t("admin.accessControl.accounts.error"));
-        } finally {
-            setAccountPermissionsSaving(false);
         }
     };
 
@@ -336,14 +268,10 @@ export default function AccountManagementTab() {
                 account={selectedAccount}
                 loading={accountDetailLoading}
                 roles={roles}
-                permissions={permissions}
                 accountRolesDraft={accountRolesDraft}
-                accountPermissionsDraft={accountPermissionsDraft}
                 accountEnabledDraft={accountEnabledDraft}
                 onToggleRole={toggleAccountRole}
-                onTogglePermission={toggleAccountPermission}
                 onSaveRoles={handleSaveAccountRoles}
-                onSavePermissions={handleSaveAccountPermissions}
                 onToggleLock={handleToggleLock}
                 onResetPassword={handleResetPassword}
                 passwordForm={passwordForm}
@@ -352,11 +280,9 @@ export default function AccountManagementTab() {
                 passwordSuccess={passwordSuccess}
                 passwordSaving={passwordSaving}
                 accountRolesSaving={accountRolesSaving}
-                accountPermissionsSaving={accountPermissionsSaving}
                 saveMessage={accountSaveMessage}
                 saveError={accountSaveError}
                 hasRolesChanges={hasSetChanges(accountRolesDraft, accountRolesOriginal)}
-                hasPermissionsChanges={hasSetChanges(accountPermissionsDraft, accountPermissionsOriginal)}
             />
         </div>
     );

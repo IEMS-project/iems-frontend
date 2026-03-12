@@ -11,7 +11,7 @@ export default function AdminAccessControl() {
 
   const tabs = [
     { id: "accounts", label: t("admin.accessControl.tabs.accounts") },
-    { id: "roles-permissions", label: t("admin.accessControl.tabs.rolesPermissions") },
+    { id: "roles-permissions", label: t("admin.accessControl.tabs.roles") },
   ];
 
   return (
