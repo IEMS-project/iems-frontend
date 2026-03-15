@@ -84,6 +84,44 @@ export const projectService = {
     return data?.data || data;
   },
 
+  async updateMemberStatus(projectId, userId, status) {
+    const data = await request(`${BASE}/${projectId}/members/${userId}/status`, {
+      method: "PATCH",
+      body: { status },
+    });
+    return data?.data || data;
+  },
+
+  // ── Member Permissions ────────────────────────────────────────
+  async getMemberPermissions(projectId, userId) {
+    const data = await request(`${BASE}/${projectId}/members/${userId}/permissions`);
+    return data?.data || data || { granted: [], denied: [] };
+  },
+
+  async grantMemberPermission(projectId, userId, permCode) {
+    const data = await request(
+      `${BASE}/${projectId}/members/${userId}/permissions/${permCode}/grant`,
+      { method: "POST" }
+    );
+    return data?.data || data;
+  },
+
+  async denyMemberPermission(projectId, userId, permCode) {
+    const data = await request(
+      `${BASE}/${projectId}/members/${userId}/permissions/${permCode}/deny`,
+      { method: "POST" }
+    );
+    return data?.data || data;
+  },
+
+  async resetMemberPermission(projectId, userId, permCode) {
+    const data = await request(
+      `${BASE}/${projectId}/members/${userId}/permissions/${permCode}`,
+      { method: "DELETE" }
+    );
+    return data?.data || data;
+  },
+
   // ── Roles ────────────────────────────────────────────────────
   async getProjectRoles(projectId) {
     const data = await request(`${BASE}/${projectId}/roles`);
@@ -132,17 +170,17 @@ export const projectService = {
     return data?.data || data || [];
   },
 
-  async assignPermission(projectId, roleId, permissionId) {
+  async assignPermission(projectId, roleId, permCode) {
     const data = await request(
-      `${BASE}/${projectId}/roles/${roleId}/permissions/${permissionId}`,
+      `${BASE}/${projectId}/roles/${roleId}/permissions/${permCode}`,
       { method: "POST" }
     );
     return data?.data || data;
   },
 
-  async removePermission(projectId, roleId, permissionId) {
+  async removePermission(projectId, roleId, permCode) {
     const data = await request(
-      `${BASE}/${projectId}/roles/${roleId}/permissions/${permissionId}`,
+      `${BASE}/${projectId}/roles/${roleId}/permissions/${permCode}`,
       { method: "DELETE" }
     );
     return data?.data || data;

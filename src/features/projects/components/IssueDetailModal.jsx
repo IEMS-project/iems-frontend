@@ -420,7 +420,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
 
   // ── Render one comment (with replies) ─────────────────────────────────────
   const renderComment = (comment, isReply = false) => {
-    const name = getAuthorName(comment.userId || comment.authorId) || "Unknown";
+    const name =comment.authorName || getAuthorName(comment.authorId) || "Unknown"
     const replies = repliesByParent[comment.id] || [];
     return (
       <div key={comment.id} className={isReply ? "pl-8 mt-2" : ""}>

@@ -7,7 +7,13 @@ import { projectService } from "@/features/projects/api/projectService";
 import { workflowService } from "@/features/projects/api/workflowService";
 import { toast } from "sonner";
 
-const STEP_TITLES = ["Basic Information", "Workflow", "Priority"];
+const STEP_TITLES = ["Basic Information", "Workflow", "Priority", "Issue Types"];
+
+const ISSUE_TYPE_ICONS = [
+    "🐛", "✨", "📋", "🔥", "🔧", "📝", "🚀", "💡",
+    "⚠️", "🎯", "🔍", "💬", "🧪", "🔒", "🎨", "📊",
+    "⭐", "❌", "📦", "🏷️", "🔗", "📌", "🛠️", "🌟",
+];
 
 const INITIAL_BASIC_INFO = {
     name: "",
@@ -16,8 +22,6 @@ const INITIAL_BASIC_INFO = {
     startDate: "",
     endDate: "",
     status: "PLANNING",
-    methodology: "AGILE",
-    framework: "SCRUM",
 };
 
 // item._removed = true  → DELETE  (only if item.id exists)
@@ -38,6 +42,10 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     // each priority may have { id, name, color, level, _removed }
     const [priorities, setPriorities] = useState([]);
 
+    // each issue type may have { id, name, description, iconUrl, _removed }
+    const [issueTypes, setIssueTypes] = useState([]);
+    const [activeIconPicker, setActiveIconPicker] = useState(null); // index of open picker
+
     const handleClose = () => {
         setStep(0);
         setCreatedProjectId(null);
@@ -45,6 +53,8 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setBasicInfo({ ...INITIAL_BASIC_INFO });
         setWorkflowData({ id: null, name: "", statuses: [] });
         setPriorities([]);
+        setIssueTypes([]);
+        setActiveIconPicker(null);
         onClose();
     };
 
@@ -83,9 +93,10 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             setCreatedProjectId(projectId);
 
             // Load backend-seeded defaults in parallel
-            const [workflows, priorList] = await Promise.all([
+            const [workflows, priorList, issueTypeList] = await Promise.all([
                 workflowService.getWorkflows(projectId),
                 projectService.getIssuePriorities(projectId),
+                projectService.getIssueTypes(projectId),
             ]);
 
             // Populate workflow step with existing data
@@ -111,6 +122,18 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                 })));
             } else {
                 setPriorities([]);
+            }
+
+            // Populate issue types step with existing data
+            if (issueTypeList.length > 0) {
+                setIssueTypes(issueTypeList.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    description: t.description || "",
+                    iconUrl: t.iconUrl || "",
+                })));
+            } else {
+                setIssueTypes([]);
             }
 
             setStep(1);
@@ -166,7 +189,7 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     };
 
     // ── Step 3: reconcile priority changes ────────────────────────
-    const handleStep3Finish = async () => {
+    const handleStep3Next = async () => {
         setLoading(true);
         try {
             let levelCounter = 1;
@@ -187,11 +210,40 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                     });
                 }
             }
+            setStep(3);
+        } catch (error) {
+            toast.error(error?.message || "Failed to save priorities");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ── Step 4: reconcile issue type changes ──────────────────────
+    const handleStep4Finish = async () => {
+        setLoading(true);
+        try {
+            for (const issueType of issueTypes) {
+                if (issueType._removed && issueType.id) {
+                    await projectService.deleteIssueType(createdProjectId, issueType.id);
+                } else if (issueType.id && !issueType._removed) {
+                    await projectService.updateIssueType(createdProjectId, issueType.id, {
+                        name: issueType.name,
+                        description: issueType.description,
+                        iconUrl: issueType.iconUrl || null,
+                    });
+                } else if (!issueType.id && !issueType._removed && issueType.name.trim()) {
+                    await projectService.createIssueType(createdProjectId, {
+                        name: issueType.name,
+                        description: issueType.description,
+                        iconUrl: issueType.iconUrl || null,
+                    });
+                }
+            }
             toast.success("Project created successfully");
             onCreated?.();
             handleClose();
         } catch (error) {
-            toast.error(error?.message || "Failed to save priorities");
+            toast.error(error?.message || "Failed to save issue types");
         } finally {
             setLoading(false);
         }
@@ -247,6 +299,28 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             return updated;
         });
 
+    // ── Issue type helpers ────────────────────────────────────────
+    const addIssueType = () =>
+        setIssueTypes(prev => [...prev, { name: "", description: "", iconUrl: "" }]);
+
+    const removeIssueType = (index) =>
+        setIssueTypes(prev => {
+            const updated = [...prev];
+            if (updated[index].id) {
+                updated[index] = { ...updated[index], _removed: true };
+            } else {
+                updated.splice(index, 1);
+            }
+            return updated;
+        });
+
+    const updateIssueType = (index, field, value) =>
+        setIssueTypes(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            return updated;
+        });
+
     // ── Step indicator ────────────────────────────────────────────
     const stepIndicator = (
         <div className="flex items-center gap-0 mt-2">
@@ -284,10 +358,17 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                         {loading ? "Saving…" : "Next →"}
                     </Button>
                 </>
+            ) : step === 2 ? (
+                <>
+                    <Button variant="secondary" onClick={() => setStep(3)} disabled={loading}>Skip</Button>
+                    <Button onClick={handleStep3Next} disabled={loading}>
+                        {loading ? "Saving…" : "Next →"}
+                    </Button>
+                </>
             ) : (
                 <>
                     <Button variant="secondary" onClick={handleSkipToFinish} disabled={loading}>Skip</Button>
-                    <Button onClick={handleStep3Finish} disabled={loading}>
+                    <Button onClick={handleStep4Finish} disabled={loading}>
                         {loading ? "Saving…" : "Finish"}
                     </Button>
                 </>
@@ -301,6 +382,7 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     // visible = not _removed
     const visibleStatuses = workflowData.statuses.filter(s => !s._removed);
     const visiblePriorities = priorities.filter(p => !p._removed);
+    const visibleIssueTypes = issueTypes.filter(t => !t._removed);
 
     return (
         <Modal
@@ -340,23 +422,6 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                             <option value="ON_HOLD">On Hold</option>
                             <option value="COMPLETED">Completed</option>
                             <option value="CANCELLED">Cancelled</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className={labelCls}>Methodology</label>
-                        <select value={basicInfo.methodology} onChange={e => setBasicInfo(prev => ({ ...prev, methodology: e.target.value }))} className={inputCls}>
-                            <option value="AGILE">Agile</option>
-                            <option value="WATERFALL">Waterfall</option>
-                        </select>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                        <label className={labelCls}>Framework</label>
-                        <select value={basicInfo.framework} onChange={e => setBasicInfo(prev => ({ ...prev, framework: e.target.value }))} className={inputCls}>
-                            <option value="SCRUM">Scrum</option>
-                            <option value="KANBAN">Kanban</option>
-                            <option value="CUSTOM">Custom</option>
                         </select>
                     </div>
 
@@ -432,6 +497,97 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                             {visiblePriorities.length === 0 && (
                                 <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded">
                                     No priorities. Click "+ Add Priority" to add one.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Step 4: Issue Types ── */}
+            {step === 3 && (
+                <div className="space-y-4">
+                    {activeIconPicker !== null && (
+                        <div className="fixed inset-0 z-40" onClick={() => setActiveIconPicker(null)} />
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        Choose which issue types your project will use. You can add, remove, or rename them later in settings.
+                    </p>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className={labelCls + " mb-0"}>Issue Types</label>
+                            <button onClick={addIssueType} className="text-xs text-blue-500 hover:text-blue-600 font-medium">+ Add Issue Type</button>
+                        </div>
+                        <div className="space-y-2">
+                            {visibleIssueTypes.map((issueType, visibleIdx) => {
+                                const realIdx = issueTypes.indexOf(issueType);
+                                const pickerOpen = activeIconPicker === realIdx;
+                                return (
+                                    <div key={issueType.id ?? visibleIdx} className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            {/* Icon picker button */}
+                                            <div className="relative shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveIconPicker(pickerOpen ? null : realIdx)}
+                                                    className="w-9 h-9 rounded border border-border bg-muted flex items-center justify-center text-lg hover:bg-accent transition-colors"
+                                                    title="Pick an icon"
+                                                >
+                                                    {issueType.iconUrl || "＋"}
+                                                </button>
+                                                {pickerOpen && (
+                                                    <div className="absolute z-50 top-10 left-0 bg-popover border border-border rounded-lg shadow-lg p-2 w-52">
+                                                        <div className="grid grid-cols-8 gap-1">
+                                                            {ISSUE_TYPE_ICONS.map(emoji => (
+                                                                <button
+                                                                    key={emoji}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        updateIssueType(realIdx, "iconUrl", emoji);
+                                                                        setActiveIconPicker(null);
+                                                                    }}
+                                                                    className={`w-6 h-6 flex items-center justify-center rounded text-base hover:bg-accent transition-colors ${issueType.iconUrl === emoji ? "bg-blue-100 dark:bg-blue-900" : ""}`}
+                                                                >
+                                                                    {emoji}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        {issueType.iconUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    updateIssueType(realIdx, "iconUrl", "");
+                                                                    setActiveIconPicker(null);
+                                                                }}
+                                                                className="mt-1 w-full text-xs text-muted-foreground hover:text-destructive text-center"
+                                                            >
+                                                                Remove icon
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <Input
+                                                value={issueType.name}
+                                                onChange={e => updateIssueType(realIdx, "name", e.target.value)}
+                                                className={inputCls + " flex-1"}
+                                                placeholder="Issue type name (e.g. BUG)"
+                                            />
+                                            <Input
+                                                value={issueType.description}
+                                                onChange={e => updateIssueType(realIdx, "description", e.target.value)}
+                                                className={inputCls + " flex-1"}
+                                                placeholder="Description (optional)"
+                                            />
+                                            <button onClick={() => removeIssueType(realIdx)} className="text-muted-foreground hover:text-destructive transition-colors shrink-0 px-1">✕</button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {visibleIssueTypes.length === 0 && (
+                                <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded">
+                                    No issue types. Click "+ Add Issue Type" to add one.
                                 </p>
                             )}
                         </div>
