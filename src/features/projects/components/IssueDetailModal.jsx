@@ -152,8 +152,10 @@ function ChildIssueRow({ child, issueTypes, issuePriorities, workflowStatuses, m
       const name = m.fullName || m.userName || m.email || "?";
       const id = m.accountId || m.id;
       const ini = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-      return { value: id, label: name, active: id === local.assigneeId,
-        icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{ini}</div> };
+      return {
+        value: id, label: name, active: id === local.assigneeId,
+        icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{ini}</div>
+      };
     }),
   ];
 
@@ -492,366 +494,366 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
   // ════════════════════════════════════════════════════════════════════════
   return (
     <>
-    <Modal
-      open={open}
-      onClose={onClose}
-      className="!max-w-5xl !h-[95vh] !max-h-[95vh]"
-      contentClassName="overflow-hidden p-0"
-      title={
-        <div className="flex items-center gap-2">
-          <TypeIcon className={`w-4 h-4 ${typeColor}`} />
-          <span className="text-xs font-mono text-muted-foreground">{issue.issueKey}</span>
-        </div>
-      }
-      footer={
-        <div className="flex justify-between items-center">
-          <Button variant="destructive" size="sm" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4 mr-1" /> Delete
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={onClose}>Close</Button>
-            <Button size="sm" onClick={handleSave} disabled={!isDirty || saving} className="min-w-[80px]">
-              <Save className="w-4 h-4 mr-1" />{saving ? "Saving..." : "Save"}
-            </Button>
+      <Modal
+        open={open}
+        onClose={onClose}
+        className="!max-w-5xl !h-[95vh] !max-h-[95vh]"
+        contentClassName="overflow-hidden p-0"
+        title={
+          <div className="flex items-center gap-2">
+            <TypeIcon className={`w-4 h-4 ${typeColor}`} />
+            <span className="text-xs font-mono text-muted-foreground">{issue.issueKey}</span>
           </div>
-        </div>
-      }
-    >
-      <div className="h-full flex">
+        }
+        footer={
+          <div className="flex justify-between items-center">
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Trash2 className="w-4 h-4 mr-1" /> Delete
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={onClose}>Close</Button>
+              <Button size="sm" onClick={handleSave} disabled={!isDirty || saving} className="min-w-[80px]">
+                <Save className="w-4 h-4 mr-1" />{saving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="h-full flex">
 
-        {/* ════ LEFT COLUMN ════ */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
+          {/* ════ LEFT COLUMN ════ */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
 
-          {/* Issue header — fixed */}
-          <div className="flex-shrink-0 px-6 pt-4 pb-3 border-b border-border">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              {/* Editable title */}
-              <input
-                value={form.title}
-                onChange={e => set("title", e.target.value)}
-                className="flex-1 text-lg font-semibold bg-transparent text-foreground border-0 border-b-2 border-transparent hover:border-border focus:border-blue-500 focus:outline-none py-0.5 transition-colors leading-snug"
-                placeholder="Issue title"
-              />
-              {/* More actions */}
-              <div className="relative shrink-0" ref={moreRef}>
-                <button
-                  onClick={() => setShowMoreMenu(v => !v)}
-                  className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            {/* Issue header — fixed */}
+            <div className="flex-shrink-0 px-6 pt-4 pb-3 border-b border-border">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                {/* Editable title */}
+                <input
+                  value={form.title}
+                  onChange={e => set("title", e.target.value)}
+                  className="flex-1 text-lg font-semibold bg-transparent text-foreground border-0 border-b-2 border-transparent hover:border-border focus:border-blue-500 focus:outline-none py-0.5 transition-colors leading-snug"
+                  placeholder="Issue title"
+                />
+                {/* More actions */}
+                <div className="relative shrink-0" ref={moreRef}>
+                  <button
+                    onClick={() => setShowMoreMenu(v => !v)}
+                    className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                  {showMoreMenu && (
+                    <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
+                      <button
+                        onClick={() => { setShowMoreMenu(false); handleDelete(); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete issue
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status + meta pills */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={form.statusId}
+                  onChange={e => set("statusId", e.target.value)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${getStatusStyle(currentStatus?.name)}`}
                 >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-                {showMoreMenu && (
-                  <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-                    <button
-                      onClick={() => { setShowMoreMenu(false); handleDelete(); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete issue
-                    </button>
-                  </div>
+                  {workflowStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1 border border-border">
+                  <TypeIcon className={`w-3 h-3 ${typeColor}`} />{typeName}
+                </span>
+                {priorityObj && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1 border border-border">
+                    <PriorityIcon className={`w-3 h-3 ${prioColor}`} />{priorityObj.name}
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* Status + meta pills */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <select
-                value={form.statusId}
-                onChange={e => set("statusId", e.target.value)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${getStatusStyle(currentStatus?.name)}`}
-              >
-                {workflowStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1 border border-border">
-                <TypeIcon className={`w-3 h-3 ${typeColor}`} />{typeName}
-              </span>
-              {priorityObj && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1 border border-border">
-                  <PriorityIcon className={`w-3 h-3 ${prioColor}`} />{priorityObj.name}
-                </span>
-              )}
-            </div>
-          </div>
+            {/* Scrollable main content — left side own scroll */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
 
-          {/* Scrollable main content — left side own scroll */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
-
-            {/* ── Description ── */}
-            <div className="flex-shrink-0 px-6 py-4 border-b border-border">
-              <Section
-                title="Description"
-                collapsed={collapsed.description}
-                onToggle={() => setCollapsed(p => ({ ...p, description: !p.description }))}
-              >
-                <RichTextEditor
-                  value={form.description}
-                  onChange={v => set("description", v)}
-                  placeholder="Add a description..."
-                />
-              </Section>
-            </div>
-
-            {/* ── Child Issues / Subtasks (only if any exist or adding) ── */}
-            {(children.length > 0 || addingSubtask) && (
+              {/* ── Description ── */}
               <div className="flex-shrink-0 px-6 py-4 border-b border-border">
                 <Section
-                  title={`Child Issues${children.length ? ` (${children.length})` : ""}`}
-                  collapsed={collapsed.subtasks}
-                  onToggle={() => setCollapsed(p => ({ ...p, subtasks: !p.subtasks }))}
+                  title="Description"
+                  collapsed={collapsed.description}
+                  onToggle={() => setCollapsed(p => ({ ...p, description: !p.description }))}
+                >
+                  <RichTextEditor
+                    value={form.description}
+                    onChange={v => set("description", v)}
+                    placeholder="Add a description..."
+                  />
+                </Section>
+              </div>
+
+              {/* ── Child Issues / Subtasks (only if any exist or adding) ── */}
+              {(children.length > 0 || addingSubtask) && (
+                <div className="flex-shrink-0 px-6 py-4 border-b border-border">
+                  <Section
+                    title={`Child Issues${children.length ? ` (${children.length})` : ""}`}
+                    collapsed={collapsed.subtasks}
+                    onToggle={() => setCollapsed(p => ({ ...p, subtasks: !p.subtasks }))}
+                    action={
+                      !addingSubtask && (
+                        <button onClick={() => setAddingSubtask(true)}
+                          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium">
+                          <Plus className="w-3.5 h-3.5" /> Add
+                        </button>
+                      )
+                    }
+                  >
+                    {/* Progress bar */}
+                    {children.length > 0 && (
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">{progress}%</span>
+                      </div>
+                    )}
+                    {/* Subtask table */}
+                    <div className="overflow-x-auto mb-2">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-t border-border bg-muted/30">
+                            <th className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Work</th>
+                            <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-24">Priority</th>
+                            <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-28">Assignee</th>
+                            <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                          {children.map(child => (
+                            <ChildIssueRow
+                              key={child.id}
+                              child={child}
+                              issueTypes={issueTypes}
+                              issuePriorities={issuePriorities}
+                              workflowStatuses={workflowStatuses}
+                              members={members}
+                              projectId={projectId}
+                              onOpenDetail={setSubModalIssue}
+                            />
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Inline add subtask form */}
+                    {addingSubtask && (
+                      <div className="flex gap-2 items-center mt-2">
+                        <input
+                          value={subtaskTitle}
+                          onChange={e => setSubtaskTitle(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") handleAddSubtask(); if (e.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }}
+                          placeholder="Subtask title..."
+                          className="flex-1 text-sm border border-border rounded-md px-3 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={handleAddSubtask} disabled={!subtaskTitle.trim()}>Add</Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setAddingSubtask(false); setSubtaskTitle(""); }}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </Section>
+                </div>
+              )}
+
+              {/* ── Activity ── */}
+              <div className="px-6 py-4">
+                <Section
+                  title="Activity"
+                  collapsed={collapsed.activity}
+                  onToggle={() => setCollapsed(p => ({ ...p, activity: !p.activity }))}
                   action={
-                    !addingSubtask && (
+                    !children.length && !addingSubtask && (
                       <button onClick={() => setAddingSubtask(true)}
                         className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium">
-                        <Plus className="w-3.5 h-3.5" /> Add
+                        <Plus className="w-3.5 h-3.5" /> Child issue
                       </button>
                     )
                   }
                 >
-                  {/* Progress bar */}
-                  {children.length > 0 && (
-                    <div className="mb-3 flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">{progress}%</span>
-                    </div>
-                  )}
-                  {/* Subtask table */}
-                  <div className="overflow-x-auto mb-2">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-t border-border bg-muted/30">
-                          <th className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Work</th>
-                          <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-24">Priority</th>
-                          <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-28">Assignee</th>
-                          <th className="px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/50">
-                        {children.map(child => (
-                          <ChildIssueRow
-                            key={child.id}
-                            child={child}
-                            issueTypes={issueTypes}
-                            issuePriorities={issuePriorities}
-                            workflowStatuses={workflowStatuses}
-                            members={members}
-                            projectId={projectId}
-                            onOpenDetail={setSubModalIssue}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* Tabs — Comments / History only */}
+                  <div className="flex gap-0 border-b border-border mb-3">
+                    {[["comments", "Comments"], ["history", "History"]].map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${activeTab === key ? "border-blue-500 text-blue-500" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {label}
+                        {key === "comments" && comments.length > 0 && <span className="ml-1.5 bg-muted rounded-full px-1.5 py-0.5 text-[10px]">{comments.length}</span>}
+                        {key === "history" && activityLogs.length > 0 && <span className="ml-1.5 bg-muted rounded-full px-1.5 py-0.5 text-[10px]">{activityLogs.length}</span>}
+                      </button>
+                    ))}
                   </div>
-                  {/* Inline add subtask form */}
-                  {addingSubtask && (
-                    <div className="flex gap-2 items-center mt-2">
-                      <input
-                        value={subtaskTitle}
-                        onChange={e => setSubtaskTitle(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter") handleAddSubtask(); if (e.key === "Escape") { setAddingSubtask(false); setSubtaskTitle(""); } }}
-                        placeholder="Subtask title..."
-                        className="flex-1 text-sm border border-border rounded-md px-3 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                        autoFocus
+
+                  {/* Tab content */}
+                  <div className="space-y-3 pb-3">
+                    {(loadingComments || loadingLogs) && <p className="text-sm text-muted-foreground italic">Loading...</p>}
+
+                    {/* COMMENTS tab */}
+                    {activeTab === "comments" && !loadingComments && (
+                      topLevelComments.length === 0
+                        ? <p className="text-sm text-muted-foreground italic">No comments yet</p>
+                        : topLevelComments.map(c => renderComment(c))
+                    )}
+
+                    {/* HISTORY tab */}
+                    {activeTab === "history" && !loadingLogs && (
+                      activityLogs.length === 0
+                        ? <p className="text-sm text-muted-foreground italic">No history yet</p>
+                        : activityLogs.map(log => renderActivity(log))
+                    )}
+                  </div>
+
+                  {/* Add comment input */}
+                  {activeTab === "comments" && (
+                    <div className="flex gap-2 border-t border-border pt-3 mt-1">
+                      <Textarea
+                        value={newComment}
+                        onChange={e => setNewComment(e.target.value)}
+                        placeholder="Add a comment... (Ctrl+Enter to send)"
+                        rows={2}
+                        className="flex-1 text-sm"
+                        onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) handleAddComment(); }}
                       />
-                      <Button size="sm" onClick={handleAddSubtask} disabled={!subtaskTitle.trim()}>Add</Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setAddingSubtask(false); setSubtaskTitle(""); }}>
-                        <X className="w-3.5 h-3.5" />
+                      <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()} className="self-end">
+                        <Send className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
                 </Section>
               </div>
-            )}
-
-            {/* ── Activity ── */}
-            <div className="px-6 py-4">
-              <Section
-                title="Activity"
-                collapsed={collapsed.activity}
-                onToggle={() => setCollapsed(p => ({ ...p, activity: !p.activity }))}
-                action={
-                  !children.length && !addingSubtask && (
-                    <button onClick={() => setAddingSubtask(true)}
-                      className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors font-medium">
-                      <Plus className="w-3.5 h-3.5" /> Child issue
-                    </button>
-                  )
-                }
-              >
-                {/* Tabs — Comments / History only */}
-                <div className="flex gap-0 border-b border-border mb-3">
-                  {[["comments", "Comments"], ["history", "History"]].map(([key, label]) => (
-                    <button
-                      key={key}
-                      onClick={() => setActiveTab(key)}
-                      className={`px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${activeTab === key ? "border-blue-500 text-blue-500" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {label}
-                      {key === "comments" && comments.length > 0 && <span className="ml-1.5 bg-muted rounded-full px-1.5 py-0.5 text-[10px]">{comments.length}</span>}
-                      {key === "history" && activityLogs.length > 0 && <span className="ml-1.5 bg-muted rounded-full px-1.5 py-0.5 text-[10px]">{activityLogs.length}</span>}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab content */}
-                <div className="space-y-3 pb-3">
-                  {(loadingComments || loadingLogs) && <p className="text-sm text-muted-foreground italic">Loading...</p>}
-
-                  {/* COMMENTS tab */}
-                  {activeTab === "comments" && !loadingComments && (
-                    topLevelComments.length === 0
-                      ? <p className="text-sm text-muted-foreground italic">No comments yet</p>
-                      : topLevelComments.map(c => renderComment(c))
-                  )}
-
-                  {/* HISTORY tab */}
-                  {activeTab === "history" && !loadingLogs && (
-                    activityLogs.length === 0
-                      ? <p className="text-sm text-muted-foreground italic">No history yet</p>
-                      : activityLogs.map(log => renderActivity(log))
-                  )}
-                </div>
-
-                {/* Add comment input */}
-                {activeTab === "comments" && (
-                  <div className="flex gap-2 border-t border-border pt-3 mt-1">
-                    <Textarea
-                      value={newComment}
-                      onChange={e => setNewComment(e.target.value)}
-                      placeholder="Add a comment... (Ctrl+Enter to send)"
-                      rows={2}
-                      className="flex-1 text-sm"
-                      onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) handleAddComment(); }}
-                    />
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()} className="self-end">
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </Section>
             </div>
           </div>
-        </div>
 
-        {/* ════ RIGHT SIDEBAR ════ */}
-        <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden">
-          <div className="p-5 space-y-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Details</p>
+          {/* ════ RIGHT SIDEBAR ════ */}
+          <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden">
+            <div className="p-5 space-y-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Details</p>
 
-            {/* Assignee */}
-            <DetailField label="Assignee" icon={User}>
-              <div className="space-y-1.5">
-                {assigneeName ? (
-                  <div className="flex items-center gap-2 mb-1">
-                    <Avatar name={assigneeName} />
-                    <span className="text-sm text-foreground">{assigneeName}</span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic mb-1">Unassigned</p>
-                )}
-                <select value={form.assigneeId} onChange={e => set("assigneeId", e.target.value)} className={selectClass}>
-                  <option value="">Unassigned</option>
-                  {members.map(m => (
-                    <option key={m.accountId || m.id} value={m.accountId || m.id}>
-                      {m.fullName || m.userName || m.email || m.accountId}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </DetailField>
-
-            {/* Reporter — only if set */}
-            {reporterName && (
-              <DetailField label="Reporter" icon={User}>
-                <div className="flex items-center gap-2 pt-1">
-                  <Avatar name={reporterName} color="bg-green-500" />
-                  <span className="text-sm text-foreground">{reporterName}</span>
+              {/* Assignee */}
+              <DetailField label="Assignee" icon={User}>
+                <div className="space-y-1.5">
+                  {assigneeName ? (
+                    <div className="flex items-center gap-2 mb-1">
+                      <Avatar name={assigneeName} />
+                      <span className="text-sm text-foreground">{assigneeName}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic mb-1">Unassigned</p>
+                  )}
+                  <select value={form.assigneeId} onChange={e => set("assigneeId", e.target.value)} className={selectClass}>
+                    <option value="">Unassigned</option>
+                    {members.map(m => (
+                      <option key={m.accountId || m.id} value={m.accountId || m.id}>
+                        {m.fullName || m.userName || m.email || m.accountId}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </DetailField>
-            )}
 
-            {/* Priority */}
-            <DetailField label="Priority" icon={Flag}>
-              <select value={form.priorityId} onChange={e => set("priorityId", e.target.value)} className={selectClass}>
-                <option value="">None</option>
-                {issuePriorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </DetailField>
+              {/* Reporter — only if set */}
+              {reporterName && (
+                <DetailField label="Reporter" icon={User}>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Avatar name={reporterName} color="bg-green-500" />
+                    <span className="text-sm text-foreground">{reporterName}</span>
+                  </div>
+                </DetailField>
+              )}
 
-            {/* Type */}
-            <DetailField label="Type" icon={Layers}>
-              <select value={form.issueTypeId} onChange={e => set("issueTypeId", e.target.value)} className={selectClass}>
-                {issueTypes.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
-              </select>
-            </DetailField>
-
-            {/* Sprint — only if set */}
-            {form.sprintId ? (
-              <DetailField label="Sprint" icon={Zap}>
-                <select value={form.sprintId} onChange={e => set("sprintId", e.target.value)} className={selectClass}>
-                  <option value="">Backlog</option>
-                  {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              {/* Priority */}
+              <DetailField label="Priority" icon={Flag}>
+                <select value={form.priorityId} onChange={e => set("priorityId", e.target.value)} className={selectClass}>
+                  <option value="">None</option>
+                  {issuePriorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </DetailField>
-            ) : (
-              <DetailField label="Sprint" icon={Zap}>
-                <select value={form.sprintId} onChange={e => set("sprintId", e.target.value)} className={selectClass}>
-                  <option value="">Backlog</option>
-                  {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+
+              {/* Type */}
+              <DetailField label="Type" icon={Layers}>
+                <select value={form.issueTypeId} onChange={e => set("issueTypeId", e.target.value)} className={selectClass}>
+                  {issueTypes.map(it => <option key={it.id} value={it.id}>{it.name}</option>)}
                 </select>
               </DetailField>
-            )}
 
-            {/* Story Points — only if set */}
-            {(form.storyPoints !== "" && form.storyPoints !== null) || true ? (
-              <DetailField label="Story Points" icon={Hash}>
-                <input
-                  type="number" min={0} value={form.storyPoints}
-                  onChange={e => set("storyPoints", e.target.value)}
-                  placeholder="—" className={selectClass}
-                />
-              </DetailField>
-            ) : null}
+              {/* Sprint — only if set */}
+              {form.sprintId ? (
+                <DetailField label="Sprint" icon={Zap}>
+                  <select value={form.sprintId} onChange={e => set("sprintId", e.target.value)} className={selectClass}>
+                    <option value="">Backlog</option>
+                    {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </DetailField>
+              ) : (
+                <DetailField label="Sprint" icon={Zap}>
+                  <select value={form.sprintId} onChange={e => set("sprintId", e.target.value)} className={selectClass}>
+                    <option value="">Backlog</option>
+                    {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </DetailField>
+              )}
 
-            {/* Due Date — only if set */}
-            {form.dueDate ? (
-              <DetailField label="Due date" icon={Calendar}>
-                <input type="date" value={form.dueDate} onChange={e => set("dueDate", e.target.value)} className={selectClass} />
-              </DetailField>
-            ) : (
-              <DetailField label="Due date" icon={Calendar}>
-                <input type="date" value={form.dueDate} onChange={e => set("dueDate", e.target.value)} className={selectClass} />
-              </DetailField>
-            )}
+              {/* Story Points — only if set */}
+              {(form.storyPoints !== "" && form.storyPoints !== null) || true ? (
+                <DetailField label="Story Points" icon={Hash}>
+                  <input
+                    type="number" min={0} value={form.storyPoints}
+                    onChange={e => set("storyPoints", e.target.value)}
+                    placeholder="—" className={selectClass}
+                  />
+                </DetailField>
+              ) : null}
 
-            {/* Created / Updated */}
-            {issue.createdAt && (
-              <DetailField label="Created" icon={CalendarDays}>
-                <p className="text-sm text-foreground pt-1">{new Date(issue.createdAt).toLocaleDateString()}</p>
-              </DetailField>
-            )}
-            {issue.updatedAt && (
-              <DetailField label="Updated" icon={CalendarDays}>
-                <p className="text-sm text-foreground pt-1">{new Date(issue.updatedAt).toLocaleDateString()}</p>
-              </DetailField>
-            )}
+              {/* Due Date — only if set */}
+              {form.dueDate ? (
+                <DetailField label="Due date" icon={Calendar}>
+                  <input type="date" value={form.dueDate} onChange={e => set("dueDate", e.target.value)} className={selectClass} />
+                </DetailField>
+              ) : (
+                <DetailField label="Due date" icon={Calendar}>
+                  <input type="date" value={form.dueDate} onChange={e => set("dueDate", e.target.value)} className={selectClass} />
+                </DetailField>
+              )}
+
+              {/* Created / Updated */}
+              {issue.createdAt && (
+                <DetailField label="Created" icon={CalendarDays}>
+                  <p className="text-sm text-foreground pt-1">{new Date(issue.createdAt).toLocaleDateString()}</p>
+                </DetailField>
+              )}
+              {issue.updatedAt && (
+                <DetailField label="Updated" icon={CalendarDays}>
+                  <p className="text-sm text-foreground pt-1">{new Date(issue.updatedAt).toLocaleDateString()}</p>
+                </DetailField>
+              )}
+            </div>
           </div>
+
         </div>
+      </Modal>
 
-      </div>
-    </Modal>
-
-    {/* Nested modal for subtask detail */}
-    {subModalIssue && (
-      <IssueDetailModal
-        open={!!subModalIssue}
-        onClose={() => setSubModalIssue(null)}
-        issue={subModalIssue}
-        onUpdate={() => { loadChildren(); setSubModalIssue(null); }}
-        onDelete={() => { loadChildren(); setSubModalIssue(null); }}
-      />
-    )}
-  </>
+      {/* Nested modal for subtask detail */}
+      {subModalIssue && (
+        <IssueDetailModal
+          open={!!subModalIssue}
+          onClose={() => setSubModalIssue(null)}
+          issue={subModalIssue}
+          onUpdate={() => { loadChildren(); setSubModalIssue(null); }}
+          onDelete={() => { loadChildren(); setSubModalIssue(null); }}
+        />
+      )}
+    </>
   );
 }

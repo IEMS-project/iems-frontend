@@ -458,7 +458,7 @@ export default function BacklogTab() {
             <div className="pointer-events-none min-w-[320px] flex flex-col rounded-md shadow-lg overflow-hidden border border-blue-400">
               <div className="relative bg-card px-3 py-2 flex items-center gap-1">
                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 opacity-60" />
-                <IssueRow issue={activeIssue} issueTypes={issueTypes} issuePriorities={issuePriorities} members={members} onClick={() => {}} />
+                <IssueRow issue={activeIssue} issueTypes={issueTypes} issuePriorities={issuePriorities} members={members} onClick={() => { }} />
                 {isMulti && (
                   <div className="absolute -top-2 -right-2 z-20 min-w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center px-1.5 shadow">
                     {selectedIssueIds.size}
@@ -471,7 +471,7 @@ export default function BacklogTab() {
                 return (
                   <div key={id} className="bg-muted/50 border-t border-border px-3 py-2 flex items-center gap-1 opacity-80">
                     <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0 opacity-40" />
-                    <IssueRow issue={s} issueTypes={issueTypes} issuePriorities={issuePriorities} members={members} onClick={() => {}} />
+                    <IssueRow issue={s} issueTypes={issueTypes} issuePriorities={issuePriorities} members={members} onClick={() => { }} />
                   </div>
                 );
               })}
