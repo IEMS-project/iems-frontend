@@ -1,157 +1,160 @@
-import React, { useEffect, useRef } from 'react';
-import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
+import { useEffect, useRef } from "react";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
-const RichTextEditor = ({ value, onChange, placeholder, className = '', readOnly = false }) => {
-  const editorRef = useRef(null);
+const TOOLBAR = [
+  [{ header: [1, 2, 3, false] }],
+  ["bold", "italic", "underline", "strike"],
+  [{ list: "ordered" }, { list: "bullet" }],
+  ["blockquote", "code-block"],
+  ["link"],
+  ["clean"],
+];
+
+export default function RichTextEditor({
+  value,
+  onChange,
+  placeholder = "Add a description...",
+  readOnly = false,
+  className = "",
+}) {
+  const wrapperRef = useRef(null);
   const quillRef = useRef(null);
-  const containerRef = useRef(null);
+  const isInternalChange = useRef(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!wrapperRef.current) return;
 
-    // Clear any existing content to prevent duplicates
-    containerRef.current.innerHTML = '';
+    // Quill (snow theme) inserts the toolbar as a SIBLING of the container,
+    // so both elements share the same parent. We use an intermediate `wrapper`
+    // div so that toolbar + container are children of `wrapper`, not of
+    // `wrapperRef` directly. On cleanup we remove `wrapper` to take both away.
+    const wrapper = document.createElement("div");
+    wrapperRef.current.appendChild(wrapper);
 
-    // Create editor div
-    const editorDiv = document.createElement('div');
-    containerRef.current.appendChild(editorDiv);
-    editorRef.current = editorDiv;
+    const host = document.createElement("div");
+    wrapper.appendChild(host);
 
-    const quill = new Quill(editorDiv, {
-      theme: 'snow',
+    const quill = new Quill(host, {
+      theme: "snow",
+      placeholder,
       readOnly,
-      placeholder: placeholder || '',
-      modules: {
-        toolbar: readOnly
-          ? false
-          : [
-            [{ header: [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            [{ color: [] }, { background: [] }],
-            ['link', 'code-block'],
-            ['clean'],
-          ],
-      },
-      formats: [
-        'header',
-        'bold',
-        'italic',
-        'underline',
-        'strike',
-        'list',
-        'bullet',
-        'color',
-        'background',
-        'link',
-        'code-block',
-      ],
+      modules: { toolbar: readOnly ? false : TOOLBAR },
     });
 
+    quill.root.innerHTML = value || "";
     quillRef.current = quill;
 
-    // Set initial value
-    if (value) quill.root.innerHTML = value;
-
-    // On change
-    if (!readOnly && onChange) {
-      quill.on('text-change', () => {
-        const html = quill.root.innerHTML;
-        const newValue = html === '<p><br></p>' ? '' : html;
-        onChange(newValue);
-      });
-    }
+    quill.on("text-change", () => {
+      const html = quill.root.innerHTML;
+      isInternalChange.current = true;
+      onChange?.(html === "<p><br></p>" ? "" : html);
+    });
 
     return () => {
-      if (quillRef.current) {
-        quillRef.current = null;
-      }
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
+      quill.off("text-change");
+      quillRef.current = null;
+      // Remove directly — wrapperRef.current may be null in Strict Mode cleanup
+      wrapper.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update editor content when value changes from outside
+  // Sync external value → Quill (skip when change came from Quill itself)
   useEffect(() => {
     if (!quillRef.current) return;
-
-    const currentContent = quillRef.current.root.innerHTML;
-    const normalizedCurrent = currentContent === '<p><br></p>' ? '' : currentContent;
-    const normalizedValue = value || '';
-
-    if (normalizedCurrent !== normalizedValue) {
-      const selection = quillRef.current.getSelection();
-      quillRef.current.root.innerHTML = value || '';
-      if (selection) {
-        quillRef.current.setSelection(selection);
-      }
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
     }
-  }, [value])
+    quillRef.current.root.innerHTML = value || "";
+  }, [value]);
+
+  useEffect(() => {
+    quillRef.current?.enable(!readOnly);
+  }, [readOnly]);
 
   return (
-    <div className={`rich-text-editor ${className}`}>
-      <div ref={containerRef} />
+    <>
+      <div ref={wrapperRef} className={`rte-root ${className}`} />
       <style>{`
-        .rich-text-editor :global(.ql-container) {
+        .rte-root .ql-toolbar.ql-snow {
+          border: 1px solid hsl(var(--border));
+          border-radius: 6px 6px 0 0;
+          background: hsl(var(--muted) / 0.5);
+          padding: 5px 8px;
           font-family: inherit;
-          font-size: 14px;
         }
-        .rich-text-editor :global(.ql-editor) {
-          min-height: 200px;
+        .rte-root .ql-container.ql-snow {
+          border: 1px solid hsl(var(--border));
+          border-top: none;
+          border-radius: 0 0 6px 6px;
+          font-family: inherit;
+          font-size: 0.875rem;
+          background: hsl(var(--background));
+          color: hsl(var(--foreground));
         }
-        .rich-text-editor :global(.ql-editor.ql-blank::before) {
-          font-style: normal;
-          color: #9ca3af;
+        .rte-root .ql-editor {
+          min-height: 120px;
+          padding: 10px 12px;
+          line-height: 1.65;
+          color: hsl(var(--foreground));
         }
-        /* Dark mode styles */
-        :global(.dark) .rich-text-editor :global(.ql-toolbar) {
-          background-color: rgb(31 41 55);
-          border-color: rgb(55 65 81);
+        .rte-root .ql-editor.ql-blank::before {
+          color: hsl(var(--muted-foreground));
+          font-style: italic;
+          left: 12px;
+          right: 12px;
         }
-        :global(.dark) .rich-text-editor :global(.ql-container) {
-          background-color: rgb(17 24 39);
-          border-color: rgb(55 65 81);
-          color: rgb(229 231 235);
+        .rte-root .ql-toolbar .ql-stroke {
+          stroke: hsl(var(--muted-foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-editor.ql-blank::before) {
-          color: rgb(107 114 128);
+        .rte-root .ql-toolbar .ql-fill {
+          fill: hsl(var(--muted-foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-stroke) {
-          stroke: rgb(156 163 175);
+        .rte-root .ql-toolbar button:hover .ql-stroke,
+        .rte-root .ql-toolbar button.ql-active .ql-stroke {
+          stroke: hsl(var(--foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-fill) {
-          fill: rgb(156 163 175);
+        .rte-root .ql-toolbar button:hover .ql-fill,
+        .rte-root .ql-toolbar button.ql-active .ql-fill {
+          fill: hsl(var(--foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-picker-label) {
-          color: rgb(156 163 175);
+        .rte-root .ql-toolbar .ql-picker-label {
+          color: hsl(var(--muted-foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-picker-options) {
-          background-color: rgb(31 41 55);
-          border-color: rgb(55 65 81);
+        .rte-root .ql-toolbar .ql-picker-label:hover,
+        .rte-root .ql-toolbar .ql-picker-label.ql-active {
+          color: hsl(var(--foreground));
         }
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:hover),
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:focus),
-        :global(.dark) .rich-text-editor :global(.ql-toolbar .ql-picker-label:hover),
-        :global(.dark) .rich-text-editor :global(.ql-toolbar .ql-picker-item:hover) {
-          color: rgb(229 231 235);
+        .rte-root .ql-editor a {
+          color: hsl(221 83% 53%);
+          text-decoration: underline;
         }
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:hover .ql-stroke),
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:focus .ql-stroke) {
-          stroke: rgb(229 231 235);
+        .rte-root .ql-editor blockquote {
+          border-left: 3px solid hsl(var(--border));
+          padding-left: 12px;
+          color: hsl(var(--muted-foreground));
+          margin: 8px 0;
         }
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:hover .ql-fill),
-        :global(.dark) .rich-text-editor :global(.ql-toolbar button:focus .ql-fill) {
-          fill: rgb(229 231 235);
+        .rte-root .ql-editor pre.ql-syntax {
+          background: hsl(var(--muted));
+          border-radius: 4px;
+          padding: 8px 12px;
+          font-size: 0.82em;
+          color: hsl(var(--foreground));
         }
-        /* Read-only mode */
-        .rich-text-editor.read-only :global(.ql-editor) {
-          padding: 0;
+        .rte-root .ql-editor ul,
+        .rte-root .ql-editor ol {
+          padding-left: 1.5em;
+        }
+        .rte-root .ql-container.ql-snow:only-child {
+          border-radius: 6px;
+        }
+        .rte-root .ql-editor.ql-disabled {
+          cursor: default;
         }
       `}</style>
-    </div>
+    </>
   );
-};
-
-export default RichTextEditor;
+}

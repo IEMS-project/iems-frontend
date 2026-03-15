@@ -10,29 +10,28 @@ import Skeleton from "@/components/ui/Skeleton";
 import StatsCard from "@/components/ui/StatsCard";
 import Progress from "@/components/ui/Progress";
 import { CheckCircle2, RefreshCw, ClipboardList, AlarmClock } from "lucide-react";
-import { translatePriority, translateStatus, translateWorkType } from "@/lib/i18n";
 
 export default function ProjectOverviewPage() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const { projectData } = useOutletContext();
     
-    // Get tasks from context instead of loading separately
-    const { tasks, tasksLoading } = useProject();
+    // Get issues from context
+    const { issues = [], issuesLoading, workflowStatuses = [], issuePriorities = [], issueTypes = [] } = useProject();
 
     // Calculate statistics
     const stats = useMemo(() => {
-        const total = tasks.length;
+        const total = issues.length;
         let completed = 0;
         let inProgress = 0;
         let todo = 0;
 
-        tasks.forEach((task) => {
-            const status = translateStatus(task.status);
-            // Use normalized status for comparison
-            if (status === "Hoàn thành" || status === "Completed" || status === "Done") {
+        issues.forEach((issue) => {
+            const statusObj = workflowStatuses.find(s => s.id === issue.statusId);
+            const category = statusObj?.category || 'TODO';
+            if (category === 'DONE') {
                 completed += 1;
-            } else if (status === "Đang thực hiện" || status === "Đang duyệt" || status === "In Progress" || status === "In Review") {
+            } else if (category === 'IN_PROGRESS') {
                 inProgress += 1;
             } else {
                 todo += 1;
@@ -42,122 +41,51 @@ export default function ProjectOverviewPage() {
         const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         return { total, completed, inProgress, todo, progress };
-    }, [tasks]);
+    }, [issues, workflowStatuses]);
 
     // Status breakdown for donut chart
     const statusBreakdown = useMemo(() => {
         const counts = {};
-        const statusMap = {
-            'Đang chờ': 'pending',
-            'Đang thực hiện': 'inProgress',
-            'Đang duyệt': 'inReview',
-            'Hoàn thành': 'completed',
-            'Bị chặn': 'blocked',
-            'Tạm ngừng': 'onHold',
-            'Đã hủy': 'cancelled',
-            'Chưa xác định': 'unknown'
-        };
-
-        tasks.forEach((task) => {
-            const statusRaw = translateStatus(task.status) || "Chưa xác định";
-            const statusKey = statusMap[statusRaw] || 'unknown';
-            const label = t(`dashboard.status.${statusKey}`);
+        
+        issues.forEach((issue) => {
+            const statusObj = workflowStatuses.find(s => s.id === issue.statusId);
+            const label = statusObj ? statusObj.name : 'Unknown';
             counts[label] = (counts[label] || 0) + 1;
         });
 
-        // Use i18n translated labels for preferred order
-        const preferredOrder = [
-            t('dashboard.status.pending'),
-            t('dashboard.status.inProgress'),
-            t('dashboard.status.inReview'),
-            t('dashboard.status.completed'),
-            t('dashboard.status.blocked'),
-            t('dashboard.status.onHold'),
-            t('dashboard.status.cancelled'),
-            t('dashboard.status.unknown')
-        ];
-
-        const ordered = {};
-        preferredOrder.forEach((status) => {
-            if (counts[status] !== undefined) {
-                ordered[status] = counts[status];
-            }
-        });
-        Object.entries(counts).forEach(([status, value]) => {
-            if (ordered[status] === undefined) {
-                ordered[status] = value;
-            }
-        });
-        return ordered;
-    }, [tasks, t]);
+        return counts;
+    }, [issues, workflowStatuses]);
 
     // Priority breakdown
     const priorityBreakdown = useMemo(() => {
         const counts = {};
-        const priorityMap = {
-            'Cao nhất': 'highest',
-            'Cao': 'high',
-            'Trung bình': 'medium',
-            'Thấp': 'low',
-            'Thấp nhất': 'lowest',
-            'Không ưu tiên': 'none'
-        };
-
-        tasks.forEach((task) => {
-            const priorityRaw = translatePriority(task.priority) || "Không ưu tiên";
-            const priorityKey = priorityMap[priorityRaw] || 'none';
-            const label = t(`dashboard.priority.${priorityKey}`);
+        
+        issues.forEach((issue) => {
+            const priorityObj = issuePriorities.find(p => p.id === issue.priorityId);
+            const label = priorityObj ? priorityObj.name : 'None';
             counts[label] = (counts[label] || 0) + 1;
         });
 
-        // Use i18n translated labels for preferred order
-        const preferredOrder = [
-            t('dashboard.priority.highest'),
-            t('dashboard.priority.high'),
-            t('dashboard.priority.medium'),
-            t('dashboard.priority.low'),
-            t('dashboard.priority.lowest'),
-            t('dashboard.priority.none')
-        ];
-
-        const ordered = {};
-        preferredOrder.forEach((priority) => {
-            if (counts[priority] !== undefined) {
-                ordered[priority] = counts[priority];
-            }
-        });
-        Object.entries(counts).forEach(([priority, value]) => {
-            if (ordered[priority] === undefined) {
-                ordered[priority] = value;
-            }
-        });
-        return ordered;
-    }, [tasks, t]);
+        return counts;
+    }, [issues, issuePriorities]);
 
     // Work types breakdown
     const workTypesBreakdown = useMemo(() => {
         const counts = {};
-        const taskTypeMap = {
-            'Epic': 'epic',
-            'Nhiệm vụ': 'task',
-            'User story': 'story',
-            'Lỗi': 'bug'
-        };
-
-        tasks.forEach((task) => {
-            const typeRaw = translateWorkType(task.taskType) || "Nhiệm vụ";
-            const typeKey = taskTypeMap[typeRaw] || 'task';
-            const label = t(`projects.detail.tasks.taskTypes.${typeKey}`);
+        
+        issues.forEach((issue) => {
+            const typeObj = issueTypes.find(t => t.id === issue.issueTypeId);
+            const label = typeObj ? typeObj.name : 'Task';
             counts[label] = (counts[label] || 0) + 1;
         });
 
-        const total = tasks.length;
+        const total = issues.length;
         return Object.entries(counts).map(([type, count]) => ({
             type,
             count,
             percentage: total > 0 ? Math.round((count / total) * 100) : 0,
         }));
-    }, [tasks, t]);
+    }, [issues, issueTypes]);
 
     return (
         <div className="space-y-6">
@@ -195,7 +123,7 @@ export default function ProjectOverviewPage() {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {tasksLoading ? (
+                {issuesLoading ? (
                     <>
                         <Skeleton className="h-24 w-full" />
                         <Skeleton className="h-24 w-full" />
@@ -265,7 +193,7 @@ export default function ProjectOverviewPage() {
                             <CardTitle>{t('projects.detail.overview.charts.statusBreakdown')}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {tasksLoading ? (
+                            {issuesLoading ? (
                                 <Skeleton className="h-48 w-full" />
                             ) : (
                                 <div className="space-y-4">
@@ -290,15 +218,7 @@ export default function ProjectOverviewPage() {
                                                             return sum + (p / 100) * 502.4;
                                                         }, 0);
 
-                                                    const colors = {};
-                                                    // Build color map with translated keys
-                                                    colors[t('dashboard.status.pending')] = "#3b82f6";
-                                                    colors[t('dashboard.status.inProgress')] = "#8b5cf6";
-                                                    colors[t('dashboard.status.inReview')] = "#06b6d4";
-                                                    colors[t('dashboard.status.completed')] = "#10b981";
-                                                    colors[t('dashboard.status.blocked')] = "#f97316";
-                                                    colors[t('dashboard.status.onHold')] = "#facc15";
-                                                    colors[t('dashboard.status.cancelled')] = "#6b7280";
+                                                    const statusObj = workflowStatuses.find(s => s.name === status);
 
                                                     return (
                                                         <circle
@@ -307,7 +227,7 @@ export default function ProjectOverviewPage() {
                                                             cy="96"
                                                             r="80"
                                                             fill="none"
-                                                            stroke={colors[status] || "#9ca3af"}
+                                                            stroke={statusObj?.color || "#9ca3af"}
                                                             strokeWidth="16"
                                                             strokeDasharray={`${(percentage / 100) * 502.4} 502.4`}
                                                             strokeDashoffset={-offset}
@@ -325,19 +245,10 @@ export default function ProjectOverviewPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {Object.entries(statusBreakdown).map(([status, count]) => {
-                                            const colors = {};
-                                            // Build color map with translated keys
-                                            colors[t('dashboard.status.pending')] = "bg-blue-500";
-                                            colors[t('dashboard.status.inProgress')] = "bg-purple-500";
-                                            colors[t('dashboard.status.inReview')] = "bg-cyan-500";
-                                            colors[t('dashboard.status.completed')] = "bg-green-500";
-                                            colors[t('dashboard.status.blocked')] = "bg-orange-500";
-                                            colors[t('dashboard.status.onHold')] = "bg-amber-400";
-                                            colors[t('dashboard.status.cancelled')] = "bg-gray-500";
-
+                                            const statusObj = workflowStatuses.find(s => s.name === status);
                                             return (
                                                 <div key={status} className="flex items-center gap-2">
-                                                    <div className={`h-3 w-3 rounded-full ${colors[status] || "bg-gray-500"}`} />
+                                                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: statusObj?.color || "#9ca3af" }} />
                                                     <span className="text-sm text-foreground">{status}: {count}</span>
                                                 </div>
                                             );
@@ -354,19 +265,21 @@ export default function ProjectOverviewPage() {
                             <CardTitle>{t('projects.detail.overview.charts.priorityBreakdown')}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {tasksLoading ? (
+                            {issuesLoading ? (
                                 <Skeleton className="h-48 w-full" />
                             ) : (
                                 <div className="space-y-2">
-                                    {Object.entries(priorityBreakdown).map(([priority, count]) => (
+                                    {Object.entries(priorityBreakdown).map(([priority, count]) => {
+                                        const pObj = issuePriorities.find(p => p.name === priority);
+                                        return (
                                         <div key={priority} className="flex items-center justify-between">
                                             <span className="text-sm text-foreground">{priority}</span>
                                             <div className="flex items-center gap-2">
-                                                <div className="h-6 bg-blue-500 dark:bg-blue-400 rounded" style={{ width: `${(count / Math.max(...Object.values(priorityBreakdown), 1)) * 200}px` }} />
+                                                <div className="h-6 rounded" style={{ width: `${(count / Math.max(...Object.values(priorityBreakdown), 1)) * 200}px`, backgroundColor: pObj?.color || "#3b82f6" }} />
                                                 <span className="text-sm font-medium w-8 text-right text-foreground">{count}</span>
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             )}
                         </CardContent>
@@ -378,7 +291,7 @@ export default function ProjectOverviewPage() {
                             <CardTitle>{t('projects.detail.overview.charts.workTypesBreakdown')}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {tasksLoading ? (
+                            {issuesLoading ? (
                                 <Skeleton className="h-32 w-full" />
                             ) : (
                                 <div className="space-y-3">
@@ -425,4 +338,3 @@ export default function ProjectOverviewPage() {
         </div>
     );
 }
-
