@@ -386,10 +386,12 @@
     "detail": {
       "tabs": {
         "overview": "Overview",
-        "timeline": "Timeline",
-        "phases": "Phases",
-        "tasks": "Tasks",
+        "backlog": "Backlog",
+        "board": "Board",
+        "tasks": "Issues",
+        "sprints": "Sprints",
         "members": "Members",
+        "settings": "Settings",
         "code": "Source Code"
       },
       "overview": {
@@ -1281,5 +1283,95 @@
     "minutesAgo": "{{count}} minutes ago",
     "hoursAgo": "{{count}} hours ago",
     "daysAgo": "{{count}} days ago"
+  },
+  "issues": {
+    "createIssue": "Create Issue",
+    "search": "Search issues...",
+    "backlog": "Backlog",
+    "issues": "issues",
+    "points": "pts",
+    "noIssues": "No issues in this sprint",
+    "emptyBacklog": "Backlog is empty",
+    "dropHere": "Drop issues here",
+    "noDescription": "No description",
+    "comments": "Comments",
+    "noComments": "No comments yet",
+    "addComment": "Add a comment...",
+    "details": "Details",
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "Enter issue title",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "type": "Type",
+      "selectType": "Select type",
+      "priority": "Priority",
+      "selectPriority": "Select priority",
+      "assignee": "Assignee",
+      "selectAssignee": "Select assignee",
+      "unassigned": "Unassigned",
+      "sprint": "Sprint",
+      "backlog": "Backlog",
+      "storyPoints": "Story Points",
+      "parentIssue": "Parent Issue",
+      "noParent": "None",
+      "status": "Status",
+      "reporter": "Reporter",
+      "created": "Created"
+    },
+    "messages": {
+      "titleRequired": "Please enter issue title",
+      "created": "Issue created successfully",
+      "updated": "Issue updated",
+      "deleted": "Issue deleted",
+      "statusChanged": "Status changed",
+      "invalidTransition": "This status transition is not allowed"
+    }
+  },
+  "sprints": {
+    "title": "Sprints",
+    "create": "Create Sprint",
+    "edit": "Edit Sprint",
+    "start": "Start",
+    "complete": "Complete",
+    "empty": "No sprints yet. Create your first sprint!",
+    "form": {
+      "name": "Sprint Name",
+      "namePlaceholder": "e.g. Sprint 1",
+      "goal": "Sprint Goal",
+      "goalPlaceholder": "What is the goal of this sprint?",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "messages": {
+      "nameRequired": "Sprint name is required",
+      "created": "Sprint created",
+      "updated": "Sprint updated",
+      "started": "Sprint started",
+      "completed": "Sprint completed",
+      "cancelled": "Sprint cancelled",
+      "deleted": "Sprint deleted",
+      "deleteConfirm": "Delete this sprint?"
+    }
+  },
+  "settings": {
+    "workflow": "Workflow",
+    "issueTypes": "Issue Types",
+    "priorities": "Priorities",
+    "roles": "Roles",
+    "workflowStatuses": "Workflow Statuses",
+    "addStatus": "Add Status",
+    "flow": "Workflow Flow",
+    "statusAdded": "Status added",
+    "statusDeleted": "Status removed",
+    "addType": "Add Issue Type",
+    "typeAdded": "Issue type added",
+    "typeDeleted": "Issue type deleted",
+    "addPriority": "Add Priority",
+    "priorityAdded": "Priority added",
+    "priorityDeleted": "Priority deleted",
+    "addRole": "Add Role",
+    "roleAdded": "Role added",
+    "roleDeleted": "Role deleted"
   }
 }

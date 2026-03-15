@@ -10,11 +10,13 @@ import { projectService } from "@/features/projects/api/projectService";
 import { toast } from "sonner";
 import { columns } from "@/features/projects/components/projects-columns";
 import { ProjectsDataTable } from "@/features/projects/components/projects-data-table";
+import CreateProjectModal from "@/features/projects/components/CreateProjectModal";
 
 export default function Projects() {
     const { t } = useTranslation();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
@@ -44,15 +46,12 @@ export default function Projects() {
     }, []);
 
     const handleCreateProject = () => {
-        setEditingProject(null);
-        setFormData({
-            name: "",
-            description: "",
-            startDate: "",
-            endDate: "",
-            status: "PLANNING"
-        });
-        setShowModal(true);
+        setShowCreateModal(true);
+    };
+
+    const handleProjectCreated = async () => {
+        const updatedProjects = await projectService.getProjectsTable();
+        setProjects(updatedProjects);
     };
 
     const handleEditProject = (project) => {
@@ -244,6 +243,12 @@ export default function Projects() {
                 confirmText={t("ui.common.delete")}
                 cancelText={t("ui.common.cancel")}
                 variant="destructive"
+            />
+
+            <CreateProjectModal
+                open={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onCreated={handleProjectCreated}
             />
         </>
     );

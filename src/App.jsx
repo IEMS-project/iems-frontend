@@ -4,13 +4,15 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
 import ProjectDetailLayout from "@/features/projects/components/ProjectDetailLayout";
 import ProjectOverviewPage from "@/pages/project/ProjectOverviewPage";
-import ProjectTimelinePage from "@/pages/project/ProjectTimelinePage";
-import ProjectPhasesPage from "@/pages/ProjectPhasesPage";
-import ProjectTasksPage from "@/pages/project/ProjectTasksPage";
+import ProjectBacklogPage from "@/pages/project/ProjectBacklogPage";
+import ProjectBoardPage from "@/pages/project/ProjectBoardPage";
+import ProjectSprintsPage from "@/pages/project/ProjectSprintsPage";
 import ProjectMembersPage from "@/pages/project/ProjectMembersPage";
+import ProjectSettingsPage from "@/pages/project/ProjectSettingsPage";
+import ProjectIssueListPage from "@/pages/project/ProjectIssueListPage";
 import ProjectCode from "@/features/projects/components/ProjectCode";
+import ProjectIssueDetailPage from "@/pages/project/ProjectIssueDetailPage";
 import Projects from "@/pages/Projects";
-import Tasks from "@/pages/Tasks";
 // import Departments from "@/pages/Departments";
 // import DepartmentDetail from "@/pages/DepartmentDetail";
 import Messages from "@/pages/Messages.jsx";
@@ -73,13 +75,17 @@ export default function App() {
                                 <Route path="/projects/:projectId" element={<ProjectDetailLayout />}>
                                     <Route index element={<Navigate to="overview" replace />} />
                                     <Route path="overview" element={<ProjectOverviewPage />} />
-                                    <Route path="timeline" element={<ProjectTimelinePage />} />
-                                    <Route path="phases" element={<ProjectPhasesPage />} />
-                                    <Route path="tasks" element={<ProjectTasksPage />} />
+                                    <Route path="backlog" element={<ProjectBacklogPage />} />
+                                    <Route path="board" element={<ProjectBoardPage />} />
+                                    <Route path="tasks" element={<ProjectIssueListPage />} />
+                                    <Route path="sprints" element={<ProjectSprintsPage />} />
                                     <Route path="members" element={<ProjectMembersPage />} />
+                                    <Route path="settings" element={<ProjectSettingsPage />} />
                                     <Route path="code/*" element={<ProjectCode />} />
+                                    <Route path="issues/:issueId" element={<ProjectIssueDetailPage />} />
                                 </Route>
-                                <Route path="/tasks" element={<Tasks />} />
+                                {/* Redirect old /tasks to dashboard */}
+                                <Route path="/tasks" element={<Navigate to="/dashboard" replace />} />
                                 {/* Department routes commented out - department service removed from backend */}
                                 {/* <Route path="/departments" element={<Departments />} /> */}
                                 {/* <Route path="/departments/:departmentId" element={<DepartmentDetail />} /> */}

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 
 // Modal accepts both `open` and `isOpen` props for backwards/alternate compatibility.
-export default function Modal({ open, isOpen, onClose, title, children, footer, className = "" }) {
+export default function Modal({ open, isOpen, onClose, title, children, footer, className = "", contentClassName = "" }) {
 	const visible = open ?? isOpen;
 
 	useEffect(() => {
@@ -41,7 +41,7 @@ export default function Modal({ open, isOpen, onClose, title, children, footer, 
 						{title}
 					</div>
 				)}
-				<div className="p-4 overflow-y-auto flex-1">
+				<div className={`p-4 overflow-y-auto flex-1 ${contentClassName}`}>
 					{children}
 				</div>
 				{footer && (

@@ -19,10 +19,12 @@ import { Pencil } from "lucide-react";
 
 const tabs = [
     { id: "overview", label: "overview", path: "overview" },
-    { id: "timeline", label: "timeline", path: "timeline" },
-    { id: "phases", label: "phases", path: "phases" },
+    { id: "backlog", label: "backlog", path: "backlog" },
+    { id: "board", label: "board", path: "board" },
     { id: "tasks", label: "tasks", path: "tasks" },
+    { id: "sprints", label: "sprints", path: "sprints" },
     { id: "members", label: "members", path: "members" },
+    { id: "settings", label: "settings", path: "settings" },
     { id: "code", label: "code", path: "code" },
 ];
 
@@ -62,10 +64,12 @@ function ProjectDetailLayoutContent() {
     // Determine current tab from path
     const currentTab = React.useMemo(() => {
         const path = location.pathname;
-        if (path.includes("/members")) return "members";
+        if (path.includes("/backlog")) return "backlog";
+        if (path.includes("/board")) return "board";
         if (path.includes("/tasks")) return "tasks";
-        if (path.includes("/timeline")) return "timeline";
-        if (path.includes("/phases")) return "phases";
+        if (path.includes("/sprints")) return "sprints";
+        if (path.includes("/members")) return "members";
+        if (path.includes("/settings")) return "settings";
         if (path.includes("/code")) return "code";
         return "overview";
     }, [location.pathname]);

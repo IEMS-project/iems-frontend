@@ -386,10 +386,12 @@
     "detail": {
       "tabs": {
         "overview": "Tổng quan",
-        "timeline": "Tiến độ",
-        "phases": "Giai đoạn",
-        "tasks": "Nhiệm vụ",
+        "backlog": "Tồn đọng",
+        "board": "Bảng",
+        "tasks": "Vấn đề",
+        "sprints": "Sprint",
         "members": "Thành viên",
+        "settings": "Cài đặt",
         "code": "Mã nguồn"
       },
       "overview": {
