@@ -116,6 +116,7 @@ export default function BoardTab() {
   const [newColColor, setNewColColor] = useState(COL_PRESET_COLORS[0]);
   const [savingColumn, setSavingColumn] = useState(false);
   const newColInputRef = useRef(null);
+  const columnOrderBeforeDrag = useRef(null);
 
   // Create issue modal
   const [createStatusId, setCreateStatusId] = useState(null);
@@ -192,6 +193,22 @@ export default function BoardTab() {
 
   const handleDragStart = ({ active }) => {
     setActiveItem(active.data.current ?? null);
+    if (active.data.current?.type === "column") {
+      columnOrderBeforeDrag.current = [...columnOrder];
+    }
+  };
+
+  const handleDragOver = ({ active, over }) => {
+    if (!over || active.data.current?.type !== "column") return;
+    const overColId = String(over.id).startsWith("drop-")
+      ? String(over.id).slice(5)
+      : String(over.id);
+    setColumnOrder(prev => {
+      const oldIdx = prev.indexOf(String(active.id));
+      const newIdx = prev.indexOf(overColId);
+      if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return prev;
+      return arrayMove(prev, oldIdx, newIdx);
+    });
   };
 
   const handleDragEnd = async ({ active, over }) => {
@@ -203,8 +220,10 @@ export default function BoardTab() {
     // ── Card dropped into a column ──────────────────────────────
     if (type === "card") {
       const overId = String(over.id);
-      if (!overId.startsWith("drop-")) return;
-      const targetStatusId = overId.slice(5);
+      const targetStatusId = overId.startsWith("drop-")
+        ? overId.slice(5)
+        : (workflowStatuses.some(s => s.id === overId) ? overId : null);
+      if (!targetStatusId) return;
       const issue = active.data.current.issue;
       if (issue.statusId === targetStatusId) return;
 
@@ -233,27 +252,23 @@ export default function BoardTab() {
     }
 
     // ── Column reorder ──────────────────────────────────────────
-    if (active.id === over.id) return;
-    const oldIndex = columnOrder.indexOf(String(active.id));
-    const newIndex = columnOrder.indexOf(String(over.id));
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
-    setColumnOrder(newOrder);
+    const before = columnOrderBeforeDrag.current;
+    columnOrderBeforeDrag.current = null;
+    if (!before || before.join(",") === columnOrder.join(",")) return;
 
     const defaultWf = workflows.find(w => w.isDefault) || workflows[0];
     if (!defaultWf) return;
 
     try {
       await Promise.all(
-        newOrder.map((statusId, index) =>
+        columnOrder.map((statusId, index) =>
           workflowService.updateStatus(projectId, defaultWf.id, statusId, { sortOrder: index + 1 })
         )
       );
       await refreshWorkflows();
     } catch {
       toast.error(t("board.columnReorderError", "Error saving column order"));
-      setColumnOrder(workflowStatuses.map(s => s.id));
+      setColumnOrder(before);
     }
   };
 
@@ -395,6 +410,7 @@ export default function BoardTab() {
         collisionDetection={closestCenter}
         modifiers={isCardDrag ? [] : [restrictToHorizontalAxis]}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         {/* SortableContext only drives column sorting — card IDs are NOT in items */}

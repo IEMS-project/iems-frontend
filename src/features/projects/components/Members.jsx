@@ -15,38 +15,56 @@ import { Shield, Search, UserPlus, ChevronRight } from "lucide-react";
 
 const PERMISSION_GROUPS = [
     {
+        group: "Projects",
+        perms: [
+            { code: "PROJECT_READ", label: "Read" },
+            { code: "PROJECT_CREATE", label: "Create" },
+            { code: "PROJECT_UPDATE", label: "Update" },
+            { code: "PROJECT_DELETE", label: "Delete" },
+        ],
+    },
+    {
         group: "Issues",
         perms: [
-            { code: "ISSUE_CREATE", label: "Create issues" },
-            { code: "ISSUE_EDIT", label: "Edit issues" },
-            { code: "ISSUE_DELETE", label: "Delete issues" },
-            { code: "ISSUE_ASSIGN", label: "Assign issues" },
-            { code: "ISSUE_TRANSITION", label: "Change issue status" },
+            { code: "ISSUE_READ", label: "Read" },
+            { code: "ISSUE_CREATE", label: "Create" },
+            { code: "ISSUE_UPDATE", label: "Update" },
+            { code: "ISSUE_DELETE", label: "Delete" },
+        ],
+    },
+    {
+        group: "Workflows",
+        perms: [
+            { code: "WORKFLOW_READ", label: "Read" },
+            { code: "WORKFLOW_CREATE", label: "Create" },
+            { code: "WORKFLOW_UPDATE", label: "Update" },
+            { code: "WORKFLOW_DELETE", label: "Delete" },
+        ],
+    },
+    {
+        group: "Roles",
+        perms: [
+            { code: "ROLE_READ", label: "Read" },
+            { code: "ROLE_CREATE", label: "Create" },
+            { code: "ROLE_UPDATE", label: "Update" },
+            { code: "ROLE_DELETE", label: "Delete" },
         ],
     },
     {
         group: "Sprints",
         perms: [
-            { code: "SPRINT_CREATE", label: "Create sprints" },
-            { code: "SPRINT_EDIT", label: "Edit sprints" },
-            { code: "SPRINT_DELETE", label: "Delete sprints" },
-            { code: "SPRINT_MANAGE", label: "Start / complete sprints" },
+            { code: "SPRINT_READ", label: "Read" },
+            { code: "SPRINT_CREATE", label: "Create" },
+            { code: "SPRINT_UPDATE", label: "Update" },
+            { code: "SPRINT_DELETE", label: "Delete" },
         ],
     },
     {
         group: "Members",
         perms: [
-            { code: "MEMBER_INVITE", label: "Invite members" },
-            { code: "MEMBER_REMOVE", label: "Remove members" },
-            { code: "MEMBER_ROLE_ASSIGN", label: "Assign member roles" },
-        ],
-    },
-    {
-        group: "Settings",
-        perms: [
-            { code: "PROJECT_EDIT", label: "Edit project details" },
-            { code: "WORKFLOW_MANAGE", label: "Manage workflow & statuses" },
-            { code: "ROLE_MANAGE", label: "Manage roles & permissions" },
+            { code: "MEMBER_INVITE", label: "Invite" },
+            { code: "MEMBER_REMOVE", label: "Remove" },
+            { code: "MEMBER_ROLE_ASSIGN", label: "Assign role" },
         ],
     },
 ];
@@ -350,6 +368,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
     };
 
     const matchedRole = roles.find(r => r.id === member.roleId);
+    const isAdminRoleMember = Boolean(matchedRole?.isDefault);
     const currentRoleName = member.roleName || member.role ||
         matchedRole?.roleName || matchedRole?.name || null;
 
@@ -431,6 +450,12 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                         Permissions
                     </h4>
 
+                    {isAdminRoleMember && (
+                        <div className="mb-4 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                            Admin/default role members cannot be edited with direct user permission overrides.
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-5 text-xs text-muted-foreground mb-4 flex-wrap">
                         <span className="flex items-center gap-1.5">
                             <span className="w-3 h-3 rounded border-2 border-blue-400 bg-blue-100 dark:bg-blue-900/40 inline-block" />
@@ -468,6 +493,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                                         {perms.map(({ code, label }) => {
                                             const state = getPermState(code);
                                             const isToggling = togglingPerm.has(code);
+                                            const isLocked = isAdminRoleMember;
 
                                             let checkboxCls = "rounded border-gray-300 dark:border-gray-600";
                                             let labelCls = "text-sm text-foreground";
@@ -488,12 +514,12 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                                             return (
                                                 <label
                                                     key={code}
-                                                    className={`flex items-center gap-2 cursor-pointer select-none ${isToggling ? "opacity-50 pointer-events-none" : ""}`}
+                                                    className={`flex items-center gap-2 cursor-pointer select-none ${isToggling || isLocked ? "opacity-50 pointer-events-none" : ""}`}
                                                 >
                                                     <input
                                                         type="checkbox"
                                                         checked={isEffective(code)}
-                                                        disabled={isToggling}
+                                                        disabled={isToggling || isLocked}
                                                         onChange={() => handleTogglePerm(code)}
                                                         className={checkboxCls}
                                                     />
