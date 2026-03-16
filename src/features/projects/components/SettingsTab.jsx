@@ -13,7 +13,7 @@ import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import {
   Plus, Pencil, Trash2, Settings2, Layers, Flag, GitBranch,
-  ArrowRight, Shield
+  ArrowRight, Shield, ChevronRight
 } from "lucide-react";
 
 export default function SettingsTab() {
@@ -211,23 +211,103 @@ function WorkflowSection() {
 }
 
 // ── Issue Types Section ───────────────────────────────────────
+const ISSUE_TYPE_ICONS = [
+  "🐛", "✨", "📋", "🔥", "🔧", "📝", "🚀", "💡",
+  "⚠️", "🎯", "🔍", "💬", "🧪", "🔒", "🎨", "📊",
+  "⭐", "❌", "📦", "🏷️", "🔗", "📌", "🛠️", "🌟",
+];
+
+function IconPickerPopover({ value, onChange, pickerId, activeIconPicker, setActiveIconPicker }) {
+  const isOpen = activeIconPicker === pickerId;
+  return (
+    <div className="relative shrink-0">
+      {isOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setActiveIconPicker(null)} />
+      )}
+      <button
+        type="button"
+        onClick={() => setActiveIconPicker(isOpen ? null : pickerId)}
+        className="w-9 h-9 rounded border border-border bg-muted flex items-center justify-center text-lg hover:bg-accent transition-colors"
+        title="Pick an icon"
+      >
+        {value || <Layers className="w-4 h-4 text-muted-foreground" />}
+      </button>
+      {isOpen && (
+        <div className="absolute z-50 top-10 left-0 bg-popover border border-border rounded-lg shadow-lg p-2 w-52">
+          <div className="grid grid-cols-8 gap-1">
+            {ISSUE_TYPE_ICONS.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => { onChange(emoji); setActiveIconPicker(null); }}
+                className={`w-6 h-6 flex items-center justify-center rounded text-base hover:bg-accent transition-colors ${value === emoji ? "bg-blue-100 dark:bg-blue-900" : ""}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          {value && (
+            <button
+              type="button"
+              onClick={() => { onChange(""); setActiveIconPicker(null); }}
+              className="mt-1 w-full text-xs text-muted-foreground hover:text-destructive text-center"
+            >
+              Remove icon
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IssueTypesSection() {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const { issueTypes, refreshIssueTypes } = useProject();
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({ name: "", description: "", iconUrl: "" });
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", description: "", iconUrl: "" });
+  const [activeIconPicker, setActiveIconPicker] = useState(null);
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
     try {
       setSaving(true);
-      await projectService.createIssueType(projectId, { name: form.name.trim(), description: form.description });
+      await projectService.createIssueType(projectId, {
+        name: form.name.trim(),
+        description: form.description,
+        iconUrl: form.iconUrl || null,
+      });
       toast.success(t("settings.typeAdded", "Issue type added"));
       await refreshIssueTypes();
       setShowAdd(false);
-      setForm({ name: "", description: "" });
+      setForm({ name: "", description: "", iconUrl: "" });
+    } catch (e) {
+      toast.error(e?.message || "Error");
+    } finally { setSaving(false); }
+  };
+
+  const startEdit = (type) => {
+    setEditingId(type.id);
+    setEditForm({ name: type.name, description: type.description || "", iconUrl: type.iconUrl || "" });
+    setActiveIconPicker(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editForm.name.trim()) return;
+    try {
+      setSaving(true);
+      await projectService.updateIssueType(projectId, editingId, {
+        name: editForm.name.trim(),
+        description: editForm.description,
+        iconUrl: editForm.iconUrl || null,
+      });
+      toast.success(t("settings.typeUpdated", "Issue type updated"));
+      await refreshIssueTypes();
+      setEditingId(null);
     } catch (e) {
       toast.error(e?.message || "Error");
     } finally { setSaving(false); }
@@ -241,37 +321,90 @@ function IssueTypesSection() {
     } catch (e) { toast.error(e?.message || "Error"); }
   };
 
+  const inputCls = "w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.issueTypes", "Issue Types")}</h3>
-        <Button size="sm" onClick={() => setShowAdd(true)}>
+        <Button size="sm" onClick={() => { setShowAdd(true); setActiveIconPicker(null); }}>
           <Plus className="w-4 h-4 mr-1" /> {t("ui.common.add")}
         </Button>
       </div>
       <div className="space-y-2">
         {issueTypes.map(type => (
-          <div key={type.id} className="flex items-center gap-3 p-3 rounded-md border border-border bg-card">
-            <Layers className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium text-foreground flex-1">{type.name}</span>
-            {type.description && <span className="text-xs text-muted-foreground">{type.description}</span>}
-            <Button size="sm" variant="ghost" onClick={() => handleDelete(type.id)}>
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
-            </Button>
+          <div key={type.id} className="rounded-md border border-border bg-card">
+            {editingId === type.id ? (
+              <div className="flex items-center gap-2 p-3">
+                <IconPickerPopover
+                  value={editForm.iconUrl}
+                  onChange={v => setEditForm(f => ({ ...f, iconUrl: v }))}
+                  pickerId={`edit-${type.id}`}
+                  activeIconPicker={activeIconPicker}
+                  setActiveIconPicker={setActiveIconPicker}
+                />
+                <Input
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className={inputCls + " flex-1"}
+                  placeholder="Issue type name"
+                  autoFocus
+                />
+                <Input
+                  value={editForm.description}
+                  onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className={inputCls + " flex-1"}
+                  placeholder="Description (optional)"
+                />
+                <Button size="sm" onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? "..." : t("ui.common.save", "Save")}
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+                  {t("ui.common.cancel", "Cancel")}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 p-3">
+                <span className="w-7 h-7 flex items-center justify-center text-lg shrink-0">
+                  {type.iconUrl || <Layers className="w-4 h-4 text-muted-foreground" />}
+                </span>
+                <span className="font-medium text-foreground flex-1">{type.name}</span>
+                {type.description && <span className="text-xs text-muted-foreground">{type.description}</span>}
+                <Button size="sm" variant="ghost" onClick={() => startEdit(type)}>
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => handleDelete(type.id)}>
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t("settings.addType", "Add Issue Type")}
+
+      <Modal
+        open={showAdd}
+        onClose={() => { setShowAdd(false); setForm({ name: "", description: "", iconUrl: "" }); setActiveIconPicker(null); }}
+        title={t("settings.addType", "Add Issue Type")}
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setShowAdd(false)}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={saving}>{t("ui.common.save")}</Button>
+            <Button variant="secondary" onClick={() => { setShowAdd(false); setActiveIconPicker(null); }}>{t("ui.common.cancel")}</Button>
+            <Button onClick={handleAdd} disabled={saving}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
         <div className="space-y-3">
-          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. FEATURE" />
-          <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" />
+          <div className="flex items-center gap-2">
+            <IconPickerPopover
+              value={form.iconUrl}
+              onChange={v => setForm(f => ({ ...f, iconUrl: v }))}
+              pickerId="add"
+              activeIconPicker={activeIconPicker}
+              setActiveIconPicker={setActiveIconPicker}
+            />
+            <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls} placeholder="e.g. FEATURE" />
+          </div>
+          <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={inputCls} placeholder="Description (optional)" />
         </div>
       </Modal>
     </div>
@@ -345,13 +478,103 @@ function PrioritiesSection() {
 }
 
 // ── Roles Section ──────────────────────────────────────────────
+const PERMISSION_GROUPS = [
+  {
+    group: "Issues",
+    perms: [
+      { code: "ISSUE_CREATE", label: "Create issues" },
+      { code: "ISSUE_EDIT", label: "Edit issues" },
+      { code: "ISSUE_DELETE", label: "Delete issues" },
+      { code: "ISSUE_ASSIGN", label: "Assign issues" },
+      { code: "ISSUE_TRANSITION", label: "Change issue status" },
+    ],
+  },
+  {
+    group: "Sprints",
+    perms: [
+      { code: "SPRINT_CREATE", label: "Create sprints" },
+      { code: "SPRINT_EDIT", label: "Edit sprints" },
+      { code: "SPRINT_DELETE", label: "Delete sprints" },
+      { code: "SPRINT_MANAGE", label: "Start / complete sprints" },
+    ],
+  },
+  {
+    group: "Members",
+    perms: [
+      { code: "MEMBER_INVITE", label: "Invite members" },
+      { code: "MEMBER_REMOVE", label: "Remove members" },
+      { code: "MEMBER_ROLE_ASSIGN", label: "Assign member roles" },
+    ],
+  },
+  {
+    group: "Settings",
+    perms: [
+      { code: "PROJECT_EDIT", label: "Edit project details" },
+      { code: "WORKFLOW_MANAGE", label: "Manage workflow & statuses" },
+      { code: "ROLE_MANAGE", label: "Manage roles & permissions" },
+    ],
+  },
+];
+
 function RolesSection() {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const { roles, refreshRoles } = useProject();
+  const [expandedRoleId, setExpandedRoleId] = useState(null);
+  const [rolePermissions, setRolePermissions] = useState({}); // { [roleId]: Set<string> }
+  const [loadingPerms, setLoadingPerms] = useState(new Set());
+  const [savingPerms, setSavingPerms] = useState(new Set());
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
+
+  const loadPermissions = async (roleId) => {
+    if (rolePermissions[roleId]) return;
+    setLoadingPerms(prev => new Set([...prev, roleId]));
+    try {
+      const perms = await projectService.getRolePermissions(projectId, roleId);
+      setRolePermissions(prev => ({ ...prev, [roleId]: new Set(perms) }));
+    } catch (e) {
+      toast.error("Failed to load permissions");
+    } finally {
+      setLoadingPerms(prev => { const s = new Set(prev); s.delete(roleId); return s; });
+    }
+  };
+
+  const handleExpandRole = async (roleId) => {
+    if (expandedRoleId === roleId) {
+      setExpandedRoleId(null);
+    } else {
+      setExpandedRoleId(roleId);
+      await loadPermissions(roleId);
+    }
+  };
+
+  const handleTogglePermission = async (roleId, permCode, currentlyEnabled) => {
+    const key = `${roleId}-${permCode}`;
+    setSavingPerms(prev => new Set([...prev, key]));
+    try {
+      if (currentlyEnabled) {
+        await projectService.removePermission(projectId, roleId, permCode);
+        setRolePermissions(prev => {
+          const s = new Set(prev[roleId]);
+          s.delete(permCode);
+          return { ...prev, [roleId]: s };
+        });
+      } else {
+        await projectService.assignPermission(projectId, roleId, permCode);
+        setRolePermissions(prev => {
+          const s = new Set(prev[roleId] || []);
+          s.add(permCode);
+          return { ...prev, [roleId]: s };
+        });
+      }
+    } catch (e) {
+      toast.error("Failed to update permission");
+    } finally {
+      setSavingPerms(prev => { const s = new Set(prev); s.delete(key); return s; });
+    }
+  };
 
   const handleAdd = async () => {
     if (!form.name.trim()) return;
@@ -374,6 +597,7 @@ function RolesSection() {
     try {
       await projectService.deleteProjectRole(projectId, roleId);
       toast.success(t("settings.roleDeleted", "Role deleted"));
+      if (expandedRoleId === roleId) setExpandedRoleId(null);
       await refreshRoles();
     } catch (e) { toast.error(e?.message || "Error"); }
   };
@@ -381,37 +605,89 @@ function RolesSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">{t("settings.roles", "Roles")}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{t("settings.roles", "Roles & Permissions")}</h3>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus className="w-4 h-4 mr-1" /> {t("ui.common.add")}
         </Button>
       </div>
+
       <div className="space-y-2">
-        {roles.map(role => (
-          <div key={role.id} className="flex items-center gap-3 p-3 rounded-md border border-border bg-card">
-            <Shield className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium text-foreground flex-1">{role.name}</span>
-            {role.description && <span className="text-xs text-muted-foreground">{role.description}</span>}
-            {role.isDefault && <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Default</span>}
-            {!role.isDefault && (
-              <Button size="sm" variant="ghost" onClick={() => handleDelete(role.id)}>
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-              </Button>
-            )}
-          </div>
-        ))}
+        {roles.map(role => {
+          const isExpanded = expandedRoleId === role.id;
+          const perms = rolePermissions[role.id] || new Set();
+          const isLoadingPerms = loadingPerms.has(role.id);
+          return (
+            <div key={role.id} className="rounded-md border border-border bg-card overflow-hidden">
+              {/* Role header */}
+              <div className="flex items-center gap-3 p-3">
+                <Shield className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="font-medium text-foreground flex-1">{role.name}</span>
+                {role.description && <span className="text-xs text-muted-foreground">{role.description}</span>}
+                {role.isDefault && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Default</span>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => handleExpandRole(role.id)} title="Manage permissions">
+                  <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+                </Button>
+                {!role.isDefault && (
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(role.id)}>
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Permissions panel */}
+              {isExpanded && (
+                <div className="border-t border-border px-4 py-3 bg-muted/30">
+                  {isLoadingPerms ? (
+                    <p className="text-xs text-muted-foreground py-2">Loading permissions…</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                      {PERMISSION_GROUPS.map(({ group, perms: groupPerms }) => (
+                        <div key={group}>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{group}</p>
+                          <div className="space-y-1.5">
+                            {groupPerms.map(({ code, label }) => {
+                              const enabled = perms.has(code);
+                              const isSaving = savingPerms.has(`${role.id}-${code}`);
+                              return (
+                                <label key={code} className="flex items-center gap-2 cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={enabled}
+                                    disabled={isSaving}
+                                    onChange={() => handleTogglePermission(role.id, code, enabled)}
+                                    className="rounded border-border accent-blue-500"
+                                  />
+                                  <span className={`text-sm ${isSaving ? "text-muted-foreground" : "text-foreground"}`}>
+                                    {label}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t("settings.addRole", "Add Role")}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowAdd(false)}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={saving}>{t("ui.common.save")}</Button>
+            <Button onClick={handleAdd} disabled={saving}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
         <div className="space-y-3">
           <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Role name" />
-          <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" />
+          <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description (optional)" />
         </div>
       </Modal>
     </div>
