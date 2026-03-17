@@ -53,7 +53,7 @@ export default function ProjectOverviewPage() {
                 activityHasMoreRef.current = !res.last;
                 activityPageRef.current = next;
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => { activityLoadingMoreRef.current = false; setActivityLoadingMore(false); });
     }, [projectId]);
 
@@ -125,7 +125,7 @@ export default function ProjectOverviewPage() {
                                 <div className="text-xs uppercase text-muted-foreground">{t('projects.form.startDate')}</div>
                                 <div className="text-foreground">
                                     {projectData.startDate
-                                        ? (() => { const [y,m,d] = projectData.startDate.split("T")[0].split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString('vi-VN'); })()
+                                        ? (() => { const [y, m, d] = projectData.startDate.split("T")[0].split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString('vi-VN'); })()
                                         : '-'}
                                 </div>
                             </div>
@@ -133,7 +133,7 @@ export default function ProjectOverviewPage() {
                                 <div className="text-xs uppercase text-muted-foreground">{t('projects.form.endDate')}</div>
                                 <div className="text-foreground">
                                     {projectData.endDate
-                                        ? (() => { const [y,m,d] = projectData.endDate.split("T")[0].split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString('vi-VN'); })()
+                                        ? (() => { const [y, m, d] = projectData.endDate.split("T")[0].split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString('vi-VN'); })()
                                         : '-'}
                                 </div>
                             </div>

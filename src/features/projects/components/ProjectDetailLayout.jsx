@@ -36,10 +36,10 @@ function ProjectDetailLayoutContent() {
     const navigate = useNavigate();
     const location = useLocation();
     const { userProfile } = useAuth();
-    
+
     // Get data from ProjectContext
     const { projectData, loading, refreshProject } = useProject();
-    
+
     // Edit project modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [users, setUsers] = useState([]);
@@ -55,11 +55,11 @@ function ProjectDetailLayoutContent() {
     // Check if current user can edit project (admin, super_admin, or project manager)
     const canEditProject = useMemo(() => {
         if (!userProfile || !projectData) return false;
-        
+
         const userRole = userProfile.role?.toUpperCase() || "";
         const isAdmin = ["SUPER_ADMIN", "ADMIN", "PROJECT_MANAGER"].includes(userRole);
         const isProjectManager = projectData.managerId === userProfile.id;
-        
+
         return isAdmin || isProjectManager;
     }, [userProfile, projectData]);
 
@@ -91,7 +91,7 @@ function ProjectDetailLayoutContent() {
         } catch (error) {
             console.error("Error loading users:", error);
         }
-        
+
         setFormData({
             name: projectData?.name || "",
             description: projectData?.description || "",

@@ -257,7 +257,7 @@ export default function ProjectTimeline({
                                                                     className="w-full"
                                                                     onClick={() => handleViewIssue(issue.id)}
                                                                 >
-                                                                    <GanttFeatureItem onMove={() => {}} {...feature}>
+                                                                    <GanttFeatureItem onMove={() => { }} {...feature}>
                                                                         <p className="flex-1 truncate text-xs">
                                                                             {feature.name}
                                                                         </p>
