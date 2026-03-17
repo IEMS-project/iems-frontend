@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import Modal from "@/components/ui/Modal";
@@ -13,9 +13,9 @@ import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCar
 import { cn, timeAgo } from "@/lib/utils";
 import {
   Flag, User, CalendarDays, Hash, MessageSquare, Trash2, Send,
-  Zap, History, Save, MoreHorizontal, ArrowRightLeft, UserCheck,
+  Zap, History, Save, MoreHorizontal, ArrowRightLeft, ArrowRight, UserCheck,
   Plus, Minus, CheckCircle2, CornerDownRight, X, Calendar,
-  ChevronDown, ChevronRight, Layers, ExternalLink, Check,
+  ChevronDown, ChevronLeft, ChevronRight, Layers, ExternalLink, Check,
 } from "lucide-react";
 
 // ── Status badge colour ─────────────────────────────────────────────────────
@@ -40,6 +40,22 @@ function getActivityMeta(action) {
     case "ISSUE_REMOVED_FROM_SPRINT": return { icon: Minus, color: "bg-muted text-muted-foreground" };
     default: return { icon: CheckCircle2, color: "bg-muted text-muted-foreground" };
   }
+}
+
+// ── Status pill for activity history ────────────────────────────────────────
+function StatusBadge({ value, workflowStatuses }) {
+  if (!value) return null;
+  const status = workflowStatuses.find(s => s.id === value || s.name === value);
+  const name = status?.name || value;
+  const color = status?.color || "#6B7280";
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
+      style={{ backgroundColor: color + "22", color, border: `1px solid ${color}55` }}
+    >
+      {name}
+    </span>
+  );
 }
 
 function initForm(issue) {
@@ -268,6 +284,11 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [activityLoadingMore, setActivityLoadingMore] = useState(false);
+  const activityPageRef = useRef(0);
+  const activityHasMoreRef = useRef(false);
+  const activityLoadingMoreRef = useRef(false);
+  const activitySentinelRef = useRef(null);
   const [activeTab, setActiveTab] = useState("comments"); // comments | history
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -285,13 +306,24 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreRef = useRef(null);
 
-  useEffect(() => { setForm(initForm(issue)); setCollapsed({ description: false, subtasks: false, activity: false }); }, [issue?.id, open]);
+  useEffect(() => {
+    setForm(initForm(issue));
+    setCollapsed({ description: false, subtasks: false, activity: false });
+    setActivityLogs([]);
+    activityPageRef.current = 0;
+    activityHasMoreRef.current = false;
+    activityLoadingMoreRef.current = false;
+  }, [issue?.id, open]);
 
   useEffect(() => {
     if (!issue?.id || !open) return;
     loadComments();
-    loadActivityLogs();
     loadChildren();
+  }, [issue?.id, open]);
+
+  useEffect(() => {
+    if (!issue?.id || !open) return;
+    loadActivityLogs();
   }, [issue?.id, open]);
 
   // Close more menu on outside click
@@ -320,9 +352,36 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
     catch (e) { console.error(e); } finally { setLoadingComments(false); }
   };
   const loadActivityLogs = async () => {
-    try { setLoadingLogs(true); const d = await issueService.getActivityLogs(projectId, issue.id); setActivityLogs(Array.isArray(d) ? d : []); }
-    catch (e) { console.error(e); } finally { setLoadingLogs(false); }
+    try {
+      setLoadingLogs(true);
+      const res = await issueService.getActivityLogs(projectId, issue.id, 0, 10);
+      setActivityLogs(res.content || []);
+      activityHasMoreRef.current = !res.last;
+      activityPageRef.current = 0;
+    } catch (e) { console.error(e); } finally { setLoadingLogs(false); }
   };
+  const loadMoreActivityLogs = useCallback(() => {
+    if (activityLoadingMoreRef.current || !activityHasMoreRef.current) return;
+    activityLoadingMoreRef.current = true;
+    setActivityLoadingMore(true);
+    const next = activityPageRef.current + 1;
+    issueService.getActivityLogs(projectId, issue.id, next, 10)
+      .then(res => {
+        setActivityLogs(prev => [...prev, ...(res.content || [])]);
+        activityHasMoreRef.current = !res.last;
+        activityPageRef.current = next;
+      })
+      .catch(() => {})
+      .finally(() => { activityLoadingMoreRef.current = false; setActivityLoadingMore(false); });
+  }, [projectId, issue?.id]);
+  // IntersectionObserver for history infinite scroll
+  useEffect(() => {
+    const el = activitySentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) loadMoreActivityLogs(); }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loadMoreActivityLogs, loadingLogs]);
   const loadChildren = async () => {
     try { const d = await issueService.getChildren(projectId, issue.id); setChildren(Array.isArray(d) ? d : []); }
     catch (e) { console.error(e); }
@@ -349,7 +408,10 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           : await issueService.removeFromSprint(projectId, issue.id);
       }
       toast.success("Issue updated");
-      await refreshIssues(); await loadActivityLogs(); onUpdate?.();
+      await refreshIssues();
+      activityPageRef.current = 0; activityHasMoreRef.current = false; activityLoadingMoreRef.current = false;
+      setActivityLogs([]); await loadActivityLogs();
+      onUpdate?.();
     } catch (e) { toast.error(e?.message || "Error saving"); }
     finally { setSaving(false); }
   };
@@ -461,6 +523,16 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
   const renderActivity = (log) => {
     const { icon: Icon, color } = getActivityMeta(log.action);
     const initials = log.userName ? log.userName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "?";
+    let fromVal = log.oldValue ?? null;
+    let toVal = log.newValue ?? null;
+    if (log.action === "ISSUE_STATUS_CHANGED" && fromVal == null && toVal == null && log.details?.includes("→")) {
+      const colonIdx = log.details.indexOf(":");
+      const raw = colonIdx !== -1 ? log.details.slice(colonIdx + 1) : log.details;
+      const parts = raw.split("→");
+      fromVal = parts[0]?.trim() || null;
+      toVal = parts[1]?.trim() || null;
+    }
+    const isStatusChange = log.action === "ISSUE_STATUS_CHANGED" && (fromVal != null || toVal != null);
     return (
       <div key={log.id} className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
         <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${color}`}>
@@ -474,7 +546,15 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
             }
             <span className="text-xs font-semibold text-foreground">{log.userName || "Unknown"}</span>
           </div>
-          <p className="text-sm text-foreground">{log.details}</p>
+          {isStatusChange ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <StatusBadge value={fromVal} workflowStatuses={workflowStatuses} />
+              <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+              <StatusBadge value={toVal} workflowStatuses={workflowStatuses} />
+            </div>
+          ) : (
+            <p className="text-sm text-foreground">{log.details}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-0.5" title={log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}>{timeAgo(log.createdAt)}</p>
         </div>
       </div>
@@ -711,7 +791,30 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
                     {activeTab === "history" && !loadingLogs && (
                       activityLogs.length === 0
                         ? <p className="text-sm text-muted-foreground italic">No history yet</p>
-                        : activityLogs.map(log => renderActivity(log))
+                        : <>
+                            {activityLogs.map(log => renderActivity(log))}
+                            {activityTotalPages > 1 && (
+                              <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/40">
+                                <button
+                                  onClick={() => setActivityPage(p => p - 1)}
+                                  disabled={activityPage === 0}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs rounded hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                                </button>
+                                <span className="text-xs text-muted-foreground">
+                                  {activityPage + 1} / {activityTotalPages}
+                                </span>
+                                <button
+                                  onClick={() => setActivityPage(p => p + 1)}
+                                  disabled={activityPage >= activityTotalPages - 1}
+                                  className="flex items-center gap-1 px-2 py-1 text-xs rounded hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Next <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </>
                     )}
                   </div>
 

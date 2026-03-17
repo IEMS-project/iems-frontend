@@ -64,4 +64,9 @@ export const sprintService = {
     const data = await request(`${BASE}/${projectId}/sprints/${sprintId}/issues`);
     return data?.data || data || [];
   },
+
+  async getBurndown(projectId, sprintId) {
+    const data = await request(`${BASE}/${projectId}/sprints/${sprintId}/burndown`);
+    return data?.data || data || null;
+  },
 };

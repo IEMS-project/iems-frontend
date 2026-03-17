@@ -245,9 +245,9 @@ export const projectService = {
   },
 
   // ── Activity Log ─────────────────────────────────────────────
-  async getActivities(projectId) {
-    const data = await request(`${BASE}/${projectId}/activities`);
-    return data?.data || data || [];
+  async getActivities(projectId, page = 0, size = 10) {
+    const data = await request(`${BASE}/${projectId}/activities?page=${page}&size=${size}`);
+    return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
   },
 
   async getIssueActivities(projectId, issueId) {

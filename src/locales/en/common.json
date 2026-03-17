@@ -389,6 +389,8 @@
         "backlog": "Backlog",
         "board": "Board",
         "tasks": "Issues",
+        "timeline": "Timeline",
+        "burndown": "Burndown",
         "sprints": "Sprints",
         "members": "Members",
         "settings": "Settings",
@@ -1352,6 +1354,17 @@
       "cancelled": "Sprint cancelled",
       "deleted": "Sprint deleted",
       "deleteConfirm": "Delete this sprint?"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "selectSprint": "Select sprint",
+      "total": "Total",
+      "remaining": "Remaining",
+      "completed": "Completed",
+      "progress": "Progress",
+      "actual": "Actual",
+      "ideal": "Ideal",
+      "noData": "No burndown data"
     }
   },
   "settings": {
