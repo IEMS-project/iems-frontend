@@ -1,13 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ProjectTimeline from "@/features/projects/components/ProjectTimeline";
 import { useProject } from "@/features/projects/context/ProjectContext";
 
 export default function ProjectTimelinePage() {
-    // Get tasks from context instead of loading separately
-    const { tasks, tasksLoading } = useProject();
+    const { issues, sprints, workflowStatuses, members, issuesLoading, sprintsLoading, refreshIssues, refreshSprints } = useProject();
+
+    useEffect(() => {
+        refreshIssues();
+        refreshSprints();
+    }, []);
 
     return (
-        <ProjectTimeline tasks={tasks} loading={tasksLoading} />
+        <ProjectTimeline
+            issues={issues}
+            sprints={sprints}
+            workflowStatuses={workflowStatuses}
+            members={members}
+            loading={issuesLoading || sprintsLoading}
+        />
     );
 }
-

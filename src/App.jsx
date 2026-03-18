@@ -11,7 +11,8 @@ import ProjectMembersPage from "@/pages/project/ProjectMembersPage";
 import ProjectSettingsPage from "@/pages/project/ProjectSettingsPage";
 import ProjectIssueListPage from "@/pages/project/ProjectIssueListPage";
 import ProjectCode from "@/features/projects/components/ProjectCode";
-import ProjectIssueDetailPage from "@/pages/project/ProjectIssueDetailPage";
+import ProjectTimelinePage from "@/pages/project/ProjectTimelinePage";
+import ProjectBurndownPage from "@/pages/project/ProjectBurndownPage";
 import Projects from "@/pages/Projects";
 // import Departments from "@/pages/Departments";
 // import DepartmentDetail from "@/pages/DepartmentDetail";
@@ -79,10 +80,11 @@ export default function App() {
                                     <Route path="board" element={<ProjectBoardPage />} />
                                     <Route path="tasks" element={<ProjectIssueListPage />} />
                                     <Route path="sprints" element={<ProjectSprintsPage />} />
+                                    <Route path="burndown" element={<ProjectBurndownPage />} />
                                     <Route path="members" element={<ProjectMembersPage />} />
                                     <Route path="settings" element={<ProjectSettingsPage />} />
+                                    <Route path="timeline" element={<ProjectTimelinePage />} />
                                     <Route path="code/*" element={<ProjectCode />} />
-                                    <Route path="issues/:issueId" element={<ProjectIssueDetailPage />} />
                                 </Route>
                                 {/* Redirect old /tasks to dashboard */}
                                 <Route path="/tasks" element={<Navigate to="/dashboard" replace />} />

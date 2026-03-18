@@ -136,8 +136,8 @@ export const issueService = {
     return data?.data || data;
   },
   // ── Activity Log ─────────────────────────────────────────────
-  async getActivityLogs(projectId, issueId) {
-    const data = await request(`${BASE}/${projectId}/activities/issues/${issueId}`);
-    return data?.data || data || [];
+  async getActivityLogs(projectId, issueId, page = 0, size = 10) {
+    const data = await request(`${BASE}/${projectId}/activities/issues/${issueId}?page=${page}&size=${size}`);
+    return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
   },
 };

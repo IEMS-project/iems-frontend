@@ -480,38 +480,56 @@ function PrioritiesSection() {
 // ── Roles Section ──────────────────────────────────────────────
 const PERMISSION_GROUPS = [
   {
+    group: "Projects",
+    perms: [
+      { code: "PROJECT_READ", label: "Read" },
+      { code: "PROJECT_CREATE", label: "Create" },
+      { code: "PROJECT_UPDATE", label: "Update" },
+      { code: "PROJECT_DELETE", label: "Delete" },
+    ],
+  },
+  {
     group: "Issues",
     perms: [
-      { code: "ISSUE_CREATE", label: "Create issues" },
-      { code: "ISSUE_EDIT", label: "Edit issues" },
-      { code: "ISSUE_DELETE", label: "Delete issues" },
-      { code: "ISSUE_ASSIGN", label: "Assign issues" },
-      { code: "ISSUE_TRANSITION", label: "Change issue status" },
+      { code: "ISSUE_READ", label: "Read" },
+      { code: "ISSUE_CREATE", label: "Create" },
+      { code: "ISSUE_UPDATE", label: "Update" },
+      { code: "ISSUE_DELETE", label: "Delete" },
+    ],
+  },
+  {
+    group: "Workflows",
+    perms: [
+      { code: "WORKFLOW_READ", label: "Read" },
+      { code: "WORKFLOW_CREATE", label: "Create" },
+      { code: "WORKFLOW_UPDATE", label: "Update" },
+      { code: "WORKFLOW_DELETE", label: "Delete" },
+    ],
+  },
+  {
+    group: "Roles",
+    perms: [
+      { code: "ROLE_READ", label: "Read" },
+      { code: "ROLE_CREATE", label: "Create" },
+      { code: "ROLE_UPDATE", label: "Update" },
+      { code: "ROLE_DELETE", label: "Delete" },
     ],
   },
   {
     group: "Sprints",
     perms: [
-      { code: "SPRINT_CREATE", label: "Create sprints" },
-      { code: "SPRINT_EDIT", label: "Edit sprints" },
-      { code: "SPRINT_DELETE", label: "Delete sprints" },
-      { code: "SPRINT_MANAGE", label: "Start / complete sprints" },
+      { code: "SPRINT_READ", label: "Read" },
+      { code: "SPRINT_CREATE", label: "Create" },
+      { code: "SPRINT_UPDATE", label: "Update" },
+      { code: "SPRINT_DELETE", label: "Delete" },
     ],
   },
   {
     group: "Members",
     perms: [
-      { code: "MEMBER_INVITE", label: "Invite members" },
-      { code: "MEMBER_REMOVE", label: "Remove members" },
-      { code: "MEMBER_ROLE_ASSIGN", label: "Assign member roles" },
-    ],
-  },
-  {
-    group: "Settings",
-    perms: [
-      { code: "PROJECT_EDIT", label: "Edit project details" },
-      { code: "WORKFLOW_MANAGE", label: "Manage workflow & statuses" },
-      { code: "ROLE_MANAGE", label: "Manage roles & permissions" },
+      { code: "MEMBER_INVITE", label: "Invite" },
+      { code: "MEMBER_REMOVE", label: "Remove" },
+      { code: "MEMBER_ROLE_ASSIGN", label: "Assign role" },
     ],
   },
 ];
@@ -551,6 +569,11 @@ function RolesSection() {
   };
 
   const handleTogglePermission = async (roleId, permCode, currentlyEnabled) => {
+    const role = roles.find(item => item.id === roleId);
+    if (role?.isDefault) {
+      return;
+    }
+
     const key = `${roleId}-${permCode}`;
     setSavingPerms(prev => new Set([...prev, key]));
     try {
@@ -639,6 +662,11 @@ function RolesSection() {
               {/* Permissions panel */}
               {isExpanded && (
                 <div className="border-t border-border px-4 py-3 bg-muted/30">
+                  {role.isDefault && (
+                    <p className="text-xs text-muted-foreground py-2">
+                      Admin/default role permissions are locked.
+                    </p>
+                  )}
                   {isLoadingPerms ? (
                     <p className="text-xs text-muted-foreground py-2">Loading permissions…</p>
                   ) : (
@@ -650,16 +678,17 @@ function RolesSection() {
                             {groupPerms.map(({ code, label }) => {
                               const enabled = perms.has(code);
                               const isSaving = savingPerms.has(`${role.id}-${code}`);
+                              const isLocked = role.isDefault;
                               return (
                                 <label key={code} className="flex items-center gap-2 cursor-pointer select-none">
                                   <input
                                     type="checkbox"
                                     checked={enabled}
-                                    disabled={isSaving}
+                                    disabled={isSaving || isLocked}
                                     onChange={() => handleTogglePermission(role.id, code, enabled)}
                                     className="rounded border-border accent-blue-500"
                                   />
-                                  <span className={`text-sm ${isSaving ? "text-muted-foreground" : "text-foreground"}`}>
+                                  <span className={`text-sm ${isSaving || isLocked ? "text-muted-foreground" : "text-foreground"}`}>
                                     {label}
                                   </span>
                                 </label>

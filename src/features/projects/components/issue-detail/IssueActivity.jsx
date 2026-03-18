@@ -3,12 +3,6 @@ import {
   MessageSquare,
   History,
   Send,
-  ArrowRightLeft,
-  UserCheck,
-  Plus,
-  Minus,
-  Zap,
-  CheckCircle2,
   CornerDownRight,
   X,
   ChevronDown,
@@ -19,24 +13,8 @@ import { cn, timeAgo } from "@/lib/utils";
 import { issueService } from "@/features/projects/api/issueService";
 import Avatar from "@/components/ui/Avatar";
 import { toast } from "sonner";
-
-/* ── Activity meta helpers ── */
-function getActivityMeta(action) {
-  switch (action) {
-    case "ISSUE_CREATED":
-      return { icon: Plus, colorClass: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" };
-    case "ISSUE_STATUS_CHANGED":
-      return { icon: ArrowRightLeft, colorClass: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" };
-    case "ISSUE_ASSIGNED":
-      return { icon: UserCheck, colorClass: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" };
-    case "ISSUE_MOVED_TO_SPRINT":
-      return { icon: Zap, colorClass: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" };
-    case "ISSUE_REMOVED_FROM_SPRINT":
-      return { icon: Minus, colorClass: "bg-muted text-muted-foreground" };
-    default:
-      return { icon: CheckCircle2, colorClass: "bg-muted text-muted-foreground" };
-  }
-}
+import ActivityLogItem from "@/features/projects/components/ActivityLogItem";
+import { useProject } from "@/features/projects/context/ProjectContext";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -146,33 +124,10 @@ function CommentItem({ comment, members, onReply, replyingTo, replyText, setRepl
   );
 }
 
-/* ── Activity log item ── */
-function ActivityItem({ log }) {
-  const { icon: Icon, colorClass } = getActivityMeta(log.action);
-  return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-border/50 last:border-0">
-      <div className={cn("mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0", colorClass)}>
-        <Icon className="w-3 h-3" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          {log.userImage ? (
-            <img src={log.userImage} alt={log.userName} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <Avatar name={log.userName || "?"} size="xs" className="flex-shrink-0" />
-          )}
-          <span className="text-xs font-semibold text-foreground">{log.userName || "Unknown"}</span>
-        </div>
-        <p className="text-sm text-foreground leading-relaxed">{log.details || log.action}</p>
-        <p className="text-xs text-muted-foreground mt-0.5" title={log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}>
-          {timeAgo(log.createdAt)}
-        </p>
-      </div>
-    </div>
-  );
-}
+/* ── Activity log item → see ActivityLogItem.jsx ── */
 
 export default function IssueActivity({ projectId, issueId, members = [] }) {
+  const { workflowStatuses = [] } = useProject();
   const [activeTab, setActiveTab] = useState("all");
   const [collapsed, setCollapsed] = useState(false);
 
@@ -402,7 +357,7 @@ export default function IssueActivity({ projectId, issueId, members = [] }) {
                     <p className="text-sm text-muted-foreground italic">No activity yet.</p>
                   )}
                   {activityLogs.map((log) => (
-                    <ActivityItem key={log.id} log={log} />
+                    <ActivityLogItem key={log.id} log={log} workflowStatuses={workflowStatuses} />
                   ))}
                 </div>
               )}
@@ -432,7 +387,7 @@ export default function IssueActivity({ projectId, issueId, members = [] }) {
                     replies={repliesByParent[item.data.id] || []}
                   />
                 ) : (
-                  <ActivityItem key={`a-${item.data.id}`} log={item.data} />
+                  <ActivityLogItem key={`a-${item.data.id}`} log={item.data} workflowStatuses={workflowStatuses} />
                 )
               )}
             </div>

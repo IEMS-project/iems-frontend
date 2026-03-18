@@ -389,6 +389,8 @@
         "backlog": "Tồn đọng",
         "board": "Bảng",
         "tasks": "Vấn đề",
+        "timeline": "Dòng thời gian",
+        "burndown": "Burndown",
         "sprints": "Sprint",
         "members": "Thành viên",
         "settings": "Cài đặt",
@@ -588,6 +590,43 @@
           "deleteTitle": "Xác nhận xóa vai trò"
         }
       }
+    }
+  },
+  "sprints": {
+    "title": "Sprint",
+    "create": "Tạo sprint",
+    "edit": "Chỉnh sửa sprint",
+    "start": "Bắt đầu",
+    "complete": "Hoàn thành",
+    "empty": "Chưa có sprint nào. Hãy tạo sprint đầu tiên!",
+    "form": {
+      "name": "Tên sprint",
+      "namePlaceholder": "Ví dụ: Sprint 1",
+      "goal": "Mục tiêu sprint",
+      "goalPlaceholder": "Mục tiêu của sprint này là gì?",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc"
+    },
+    "messages": {
+      "nameRequired": "Tên sprint là bắt buộc",
+      "created": "Đã tạo sprint",
+      "updated": "Đã cập nhật sprint",
+      "started": "Đã bắt đầu sprint",
+      "completed": "Đã hoàn thành sprint",
+      "cancelled": "Đã hủy sprint",
+      "deleted": "Đã xóa sprint",
+      "deleteConfirm": "Bạn có chắc muốn xóa sprint này?"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "selectSprint": "Chọn sprint",
+      "total": "Tổng",
+      "remaining": "Còn lại",
+      "completed": "Hoàn thành",
+      "progress": "Tiến độ",
+      "actual": "Thực tế",
+      "ideal": "Lý tưởng",
+      "noData": "Chưa có dữ liệu burndown"
     }
   },
   "tables": {

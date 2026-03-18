@@ -22,6 +22,8 @@ const tabs = [
     { id: "backlog", label: "backlog", path: "backlog" },
     { id: "board", label: "board", path: "board" },
     { id: "tasks", label: "tasks", path: "tasks" },
+    { id: "timeline", label: "timeline", path: "timeline" },
+    { id: "burndown", label: "burndown", path: "burndown" },
     { id: "sprints", label: "sprints", path: "sprints" },
     { id: "members", label: "members", path: "members" },
     { id: "settings", label: "settings", path: "settings" },
@@ -34,10 +36,10 @@ function ProjectDetailLayoutContent() {
     const navigate = useNavigate();
     const location = useLocation();
     const { userProfile } = useAuth();
-    
+
     // Get data from ProjectContext
     const { projectData, loading, refreshProject } = useProject();
-    
+
     // Edit project modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [users, setUsers] = useState([]);
@@ -53,11 +55,11 @@ function ProjectDetailLayoutContent() {
     // Check if current user can edit project (admin, super_admin, or project manager)
     const canEditProject = useMemo(() => {
         if (!userProfile || !projectData) return false;
-        
+
         const userRole = userProfile.role?.toUpperCase() || "";
         const isAdmin = ["SUPER_ADMIN", "ADMIN", "PROJECT_MANAGER"].includes(userRole);
         const isProjectManager = projectData.managerId === userProfile.id;
-        
+
         return isAdmin || isProjectManager;
     }, [userProfile, projectData]);
 
@@ -67,6 +69,8 @@ function ProjectDetailLayoutContent() {
         if (path.includes("/backlog")) return "backlog";
         if (path.includes("/board")) return "board";
         if (path.includes("/tasks")) return "tasks";
+        if (path.includes("/timeline")) return "timeline";
+        if (path.includes("/burndown")) return "burndown";
         if (path.includes("/sprints")) return "sprints";
         if (path.includes("/members")) return "members";
         if (path.includes("/settings")) return "settings";
@@ -87,7 +91,7 @@ function ProjectDetailLayoutContent() {
         } catch (error) {
             console.error("Error loading users:", error);
         }
-        
+
         setFormData({
             name: projectData?.name || "",
             description: projectData?.description || "",
