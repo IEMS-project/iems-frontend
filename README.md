@@ -20,3 +20,16 @@ Manual verification steps:
 1. Start the app (`npm run dev`) and open the Departments page.
 2. Toggle between grid and list using the two small buttons next to the "Thêm phòng ban" button.
 3. Ensure edit/delete still work and the rows/cards navigate to department details when clicked.
+
+## OAuth config (Google/GitHub)
+
+Create `.env` in `iems-frontend` with:
+
+```
+VITE_GATEWAY_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+VITE_GITHUB_CLIENT_ID=your_github_client_id
+VITE_GITHUB_REDIRECT_URI=http://localhost:5173/login
+```
+
+`VITE_GITHUB_REDIRECT_URI` must match `github.redirect-uri` in `iam-service` and the callback URL configured in your GitHub OAuth App.

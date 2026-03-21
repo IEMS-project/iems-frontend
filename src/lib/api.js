@@ -32,11 +32,9 @@ async function refreshAccessToken() {
 
   refreshingPromise = (async () => {
     try {
-      const res = await fetch(`${GATEWAY_BASE_URL}/api/auth/refresh`, {
+      const res = await fetch(`${GATEWAY_BASE_URL}/iam-service/api/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({}),
       });
 
       const contentType = res.headers.get("content-type") || "";
@@ -46,6 +44,7 @@ async function refreshAccessToken() {
       if (!res.ok) {
         setStoredTokens(null);
         const msg = data?.message || data?.error || res.statusText;
+        console.error("[Token Refresh] Refresh failed:", msg);
         throw new Error(msg || "Refresh failed");
       }
 
@@ -54,8 +53,13 @@ async function refreshAccessToken() {
         throw new Error("No access token returned from refresh");
       }
 
+      console.log("[Token Refresh] Successfully refreshed access token");
       setStoredTokens({ accessToken: payload.accessToken, userInfo: payload.userInfo });
       return payload.accessToken;
+    } catch (error) {
+      console.error("[Token Refresh] Error during token refresh:", error.message);
+      setStoredTokens(null);
+      throw error;
     } finally {
       refreshingPromise = null;
     }
@@ -139,22 +143,36 @@ async function baseRequest(path, {
     credentials,
   });
 
+  // Handle 401 Unauthorized - attempt to refresh token
   if (response.status === 401 && withAuth && retryOn401) {
-    await refreshAccessToken();
-    const newTokens = getStoredTokens();
-    if (!newTokens?.accessToken) {
-      const err = new Error(response.statusText || "Unauthorized");
+    console.log(`[API] Received 401 for ${method} ${path}, attempting token refresh...`);
+    try {
+      const newAccessToken = await refreshAccessToken();
+
+      if (!newAccessToken) {
+        const err = new Error("Token refresh failed - no new access token");
+        err.status = 401;
+        throw err;
+      }
+
+      // Retry request with new token
+      finalHeaders["Authorization"] = `Bearer ${newAccessToken}`;
+      console.log(`[API] Retrying ${method} ${path} with refreshed token`);
+
+      response = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers: finalHeaders,
+        body: preparedBody,
+        credentials,
+      });
+    } catch (error) {
+      console.error(`[API] Token refresh failed for ${method} ${path}:`, error.message);
+      // Clear tokens and let caller handle the error
+      setStoredTokens(null);
+      const err = new Error(error.message || "Token refresh failed");
       err.status = 401;
       throw err;
     }
-
-    finalHeaders["Authorization"] = `Bearer ${newTokens.accessToken}`;
-    response = await fetch(`${baseUrl}${path}`, {
-      method,
-      headers: finalHeaders,
-      body: preparedBody,
-      credentials,
-    });
   }
 
   return parseResponse(response);

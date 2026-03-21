@@ -27,6 +27,7 @@ import PermissionDenied from "@/pages/PermissionDenied";
 import Chatbot from "@/pages/Chatbot";
 import MainLayout from "@/layouts/MainLayout";
 import Login from "@/pages/Login";
+import AdminLogin from "@/pages/AdminLogin";
 import { useAuth } from "@/context/AuthContext.jsx";
 import { getStoredTokens } from "@/lib/api";
 
@@ -65,6 +66,8 @@ export default function App() {
             <Routes>
                 {/* Login page - standalone, no layout */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Navigate to="/login" replace />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
 
                 {/* All other pages - with MainLayout */}
                 <Route path="/*" element={
