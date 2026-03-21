@@ -20,9 +20,23 @@ function setStoredTokens(payload) {
 
   const safe = {
     accessToken: payload?.accessToken,
+    refreshToken: payload?.refreshToken,
     userInfo: payload?.userInfo,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+}
+
+function redirectToLogin() {
+  if (typeof window === "undefined") return;
+  const currentPath = window.location.pathname;
+  if (currentPath === "/login" || currentPath === "/admin-login") return;
+  window.location.replace("/login");
+}
+
+function clearAuthAndRedirect() {
+  setStoredTokens(null);
+  localStorage.removeItem("github_access_token");
+  redirectToLogin();
 }
 
 let refreshingPromise = null;
@@ -32,8 +46,14 @@ async function refreshAccessToken() {
 
   refreshingPromise = (async () => {
     try {
+      const tokens = getStoredTokens();
+      const refreshToken = tokens?.refreshToken;
+      const refreshBody = refreshToken ? JSON.stringify({ refreshToken }) : undefined;
+
       const res = await fetch(`${GATEWAY_BASE_URL}/iam-service/api/auth/refresh`, {
         method: "POST",
+        headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
+        body: refreshBody,
         credentials: "include",
       });
 
@@ -42,7 +62,6 @@ async function refreshAccessToken() {
       const data = isJson ? await res.json().catch(() => null) : null;
 
       if (!res.ok) {
-        setStoredTokens(null);
         const msg = data?.message || data?.error || res.statusText;
         console.error("[Token Refresh] Refresh failed:", msg);
         throw new Error(msg || "Refresh failed");
@@ -54,11 +73,10 @@ async function refreshAccessToken() {
       }
 
       console.log("[Token Refresh] Successfully refreshed access token");
-      setStoredTokens({ accessToken: payload.accessToken, userInfo: payload.userInfo });
+      setStoredTokens(payload);
       return payload.accessToken;
     } catch (error) {
       console.error("[Token Refresh] Error during token refresh:", error.message);
-      setStoredTokens(null);
       throw error;
     } finally {
       refreshingPromise = null;
@@ -143,9 +161,10 @@ async function baseRequest(path, {
     credentials,
   });
 
-  // Handle 401 Unauthorized - attempt to refresh token
-  if (response.status === 401 && withAuth && retryOn401) {
-    console.log(`[API] Received 401 for ${method} ${path}, attempting token refresh...`);
+  // Handle Unauthorized/Forbidden from expired access token - attempt to refresh token
+  const shouldRetryWithRefresh = (response.status === 401 || response.status === 403) && withAuth && retryOn401;
+  if (shouldRetryWithRefresh) {
+    console.log(`[API] Received ${response.status} for ${method} ${path}, attempting token refresh...`);
     try {
       const newAccessToken = await refreshAccessToken();
 
@@ -167,10 +186,9 @@ async function baseRequest(path, {
       });
     } catch (error) {
       console.error(`[API] Token refresh failed for ${method} ${path}:`, error.message);
-      // Clear tokens and let caller handle the error
-      setStoredTokens(null);
+      clearAuthAndRedirect();
       const err = new Error(error.message || "Token refresh failed");
-      err.status = 401;
+      err.status = error?.status || 401;
       throw err;
     }
   }
