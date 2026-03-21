@@ -118,8 +118,8 @@ function SubtaskRow({
 
   const statusObj = workflowStatuses.find((s) => s.id === local.statusId);
 
-  const assignee = members.find((m) => (m.accountId || m.id) === local.assigneeId);
-  const assigneeName = assignee?.fullName || assignee?.userName || assignee?.email || null;
+  const assignee = members.find((m) => (m.accountId || m.id) === local.assigneeId) || local.assignee;
+  const assigneeName = assignee?.fullName || assignee?.userName || assignee?.name || assignee?.email || null;
 
   const toggleField = (e, field) => {
     e.stopPropagation();
@@ -177,7 +177,7 @@ function SubtaskRow({
       icon: <User className="w-3.5 h-3.5 text-muted-foreground" />,
     },
     ...members.map((m) => {
-      const name = m.fullName || m.userName || m.email || "?";
+      const name = m.fullName || m.userName || m.name || m.email || "?";
       const id = m.accountId || m.id;
       return {
         value: id,
@@ -187,6 +187,15 @@ function SubtaskRow({
       };
     }),
   ];
+
+  if (local.assigneeId && !members.some((m) => (m.accountId || m.id) === local.assigneeId)) {
+    assigneeOptions.push({
+      value: local.assigneeId,
+      label: assigneeName || "?",
+      active: true,
+      icon: <Avatar name={assigneeName || "?"} size="xs" />,
+    });
+  }
 
   return (
     <tr className="group hover:bg-muted/40 transition-colors">

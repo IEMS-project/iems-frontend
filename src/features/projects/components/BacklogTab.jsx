@@ -29,14 +29,14 @@ const SPRINT_STATUS_COLORS = {
 };
 
 // ── Droppable zone with blue-ring highlight on hover ────────────
-function DroppableZone({ id, children, className }) {
-  const { setNodeRef, isOver } = useDroppable({ id });
+function DroppableZone({ id, children, className, disabled }) {
+  const { setNodeRef, isOver } = useDroppable({ id, disabled });
   return (
     <div
-      ref={setNodeRef}
+      ref={disabled ? undefined : setNodeRef}
       className={cn(
         "transition-all duration-150",
-        isOver && "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-inset ring-blue-400",
+        !disabled && isOver && "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-inset ring-blue-400",
         className,
       )}
     >
@@ -245,7 +245,7 @@ export default function BacklogTab() {
 
   const handleDragStart = ({ active }) => {
     setActiveIssue(allIssuesMap[active.id] || null);
-    // Auto-expand ACTIVE/PLANNED sprints so all drop zones are visible
+    // Auto-expand only ACTIVE/PLANNED sprints so droppable zones are visible
     setExpandedSprints(prev => {
       const next = new Set(prev);
       sprints
@@ -267,6 +267,14 @@ export default function BacklogTab() {
     const sprintId = !isBacklog && destContainer.startsWith("sprint-")
       ? destContainer.slice(7) : null;
     if (!isBacklog && !sprintId) return;
+
+    // Block drop into COMPLETED or CANCELLED sprints
+    if (sprintId) {
+      const destSprint = sprints.find(s => String(s.id) === String(sprintId));
+      if (destSprint && (destSprint.status === "COMPLETED" || destSprint.status === "CANCELLED")) {
+        return;
+      }
+    }
 
     // If dragged issue is part of selection, move ALL selected; otherwise just this one
     const idsToMove = selectedIssueIds.has(active.id)
@@ -360,40 +368,45 @@ export default function BacklogTab() {
               </div>
 
               {/* Body — droppable */}
-              {isExpanded && (
-                <DroppableZone id={containerId} className="border-t border-border">
-                  {sprintIssues.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                      {t("issues.noIssues", "No issues in this sprint")}
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-border">
-                      {sprintIssues.map(issue => (
-                        <DraggableIssueRow
-                          key={issue.id}
-                          issue={issue}
-                          containerId={containerId}
-                          issueTypes={issueTypes}
-                          issuePriorities={issuePriorities}
-                          members={members}
-                          onClick={() => setSelectedIssue(issue)}
-                          isSelected={selectedIssueIds.has(issue.id)}
-                          onToggleSelect={() => toggleSelectIssue(issue.id)}
-                          isGroupDragging={!!(activeIssue && selectedIssueIds.has(activeIssue.id) && selectedIssueIds.has(issue.id) && issue.id !== activeIssue.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div className="px-4 py-2 border-t border-border">
-                    <button
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={() => { setCreateSprintId(sprint.id); setShowCreateModal(true); }}
-                    >
-                      <Plus className="w-4 h-4" /> {t("issues.createIssue", "Create issue")}
-                    </button>
-                  </div>
-                </DroppableZone>
-              )}
+              {isExpanded && (() => {
+                const isClosed = sprint.status === "COMPLETED" || sprint.status === "CANCELLED";
+                return (
+                  <DroppableZone id={containerId} className="border-t border-border" disabled={isClosed}>
+                    {sprintIssues.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        {t("issues.noIssues", "No issues in this sprint")}
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {sprintIssues.map(issue => (
+                          <DraggableIssueRow
+                            key={issue.id}
+                            issue={issue}
+                            containerId={containerId}
+                            issueTypes={issueTypes}
+                            issuePriorities={issuePriorities}
+                            members={members}
+                            onClick={() => setSelectedIssue(issue)}
+                            isSelected={selectedIssueIds.has(issue.id)}
+                            onToggleSelect={() => toggleSelectIssue(issue.id)}
+                            isGroupDragging={!!(activeIssue && selectedIssueIds.has(activeIssue.id) && selectedIssueIds.has(issue.id) && issue.id !== activeIssue.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {!isClosed && (
+                      <div className="px-4 py-2 border-t border-border">
+                        <button
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => { setCreateSprintId(sprint.id); setShowCreateModal(true); }}
+                        >
+                          <Plus className="w-4 h-4" /> {t("issues.createIssue", "Create issue")}
+                        </button>
+                      </div>
+                    )}
+                  </DroppableZone>
+                );
+              })()}
             </div>
           );
         })}
@@ -508,6 +521,8 @@ function IssueRow({ issue, issueTypes, issuePriorities, members, onClick, sprint
   const TypeIcon = getIssueTypeIcon(typeName);
   const typeColor = getIssueTypeColor(typeName);
   const { icon: PriorityIcon, color: prioColor } = getPriorityIcon(priorityObj?.name);
+  const assigneeObj = members.find(m => (m.accountId || m.id) === issue.assigneeId) || issue?.assignee;
+  const assigneeName = assigneeObj?.fullName || assigneeObj?.userName || assigneeObj?.name || assigneeObj?.email;
 
   return (
     <div className="flex items-center gap-3 cursor-pointer flex-1 min-w-0" onClick={onClick}>
@@ -523,8 +538,8 @@ function IssueRow({ issue, issueTypes, issuePriorities, members, onClick, sprint
         </span>
       )}
       {issue.assigneeId && (
-        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0">
-          {(issue.assigneeId || "?")[0]?.toUpperCase()}
+        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0" title={assigneeName}>
+          {(assigneeName || "?")[0]?.toUpperCase()}
         </div>
       )}
       {/* Move-to-sprint dropdown (backlog items only) */}

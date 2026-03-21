@@ -12,6 +12,7 @@ import { projectService } from "@/features/projects/api/projectService";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { toast } from "sonner";
 import { Shield, Search, UserPlus, ChevronRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PERMISSION_GROUPS = [
     {
@@ -282,9 +283,11 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
     const [selectedRoleId, setSelectedRoleId] = useState(member.roleId || "");
     const [savingRole, setSavingRole] = useState(false);
 
-    const [rolePerms, setRolePerms] = useState(null);
-    const [directPerms, setDirectPerms] = useState(null);
+    const [rolePerms, setRolePerms] = useState(null); // Set of role perms
+    const [directPerms, setDirectPerms] = useState(null); // { granted: Set, denied: Set }
     const [loadingPerms, setLoadingPerms] = useState(false);
+    const [draftDirectPerms, setDraftDirectPerms] = useState({ granted: new Set(), denied: new Set() });
+    const [savingPerms, setSavingPerms] = useState(false);
     const [togglingPerm, setTogglingPerm] = useState(new Set());
 
     const loadPerms = useCallback(async (roleId) => {
@@ -298,10 +301,17 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                     .catch(() => ({ granted: [], denied: [] })),
             ]);
             setRolePerms(new Set(Array.isArray(rPerms) ? rPerms : []));
-            setDirectPerms({
+            const dPermsMapped = {
                 granted: new Set(dPerms?.granted || []),
                 denied: new Set(dPerms?.denied || []),
+            };
+            setDirectPerms(dPermsMapped);
+            setDraftDirectPerms({
+                granted: new Set(dPermsMapped.granted),
+                denied: new Set(dPermsMapped.denied),
             });
+        } catch (e) {
+            console.error("Error loading perms", e);
         } finally {
             setLoadingPerms(false);
         }
@@ -311,42 +321,113 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
         loadPerms(member.roleId);
     }, [loadPerms, member.roleId]);
 
-    const getPermState = (code) => {
-        if (!rolePerms || !directPerms) return "loading";
-        if (directPerms.denied.has(code)) return "denied";
-        if (directPerms.granted.has(code)) return "granted";
+    const getPermState = (code, currentDraft = draftDirectPerms) => {
+        if (!rolePerms) return "none";
+        if (currentDraft.denied.has(code)) return "denied";
+        if (currentDraft.granted.has(code)) return "granted";
         if (rolePerms.has(code)) return "role";
         return "none";
     };
 
-    const isEffective = (code) => {
-        const s = getPermState(code);
+    const isEffective = (code, currentDraft = draftDirectPerms) => {
+        const s = getPermState(code, currentDraft);
         return s === "role" || s === "granted";
     };
 
-    const handleTogglePerm = async (code) => {
-        if (togglingPerm.has(code)) return;
-        const state = getPermState(code);
-        setTogglingPerm(prev => new Set([...prev, code]));
-        try {
-            if (state === "role") {
-                await projectService.denyMemberPermission(projectId, member.userId, code);
-                setDirectPerms(prev => ({ ...prev, denied: new Set([...prev.denied, code]) }));
-            } else if (state === "denied") {
-                await projectService.resetMemberPermission(projectId, member.userId, code);
-                setDirectPerms(prev => { const s = new Set(prev.denied); s.delete(code); return { ...prev, denied: s }; });
-            } else if (state === "none") {
-                await projectService.grantMemberPermission(projectId, member.userId, code);
-                setDirectPerms(prev => ({ ...prev, granted: new Set([...prev.granted, code]) }));
-            } else if (state === "granted") {
-                await projectService.resetMemberPermission(projectId, member.userId, code);
-                setDirectPerms(prev => { const s = new Set(prev.granted); s.delete(code); return { ...prev, granted: s }; });
-            }
-        } catch (e) {
-            toast.error(e?.message || "Failed to update permission");
-        } finally {
-            setTogglingPerm(prev => { const s = new Set(prev); s.delete(code); return s; });
+    const applyToggleFunc = (code, enable, currentDraft) => {
+        const roleHas = rolePerms?.has(code);
+        let nextGranted = new Set(currentDraft.granted);
+        let nextDenied = new Set(currentDraft.denied);
+
+        if (enable) {
+            if (roleHas) nextDenied.delete(code);
+            else nextGranted.add(code);
+        } else {
+            if (roleHas) nextDenied.add(code);
+            else nextGranted.delete(code);
         }
+        return { granted: nextGranted, denied: nextDenied };
+    };
+
+    const handleTogglePermGroup = (groupPerms, enable) => {
+        setDraftDirectPerms(prev => {
+            let nextState = prev;
+            groupPerms.forEach(p => {
+                nextState = applyToggleFunc(p.code, enable, nextState);
+            });
+            return nextState;
+        });
+    };
+
+    const handleTogglePermAll = (enable) => {
+        setDraftDirectPerms(prev => {
+            let nextState = prev;
+            PERMISSION_GROUPS.forEach(g => g.perms.forEach(p => {
+                nextState = applyToggleFunc(p.code, enable, nextState);
+            }));
+            return nextState;
+        });
+    };
+
+    const handleTogglePerm = (code, enable) => {
+        setDraftDirectPerms(prev => {
+            let nextState = applyToggleFunc(code, enable, prev);
+            const groupInfo = PERMISSION_GROUPS.find(g => g.perms.some(p => p.code === code));
+            if (groupInfo) {
+                if (enable && !code.endsWith("_READ")) {
+                    const readPerm = groupInfo.perms.find(p => p.code.endsWith("_READ"));
+                    if (readPerm) nextState = applyToggleFunc(readPerm.code, true, nextState);
+                } else if (!enable && code.endsWith("_READ")) {
+                    groupInfo.perms.forEach(p => {
+                        nextState = applyToggleFunc(p.code, false, nextState);
+                    });
+                }
+            }
+            return nextState;
+        });
+    };
+
+    const handleSavePerms = async () => {
+        setSavingPerms(true);
+        try {
+            const promises = [];
+            const allCodes = PERMISSION_GROUPS.flatMap(g => g.perms.map(p => p.code));
+            
+            allCodes.forEach(code => {
+                const origGranted = directPerms.granted.has(code);
+                const origDenied = directPerms.denied.has(code);
+                const draftGranted = draftDirectPerms.granted.has(code);
+                const draftDenied = draftDirectPerms.denied.has(code);
+
+                if (origGranted === draftGranted && origDenied === draftDenied) return;
+
+                promises.push((async () => {
+                    if (origGranted || origDenied) {
+                         await projectService.resetMemberPermission(projectId, member.userId, code);
+                    }
+                    if (draftGranted) {
+                         await projectService.grantMemberPermission(projectId, member.userId, code);
+                    } else if (draftDenied) {
+                         await projectService.denyMemberPermission(projectId, member.userId, code);
+                    }
+                })());
+            });
+
+            await Promise.all(promises);
+            toast.success("Permissions saved successfully");
+            loadPerms(member.roleId);
+        } catch (e) {
+            toast.error(e?.message || "Failed to save permissions");
+        } finally {
+            setSavingPerms(false);
+        }
+    };
+
+    const handleDiscardPerms = () => {
+        setDraftDirectPerms({
+            granted: new Set(directPerms?.granted || []),
+            denied: new Set(directPerms?.denied || []),
+        });
     };
 
     const handleRoleChange = async () => {
@@ -456,19 +537,36 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-5 text-xs text-muted-foreground mb-4 flex-wrap">
-                        <span className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded border-2 border-blue-400 bg-blue-100 dark:bg-blue-900/40 inline-block" />
-                            Từ role
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded border-2 border-green-500 bg-green-100 dark:bg-green-900/40 inline-block" />
-                            Cấp trực tiếp
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded border-2 border-red-400 bg-red-100 dark:bg-red-900/40 inline-block" />
-                            Đã từ chối
-                        </span>
+                    <div className="flex items-center justify-end gap-5 text-xs text-muted-foreground mb-4">
+                        <div className="flex items-center gap-4">
+                            {(() => {
+                                const isDirty = directPerms && (
+                                    [...draftDirectPerms.granted].some(x => !directPerms.granted.has(x)) ||
+                                    [...directPerms.granted].some(x => !draftDirectPerms.granted.has(x)) ||
+                                    [...draftDirectPerms.denied].some(x => !directPerms.denied.has(x)) ||
+                                    [...directPerms.denied].some(x => !draftDirectPerms.denied.has(x))
+                                );
+
+                                return isDirty ? (
+                                    <div className="flex items-center gap-2">
+                                        <Button size="sm" onClick={handleSavePerms} disabled={savingPerms}>
+                                            {savingPerms ? "Saving..." : "Save Changes"}
+                                        </Button>
+                                        <Button size="sm" variant="secondary" onClick={handleDiscardPerms} disabled={savingPerms}>
+                                            Discard
+                                        </Button>
+                                    </div>
+                                ) : null;
+                            })()}
+                            <label className={`flex items-center gap-2 cursor-pointer select-none ${isAdminRoleMember ? "opacity-50 pointer-events-none" : ""}`}>
+                                <Checkbox
+                                    checked={PERMISSION_GROUPS.every(g => g.perms.every(p => isEffective(p.code, draftDirectPerms)))}
+                                    disabled={isAdminRoleMember || savingPerms || loadingPerms}
+                                    onChange={(e) => handleTogglePermAll(e.target.checked)}
+                                />
+                                <span className="font-semibold text-foreground uppercase tracking-wide">Chọn tất cả</span>
+                            </label>
+                        </div>
                     </div>
 
                     {loadingPerms ? (
@@ -484,54 +582,58 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-                            {PERMISSION_GROUPS.map(({ group, perms }) => (
+                            {PERMISSION_GROUPS.map(({ group, perms }) => {
+                                const isGroupChecked = perms.length > 0 && perms.every(p => isEffective(p.code, draftDirectPerms));
+                                const isGroupIndeterminate = !isGroupChecked && perms.some(p => isEffective(p.code, draftDirectPerms));
+                                
+                                return (
                                 <div key={group}>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                        {group}
-                                    </p>
-                                    <div className="space-y-2">
+                                    <div className="flex items-center gap-2 mb-2 cursor-pointer select-none">
+                                        <Checkbox
+                                            checked={isGroupChecked ? true : isGroupIndeterminate ? "indeterminate" : false}
+                                            disabled={isAdminRoleMember || savingPerms}
+                                            onChange={(e) => handleTogglePermGroup(perms, e.target.checked)}
+                                        />
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0 leading-none">
+                                            {group}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2 ml-5">
                                         {perms.map(({ code, label }) => {
-                                            const state = getPermState(code);
-                                            const isToggling = togglingPerm.has(code);
-                                            const isLocked = isAdminRoleMember;
+                                            const state = getPermState(code, draftDirectPerms);
+                                            const isLocked = isAdminRoleMember || savingPerms;
 
-                                            let checkboxCls = "rounded border-gray-300 dark:border-gray-600";
-                                            let labelCls = "text-sm text-foreground";
                                             let badge = null;
 
                                             if (state === "denied") {
-                                                checkboxCls = "rounded accent-red-500";
-                                                labelCls = "text-sm text-red-600 dark:text-red-400 line-through";
-                                                badge = <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 ml-1">denied</span>;
+                                                badge = <Badge variant="red" className="ml-2 scale-90 origin-left">Denied</Badge>;
                                             } else if (state === "granted") {
-                                                checkboxCls = "rounded accent-green-500";
-                                                labelCls = "text-sm text-green-700 dark:text-green-400 font-medium";
-                                                badge = <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 ml-1">direct</span>;
+                                                badge = <Badge variant="green" className="ml-2 scale-90 origin-left">Direct</Badge>;
                                             } else if (state === "role") {
-                                                checkboxCls = "rounded accent-blue-500";
+                                                badge = <Badge variant="blue" className="ml-2 scale-90 origin-left">Role</Badge>;
                                             }
 
                                             return (
                                                 <label
                                                     key={code}
-                                                    className={`flex items-center gap-2 cursor-pointer select-none ${isToggling || isLocked ? "opacity-50 pointer-events-none" : ""}`}
+                                                    className={`flex items-center gap-2 cursor-pointer select-none py-1 ${isLocked ? "opacity-50 pointer-events-none" : ""}`}
                                                 >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isEffective(code)}
-                                                        disabled={isToggling || isLocked}
-                                                        onChange={() => handleTogglePerm(code)}
-                                                        className={checkboxCls}
+                                                    <Checkbox
+                                                        checked={isEffective(code, draftDirectPerms)}
+                                                        disabled={isLocked}
+                                                        onChange={(e) => handleTogglePerm(code, e.target.checked)}
                                                     />
-                                                    <span className={labelCls}>
-                                                        {label}{badge}
+                                                    <span className="text-sm text-foreground">
+                                                        {label}
                                                     </span>
+                                                    {badge}
                                                 </label>
                                             );
                                         })}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

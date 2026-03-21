@@ -8,6 +8,7 @@ import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+import FibonacciStoryPointInput, { isFibonacci } from "./FibonacciStoryPointInput";
 
 export default function CreateIssueModal({
   open,
@@ -60,6 +61,10 @@ export default function CreateIssueModal({
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast.warning(t("issues.messages.titleRequired", "Please enter issue title"));
+      return;
+    }
+    if (formData.storyPoints !== "" && !isFibonacci(formData.storyPoints)) {
+      toast.warning("Story Points must be a Fibonacci number (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)");
       return;
     }
 
@@ -201,9 +206,11 @@ export default function CreateIssueModal({
             className="w-full rounded-md border border-border bg-background text-foreground p-2 text-sm"
           >
             <option value="">{t("issues.form.backlog", "Backlog")}</option>
-            {sprints.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
+            {sprints
+              .filter(s => s.status === "PLANNED" || s.status === "ACTIVE")
+              .map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
           </select>
         </div>
 
@@ -212,13 +219,10 @@ export default function CreateIssueModal({
           <label className="block text-sm font-medium text-foreground mb-1">
             {t("issues.form.storyPoints", "Story Points")}
           </label>
-          <Input
-            type="number"
-            min="0"
+          <FibonacciStoryPointInput
             value={formData.storyPoints}
-            onChange={e => handleChange("storyPoints", e.target.value)}
-            placeholder="0"
-            className="w-full"
+            onChange={v => handleChange("storyPoints", v)}
+            className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
           />
         </div>
 

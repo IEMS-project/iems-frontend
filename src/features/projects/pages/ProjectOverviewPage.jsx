@@ -190,7 +190,6 @@ export default function ProjectOverviewPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-foreground">{t('projects.detail.overview.statistics.completionRate')}</span>
                                 <span className="text-sm text-muted-foreground">{projectData?.progress ?? stats.progress}%</span>
                             </div>
                             <Progress value={projectData?.progress ?? stats.progress} />
