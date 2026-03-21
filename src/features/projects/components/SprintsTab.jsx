@@ -9,6 +9,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { sprintService } from "@/features/projects/api/sprintService";
 import { toast } from "sonner";
+import { validateDates, todayStr } from "@/features/projects/utils/dateValidation";
 import {
   Plus, Play, CheckCircle2, XCircle, Calendar, Target,
   Clock, Pencil, Trash2
@@ -53,6 +54,8 @@ export default function SprintsTab() {
       toast.warning(t("sprints.messages.nameRequired", "Sprint name is required"));
       return;
     }
+    const dateError = validateDates({ startDate: formData.startDate, endDate: formData.endDate, allowPastStart: !!editingSprint });
+    if (dateError) { toast.warning(dateError); return; }
     try {
       setSaving(true);
       const payload = {
@@ -274,6 +277,7 @@ export default function SprintsTab() {
               </label>
               <Input
                 type="date"
+                min={todayStr()}
                 value={formData.startDate}
                 onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                 className="w-full"
@@ -285,6 +289,7 @@ export default function SprintsTab() {
               </label>
               <Input
                 type="date"
+                min={formData.startDate || todayStr()}
                 value={formData.endDate}
                 onChange={e => setFormData({ ...formData, endDate: e.target.value })}
                 className="w-full"

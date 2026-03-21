@@ -69,7 +69,8 @@ export default function IssueCard({
 
   const { icon: PriorityIcon, color: prioColor } = getPriorityIcon(priorityName);
 
-  const assigneeName = members.find(m => m.accountId === issue.assigneeId)?.accountId;
+  const assigneeObj = members.find(m => (m.accountId || m.id) === issue.assigneeId) || issue?.assignee;
+  const assigneeName = assigneeObj?.fullName || assigneeObj?.userName || assigneeObj?.name || assigneeObj?.email;
 
   return (
     <div

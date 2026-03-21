@@ -6,6 +6,7 @@ import Textarea from "@/components/ui/Textarea";
 import { projectService } from "@/features/projects/api/projectService";
 import { workflowService } from "@/features/projects/api/workflowService";
 import { toast } from "sonner";
+import { validateDates, todayStr } from "@/features/projects/utils/dateValidation";
 
 const STEP_TITLES = ["Basic Information", "Workflow", "Priority", "Issue Types"];
 
@@ -80,6 +81,8 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         if (!basicInfo.name.trim()) { toast.warning("Project name is required"); return; }
         if (!basicInfo.projectKey.trim()) { toast.warning("Project key is required"); return; }
         if (!basicInfo.startDate) { toast.warning("Start date is required"); return; }
+        const dateError = validateDates({ startDate: basicInfo.startDate, endDate: basicInfo.endDate });
+        if (dateError) { toast.warning(dateError); return; }
 
         setLoading(true);
         try {
@@ -407,11 +410,11 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
 
                     <div>
                         <label className={labelCls}>Start Date *</label>
-                        <Input type="date" value={basicInfo.startDate} onChange={e => setBasicInfo(prev => ({ ...prev, startDate: e.target.value }))} className={inputCls} />
+                        <Input type="date" min={todayStr()} value={basicInfo.startDate} onChange={e => setBasicInfo(prev => ({ ...prev, startDate: e.target.value }))} className={inputCls} />
                     </div>
                     <div>
                         <label className={labelCls}>End Date</label>
-                        <Input type="date" value={basicInfo.endDate} onChange={e => setBasicInfo(prev => ({ ...prev, endDate: e.target.value }))} className={inputCls} />
+                        <Input type="date" min={basicInfo.startDate || todayStr()} value={basicInfo.endDate} onChange={e => setBasicInfo(prev => ({ ...prev, endDate: e.target.value }))} className={inputCls} />
                     </div>
 
                     <div>

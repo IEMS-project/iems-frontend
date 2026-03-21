@@ -6,6 +6,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Skeleton from "@/components/ui/Skeleton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { projectService } from "@/features/projects/api/projectService";
 import { workflowService } from "@/features/projects/api/workflowService";
@@ -540,6 +541,7 @@ function RolesSection() {
   const { roles, refreshRoles } = useProject();
   const [expandedRoleId, setExpandedRoleId] = useState(null);
   const [rolePermissions, setRolePermissions] = useState({}); // { [roleId]: Set<string> }
+  const [draftPerms, setDraftPerms] = useState({}); // { [roleId]: Set<string> }
   const [loadingPerms, setLoadingPerms] = useState(new Set());
   const [savingPerms, setSavingPerms] = useState(new Set());
   const [showAdd, setShowAdd] = useState(false);
@@ -547,11 +549,16 @@ function RolesSection() {
   const [saving, setSaving] = useState(false);
 
   const loadPermissions = async (roleId) => {
-    if (rolePermissions[roleId]) return;
+    if (rolePermissions[roleId]) {
+      setDraftPerms(prev => ({ ...prev, [roleId]: new Set(rolePermissions[roleId]) }));
+      return;
+    }
     setLoadingPerms(prev => new Set([...prev, roleId]));
     try {
       const perms = await projectService.getRolePermissions(projectId, roleId);
-      setRolePermissions(prev => ({ ...prev, [roleId]: new Set(perms) }));
+      const permSet = new Set(perms);
+      setRolePermissions(prev => ({ ...prev, [roleId]: permSet }));
+      setDraftPerms(prev => ({ ...prev, [roleId]: new Set(permSet) }));
     } catch (e) {
       toast.error("Failed to load permissions");
     } finally {
@@ -568,35 +575,75 @@ function RolesSection() {
     }
   };
 
-  const handleTogglePermission = async (roleId, permCode, currentlyEnabled) => {
-    const role = roles.find(item => item.id === roleId);
-    if (role?.isDefault) {
-      return;
-    }
-
-    const key = `${roleId}-${permCode}`;
-    setSavingPerms(prev => new Set([...prev, key]));
-    try {
-      if (currentlyEnabled) {
-        await projectService.removePermission(projectId, roleId, permCode);
-        setRolePermissions(prev => {
-          const s = new Set(prev[roleId]);
-          s.delete(permCode);
-          return { ...prev, [roleId]: s };
-        });
+  const handleTogglePermission = (roleId, permCode, enable) => {
+    setDraftPerms(prev => {
+      const s = new Set(prev[roleId] || []);
+      const groupInfo = PERMISSION_GROUPS.find(g => g.perms.some(p => p.code === permCode));
+      
+      if (enable) {
+        s.add(permCode);
+        if (!permCode.endsWith("_READ") && groupInfo) {
+          const readPerm = groupInfo.perms.find(p => p.code.endsWith("_READ"));
+          if (readPerm) s.add(readPerm.code);
+        }
       } else {
-        await projectService.assignPermission(projectId, roleId, permCode);
-        setRolePermissions(prev => {
-          const s = new Set(prev[roleId] || []);
-          s.add(permCode);
-          return { ...prev, [roleId]: s };
-        });
+        s.delete(permCode);
+        if (permCode.endsWith("_READ") && groupInfo) {
+          groupInfo.perms.forEach(p => s.delete(p.code));
+        }
       }
+      return { ...prev, [roleId]: s };
+    });
+  };
+
+  const handleToggleGroup = (roleId, groupPerms, enable) => {
+    setDraftPerms(prev => {
+      const s = new Set(prev[roleId] || []);
+      groupPerms.forEach(p => {
+        if (enable) s.add(p.code);
+        else s.delete(p.code);
+      });
+      return { ...prev, [roleId]: s };
+    });
+  };
+
+  const handleToggleAll = (roleId, enable) => {
+    setDraftPerms(prev => {
+      const s = new Set();
+      if (enable) {
+        PERMISSION_GROUPS.forEach(g => g.perms.forEach(p => s.add(p.code)));
+      }
+      return { ...prev, [roleId]: s };
+    });
+  };
+
+  const handleSavePermissions = async (roleId) => {
+    const original = rolePermissions[roleId] || new Set();
+    const currentDraft = draftPerms[roleId] || new Set();
+    const toAdd = [...currentDraft].filter(p => !original.has(p));
+    const toRemove = [...original].filter(p => !currentDraft.has(p));
+    
+    if (toAdd.length === 0 && toRemove.length === 0) return;
+
+    setSavingPerms(prev => new Set([...prev, roleId]));
+    try {
+      const promises = [
+        ...toAdd.map(code => projectService.assignPermission(projectId, roleId, code)),
+        ...toRemove.map(code => projectService.removePermission(projectId, roleId, code))
+      ];
+      await Promise.all(promises);
+      toast.success(t("settings.permissionsSaved", "Permissions saved successfully"));
+      
+      setRolePermissions(prev => ({ ...prev, [roleId]: new Set(currentDraft) }));
     } catch (e) {
-      toast.error("Failed to update permission");
+      toast.error(e?.message || "Failed to save permissions");
     } finally {
-      setSavingPerms(prev => { const s = new Set(prev); s.delete(key); return s; });
+      setSavingPerms(prev => { const s = new Set(prev); s.delete(roleId); return s; });
     }
+  };
+
+  const handleDiscardPermissions = (roleId) => {
+    setDraftPerms(prev => ({ ...prev, [roleId]: new Set(rolePermissions[roleId] || []) }));
   };
 
   const handleAdd = async () => {
@@ -670,34 +717,81 @@ function RolesSection() {
                   {isLoadingPerms ? (
                     <p className="text-xs text-muted-foreground py-2">Loading permissions…</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                      {PERMISSION_GROUPS.map(({ group, perms: groupPerms }) => (
-                        <div key={group}>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{group}</p>
-                          <div className="space-y-1.5">
-                            {groupPerms.map(({ code, label }) => {
-                              const enabled = perms.has(code);
-                              const isSaving = savingPerms.has(`${role.id}-${code}`);
-                              const isLocked = role.isDefault;
-                              return (
-                                <label key={code} className="flex items-center gap-2 cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={enabled}
-                                    disabled={isSaving || isLocked}
-                                    onChange={() => handleTogglePermission(role.id, code, enabled)}
-                                    className="rounded border-border accent-blue-500"
-                                  />
-                                  <span className={`text-sm ${isSaving || isLocked ? "text-muted-foreground" : "text-foreground"}`}>
-                                    {label}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                    <>
+                      <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
+                        <div className="flex items-center gap-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Permissions</p>
+                          
+                          {/* Save & Discard Buttons */}
+                          {!role.isDefault && draftPerms[role.id] && (() => {
+                            const original = rolePermissions[role.id] || new Set();
+                            const currentDraft = draftPerms[role.id];
+                            
+                            const toAdd = [...currentDraft].filter(p => !original.has(p));
+                            const toRemove = [...original].filter(p => !currentDraft.has(p));
+                            
+                            const isDirty = toAdd.length > 0 || toRemove.length > 0;
+                            
+                            return isDirty ? (
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" onClick={() => handleSavePermissions(role.id)} disabled={savingPerms.has(role.id)}>
+                                  {savingPerms.has(role.id) ? "Saving..." : "Save Changes"}
+                                </Button>
+                                <Button size="sm" variant="secondary" onClick={() => handleDiscardPermissions(role.id)} disabled={savingPerms.has(role.id)}>
+                                  Discard
+                                </Button>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
-                      ))}
-                    </div>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <Checkbox
+                            checked={PERMISSION_GROUPS.every(g => g.perms.every(p => (draftPerms[role.id] || new Set()).has(p.code)))}
+                            disabled={role.isDefault}
+                            onChange={(e) => handleToggleAll(role.id, e.target.checked)}
+                          />
+                          <span className="text-sm font-semibold text-foreground uppercase tracking-wide">Select All</span>
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                        {PERMISSION_GROUPS.map(({ group, perms: groupPerms }) => {
+                          const currentDraft = draftPerms[role.id] || new Set();
+                          const isGroupChecked = groupPerms.length > 0 && groupPerms.every(p => currentDraft.has(p.code));
+                          const isGroupIndeterminate = !isGroupChecked && groupPerms.some(p => currentDraft.has(p.code));
+
+                          return (
+                            <div key={group}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Checkbox
+                                  checked={isGroupChecked ? true : isGroupIndeterminate ? "indeterminate" : false}
+                                  disabled={role.isDefault}
+                                  onChange={(e) => handleToggleGroup(role.id, groupPerms, e.target.checked)}
+                                />
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide m-0 leading-none">{group}</p>
+                              </div>
+                              <div className="space-y-1.5 ml-5">
+                                {groupPerms.map(({ code, label }) => {
+                                  const enabled = currentDraft.has(code);
+                                  const isLocked = role.isDefault;
+                                  return (
+                                    <label key={code} className="flex items-center gap-2 cursor-pointer select-none">
+                                      <Checkbox
+                                        checked={enabled}
+                                        disabled={isLocked}
+                                        onChange={(e) => handleTogglePermission(role.id, code, e.target.checked)}
+                                      />
+                                      <span className={`text-sm ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
+                                        {label}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               )}

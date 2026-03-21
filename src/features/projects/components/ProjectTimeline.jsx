@@ -112,20 +112,20 @@ export default function ProjectTimeline({
         if (issue) setSelectedIssue(issue);
     };
 
-    const scrollToToday = useCallback(() => {
+    const scrollToTodayWithRange = useCallback((targetRange) => {
         const ganttElement = ganttContainerRef.current?.querySelector(".gantt");
         if (!ganttElement) return;
 
         setTimeout(() => {
             const today = new Date();
             const timelineStartDate = new Date(today.getFullYear() - 1, 0, 1);
-            const columnWidth = range === "daily" ? 50 : range === "quarterly" ? 100 : 150;
+            const columnWidth = targetRange === "daily" ? 50 : targetRange === "quarterly" ? 100 : 150;
             const parsedColumnWidth = (columnWidth * zoom) / 100;
 
             let fullColumns = 0;
             let innerOffset = 0;
 
-            if (range === "daily") {
+            if (targetRange === "daily") {
                 fullColumns = differenceInDays(startOfDay(today), startOfDay(timelineStartDate));
             } else {
                 fullColumns = differenceInMonths(startOfMonth(today), startOfMonth(timelineStartDate));
@@ -137,7 +137,11 @@ export default function ProjectTimeline({
             const visibleWidth = ganttElement.clientWidth - 300;
             ganttElement.scrollTo({ left: Math.max(0, totalOffset - visibleWidth / 2), behavior: "smooth" });
         }, 100);
-    }, [range, zoom]);
+    }, [zoom]);
+
+    const scrollToToday = useCallback(() => {
+        scrollToTodayWithRange(range);
+    }, [scrollToTodayWithRange, range]);
 
     const hasActiveFilters = filters.assignee || filters.status;
 
@@ -181,7 +185,10 @@ export default function ProjectTimeline({
                                 <Button
                                     key={r}
                                     variant={range === r ? "primary" : "secondary"}
-                                    onClick={() => setRange(r)}
+                                    onClick={() => {
+                                        setRange(r);
+                                        scrollToTodayWithRange(r);
+                                    }}
                                 >
                                     {t(`projects.detail.timeline.range.${r}`)}
                                 </Button>
@@ -246,7 +253,7 @@ export default function ProjectTimeline({
                                         <GanttFeatureListGroup key={group.id}>
                                             {group.issues.map(issue => {
                                                 const feature = issueToFeature(issue, group);
-                                                const member = memberMap[issue.assigneeId];
+                                                const member = memberMap[issue.assigneeId] || issue.assignee;
 
                                                 return (
                                                     <div className="flex" key={feature.id}>
@@ -263,7 +270,7 @@ export default function ProjectTimeline({
                                                                         </p>
                                                                         {member && (
                                                                             <Avatar
-                                                                                name={member.userName}
+                                                                                name={member.userName || member.name || member.fullName || member.email}
                                                                                 className="h-4 w-4 shrink-0 text-[8px]"
                                                                             />
                                                                         )}
