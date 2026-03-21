@@ -20,9 +20,23 @@ function setStoredTokens(payload) {
 
   const safe = {
     accessToken: payload?.accessToken,
+    refreshToken: payload?.refreshToken,
     userInfo: payload?.userInfo,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+}
+
+function redirectToLogin() {
+  if (typeof window === "undefined") return;
+  const currentPath = window.location.pathname;
+  if (currentPath === "/login" || currentPath === "/admin-login") return;
+  window.location.replace("/login");
+}
+
+function clearAuthAndRedirect() {
+  setStoredTokens(null);
+  localStorage.removeItem("github_access_token");
+  redirectToLogin();
 }
 
 let refreshingPromise = null;
@@ -32,11 +46,15 @@ async function refreshAccessToken() {
 
   refreshingPromise = (async () => {
     try {
-      const res = await fetch(`${GATEWAY_BASE_URL}/api/auth/refresh`, {
+      const tokens = getStoredTokens();
+      const refreshToken = tokens?.refreshToken;
+      const refreshBody = refreshToken ? JSON.stringify({ refreshToken }) : undefined;
+
+      const res = await fetch(`${GATEWAY_BASE_URL}/iam-service/api/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
+        body: refreshBody,
         credentials: "include",
-        body: JSON.stringify({}),
       });
 
       const contentType = res.headers.get("content-type") || "";
@@ -44,8 +62,8 @@ async function refreshAccessToken() {
       const data = isJson ? await res.json().catch(() => null) : null;
 
       if (!res.ok) {
-        setStoredTokens(null);
         const msg = data?.message || data?.error || res.statusText;
+        console.error("[Token Refresh] Refresh failed:", msg);
         throw new Error(msg || "Refresh failed");
       }
 
@@ -54,8 +72,12 @@ async function refreshAccessToken() {
         throw new Error("No access token returned from refresh");
       }
 
-      setStoredTokens({ accessToken: payload.accessToken, userInfo: payload.userInfo });
+      console.log("[Token Refresh] Successfully refreshed access token");
+      setStoredTokens(payload);
       return payload.accessToken;
+    } catch (error) {
+      console.error("[Token Refresh] Error during token refresh:", error.message);
+      throw error;
     } finally {
       refreshingPromise = null;
     }
@@ -139,22 +161,36 @@ async function baseRequest(path, {
     credentials,
   });
 
-  if (response.status === 401 && withAuth && retryOn401) {
-    await refreshAccessToken();
-    const newTokens = getStoredTokens();
-    if (!newTokens?.accessToken) {
-      const err = new Error(response.statusText || "Unauthorized");
-      err.status = 401;
+  // Handle Unauthorized/Forbidden from expired access token - attempt to refresh token
+  const shouldRetryWithRefresh = (response.status === 401 || response.status === 403) && withAuth && retryOn401;
+  if (shouldRetryWithRefresh) {
+    console.log(`[API] Received ${response.status} for ${method} ${path}, attempting token refresh...`);
+    try {
+      const newAccessToken = await refreshAccessToken();
+
+      if (!newAccessToken) {
+        const err = new Error("Token refresh failed - no new access token");
+        err.status = 401;
+        throw err;
+      }
+
+      // Retry request with new token
+      finalHeaders["Authorization"] = `Bearer ${newAccessToken}`;
+      console.log(`[API] Retrying ${method} ${path} with refreshed token`);
+
+      response = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers: finalHeaders,
+        body: preparedBody,
+        credentials,
+      });
+    } catch (error) {
+      console.error(`[API] Token refresh failed for ${method} ${path}:`, error.message);
+      clearAuthAndRedirect();
+      const err = new Error(error.message || "Token refresh failed");
+      err.status = error?.status || 401;
       throw err;
     }
-
-    finalHeaders["Authorization"] = `Bearer ${newTokens.accessToken}`;
-    response = await fetch(`${baseUrl}${path}`, {
-      method,
-      headers: finalHeaders,
-      body: preparedBody,
-      credentials,
-    });
   }
 
   return parseResponse(response);
