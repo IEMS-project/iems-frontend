@@ -28,6 +28,7 @@ const tabs = [
     { id: "members", label: "members", path: "members" },
     { id: "settings", label: "settings", path: "settings" },
     { id: "code", label: "code", path: "code" },
+    { id: "documents", label: "documents", path: "documents" },
 ];
 
 function ProjectDetailLayoutContent() {
@@ -75,6 +76,7 @@ function ProjectDetailLayoutContent() {
         if (path.includes("/members")) return "members";
         if (path.includes("/settings")) return "settings";
         if (path.includes("/code")) return "code";
+        if (path.includes("/documents")) return "documents";
         return "overview";
     }, [location.pathname]);
 

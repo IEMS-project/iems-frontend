@@ -15,8 +15,6 @@ import ShareModal from "@/features/documents/components/ShareModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import CreateFolderModal from "@/features/documents/components/CreateFolderModal";
 import RenameModal from "@/features/documents/components/RenameModal";
-import PermissionModal from "@/features/documents/components/PermissionModal";
-import SharedUsersModal from "@/features/documents/components/SharedUsersModal";
 import MoveModal from "@/features/documents/components/MoveModal";
 import DocumentsToolbar from "@/features/documents/components/DocumentsToolbar";
 import DocumentsHeader from "@/features/documents/components/DocumentsHeader";
@@ -46,6 +44,13 @@ export default function Documents() {
     setShowMobileDetails,
     sortBy,
     sortDirection,
+    typeFilter,
+    setTypeFilter,
+    ownerFilter,
+    setOwnerFilter,
+    modifiedFilter,
+    setModifiedFilter,
+    ownerOptions,
     selectedItems,
     isCreateOpen,
     setIsCreateOpen,
@@ -56,10 +61,6 @@ export default function Documents() {
     loading,
     renameItem,
     setRenameItem,
-    permissionItem,
-    setPermissionItem,
-    sharedItem,
-    setSharedItem,
     moveItem,
     setMoveItem,
     viewMode,
@@ -72,6 +73,7 @@ export default function Documents() {
     getSortLabel,
     handleItemClick,
     handleItemDoubleClick,
+    openItemDetails,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,
@@ -83,11 +85,9 @@ export default function Documents() {
     onConfirmDelete,
     handleShare,
     handleRename,
-    handlePermission,
-    handleSharedUsers,
     handleMove,
     handleRenameConfirm,
-    handlePermissionConfirm,
+    handleGeneralAccessUpdate,
     handleMoveCompleted,
     isOwner,
     handleBatchDelete,
@@ -99,8 +99,8 @@ export default function Documents() {
   } = useDocuments();
 
   return (
-    <div className="flex p-4">
-      <div className="border-border min-w-0 flex-1 space-y-4">
+    <div className="flex rounded-2xl bg-[#f8fafd] p-4">
+      <div className="border-border min-w-0 flex-1 space-y-4 rounded-2xl border bg-white p-4 shadow-sm">
         {/* Toolbar */}
         <DocumentsToolbar
           onUpload={onUploadFiles}
@@ -126,6 +126,13 @@ export default function Documents() {
           setViewMode={setViewMode}
           filterMode={filterMode}
           setFilterMode={setFilterMode}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
+          ownerFilter={ownerFilter}
+          setOwnerFilter={setOwnerFilter}
+          modifiedFilter={modifiedFilter}
+          setModifiedFilter={setModifiedFilter}
+          ownerOptions={ownerOptions}
           onEmptyTrash={handleEmptyTrash}
           hasTrashItems={sortedItems.length > 0}
         />
@@ -180,12 +187,11 @@ export default function Documents() {
                 selectedItem={selectedItem}
                 onItemClick={handleItemClick}
                 onItemDoubleClick={handleItemDoubleClick}
+                onShowDetails={openItemDetails}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
                 onRename={handleRename}
-                onPermission={handlePermission}
                 onShare={openShare}
-                onSharedUsers={handleSharedUsers}
                 onMove={handleMove}
                 onDelete={confirmDelete}
                 isOwner={isOwner}
@@ -200,13 +206,12 @@ export default function Documents() {
                 selectedItem={selectedItem}
                 onItemClick={handleItemClick}
                 onItemDoubleClick={handleItemDoubleClick}
+                onShowDetails={openItemDetails}
                 onToggleSelectAll={toggleSelectAll}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
                 onRename={handleRename}
-                onPermission={handlePermission}
                 onShare={openShare}
-                onSharedUsers={handleSharedUsers}
                 onMove={handleMove}
                 onDelete={confirmDelete}
                 isOwner={isOwner}
@@ -223,6 +228,7 @@ export default function Documents() {
               selectedItem={selectedItem}
               currentPath={currentPath}
               onClose={() => setSelectedItem(null)}
+              onManageAccess={(item) => openShare(item, item.type)}
             />
           )}
         </div>
@@ -242,6 +248,7 @@ export default function Documents() {
                 setShowMobileDetails(false);
                 setSelectedItem(null);
               }}
+              onManageAccess={(item) => openShare(item, item.type)}
             />
           </SheetContent>
         </Sheet>
@@ -255,6 +262,7 @@ export default function Documents() {
         selectedRecipients={selectedRecipients}
         setSelectedRecipients={setSelectedRecipients}
         onShare={handleShare}
+        onUpdateGeneralAccess={handleGeneralAccessUpdate}
       />
 
       <ConfirmDialog
@@ -287,19 +295,6 @@ export default function Documents() {
         onClose={() => setRenameItem(null)}
         item={renameItem}
         onConfirm={handleRenameConfirm}
-      />
-
-      <PermissionModal
-        isOpen={!!permissionItem}
-        onClose={() => setPermissionItem(null)}
-        item={permissionItem}
-        onConfirm={handlePermissionConfirm}
-      />
-
-      <SharedUsersModal
-        isOpen={!!sharedItem}
-        onClose={() => setSharedItem(null)}
-        item={sharedItem}
       />
 
       <MoveModal

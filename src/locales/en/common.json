@@ -394,7 +394,8 @@
         "sprints": "Sprints",
         "members": "Members",
         "settings": "Settings",
-        "code": "Source Code"
+        "code": "Source Code",
+        "documents": "Documents"
       },
       "overview": {
         "title": "Project Overview",
@@ -592,6 +593,32 @@
       }
     }
   },
+  "projectDocuments": {
+    "title": "Project Documents",
+    "upload": "Upload Document",
+    "uploading": "Uploading...",
+    "empty": "No documents yet",
+    "emptyDesc": "Upload documents to share with your team.",
+    "deleteConfirmTitle": "Delete Document",
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "deleteSuccess": "Document deleted",
+    "uploadSuccess": "Document uploaded successfully",
+    "createFolderSuccess": "Folder created successfully",
+    "renameSuccess": "Renamed successfully",
+    "moveSuccess": "Moved successfully",
+    "newFolder": "New Folder",
+    "rename": "Rename",
+    "move": "Move",
+    "upOneLevel": "Up one level",
+    "fileTooLarge": "File is too large (max 50MB)",
+    "accessDenied": "You do not have access to view this project's documents.",
+    "accessRestricted": "Access Restricted",
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "date": "Upload Date"
+    }
+  },
   "tables": {
     "filter": "Filter",
     "columns": "Columns",
@@ -693,12 +720,34 @@
       "sort": "Sort",
       "sortByName": "By name",
       "sortByDate": "By date",
-      "sortBySize": "By size"
+      "sortBySize": "By size",
+      "type": "Type",
+      "typeAll": "All types",
+      "typeFolder": "Folder",
+      "typeDoc": "Document",
+      "typeExcel": "Spreadsheet",
+      "typePdf": "PDF",
+      "typeImage": "Image",
+      "typeOther": "Other",
+      "owner": "Owner",
+      "ownerAll": "All owners",
+      "modified": "Last modified",
+      "modifiedAll": "Any time",
+      "modifiedToday": "Today",
+      "modifiedLast7Days": "Last 7 days",
+      "modifiedLast30Days": "Last 30 days",
+      "modifiedThisYear": "This year",
+      "modifiedLastYear": "Last year",
+      "clearFilters": "Clear all"
     },
     "list": {
       "name": "Name",
       "dateCreated": "Date Created",
       "size": "Size"
+    },
+    "grid": {
+      "folders": "Folders",
+      "files": "Files"
     },
     "emptyState": {
       "title": "This folder is empty.",
@@ -765,24 +814,52 @@
       "update": "Update",
       "cancel": "Cancel",
       "processing": "Processing...",
-      "success": "Permission updated successfully"
+      "success": "Permission updated successfully",
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
     },
     "share": {
       "title": "Share",
+      "dialogTitle": "Share \"{{name}}\"",
       "shareItem": "Share {{type}}: <strong>{{name}}</strong>",
       "folder": "folder",
       "file": "file",
       "copyLink": "Copy Link",
       "linkCopied": "Link copied",
       "searchPlaceholder": "Enter name...",
+      "accessList": "People with access",
+      "owner": "Owner",
+      "generalAccess": "General access",
+      "restricted": "Restricted",
+      "anyoneWithLink": "Anyone with the link",
       "permission": "Permission",
       "viewer": "Viewer",
       "editor": "Editor",
       "selected": "Selected {{count}}/{{total}}",
       "share": "Share",
+      "done": "Done",
       "cancel": "Cancel",
+      "noUsersFound": "No matching users found",
       "success": "Shared successfully",
       "error": "Error sharing"
+    },
+    "activity": {
+      "item": {
+        "created": "Created item {{itemName}}",
+        "renamed": "Renamed to \"{{newName}}\"",
+        "permissionUpdated": "Updated access: {{permissionLabel}}",
+        "moved": "Moved item",
+        "movedToTrash": "Moved to trash",
+        "restored": "Restored item",
+        "permanentlyDeleted": "Permanently deleted",
+        "shared": "Shared with {{count}} people",
+        "unshared": "Removed sharing for {{count}} people",
+        "sharePermissionUpdated": "Updated shared user permission: {{permission}}",
+        "shareRemoved": "Removed one share permission",
+        "favorited": "Added to favorites",
+        "unfavorited": "Removed from favorites"
+      }
     },
     "sharedUsers": {
       "title": "Shared Users",
@@ -818,6 +895,7 @@
       "success": "Successfully moved"
     },
     "contextMenu": {
+      "details": "Details",
       "rename": "Rename",
       "permission": "Permission",
       "share": "Share",
@@ -842,6 +920,9 @@
     },
     "fileDetail": {
       "details": "Details",
+      "activity": "Activity",
+      "overview": "Overview",
+      "access": "Access",
       "name": "Name:",
       "type": "Type:",
       "size": "Size:",
@@ -853,12 +934,36 @@
       "file": "File",
       "public": "Public",
       "private": "Private",
+      "publicDescription": "Anyone with the link can access",
+      "privateDescription": "Only people with access can open this item",
       "unknown": "Unknown",
       "location": "Location:",
       "myFiles": "My Files",
       "settings": "Settings",
       "shareFile": "Share file",
-      "favorite": "Favorite"
+      "favorite": "Favorite",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "activityUpdated": "You edited this item",
+      "activityCreated": "You created this item",
+      "activityDeleted": "Item moved to trash",
+      "activityPublic": "Item is publicly accessible",
+      "activityRestricted": "Item is restricted",
+      "activityFavorite": "Item marked as favorite",
+      "activityMarkedFavorite": "You added this item to favorites",
+      "activityUnmarkedFavorite": "You removed this item from favorites",
+      "activityMovedToTrash": "You moved this item to trash",
+      "activityRestored": "You restored this item",
+      "activityDeletedPermanently": "You permanently deleted this item",
+      "activityShared": "You shared this item with {{count}} people",
+      "activityRenamed": "You renamed this item to \"{{name}}\"",
+      "activityMoved": "You moved this item",
+      "activitySharePermissionChanged": "You changed {{name}} permission to {{permission}}",
+      "now": "Just now",
+      "noActivity": "No recent activity",
+      "peopleWithAccess": "People with access",
+      "manageAccess": "Manage access",
+      "notShared": "Not shared with anyone"
     },
     "types": {
       "folder": "folder",

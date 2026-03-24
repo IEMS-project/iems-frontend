@@ -13,6 +13,7 @@ import ProjectIssueListPage from "@/pages/project/ProjectIssueListPage";
 import ProjectCode from "@/features/projects/components/ProjectCode";
 import ProjectTimelinePage from "@/pages/project/ProjectTimelinePage";
 import ProjectBurndownPage from "@/pages/project/ProjectBurndownPage";
+import ProjectDocumentsPage from "@/pages/project/ProjectDocumentsPage";
 import Projects from "@/pages/Projects";
 // import Departments from "@/pages/Departments";
 // import DepartmentDetail from "@/pages/DepartmentDetail";
@@ -88,6 +89,7 @@ export default function App() {
                                     <Route path="settings" element={<ProjectSettingsPage />} />
                                     <Route path="timeline" element={<ProjectTimelinePage />} />
                                     <Route path="code/*" element={<ProjectCode />} />
+                                    <Route path="documents" element={<ProjectDocumentsPage />} />
                                 </Route>
                                 {/* Redirect old /tasks to dashboard */}
                                 <Route path="/tasks" element={<Navigate to="/dashboard" replace />} />
