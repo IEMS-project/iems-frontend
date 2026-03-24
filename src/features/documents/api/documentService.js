@@ -92,6 +92,11 @@ export const documentService = {
     return data?.data || data || [];
   },
 
+  async getItemActivities(id, type) {
+    const data = await request(`/document-service/api/items/${id}/activities?type=${type}`);
+    return data?.data || data || [];
+  },
+
   async updateSharePermission(shareId, permission) {
     const data = await request(`/document-service/api/shares/${shareId}/permission`, {
       method: "PATCH",

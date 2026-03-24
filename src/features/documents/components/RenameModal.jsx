@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -12,8 +12,15 @@ export default function RenameModal({
 	onConfirm
 }) {
 	const { t } = useTranslation();
-	const [newName, setNewName] = useState(item?.name || "");
+	const [newName, setNewName] = useState("");
 	const [loading, setLoading] = useState(false);
+	const currentName = item?.data?.name || "";
+
+	useEffect(() => {
+		if (isOpen) {
+			setNewName(currentName);
+		}
+	}, [isOpen, currentName]);
 
 	const handleSubmit = async () => {
 		if (!newName.trim()) return;
@@ -22,7 +29,6 @@ export default function RenameModal({
 		try {
 			await onConfirm(newName.trim());
 			onClose();
-			setNewName("");
 			toast.success(t('documents.rename.success'));
 		} catch (error) {
 			console.error('Error renaming:', error);
@@ -63,7 +69,7 @@ export default function RenameModal({
 				</div>
 				{item && (
 					<div className="text-sm text-gray-500">
-						{t('documents.rename.currentName')} <span className="font-medium">{item.name}</span>
+						{t('documents.rename.currentName')} <span className="font-medium">{currentName}</span>
 					</div>
 				)}
 			</div>

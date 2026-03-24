@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { documentService } from "@/features/documents/api/documentService";
@@ -22,14 +22,15 @@ export function useDocuments() {
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [sortBy, setSortBy] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [modifiedFilter, setModifiedFilter] = useState("all");
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [selectedRecipients, setSelectedRecipients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [renameItem, setRenameItem] = useState(null);
-  const [permissionItem, setPermissionItem] = useState(null);
-  const [sharedItem, setSharedItem] = useState(null);
   const [moveItem, setMoveItem] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const { setCustomBreadcrumbs } = useBreadcrumb();
@@ -247,6 +248,87 @@ export function useDocuments() {
     return [...folderItems, ...fileItems];
   }, [visibleFolders, visibleFiles, filterMode, favorites, trashItems, search]);
 
+  const ownerOptions = useMemo(() => {
+    const map = new Map();
+    allItems.forEach((item) => {
+      const ownerId = item?.ownerId;
+      if (!ownerId) return;
+      const ownerLabel =
+        item?.ownerName || item?.ownerFullName || item?.ownerEmail || t("documents.fileDetail.unknown");
+      map.set(String(ownerId), ownerLabel);
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [allItems, t]);
+
+  const getFileCategory = useCallback((item) => {
+    if (!item) return "other";
+    if (item.type === "folder") return "folder";
+
+    const name = String(item.name || "").toLowerCase();
+    const extension = name.includes(".") ? name.split(".").pop() : "";
+
+    const imageExt = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic"]);
+    const pdfExt = new Set(["pdf"]);
+    const excelExt = new Set(["xls", "xlsx", "csv", "ods"]);
+    const docExt = new Set(["doc", "docx", "txt", "rtf", "odt"]);
+
+    if (imageExt.has(extension)) return "image";
+    if (pdfExt.has(extension)) return "pdf";
+    if (excelExt.has(extension)) return "excel";
+    if (docExt.has(extension)) return "doc";
+    return "other";
+  }, []);
+
+  const matchesModifiedFilter = useCallback((item) => {
+    if (modifiedFilter === "all") return true;
+
+    const rawDate = item?.updatedAt || item?.createdAt || item?.date;
+    if (!rawDate) return false;
+    const itemDate = new Date(rawDate);
+    if (Number.isNaN(itemDate.getTime())) return false;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (modifiedFilter) {
+      case "today":
+        return itemDate >= startOfToday;
+      case "last7days": {
+        const threshold = new Date(now);
+        threshold.setDate(now.getDate() - 7);
+        return itemDate >= threshold;
+      }
+      case "last30days": {
+        const threshold = new Date(now);
+        threshold.setDate(now.getDate() - 30);
+        return itemDate >= threshold;
+      }
+      case "thisYear":
+        return itemDate.getFullYear() === now.getFullYear();
+      case "lastYear":
+        return itemDate.getFullYear() === now.getFullYear() - 1;
+      default:
+        return true;
+    }
+  }, [modifiedFilter]);
+
+  const filteredItems = useMemo(() => {
+    return allItems.filter((item) => {
+      if (typeFilter !== "all") {
+        const category = getFileCategory(item);
+        if (category !== typeFilter) return false;
+      }
+
+      if (ownerFilter !== "all") {
+        if (String(item?.ownerId || "") !== String(ownerFilter)) return false;
+      }
+
+      if (!matchesModifiedFilter(item)) return false;
+
+      return true;
+    });
+  }, [allItems, typeFilter, ownerFilter, getFileCategory, matchesModifiedFilter]);
+
   // Sorting logic
   const parseFileSize = (sizeStr) => {
     if (typeof sizeStr === "number") return sizeStr;
@@ -284,7 +366,7 @@ export function useDocuments() {
     });
   };
 
-  const sortedItems = sortItems(allItems);
+  const sortedItems = sortItems(filteredItems);
 
   const handleSortChange = (option) => {
     if (sortBy === option) {
@@ -310,26 +392,18 @@ export function useDocuments() {
   };
 
   const handleItemClick = (item) => {
-    // Don't allow navigation in trash mode
-    if (filterMode === "trash") {
-      setSelectedItem(item);
-      if (showMobileDetails !== undefined) {
-        setShowMobileDetails(true);
-      }
-      return;
+    // Always show details panel for list/detail view
+    setSelectedItem(item);
+    if (showMobileDetails !== undefined) {
+      setShowMobileDetails(true);
     }
-    
-    if (item.type === "folder") {
-      // If in favorites mode, switch back to all mode first
-      if (filterMode === "favorites") {
-        setFilterMode("all");
-      }
-      setCurrentFolderId(item.id);
-    } else {
-      setSelectedItem(item);
-      if (showMobileDetails !== undefined) {
-        setShowMobileDetails(true);
-      }
+  };
+
+  const openItemDetails = (item) => {
+    if (!item) return;
+    setSelectedItem(item);
+    if (showMobileDetails !== undefined) {
+      setShowMobileDetails(true);
     }
   };
 
@@ -346,8 +420,9 @@ export function useDocuments() {
       }
       setCurrentFolderId(item.id);
     } else if (item.path) {
-      // Open file in new tab
-      const fileUrl = `http://localhost:9000/iems-storage/${item.path}`;
+      // Open file in new tab using Cloudinary CDN URL
+      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      const fileUrl = `https://res.cloudinary.com/${cloudName}/raw/upload/${item.path}`;
       window.open(fileUrl, '_blank');
     }
   };
@@ -411,16 +486,30 @@ export function useDocuments() {
 
   async function toggleFavorite(item, type) {
     try {
+      // Optimistic update - update UI immediately
+      const newFavoriteState = !item.favorite;
+      
+      const updateItem = (items) =>
+        items.map((i) => (i.id === item.id ? { ...i, favorite: newFavoriteState } : i));
+
+      setFolders((prev) => updateItem(prev));
+      setFiles((prev) => updateItem(prev));
+      setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: newFavoriteState } : prev);
+
+      // Make API call in background
       const result = await documentService.toggleFavorite(
         item.id,
         type.toUpperCase()
       );
 
-      const updateItem = (items) =>
-        items.map((i) => (i.id === item.id ? { ...i, favorite: result } : i));
-
-      setFolders((prev) => updateItem(prev));
-      setFiles((prev) => updateItem(prev));
+      // If API result differs from optimistic update, sync it
+      if (result !== newFavoriteState) {
+        const correctUpdateItem = (items) =>
+          items.map((i) => (i.id === item.id ? { ...i, favorite: result } : i));
+        setFolders((prev) => correctUpdateItem(prev));
+        setFiles((prev) => correctUpdateItem(prev));
+        setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: result } : prev);
+      }
 
       // If in favorites mode and item was unfavorited, refresh the list
       if (filterMode === "favorites" && !result) {
@@ -435,6 +524,8 @@ export function useDocuments() {
     } catch (error) {
       console.error("Error toggling favorite:", error);
       toast.error(error?.message || t('documents.favorite.error'));
+      // Revert optimistic update on error
+      loadFolderContents();
     }
   }
 
@@ -518,24 +609,17 @@ export function useDocuments() {
         selectedRecipients,
         permission
       );
-      setShareItem(null);
       toast.success(t('documents.share.success'));
+      return true;
     } catch (error) {
       console.error("Error sharing:", error);
       toast.error(error?.message || t('documents.share.error'));
+      return false;
     }
   }
 
   function handleRename(item, type) {
     setRenameItem({ id: item.id, type, data: item });
-  }
-
-  function handlePermission(item, type) {
-    setPermissionItem({ id: item.id, type, data: item });
-  }
-
-  function handleSharedUsers(item, type) {
-    setSharedItem({ id: item.id, type, data: item });
   }
 
   function handleMove(item, type) {
@@ -557,21 +641,66 @@ export function useDocuments() {
     }
   }
 
-  async function handlePermissionConfirm(permission) {
-    if (!permissionItem) return;
+  async function handleGeneralAccessUpdate(permission) {
+    if (!shareItem) return;
+
+    const targetItem = shareItem.data;
+    const targetType = shareItem.type;
+
+    if (targetItem?.permission === permission) return;
+
     try {
-      if (permissionItem.type === "folder") {
+      if (targetType === "folder") {
         await documentService.updateFolderPermission(
-          permissionItem.data.id,
+          targetItem.id,
           permission
         );
       } else {
         await documentService.updateFilePermission(
-          permissionItem.data.id,
+          targetItem.id,
           permission
         );
       }
-      loadFolderContents();
+
+      setShareItem((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            permission,
+          },
+        };
+      });
+
+      setSelectedItem((prev) => {
+        if (!prev) return prev;
+        if (String(prev.id) !== String(targetItem.id) || prev.type !== targetType) return prev;
+        return {
+          ...prev,
+          permission,
+        };
+      });
+
+      if (targetType === "folder") {
+        setFolders((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+        setAllFolders((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+      } else {
+        setFiles((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+      }
+
     } catch (error) {
       console.error("Error updating permission:", error);
       throw error;
@@ -697,6 +826,13 @@ export function useDocuments() {
     setShowMobileDetails,
     sortBy,
     sortDirection,
+    typeFilter,
+    setTypeFilter,
+    ownerFilter,
+    setOwnerFilter,
+    modifiedFilter,
+    setModifiedFilter,
+    ownerOptions,
     selectedItems,
     setSelectedItems,
     isCreateOpen,
@@ -708,10 +844,6 @@ export function useDocuments() {
     loading,
     renameItem,
     setRenameItem,
-    permissionItem,
-    setPermissionItem,
-    sharedItem,
-    setSharedItem,
     moveItem,
     setMoveItem,
     viewMode,
@@ -724,6 +856,7 @@ export function useDocuments() {
     getSortLabel,
     handleItemClick,
     handleItemDoubleClick,
+    openItemDetails,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,
@@ -735,11 +868,9 @@ export function useDocuments() {
     onConfirmDelete,
     handleShare,
     handleRename,
-    handlePermission,
-    handleSharedUsers,
     handleMove,
     handleRenameConfirm,
-    handlePermissionConfirm,
+    handleGeneralAccessUpdate,
     handleMoveCompleted,
     isOwner,
     goUpOneLevel,

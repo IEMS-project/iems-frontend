@@ -394,7 +394,8 @@
         "sprints": "Sprint",
         "members": "Thành viên",
         "settings": "Cài đặt",
-        "code": "Mã nguồn"
+        "code": "Mã nguồn",
+        "documents": "Tài liệu"
       },
       "overview": {
         "title": "Tổng quan dự án",
@@ -592,6 +593,32 @@
       }
     }
   },
+  "projectDocuments": {
+    "title": "Tài liệu Dự án",
+    "upload": "Tải tài liệu lên",
+    "uploading": "Đang tải lên...",
+    "empty": "Chưa có tài liệu nào",
+    "emptyDesc": "Tải tài liệu lên để chia sẻ với nhóm của bạn.",
+    "deleteConfirmTitle": "Xóa Tài liệu",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa {{name}}? Hành động này không thể hoàn tác.",
+    "deleteSuccess": "Đã xóa tài liệu",
+    "uploadSuccess": "Tải tài liệu lên thành công",
+    "createFolderSuccess": "Đã tạo thư mục thành công",
+    "renameSuccess": "Đổi tên thành công",
+    "moveSuccess": "Di chuyển thành công",
+    "newFolder": "Thư mục mới",
+    "rename": "Đổi tên",
+    "move": "Di chuyển",
+    "upOneLevel": "Lên một cấp",
+    "fileTooLarge": "Kích thước tệp quá lớn (tối đa 50MB)",
+    "accessDenied": "Bạn không có quyền truy cập để xem tài liệu của dự án này.",
+    "accessRestricted": "Hạn chế Truy cập",
+    "columns": {
+      "name": "Tên",
+      "size": "Kích thước",
+      "date": "Ngày tải lên"
+    }
+  },
   "sprints": {
     "title": "Sprint",
     "create": "Tạo sprint",
@@ -730,12 +757,34 @@
       "sort": "Sắp xếp",
       "sortByName": "Theo tên",
       "sortByDate": "Theo ngày",
-      "sortBySize": "Theo dung lượng"
+      "sortBySize": "Theo dung lượng",
+      "type": "Loại",
+      "typeAll": "Tất cả loại",
+      "typeFolder": "Thư mục",
+      "typeDoc": "Tài liệu",
+      "typeExcel": "Bảng tính",
+      "typePdf": "PDF",
+      "typeImage": "Hình ảnh",
+      "typeOther": "Khác",
+      "owner": "Người",
+      "ownerAll": "Tất cả chủ sở hữu",
+      "modified": "Lần sửa đổi gần đây nhất",
+      "modifiedAll": "Bất kỳ lúc nào",
+      "modifiedToday": "Hôm nay",
+      "modifiedLast7Days": "7 ngày qua",
+      "modifiedLast30Days": "30 ngày qua",
+      "modifiedThisYear": "Năm nay",
+      "modifiedLastYear": "Năm ngoái",
+      "clearFilters": "Xóa tất cả"
     },
     "list": {
       "name": "Tên",
       "dateCreated": "Ngày tạo",
       "size": "Kích thước"
+    },
+    "grid": {
+      "folders": "Thư mục",
+      "files": "Tệp"
     },
     "emptyState": {
       "title": "Thư mục này trống.",
@@ -802,24 +851,52 @@
       "update": "Cập nhật",
       "cancel": "Hủy",
       "processing": "Đang xử lý...",
-      "success": "Quyền đã được cập nhật thành công"
+      "success": "Quyền đã được cập nhật thành công",
+      "owner": "Chủ sở hữu",
+      "editor": "Chỉnh sửa",
+      "viewer": "Xem"
     },
     "share": {
       "title": "Chia sẻ",
+      "dialogTitle": "Chia sẻ \"{{name}}\"",
       "shareItem": "Chia sẻ {{type}}: <strong>{{name}}</strong>",
       "folder": "thư mục",
       "file": "tệp",
       "copyLink": "Sao chép liên kết",
       "linkCopied": "Đã sao chép liên kết",
       "searchPlaceholder": "Nhập tên...",
+      "accessList": "Những người có quyền truy cập",
+      "owner": "Chủ sở hữu",
+      "generalAccess": "Quyền truy cập chung",
+      "restricted": "Hạn chế",
+      "anyoneWithLink": "Bất kỳ ai có đường liên kết",
       "permission": "Quyền",
       "viewer": "Xem",
       "editor": "Chỉnh sửa",
       "selected": "Đã chọn {{count}}/{{total}}",
       "share": "Chia sẻ",
+      "done": "Xong",
       "cancel": "Hủy",
+      "noUsersFound": "Không tìm thấy người dùng phù hợp",
       "success": "Chia sẻ thành công",
       "error": "Lỗi khi chia sẻ"
+    },
+    "activity": {
+      "item": {
+        "created": "Đã tạo mục {{itemName}}",
+        "renamed": "Đã đổi tên thành \"{{newName}}\"",
+        "permissionUpdated": "Đã cập nhật quyền truy cập: {{permissionLabel}}",
+        "moved": "Đã di chuyển mục",
+        "movedToTrash": "Đã chuyển vào thùng rác",
+        "restored": "Đã khôi phục mục",
+        "permanentlyDeleted": "Đã xóa vĩnh viễn",
+        "shared": "Đã chia sẻ với {{count}} người",
+        "unshared": "Đã gỡ chia sẻ với {{count}} người",
+        "sharePermissionUpdated": "Đã cập nhật quyền người được chia sẻ: {{permission}}",
+        "shareRemoved": "Đã xóa một quyền chia sẻ",
+        "favorited": "Đã thêm vào yêu thích",
+        "unfavorited": "Đã bỏ khỏi yêu thích"
+      }
     },
     "sharedUsers": {
       "title": "Người dùng đã chia sẻ",
@@ -855,6 +932,7 @@
       "success": "Đã di chuyển thành công"
     },
     "contextMenu": {
+      "details": "Thông tin",
       "rename": "Đổi tên",
       "permission": "Quyền",
       "share": "Chia sẻ",
@@ -879,6 +957,9 @@
     },
     "fileDetail": {
       "details": "Thông tin",
+      "activity": "Hoạt động",
+      "overview": "Tổng quan",
+      "access": "Quyền truy cập",
       "name": "Tên:",
       "type": "Loại:",
       "size": "Kích thước:",
@@ -890,12 +971,36 @@
       "file": "Tệp",
       "public": "Công khai",
       "private": "Riêng tư",
+      "publicDescription": "Bất kỳ ai có liên kết đều có thể truy cập",
+      "privateDescription": "Chỉ những người được cấp quyền mới có thể truy cập",
       "unknown": "Không rõ",
       "location": "Vị trí:",
       "myFiles": "Tệp của tôi",
       "settings": "Cài đặt",
       "shareFile": "Chia sẻ tệp",
-      "favorite": "Yêu thích"
+      "favorite": "Yêu thích",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "activityUpdated": "Bạn đã chỉnh sửa mục này",
+      "activityCreated": "Bạn đã tạo mục này",
+      "activityDeleted": "Mục đã được chuyển vào thùng rác",
+      "activityPublic": "Mục đang ở chế độ công khai",
+      "activityRestricted": "Mục đang ở chế độ hạn chế",
+      "activityFavorite": "Mục đã được đánh dấu yêu thích",
+      "activityMarkedFavorite": "Bạn đã thêm mục này vào yêu thích",
+      "activityUnmarkedFavorite": "Bạn đã bỏ đánh dấu yêu thích",
+      "activityMovedToTrash": "Bạn đã chuyển mục này vào thùng rác",
+      "activityRestored": "Bạn đã khôi phục mục này",
+      "activityDeletedPermanently": "Bạn đã xóa vĩnh viễn mục này",
+      "activityShared": "Bạn đã chia sẻ mục này với {{count}} người",
+      "activityRenamed": "Bạn đã đổi tên mục thành \"{{name}}\"",
+      "activityMoved": "Bạn đã di chuyển mục này",
+      "activitySharePermissionChanged": "Bạn đã đổi quyền của {{name}} thành {{permission}}",
+      "now": "Vừa xong",
+      "noActivity": "Chưa có hoạt động nào gần đây",
+      "peopleWithAccess": "Người có quyền truy cập",
+      "manageAccess": "Quản lý quyền",
+      "notShared": "Chưa chia sẻ với ai"
     },
     "types": {
       "folder": "thư mục",

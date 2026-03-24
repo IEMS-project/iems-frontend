@@ -14,9 +14,9 @@ export default function DocumentsToolbar({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between rounded-xl border border-[#e4e8ee] bg-[#f8fafd] px-4 py-3">
       <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">{t('documents.title')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#1f1f1f]">{t('documents.title')}</h1>
         {selectedCount > 0 && (
           <span className="text-sm text-muted-foreground">
             {t('documents.toolbar.selected', { count: selectedCount })}
@@ -26,11 +26,11 @@ export default function DocumentsToolbar({
       <div className="flex items-center justify-between gap-2">
         {selectedCount > 0 ? (
           <>
-            <Button onClick={onBatchMove} variant="outline" size="sm">
+            <Button onClick={onBatchMove} variant="outline" size="sm" className="gap-2 rounded-full border-[#d0d7e2] bg-white">
               <FolderInput className="h-4 w-4" />
               {t('documents.toolbar.move')}
             </Button>
-            <Button onClick={onBatchDelete} variant="destructive" size="sm">
+            <Button onClick={onBatchDelete} variant="destructive" size="sm" className="gap-2 rounded-full">
               <Trash2 className="h-4 w-4" />
               {t('documents.toolbar.delete')} ({selectedCount})
             </Button>
@@ -38,7 +38,7 @@ export default function DocumentsToolbar({
         ) : (
           <>
             <FileUploadDialog onUpload={onUpload} />
-            <Button onClick={onCreateFolder} variant="outline">
+            <Button onClick={onCreateFolder} variant="outline" className="gap-2 rounded-full border-[#d0d7e2] bg-white">
               <FolderPlus className="h-4 w-4" />
               {t('documents.toolbar.newFolder')}
             </Button>

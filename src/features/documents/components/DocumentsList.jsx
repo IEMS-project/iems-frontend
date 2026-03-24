@@ -15,15 +15,14 @@ import {
   Trash2,
   Edit,
   Lock,
-  Users,
   Globe,
   Move,
+  Info,
   MoreHorizontalIcon,
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIcon, getFolderIcon } from "./fileIconUtils";
-import { bgColors } from "@/theme/colors";
 
 function humanSize(bytes) {
   if (bytes == null) return "-";
@@ -48,13 +47,12 @@ export default function DocumentsList({
   selectedItem,
   onItemClick,
   onItemDoubleClick,
+  onShowDetails,
   onToggleSelectAll,
   onToggleItemSelection,
   onToggleFavorite,
   onRename,
-  onPermission,
   onShare,
-  onSharedUsers,
   onMove,
   onDelete,
   isOwner,
@@ -68,7 +66,7 @@ export default function DocumentsList({
   return (
     <>
       {/* Table Header */}
-      <div className="border-b bg-muted/50 flex items-center p-2 lg:p-4 text-sm font-medium text-muted-foreground">
+      <div className="flex items-center border-b border-[#dde3ea] bg-[#f8fafd] p-2 text-sm font-medium text-muted-foreground lg:p-4">
         <div className="flex min-w-0 items-center space-x-4 flex-1">
           <Checkbox
             checked={selectedItems.size === sortedItems.length && sortedItems.length > 0}
@@ -90,9 +88,9 @@ export default function DocumentsList({
           <div
             key={item.id}
             className={cn(
-              "hover:bg-muted flex cursor-pointer items-center justify-between border-b p-2 lg:p-4",
-              selectedItem?.id === item.id && "bg-muted",
-              selectedItems.has(item.id) && " dark:bg-blue-900/50 dark:border-blue-700"
+              "flex cursor-pointer items-center justify-between border-b border-[#eef2f7] p-2 transition-colors hover:bg-[#f8fafd] lg:p-4",
+              selectedItem?.id === item.id && "bg-[#edf3fe]",
+              selectedItems.has(item.id) && "border-[#8ab4f8] bg-[#edf3fe]"
             )}
             onClick={(e) => {
               if (e.ctrlKey || e.metaKey) {
@@ -161,6 +159,11 @@ export default function DocumentsList({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onShowDetails(item)}>
+                      <Info className="mr-2 h-4 w-4" />
+                      {t("documents.contextMenu.details")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     {isTrashMode ? (
                       <>
                         <DropdownMenuItem onClick={() => onRestore(item)}>
@@ -184,18 +187,10 @@ export default function DocumentsList({
                               <Edit className="mr-2 h-4 w-4" />
                               {t('documents.contextMenu.rename')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onPermission(item, item.type)}>
-                              <Lock className="mr-2 h-4 w-4" />
-                              {t('documents.contextMenu.permission')}
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onShare(item, item.type)}>
                               <Share2 className="mr-2 h-4 w-4" />
                               {t('documents.contextMenu.share')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onSharedUsers(item, item.type)}>
-                              <Users className="mr-2 h-4 w-4" />
-                              {t('documents.contextMenu.sharedUsers')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => onMove(item, item.type)}>

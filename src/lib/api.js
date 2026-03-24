@@ -107,7 +107,14 @@ function prepareBody(body, headers) {
   }
 
   if (typeof body === "string") {
-    if (!hasContentType(headers)) headers["Content-Type"] = "text/plain;charset=UTF-8";
+    if (!hasContentType(headers)) {
+      const trimmed = body.trim();
+      if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+        headers["Content-Type"] = "application/json";
+      } else {
+        headers["Content-Type"] = "text/plain;charset=UTF-8";
+      }
+    }
     return body;
   }
 
