@@ -389,6 +389,7 @@
         "backlog": "Backlog",
         "board": "Board",
         "tasks": "Issues",
+        "agent": "AI Agent",
         "timeline": "Timeline",
         "burndown": "Burndown",
         "sprints": "Sprints",

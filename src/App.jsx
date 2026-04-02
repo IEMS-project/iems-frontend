@@ -10,6 +10,7 @@ import ProjectSprintsPage from "@/pages/project/ProjectSprintsPage";
 import ProjectMembersPage from "@/pages/project/ProjectMembersPage";
 import ProjectSettingsPage from "@/pages/project/ProjectSettingsPage";
 import ProjectIssueListPage from "@/pages/project/ProjectIssueListPage";
+import ProjectAgentPage from "@/pages/project/ProjectAgentPage";
 import ProjectCode from "@/features/projects/components/ProjectCode";
 import ProjectTimelinePage from "@/pages/project/ProjectTimelinePage";
 import ProjectBurndownPage from "@/pages/project/ProjectBurndownPage";
@@ -83,6 +84,7 @@ export default function App() {
                                     <Route path="backlog" element={<ProjectBacklogPage />} />
                                     <Route path="board" element={<ProjectBoardPage />} />
                                     <Route path="tasks" element={<ProjectIssueListPage />} />
+                                    <Route path="agent" element={<ProjectAgentPage />} />
                                     <Route path="sprints" element={<ProjectSprintsPage />} />
                                     <Route path="burndown" element={<ProjectBurndownPage />} />
                                     <Route path="members" element={<ProjectMembersPage />} />

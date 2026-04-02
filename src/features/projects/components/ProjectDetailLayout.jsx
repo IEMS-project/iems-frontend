@@ -22,6 +22,7 @@ const tabs = [
     { id: "backlog", label: "backlog", path: "backlog" },
     { id: "board", label: "board", path: "board" },
     { id: "tasks", label: "tasks", path: "tasks" },
+    { id: "agent", label: "agent", path: "agent" },
     { id: "timeline", label: "timeline", path: "timeline" },
     { id: "burndown", label: "burndown", path: "burndown" },
     { id: "sprints", label: "sprints", path: "sprints" },
@@ -70,6 +71,7 @@ function ProjectDetailLayoutContent() {
         if (path.includes("/backlog")) return "backlog";
         if (path.includes("/board")) return "board";
         if (path.includes("/tasks")) return "tasks";
+        if (path.includes("/agent")) return "agent";
         if (path.includes("/timeline")) return "timeline";
         if (path.includes("/burndown")) return "burndown";
         if (path.includes("/sprints")) return "sprints";

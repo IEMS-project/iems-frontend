@@ -4,7 +4,7 @@ import ChatInput from '@/features/chatbot/components/ChatInput';
 import ConversationManager from '@/features/chatbot/components/ConversationManager';
 import chatbotService from '@/features/chatbot/api/chatbotService';
 
-const Chatbot = () => {
+const Chatbot = ({ projectId = null }) => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -214,7 +214,8 @@ const Chatbot = () => {
         },
         // conversationId - để null để backend tự động tạo conversation mới khi cần
         // Nếu đang tạo conversation mới hoặc không có active conversation, để null
-        isCreatingNewConversation || !activeConversationId ? null : activeConversationId
+        isCreatingNewConversation || !activeConversationId ? null : activeConversationId,
+        projectId
       );
     } catch (error) {
       console.error('Error sending message:', error);
@@ -312,7 +313,7 @@ const Chatbot = () => {
                       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                         <div className="text-center mb-8">
                           <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                            Bạn dự định làm gì hôm nay?
+                            {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
                           </h1>
                         </div>
                       </div>
@@ -379,7 +380,7 @@ const Chatbot = () => {
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                       <div className="text-center mb-8">
                         <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                          Bạn dự định làm gì hôm nay?
+                          {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
                         </h1>
                       </div>
                     </div>

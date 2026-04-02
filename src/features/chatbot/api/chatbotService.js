@@ -1,5 +1,5 @@
 // Chatbot service for communicating with the AI backend through API Gateway
-import { CHATBOT_BASE_URL, chatbotRequest, getStoredTokens } from "@/lib/api";
+import { CHATBOT_BASE_URL, chatbotRequest, fetchWithAuthRefresh, getStoredTokens } from "@/lib/api";
 
 class ChatbotService {
   buildUserHeaders() {
@@ -10,11 +10,12 @@ class ChatbotService {
     return {};
   }
 
-  async sendMessage(question, conversationId = null) {
+  async sendMessage(question, conversationId = null, projectId = null) {
     try {
       const body = { question };
       if (conversationId) body.conversationId = conversationId;
-      return await chatbotRequest("/api/chat", {
+      if (projectId) body.projectId = projectId;
+      return await chatbotRequest("/api/ai/chat", {
         method: "POST",
         headers: this.buildUserHeaders(),
         body,
@@ -27,7 +28,11 @@ class ChatbotService {
 
   async getStatus() {
     try {
-      return await chatbotRequest("/api/status");
+      const response = await chatbotRequest("/api/ai/health");
+      return {
+        chatbot_ready: response?.status === "UP",
+        status: response?.status,
+      };
     } catch (error) {
       console.error("Error getting chatbot status:", error);
       throw error;
@@ -36,14 +41,14 @@ class ChatbotService {
 
   async getHealth() {
     try {
-      return await chatbotRequest("/api/health");
+      return await chatbotRequest("/api/ai/health");
     } catch (error) {
       console.error("Error getting chatbot health:", error);
       throw error;
     }
   }
 
-  async sendMessageStream(question, onChunk, onEnd, onError, conversationId = null) {
+  async sendMessageStream(question, onChunk, onEnd, onError, conversationId = null, projectId = null) {
     try {
       const tokens = getStoredTokens();
       const headers = { "Content-Type": "application/json" };
@@ -56,8 +61,9 @@ class ChatbotService {
 
       const body = { question };
       if (conversationId) body.conversationId = conversationId;
+      if (projectId) body.projectId = projectId;
 
-      const response = await fetch(`${CHATBOT_BASE_URL}/api/chat/stream`, {
+      const response = await fetchWithAuthRefresh(`${CHATBOT_BASE_URL}/api/ai/chat/stream`, {
         method: "POST",
         headers,
         body: JSON.stringify(body),
@@ -104,17 +110,21 @@ class ChatbotService {
   }
 
   async getUserInfo() {
-    try {
-      return await chatbotRequest("/api/user/info");
-    } catch (error) {
-      console.error("Error getting user info:", error);
-      throw error;
-    }
+    const tokens = getStoredTokens();
+    return {
+      userId: tokens?.userInfo?.userId || null,
+      fullName: tokens?.userInfo?.fullName || tokens?.userInfo?.name || "",
+      email: tokens?.userInfo?.email || "",
+    };
   }
 
   async getConversations() {
     try {
-      return await chatbotRequest("/api/user/conversations");
+      const res = await chatbotRequest("/api/ai/conversations");
+      return {
+        conversations: res?.conversations || [],
+        current_conversation: res?.conversations?.[0] || null
+      };
     } catch (error) {
       console.error("Error getting conversations:", error);
       throw error;
@@ -123,9 +133,11 @@ class ChatbotService {
 
   async getConversationMessages(conversationId) {
     try {
-      return await chatbotRequest(`/api/user/conversations/${conversationId}/messages`, {
-        headers: this.buildUserHeaders(),
-      });
+      const res = await chatbotRequest(`/api/ai/conversations/${conversationId}/messages`);
+      return {
+        success: true,
+        messages: res?.messages || []
+      };
     } catch (error) {
       console.error("Error getting conversation messages:", error);
       throw error;
@@ -133,17 +145,17 @@ class ChatbotService {
   }
 
   async getMemory() {
-    try {
-      return await chatbotRequest("/api/user/memory");
-    } catch (error) {
-      console.error("Error getting memory:", error);
-      throw error;
-    }
+    return {
+      totalItems: 0,
+      size: 0,
+      conversations: 0,
+      topics: [],
+    };
   }
 
   async renameConversation(conversationId, newName) {
     try {
-      return await chatbotRequest(`/api/user/conversations/${conversationId}/rename?new_name=${encodeURIComponent(newName)}`, {
+      return await chatbotRequest(`/api/ai/conversations/${conversationId}/rename?new_name=${encodeURIComponent(newName)}`, {
         method: "PATCH",
       });
     } catch (error) {
@@ -153,20 +165,12 @@ class ChatbotService {
   }
 
   async switchConversation(conversationId) {
-    try {
-      return await chatbotRequest("/api/user/conversations/switch", {
-        method: "POST",
-        body: { conversationId },
-      });
-    } catch (error) {
-      console.error("Error switching conversation:", error);
-      throw error;
-    }
+    return { success: true, conversationId };
   }
 
   async deleteConversation(conversationId) {
     try {
-      return await chatbotRequest(`/api/user/conversations/${conversationId}`, {
+      return await chatbotRequest(`/api/ai/conversations/${conversationId}`, {
         method: "DELETE",
       });
     } catch (error) {
@@ -177,8 +181,8 @@ class ChatbotService {
 
   async clearMemory() {
     try {
-      return await chatbotRequest("/api/user/memory/clear", {
-        method: "POST",
+      return await chatbotRequest("/api/ai/memory/clear", {
+        method: "DELETE",
       });
     } catch (error) {
       console.error("Error clearing memory:", error);
