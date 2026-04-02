@@ -9,6 +9,11 @@ export const documentService = {
     return data?.data || data || [];
   },
 
+  async getEmbeddableDocuments(projectId) {
+    const data = await request(`${BASE}/${projectId}/documents/embeddable`);
+    return data?.data || data || [];
+  },
+
   // Upload a document to a project
   async uploadProjectDocument(projectId, file, folderId = null) {
     const formData = new FormData();
@@ -68,6 +73,16 @@ export const documentService = {
   // Get download link
   async getDocumentDownloadLink(projectId, docId) {
     const data = await request(`${BASE}/${projectId}/documents/${docId}/link`);
+    return data?.data || data;
+  },
+
+  async setAllowEmbedded(projectId, docId, allowEmbedded) {
+    const data = await request(
+      `${BASE}/${projectId}/documents/${docId}/allow-embedded?allowEmbedded=${allowEmbedded}`,
+      {
+        method: "PUT",
+      }
+    );
     return data?.data || data;
   }
 };

@@ -69,6 +69,7 @@ export default function DocumentsTab() {
     const [docToDelete, setDocToDelete] = useState(null);
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [updatingEmbedDocId, setUpdatingEmbedDocId] = useState(null);
 
     // Inputs State
     const [newFolderName, setNewFolderName] = useState('');
@@ -251,6 +252,22 @@ export default function DocumentsTab() {
         }
     };
 
+    const handleToggleEmbed = async (doc) => {
+        if (doc.isFolder || updatingEmbedDocId) return;
+
+        try {
+            setUpdatingEmbedDocId(doc.id);
+            const updated = await documentService.setAllowEmbedded(projectId, doc.id, !doc.allowEmbedded);
+            setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, allowEmbedded: updated?.allowEmbedded ?? !doc.allowEmbedded } : d));
+            toast.success(updated?.allowEmbedded ? 'Đã bật Embed for AI' : 'Đã tắt Embed for AI');
+        } catch (err) {
+            console.error('Toggle embed error:', err);
+            toast.error(err?.message || t('ui.common.error'));
+        } finally {
+            setUpdatingEmbedDocId(null);
+        }
+    };
+
     const getParentId = (folderId) => {
         const f = documents.find(d => d.id === folderId);
         return f ? f.parentId : null;
@@ -383,6 +400,11 @@ export default function DocumentsTab() {
                                                     <p className="font-medium text-foreground truncate max-w-[300px]" title={doc.fileName}>
                                                         {doc.fileName}
                                                     </p>
+                                                    {!doc.isFolder && doc.allowEmbedded && (
+                                                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                                                            {doc.aiIndexed ? 'RAG Ready' : 'Embedding Enabled'}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
@@ -426,6 +448,16 @@ export default function DocumentsTab() {
                                                         <MoveRight className="w-4 h-4 mr-2" />
                                                         {t('projectDocuments.move', 'Move')}
                                                     </DropdownMenuItem>
+                                                    {!doc.isFolder && (
+                                                        <DropdownMenuItem onClick={() => handleToggleEmbed(doc)} disabled={updatingEmbedDocId === doc.id}>
+                                                            {updatingEmbedDocId === doc.id ? (
+                                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                            ) : (
+                                                                <FileText className="w-4 h-4 mr-2" />
+                                                            )}
+                                                            {doc.allowEmbedded ? 'Disable Embed for AI' : 'Enable Embed for AI'}
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem 
                                                         onClick={() => confirmDelete(doc)}

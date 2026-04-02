@@ -3,6 +3,7 @@ import ChatMessage from '@/features/chatbot/components/ChatMessage';
 import ChatInput from '@/features/chatbot/components/ChatInput';
 import ConversationManager from '@/features/chatbot/components/ConversationManager';
 import chatbotService from '@/features/chatbot/api/chatbotService';
+import { documentService } from '@/features/projects/api/documentService';
 
 const Chatbot = ({ projectId = null }) => {
   const [messages, setMessages] = useState([]);
@@ -15,6 +16,8 @@ const Chatbot = ({ projectId = null }) => {
   const [isCreatingNewConversation, setIsCreatingNewConversation] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [refreshConversations, setRefreshConversations] = useState(0);
+  const [embeddableDocs, setEmbeddableDocs] = useState([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -57,6 +60,34 @@ const Chatbot = ({ projectId = null }) => {
 
     loadConversations();
   }, []);
+
+  useEffect(() => {
+    const loadEmbeddableDocs = async () => {
+      if (!projectId) {
+        setEmbeddableDocs([]);
+        setSelectedDocumentIds([]);
+        return;
+      }
+
+      try {
+        const docs = await documentService.getEmbeddableDocuments(projectId);
+        setEmbeddableDocs(docs || []);
+        setSelectedDocumentIds(prev => prev.filter(id => (docs || []).some(d => d.id === id)));
+      } catch (err) {
+        console.error('Failed to load embeddable docs:', err);
+      }
+    };
+
+    loadEmbeddableDocs();
+  }, [projectId, refreshConversations]);
+
+  const toggleSelectedDocument = (docId) => {
+    setSelectedDocumentIds(prev =>
+      prev.includes(docId)
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
 
   const handleConversationSelect = async (conversationId) => {
     setActiveConversationId(conversationId);
@@ -215,7 +246,8 @@ const Chatbot = ({ projectId = null }) => {
         // conversationId - để null để backend tự động tạo conversation mới khi cần
         // Nếu đang tạo conversation mới hoặc không có active conversation, để null
         isCreatingNewConversation || !activeConversationId ? null : activeConversationId,
-        projectId
+        projectId,
+        selectedDocumentIds
       );
     } catch (error) {
       console.error('Error sending message:', error);
@@ -247,7 +279,7 @@ const Chatbot = ({ projectId = null }) => {
     <div className="flex h-full flex-col gap-6 overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
         {/* Sidebar */}
-        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border flex flex-col hidden md:flex`}>
+        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border hidden md:flex md:flex-col`}>
           <ConversationManager
             activeConversationId={activeConversationId}
             onConversationSelect={handleConversationSelect}
@@ -364,6 +396,28 @@ const Chatbot = ({ projectId = null }) => {
                   )}
 
                   {/* Chat Input */}
+                  {projectId && embeddableDocs.length > 0 && (
+                    <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
+                      <p className="text-xs text-muted-foreground mb-2">Tai lieu RAG ready cua du an (chon de truy van):</p>
+                      <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
+                        {embeddableDocs.map(doc => (
+                          <button
+                            key={doc.id}
+                            type="button"
+                            onClick={() => toggleSelectedDocument(doc.id)}
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                              selectedDocumentIds.includes(doc.id)
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-background text-foreground border-border hover:bg-muted'
+                            }`}
+                          >
+                            {doc.fileName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     isLoading={isLoading}
@@ -427,6 +481,28 @@ const Chatbot = ({ projectId = null }) => {
                     <p className="text-sm text-red-600 dark:text-red-400">
                       Lỗi: {error}
                     </p>
+                  </div>
+                )}
+
+                {projectId && embeddableDocs.length > 0 && (
+                  <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
+                    <p className="text-xs text-muted-foreground mb-2">Tai lieu da bat Embed for AI (chon de truy van):</p>
+                    <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
+                      {embeddableDocs.map(doc => (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          onClick={() => toggleSelectedDocument(doc.id)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                            selectedDocumentIds.includes(doc.id)
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-background text-foreground border-border hover:bg-muted'
+                          }`}
+                        >
+                          {doc.fileName}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 

@@ -10,11 +10,12 @@ class ChatbotService {
     return {};
   }
 
-  async sendMessage(question, conversationId = null, projectId = null) {
+  async sendMessage(question, conversationId = null, projectId = null, selectedDocumentIds = []) {
     try {
       const body = { question };
       if (conversationId) body.conversationId = conversationId;
       if (projectId) body.projectId = projectId;
+      if (selectedDocumentIds?.length) body.selectedDocumentIds = selectedDocumentIds;
       return await chatbotRequest("/api/ai/chat", {
         method: "POST",
         headers: this.buildUserHeaders(),
@@ -48,10 +49,14 @@ class ChatbotService {
     }
   }
 
-  async sendMessageStream(question, onChunk, onEnd, onError, conversationId = null, projectId = null) {
+  async sendMessageStream(question, onChunk, onEnd, onError, conversationId = null, projectId = null, selectedDocumentIds = []) {
     try {
       const tokens = getStoredTokens();
-      const headers = { "Content-Type": "application/json" };
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "Cache-Control": "no-cache",
+      };
       if (tokens?.accessToken) {
         headers.Authorization = `Bearer ${tokens.accessToken}`;
       }
@@ -62,6 +67,7 @@ class ChatbotService {
       const body = { question };
       if (conversationId) body.conversationId = conversationId;
       if (projectId) body.projectId = projectId;
+      if (selectedDocumentIds?.length) body.selectedDocumentIds = selectedDocumentIds;
 
       const response = await fetchWithAuthRefresh(`${CHATBOT_BASE_URL}/api/ai/chat/stream`, {
         method: "POST",
@@ -76,18 +82,28 @@ class ChatbotService {
       const reader = response.body?.getReader();
       if (!reader) throw new Error("Streaming not supported in this environment");
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const normalized = buffer.replace(/\r\n/g, "\n");
+        const events = normalized.split("\n\n");
+        buffer = events.pop() ?? "";
 
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
+        for (const eventText of events) {
+          const dataLines = eventText
+            .split("\n")
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trimStart());
+
+          if (!dataLines.length) continue;
+
+          const payload = dataLines.join("\n");
           try {
-            const data = JSON.parse(line.slice(6));
+            const data = JSON.parse(payload);
             if (data.type === "chunk") {
               onChunk(data.content);
             } else if (data.type === "end") {
@@ -98,9 +114,14 @@ class ChatbotService {
               return;
             }
           } catch (parseError) {
-            console.error("Error parsing SSE data:", parseError);
+            console.error("Error parsing SSE event:", parseError, payload);
           }
         }
+      }
+
+      const remaining = decoder.decode();
+      if (remaining) {
+        buffer += remaining;
       }
       onEnd();
     } catch (error) {
