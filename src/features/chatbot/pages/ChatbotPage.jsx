@@ -18,15 +18,28 @@ const Chatbot = ({ projectId = null }) => {
   const [refreshConversations, setRefreshConversations] = useState(0);
   const [embeddableDocs, setEmbeddableDocs] = useState([]);
   const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
+  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (autoScrollEnabled) {
+      scrollToBottom();
+    }
+  }, [messages, autoScrollEnabled]);
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setAutoScrollEnabled(distanceFromBottom < 80);
+  };
 
   // Add welcome message only when a conversation is selected
   useEffect(() => {
@@ -42,15 +55,17 @@ const Chatbot = ({ projectId = null }) => {
     }
   }, [activeConversationId, isCreatingNewConversation]);
 
-  // Load conversations on mount
+  // Load conversations on mount and when switching project scope
   useEffect(() => {
     const loadConversations = async () => {
       try {
-        // Load conversations and set active conversation if exists
-        const data = await chatbotService.getConversations();
+        setMessages([]);
+        setActiveConversationId(null);
+        setIsCreatingNewConversation(false);
+
+        const data = await chatbotService.getConversations(projectId);
         if (data && data.current_conversation) {
           setActiveConversationId(data.current_conversation.id);
-          // Load messages for current conversation
           await handleConversationSelect(data.current_conversation.id);
         }
       } catch (error) {
@@ -59,13 +74,14 @@ const Chatbot = ({ projectId = null }) => {
     };
 
     loadConversations();
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     const loadEmbeddableDocs = async () => {
       if (!projectId) {
         setEmbeddableDocs([]);
         setSelectedDocumentIds([]);
+        setShowDocumentPicker(false);
         return;
       }
 
@@ -86,6 +102,45 @@ const Chatbot = ({ projectId = null }) => {
       prev.includes(docId)
         ? prev.filter(id => id !== docId)
         : [...prev, docId]
+    );
+  };
+
+  const renderDocumentSelector = () => {
+    if (!projectId || embeddableDocs.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          onClick={() => setShowDocumentPicker(prev => !prev)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <span className="text-xs text-muted-foreground">
+            Tai lieu RAG ready cua du an ({selectedDocumentIds.length} da chon)
+          </span>
+          <span className="text-xs text-blue-600">{showDocumentPicker ? 'An' : 'Chon tai lieu'}</span>
+        </button>
+
+        {showDocumentPicker && (
+          <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto mt-3">
+            {embeddableDocs.map(doc => (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => toggleSelectedDocument(doc.id)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selectedDocumentIds.includes(doc.id)
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-background text-foreground border-border hover:bg-muted'
+                  }`}
+              >
+                {doc.fileName}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -155,10 +210,15 @@ const Chatbot = ({ projectId = null }) => {
       setIsCreatingNewConversation(true);
     }
 
+    const selectedAttachments = embeddableDocs
+      .filter(doc => selectedDocumentIds.includes(doc.id))
+      .map(doc => ({ id: doc.id, name: doc.fileName }));
+
     const userMessage = {
       id: Date.now(),
       message: question,
       isUser: true,
+      attachments: selectedAttachments,
       timestamp: new Date().toISOString()
     };
 
@@ -276,12 +336,13 @@ const Chatbot = ({ projectId = null }) => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
         {/* Sidebar */}
         <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border hidden md:flex md:flex-col`}>
           <ConversationManager
             activeConversationId={activeConversationId}
+            projectId={projectId}
             onConversationSelect={handleConversationSelect}
             onNewConversation={handleNewConversation}
             onToggleSidebar={() => setShowSidebar(!showSidebar)}
@@ -298,6 +359,7 @@ const Chatbot = ({ projectId = null }) => {
             <div className="absolute left-0 top-0 h-full w-80 bg-card border-r border-border">
               <ConversationManager
                 activeConversationId={activeConversationId}
+                projectId={projectId}
                 onConversationSelect={handleConversationSelect}
                 onNewConversation={handleNewConversation}
                 onToggleSidebar={() => setShowSidebar(!showSidebar)}
@@ -339,7 +401,11 @@ const Chatbot = ({ projectId = null }) => {
               ) : (
                 <>
                   {/* Messages Container */}
-                  <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+                  <div
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                  >
                     {/* Show question for new conversation or no conversation - only when no messages */}
                     {(isCreatingNewConversation || (!activeConversationId && !isCreatingNewConversation)) && messages.length === 0 && (
                       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
@@ -356,6 +422,7 @@ const Chatbot = ({ projectId = null }) => {
                         key={msg.id}
                         message={msg.message}
                         isUser={msg.isUser}
+                        attachments={msg.attachments || []}
                         timestamp={msg.timestamp}
                       />
                     ))}
@@ -395,28 +462,7 @@ const Chatbot = ({ projectId = null }) => {
                     </div>
                   )}
 
-                  {/* Chat Input */}
-                  {projectId && embeddableDocs.length > 0 && (
-                    <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
-                      <p className="text-xs text-muted-foreground mb-2">Tai lieu RAG ready cua du an (chon de truy van):</p>
-                      <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-                        {embeddableDocs.map(doc => (
-                          <button
-                            key={doc.id}
-                            type="button"
-                            onClick={() => toggleSelectedDocument(doc.id)}
-                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                              selectedDocumentIds.includes(doc.id)
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-background text-foreground border-border hover:bg-muted'
-                            }`}
-                          >
-                            {doc.fileName}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {renderDocumentSelector()}
 
                   <ChatInput
                     onSendMessage={handleSendMessage}
@@ -428,7 +474,11 @@ const Chatbot = ({ projectId = null }) => {
               /* No conversation selected - show welcome message with same logic */
               <>
                 {/* Messages Container */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+                <div
+                  ref={messagesContainerRef}
+                  onScroll={handleMessagesScroll}
+                  className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                >
                   {/* Show question for no conversation - only when no messages */}
                   {messages.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
@@ -445,6 +495,7 @@ const Chatbot = ({ projectId = null }) => {
                       key={msg.id}
                       message={msg.message}
                       isUser={msg.isUser}
+                      attachments={msg.attachments || []}
                       timestamp={msg.timestamp}
                     />
                   ))}
@@ -484,27 +535,7 @@ const Chatbot = ({ projectId = null }) => {
                   </div>
                 )}
 
-                {projectId && embeddableDocs.length > 0 && (
-                  <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
-                    <p className="text-xs text-muted-foreground mb-2">Tai lieu da bat Embed for AI (chon de truy van):</p>
-                    <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-                      {embeddableDocs.map(doc => (
-                        <button
-                          key={doc.id}
-                          type="button"
-                          onClick={() => toggleSelectedDocument(doc.id)}
-                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                            selectedDocumentIds.includes(doc.id)
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-background text-foreground border-border hover:bg-muted'
-                          }`}
-                        >
-                          {doc.fileName}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {renderDocumentSelector()}
 
                 <ChatInput
                   onSendMessage={handleSendMessage}

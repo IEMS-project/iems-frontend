@@ -2,6 +2,10 @@
 import { CHATBOT_BASE_URL, chatbotRequest, fetchWithAuthRefresh, getStoredTokens } from "@/lib/api";
 
 class ChatbotService {
+  getConversationProjectId(conversation) {
+    return conversation?.projectId || conversation?.project_id || null;
+  }
+
   buildUserHeaders() {
     const tokens = getStoredTokens();
     if (tokens?.userInfo?.userId) {
@@ -139,12 +143,16 @@ class ChatbotService {
     };
   }
 
-  async getConversations() {
+  async getConversations(projectId = null) {
     try {
       const res = await chatbotRequest("/api/ai/conversations");
+      const allConversations = res?.conversations || [];
+      const conversations = projectId
+        ? allConversations.filter((conversation) => this.getConversationProjectId(conversation) === projectId)
+        : allConversations;
       return {
-        conversations: res?.conversations || [],
-        current_conversation: res?.conversations?.[0] || null
+        conversations,
+        current_conversation: conversations[0] || null,
       };
     } catch (error) {
       console.error("Error getting conversations:", error);

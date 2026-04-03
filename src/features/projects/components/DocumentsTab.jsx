@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { 
-    FileText, 
-    Upload, 
-    Trash2, 
-    Download, 
+import {
+    FileText,
+    Upload,
+    Trash2,
+    Download,
     MoreVertical,
     FileImage,
     FileArchive,
@@ -37,13 +37,13 @@ const getFileIcon = (isFolder, fileType = '', fileName = '') => {
 
     const type = fileType.toLowerCase();
     const name = fileName.toLowerCase();
-    
+
     if (type.includes('image') || name.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) return <FileImage className="h-5 w-5 text-blue-500" />;
     if (type.includes('pdf') || name.endsWith('.pdf')) return <FileText className="h-5 w-5 text-red-500" />;
     if (type.includes('zip') || type.includes('tar') || type.includes('rar') || name.match(/\.(zip|rar|tar\.gz)$/)) return <FileArchive className="h-5 w-5 text-orange-500" />;
     if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv') || name.match(/\.(xls|xlsx|csv)$/)) return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
     if (type.includes('word') || type.includes('document') || name.match(/\.(doc|docx)$/)) return <FileText className="h-5 w-5 text-blue-600" />;
-    
+
     return <File className="h-5 w-5 text-gray-400" />;
 };
 
@@ -288,8 +288,8 @@ export default function DocumentsTab() {
             {/* Header / Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 overflow-x-auto text-lg font-bold text-foreground whitespace-nowrap">
-                    <button 
-                        onClick={() => setCurrentFolderId(null)} 
+                    <button
+                        onClick={() => setCurrentFolderId(null)}
                         className="hover:text-blue-600 transition-colors"
                     >
                         {t('projectDocuments.title', 'Project Documents')}
@@ -297,7 +297,7 @@ export default function DocumentsTab() {
                     {breadcrumbs.map(f => (
                         <React.Fragment key={f.id}>
                             <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                            <button 
+                            <button
                                 onClick={() => setCurrentFolderId(f.id)}
                                 className="hover:text-blue-600 transition-colors"
                             >
@@ -307,25 +307,25 @@ export default function DocumentsTab() {
                     ))}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button 
+                    <Button
                         variant="outline"
                         onClick={() => {
                             setNewFolderName('');
                             setShowCreateFolder(true);
-                        }} 
+                        }}
                         className="flex items-center gap-2"
                     >
                         <FolderPlus className="w-4 h-4" />
                         {t('projectDocuments.newFolder', 'New Folder')}
                     </Button>
-                    <input 
-                        type="file" 
-                        className="hidden" 
+                    <input
+                        type="file"
+                        className="hidden"
                         ref={fileInputRef}
                         onChange={handleFileChange}
                     />
-                    <Button 
-                        onClick={handleUploadClick} 
+                    <Button
+                        onClick={handleUploadClick}
                         disabled={uploading || loading}
                         className="flex items-center gap-2"
                     >
@@ -349,7 +349,7 @@ export default function DocumentsTab() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {currentFolderId && !loading && (
-                                <tr 
+                                <tr
                                     className="hover:bg-muted/30 transition-colors cursor-pointer"
                                     onClick={() => setCurrentFolderId(getParentId(currentFolderId))}
                                 >
@@ -386,8 +386,8 @@ export default function DocumentsTab() {
                                 </tr>
                             ) : (
                                 visibleDocuments.map(doc => (
-                                    <tr 
-                                        key={doc.id} 
+                                    <tr
+                                        key={doc.id}
                                         className="hover:bg-muted/30 transition-colors group cursor-pointer"
                                         onDoubleClick={() => handlePreview(doc)}
                                     >
@@ -459,7 +459,7 @@ export default function DocumentsTab() {
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem 
+                                                    <DropdownMenuItem
                                                         onClick={() => confirmDelete(doc)}
                                                         className="text-red-600 dark:text-red-400"
                                                     >
@@ -495,9 +495,9 @@ export default function DocumentsTab() {
                         <DialogTitle>{t('projectDocuments.newFolder', 'New Folder')}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <Input 
+                        <Input
                             autoFocus
-                            placeholder="Folder Name" 
+                            placeholder="Folder Name"
                             value={newFolderName}
                             onChange={(e) => setNewFolderName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && submitCreateFolder()}
@@ -518,9 +518,9 @@ export default function DocumentsTab() {
                         <DialogTitle>{t('projectDocuments.rename', 'Rename')}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <Input 
+                        <Input
                             autoFocus
-                            placeholder="New Name" 
+                            placeholder="New Name"
                             value={newFolderName}
                             onChange={(e) => setNewFolderName(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && submitRename()}
@@ -542,9 +542,9 @@ export default function DocumentsTab() {
                     </DialogHeader>
                     <div className="py-4 space-y-2">
                         <p className="text-sm text-muted-foreground">Select destination folder:</p>
-                        <select 
-                            className="w-full p-2 border border-input rounded-md bg-background focus:ring-2 focus:ring-ring" 
-                            value={moveTargetId} 
+                        <select
+                            className="w-full p-2 border border-input rounded-md bg-background focus:ring-2 focus:ring-ring"
+                            value={moveTargetId}
                             onChange={e => setMoveTargetId(e.target.value)}
                         >
                             <option value="root">/ (Root)</option>
@@ -571,9 +571,9 @@ export default function DocumentsTab() {
                     </DialogHeader>
                     <div className="flex-1 bg-muted/20 rounded-md overflow-hidden flex flex-col items-center justify-center relative">
                         {previewUrl ? (
-                            <iframe 
-                                src={previewUrl} 
-                                className="w-full h-full border-0 bg-white" 
+                            <iframe
+                                src={previewUrl}
+                                className="w-full h-full border-0 bg-white"
                                 title="Document Preview"
                             />
                         ) : (
@@ -584,9 +584,9 @@ export default function DocumentsTab() {
                         )}
                         {previewUrl && (
                             <div className="absolute top-4 right-4 shadow-md rounded-md bg-background/80 backdrop-blur-sm border p-1 opacity-50 hover:opacity-100 transition-opacity">
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => window.open(previewUrl, '_blank')}
                                     title="Open in new tab"
                                 >

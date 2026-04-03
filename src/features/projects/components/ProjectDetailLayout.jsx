@@ -202,12 +202,18 @@ function ProjectDetailLayoutContent() {
                 </div>
             </div>
 
-            {/* Page Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
+            {/* Page Content */}
+            {currentTab === "agent" ? (
+                <div className="flex-1 min-h-0 overflow-hidden">
                     <Outlet context={{ projectData, loading }} />
                 </div>
-            </div>
+            ) : (
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-4">
+                        <Outlet context={{ projectData, loading }} />
+                    </div>
+                </div>
+            )}
 
             {/* Edit Project Modal */}
             <Modal

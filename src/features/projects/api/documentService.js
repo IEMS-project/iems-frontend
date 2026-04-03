@@ -18,12 +18,12 @@ export const documentService = {
   async uploadProjectDocument(projectId, file, folderId = null) {
     const formData = new FormData();
     formData.append("file", file);
-    
+
     let url = `${BASE}/${projectId}/documents/upload`;
     if (folderId) {
-        url += `?folderId=${folderId}`;
+      url += `?folderId=${folderId}`;
     }
-    
+
     const data = await request(url, {
       method: "POST",
       body: formData,

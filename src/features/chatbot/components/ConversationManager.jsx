@@ -9,6 +9,7 @@ import { bgColors, textColors } from '@/theme/colors';
 
 const ConversationManager = ({
   activeConversationId,
+  projectId,
   onConversationSelect,
   onNewConversation,
   onToggleSidebar,
@@ -61,6 +62,7 @@ const ConversationManager = ({
       component: (
         <ConversationList
           activeConversationId={activeConversationId}
+          projectId={projectId}
           onConversationSelect={onConversationSelect}
           onNewConversation={handleNewConversation}
           showSidebar={showSidebar}

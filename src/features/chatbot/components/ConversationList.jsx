@@ -9,6 +9,7 @@ import { navColors, buttonColors, textColors, borderColors, statusColors, cn } f
 
 const ConversationList = ({
   activeConversationId,
+  projectId,
   onConversationSelect,
   onNewConversation,
   showSidebar = true,
@@ -24,7 +25,7 @@ const ConversationList = ({
   const [conversationToDelete, setConversationToDelete] = useState(null);
 
   useEffect(() => {
-    loadConversations();
+    loadConversations(projectId);
 
     // Expose refresh function globally
     window.refreshConversationList = loadConversations;
@@ -33,20 +34,20 @@ const ConversationList = ({
       // Cleanup
       delete window.refreshConversationList;
     };
-  }, []);
+  }, [projectId]);
 
   // Refresh conversations when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger > 0) {
-      loadConversations();
+      loadConversations(projectId);
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, projectId]);
 
-  const loadConversations = async () => {
+  const loadConversations = async (scopeProjectId = null) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await chatbotService.getConversations();
+      const data = await chatbotService.getConversations(scopeProjectId);
       console.log('Conversations API response:', data);
 
       // Handle different response formats
