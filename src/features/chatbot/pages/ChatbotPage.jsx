@@ -131,8 +131,8 @@ const Chatbot = ({ projectId = null }) => {
                 type="button"
                 onClick={() => toggleSelectedDocument(doc.id)}
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selectedDocumentIds.includes(doc.id)
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-background text-foreground border-border hover:bg-muted'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-background text-foreground border-border hover:bg-muted'
                   }`}
               >
                 {doc.fileName}
