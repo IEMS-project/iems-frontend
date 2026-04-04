@@ -106,7 +106,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
     }
     const dueDateError = validateDates({ startDate: form.dueDate, createdAt: issue?.createdAt });
     if (dueDateError) { toast.warning(dueDateError); return; }
-    
+
     setSaving(true);
     try {
       const patch = {};
@@ -122,7 +122,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
       if (form.dueDate !== (issue.dueDate || "")) patch.dueDate = form.dueDate || null;
 
       if (Object.keys(patch).length > 0) await issueService.updateIssue(projectId, issue.id, patch);
-      
+
       if (form.sprintId !== (issue.sprintId || "")) {
         form.sprintId ? await issueService.moveToSprint(projectId, issue.id, form.sprintId)
           : await issueService.removeFromSprint(projectId, issue.id);
@@ -200,7 +200,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
         <div className="h-full flex">
           {/* ════ LEFT COLUMN ════ */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
-            
+
             {/* Issue header — fixed */}
             <div className="flex-shrink-0 px-6 pt-4 pb-3 border-b border-border">
               <div className="flex items-start justify-between gap-3 mb-3">

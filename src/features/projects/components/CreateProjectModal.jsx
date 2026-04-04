@@ -326,23 +326,21 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                     return (
                         <div
                             key={i}
-                            className={`min-w-[140px] flex-1 rounded-full border px-3 py-1.5 transition-all duration-200 ${
-                                isActive
+                            className={`min-w-[140px] flex-1 rounded-full border px-3 py-1.5 transition-all duration-200 ${isActive
                                     ? "border-primary bg-primary text-primary-foreground shadow"
                                     : isDone
                                         ? "border-border bg-background text-foreground"
                                         : "border-transparent bg-transparent text-muted-foreground"
-                            }`}
+                                }`}
                         >
                             <div className="flex items-center gap-2 whitespace-nowrap">
                                 <div
-                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                                        isActive
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${isActive
                                             ? "bg-primary-foreground/15 text-primary-foreground"
                                             : isDone
                                                 ? "bg-primary/10 text-primary"
                                                 : "bg-background text-muted-foreground"
-                                    }`}
+                                        }`}
                                 >
                                     {isDone ? "✓" : i + 1}
                                 </div>

@@ -20,17 +20,17 @@ import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
 // ── Column definitions ─────────────────────────────────────────────────────
 
 const ALL_COLUMNS = [
-  { key: "key",        label: "Key",          sortable: false, defaultVisible: true,  width: "w-28" },
-  { key: "title",      label: "Title",        sortable: true,  defaultVisible: true,  width: "min-w-[200px]" },
-  { key: "status",     label: "Status",       sortable: true,  defaultVisible: true,  width: "w-36" },
-  { key: "priority",   label: "Priority",     sortable: true,  defaultVisible: true,  width: "w-32" },
-  { key: "assignee",   label: "Assignee",     sortable: false, defaultVisible: true,  width: "w-40" },
-  { key: "sprint",     label: "Sprint",       sortable: true,  defaultVisible: true,  width: "w-36" },
-  { key: "storyPoints",label: "SP",           sortable: true,  defaultVisible: true,  width: "w-16" },
-  { key: "dueDate",    label: "Due Date",     sortable: true,  defaultVisible: true,  width: "w-32" },
-  { key: "type",       label: "Type",         sortable: false, defaultVisible: false, width: "w-28" },
-  { key: "reporter",   label: "Reporter",     sortable: false, defaultVisible: false, width: "w-36" },
-  { key: "parent",     label: "Parent",       sortable: false, defaultVisible: false, width: "w-28" },
+  { key: "key", label: "Key", sortable: false, defaultVisible: true, width: "w-28" },
+  { key: "title", label: "Title", sortable: true, defaultVisible: true, width: "min-w-[200px]" },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true, width: "w-36" },
+  { key: "priority", label: "Priority", sortable: true, defaultVisible: true, width: "w-32" },
+  { key: "assignee", label: "Assignee", sortable: false, defaultVisible: true, width: "w-40" },
+  { key: "sprint", label: "Sprint", sortable: true, defaultVisible: true, width: "w-36" },
+  { key: "storyPoints", label: "SP", sortable: true, defaultVisible: true, width: "w-16" },
+  { key: "dueDate", label: "Due Date", sortable: true, defaultVisible: true, width: "w-32" },
+  { key: "type", label: "Type", sortable: false, defaultVisible: false, width: "w-28" },
+  { key: "reporter", label: "Reporter", sortable: false, defaultVisible: false, width: "w-36" },
+  { key: "parent", label: "Parent", sortable: false, defaultVisible: false, width: "w-28" },
 ];
 
 
@@ -549,17 +549,17 @@ export default function IssueListTab() {
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50 sticky top-0 z-10">
             <tr>
-              {visibleColumns.has("key")         && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Key" /></th>}
-              {visibleColumns.has("title")        && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
-              {visibleColumns.has("status")       && <th className="px-3 py-2.5 text-left w-36 min-w-[9rem] whitespace-nowrap"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
-              {visibleColumns.has("priority")     && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
-              {visibleColumns.has("assignee")     && <th className="px-3 py-2.5 text-left w-40"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
-              {visibleColumns.has("sprint")       && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
-              {visibleColumns.has("storyPoints")  && <th className="px-3 py-2.5 text-center w-16"><ThBtn field="storyPoints" label="SP" /></th>}
-              {visibleColumns.has("dueDate")      && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="dueDate" label="Due Date" /></th>}
-              {visibleColumns.has("type")         && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Type" /></th>}
-              {visibleColumns.has("reporter")     && <th className="px-3 py-2.5 text-left w-36"><ThLabel label="Reporter" /></th>}
-              {visibleColumns.has("parent")       && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Parent" /></th>}
+              {visibleColumns.has("key") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Key" /></th>}
+              {visibleColumns.has("title") && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
+              {visibleColumns.has("status") && <th className="px-3 py-2.5 text-left w-36 min-w-[9rem] whitespace-nowrap"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
+              {visibleColumns.has("priority") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
+              {visibleColumns.has("assignee") && <th className="px-3 py-2.5 text-left w-40"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
+              {visibleColumns.has("sprint") && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
+              {visibleColumns.has("storyPoints") && <th className="px-3 py-2.5 text-center w-16"><ThBtn field="storyPoints" label="SP" /></th>}
+              {visibleColumns.has("dueDate") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="dueDate" label="Due Date" /></th>}
+              {visibleColumns.has("type") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Type" /></th>}
+              {visibleColumns.has("reporter") && <th className="px-3 py-2.5 text-left w-36"><ThLabel label="Reporter" /></th>}
+              {visibleColumns.has("parent") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Parent" /></th>}
             </tr>
           </thead>
           <tbody>
