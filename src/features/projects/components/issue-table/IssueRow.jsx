@@ -3,6 +3,7 @@ import { ChevronDown as ChevDown, User, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { issueService } from "@/features/projects/api/issueService";
+import Avatar from "@/components/ui/Avatar";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "../IssueCard";
 import { getStatusStyle } from "../../utils/issueStyles";
 import InlineTitleEditor from "../inline-editors/InlineTitleEditor";
@@ -10,21 +11,20 @@ import InlineDropdown from "../inline-editors/InlineDropdown";
 import InlineNumberEditor from "../inline-editors/InlineNumberEditor";
 import InlineDateEditor from "../inline-editors/InlineDateEditor";
 
-function Avatar({ name, size = 6 }) {
-  const initials = (name || "?")
-    .split(" ")
-    .map(p => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-  return (
-    <div
-      className={`w-${size} h-${size} rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-semibold flex-shrink-0`}
-    >
-      {initials}
-    </div>
-  );
-}
+const resolveMemberId = (member) =>
+  member?.accountId ||
+  member?.userId ||
+  member?.user?.accountId ||
+  member?.user?.id ||
+  member?.id;
+
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
 
 export default function IssueRow({
   issue: initialIssue,
@@ -44,7 +44,7 @@ export default function IssueRow({
   const status = statusMap[issue.statusId];
   const type = typeMap[issue.issueTypeId];
   const priority = priorityMap[issue.priorityId];
-  const assigneeId = issue.assigneeId || issue.assignee?.id;
+  const assigneeId = resolveIssueAssigneeId(issue);
   const assignee = memberMap[assigneeId] || issue.assignee;
   const sprint = sprintMap[issue.sprintId];
   const reporter = memberMap[issue.reporterId] || issue.reporter;
@@ -67,17 +67,25 @@ export default function IssueRow({
 
   const patch = useCallback(async (update) => {
     const prev = issue;
-    setIssue(p => ({ ...p, ...update }));
+    const optimistic = { ...issue, ...update };
+    setIssue(optimistic);
     setOpenField(null); setAnchorEl(null);
     try {
+      let saved = null;
       // sprint change handled separately
       if ("sprintId" in update) {
-        if (update.sprintId) await issueService.moveToSprint(projectId, issue.id, update.sprintId);
-        else await issueService.removeFromSprint(projectId, issue.id);
+        if (update.sprintId) {
+          saved = await issueService.moveToSprint(projectId, issue.id, update.sprintId);
+        } else {
+          saved = await issueService.removeFromSprint(projectId, issue.id);
+        }
       } else {
-        await issueService.updateIssue(projectId, issue.id, update);
+        saved = await issueService.updateIssue(projectId, issue.id, update);
       }
-      onUpdated?.();
+
+      const nextIssue = saved && saved.id ? { ...optimistic, ...saved } : optimistic;
+      setIssue(nextIssue);
+      onUpdated?.(nextIssue);
     } catch (e) {
       setIssue(prev);
       toast.error(e?.message || "Error updating issue");
@@ -86,33 +94,47 @@ export default function IssueRow({
 
   // Build option lists
   const statusOptions = workflowStatuses.map(s => ({
-    value: s.id, label: s.name, active: s.id === issue.statusId,
-    icon: <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />,
+    value: s.id,
+    label: (
+      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold whitespace-nowrap ${getStatusStyle(s.name)}`}>
+        {s.name}
+      </span>
+    ),
+    active: s.id === issue.statusId,
   }));
   const priorityOptions = issuePriorities.map(p => {
     const { icon: Icon, color } = getPriorityIcon(p.name);
     return { value: p.id, label: p.name, active: p.id === issue.priorityId, icon: <Icon className={cn("w-3.5 h-3.5", color)} /> };
   });
-  const typeOptions = issueTypes.map(it => ({
-    value: it.id, label: it.name, active: it.id === issue.issueTypeId,
-  }));
+  const typeOptions = issueTypes.map(it => {
+    const OptionTypeIcon = getIssueTypeIcon(it?.name);
+    const optionTypeColor = getIssueTypeColor(it?.name);
+    return {
+      value: it.id,
+      label: it.name,
+      active: it.id === issue.issueTypeId,
+      icon: <OptionTypeIcon className={cn("w-3.5 h-3.5", optionTypeColor)} />,
+    };
+  });
   const assigneeOptions = [
-    { value: null, label: "Unassigned", active: !issue.assigneeId, icon: <User className="w-3.5 h-3.5 text-muted-foreground" /> },
+    { value: null, label: "Unassigned", active: !assigneeId, icon: <User className="w-3.5 h-3.5 text-muted-foreground" /> },
     ...members.map(m => {
       const name = m.fullName || m.userName || m.name || m.email || "?";
-      const id = m.accountId || m.id || m.userId;
-      const ini = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+      const id = resolveMemberId(m);
       return {
-        value: id, label: name, active: id === (issue.assigneeId || issue.assignee?.id),
-        icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{ini}</div>,
+        value: id,
+        label: name,
+        active: String(id || "") === String(assigneeId || ""),
+        icon: <Avatar user={m} name={name} size="xs" />,
       };
     }),
   ];
-  if (issue.assigneeId && !members.some(m => (m.accountId || m.id || m.userId) === issue.assigneeId)) {
-    const ini = (assigneeName || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  if (assigneeId && !members.some(m => String(resolveMemberId(m) || "") === String(assigneeId))) {
     assigneeOptions.push({
-      value: issue.assigneeId, label: assigneeName || "?", active: true,
-      icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{ini}</div>,
+      value: assigneeId,
+      label: assigneeName || "?",
+      active: true,
+      icon: <Avatar user={assignee} name={assigneeName || "?"} size="xs" />,
     });
   }
   const sprintOptions = [
@@ -174,14 +196,14 @@ export default function IssueRow({
 
       {/* STATUS — inline dropdown */}
       {isVisible("status") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "whitespace-nowrap min-w-[9rem]")}>
           <button
             type="button"
             onClick={e => toggle(e, "status")}
-            className="flex items-center gap-1 w-full text-left rounded hover:bg-muted px-1 py-0.5 transition-colors"
+            className="flex items-center gap-1 w-full text-left rounded hover:bg-muted px-1 py-0.5 transition-colors whitespace-nowrap"
           >
             {status
-              ? <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getStatusStyle(status.name)}`}>{status.name}</span>
+              ? <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold whitespace-nowrap ${getStatusStyle(status.name)}`}>{status.name}</span>
               : <span className="text-xs text-muted-foreground">—</span>
             }
             <ChevDown className="w-3 h-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-60 shrink-0" />
@@ -221,7 +243,7 @@ export default function IssueRow({
             className="flex items-center gap-1.5 w-full text-left rounded hover:bg-muted px-1.5 py-1 transition-colors"
           >
             {assigneeName
-              ? <><Avatar name={assigneeName} size={5} /><span className="text-xs text-foreground truncate max-w-[90px]">{assigneeName}</span></>
+              ? <><Avatar user={assignee} name={assigneeName} size="xs" /><span className="text-xs text-foreground truncate max-w-[90px]">{assigneeName}</span></>
               : <><User className="w-3.5 h-3.5 text-muted-foreground shrink-0" /><span className="text-xs text-muted-foreground">Unassigned</span></>
             }
             <ChevDown className="w-3 h-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-60 shrink-0" />
@@ -320,7 +342,7 @@ export default function IssueRow({
       {isVisible("reporter") && (
         <td className={cellClass}>
           {reporterName
-            ? <div className="flex items-center gap-1.5"><Avatar name={reporterName} size={5} /><span className="text-xs text-foreground truncate max-w-[90px]">{reporterName}</span></div>
+            ? <div className="flex items-center gap-1.5"><Avatar user={reporter} name={reporterName} size="xs" /><span className="text-xs text-foreground truncate max-w-[90px]">{reporterName}</span></div>
             : <span className="text-xs text-muted-foreground">—</span>
           }
         </td>

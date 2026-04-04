@@ -1,4 +1,4 @@
-import { request } from "@/lib/api";
+import { fetchWithAuthRefresh, GATEWAY_BASE_URL, request } from "@/lib/api";
 
 const BASE = "/project-service/projects";
 
@@ -7,6 +7,11 @@ export const issueService = {
   async getIssues(projectId) {
     const data = await request(`${BASE}/${projectId}/issues`);
     return data?.data || data || [];
+  },
+
+  async getIssuesPaged(projectId, page = 0, size = 20) {
+    const data = await request(`${BASE}/${projectId}/issues/paged?page=${page}&size=${size}`);
+    return data?.data || { content: [], page: 0, size, totalElements: 0, totalPages: 0, last: true };
   },
 
   async createIssue(projectId, payload) {
@@ -82,6 +87,65 @@ export const issueService = {
       method: "DELETE",
     });
     return data?.data || data;
+  },
+
+  async importIssuesFromExcel(projectId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const data = await request(`${BASE}/${projectId}/issues/import`, {
+      method: "POST",
+      body: formData,
+    });
+    return data?.data || data;
+  },
+
+  async downloadIssueImportTemplate(projectId) {
+    const response = await fetchWithAuthRefresh(
+      `${GATEWAY_BASE_URL}${BASE}/${projectId}/issues/import-template`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      let message = "Failed to download import template";
+      try {
+        const data = await response.json();
+        message = data?.message || data?.error || message;
+      } catch {
+        // Keep default error message.
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("content-disposition") || "";
+    const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+    const fileName = match?.[1] || "issue-import-template.xlsx";
+    return { blob, fileName };
+  },
+
+  async downloadIssuesExport(projectId) {
+    const response = await fetchWithAuthRefresh(
+      `${GATEWAY_BASE_URL}${BASE}/${projectId}/issues/export`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      let message = "Failed to export issues";
+      try {
+        const data = await response.json();
+        message = data?.message || data?.error || message;
+      } catch {
+        // Keep default error message.
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const disposition = response.headers.get("content-disposition") || "";
+    const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
+    const fileName = match?.[1] || "issues-export.xlsx";
+    return { blob, fileName };
   },
 
   // ── Comments ─────────────────────────────────────────────────

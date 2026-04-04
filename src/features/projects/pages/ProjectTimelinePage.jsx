@@ -3,7 +3,18 @@ import ProjectTimeline from "@/features/projects/components/ProjectTimeline";
 import { useProject } from "@/features/projects/context/ProjectContext";
 
 export default function ProjectTimelinePage() {
-    const { issues, sprints, workflowStatuses, members, issuesLoading, sprintsLoading, refreshIssues, refreshSprints } = useProject();
+    const {
+        issues,
+        sprints,
+        workflowStatuses,
+        issueTypes,
+        issuePriorities,
+        members,
+        issuesLoading,
+        sprintsLoading,
+        refreshIssues,
+        refreshSprints,
+    } = useProject();
 
     useEffect(() => {
         refreshIssues();
@@ -15,6 +26,8 @@ export default function ProjectTimelinePage() {
             issues={issues}
             sprints={sprints}
             workflowStatuses={workflowStatuses}
+            issueTypes={issueTypes}
+            issuePriorities={issuePriorities}
             members={members}
             loading={issuesLoading || sprintsLoading}
         />
