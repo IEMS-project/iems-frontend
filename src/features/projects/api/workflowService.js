@@ -67,6 +67,17 @@ export const workflowService = {
     return data?.data || data;
   },
 
+  async syncStatuses(projectId, workflowId, statuses) {
+    const data = await request(
+      `${BASE}/${projectId}/workflows/${workflowId}/statuses/sync`,
+      {
+        method: "POST",
+        body: { statuses },
+      }
+    );
+    return data?.data || data || [];
+  },
+
   // ── Workflow Transitions ─────────────────────────────────────
   async getTransitions(projectId, workflowId) {
     const data = await request(`${BASE}/${projectId}/workflows/${workflowId}/transitions`);

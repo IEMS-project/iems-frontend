@@ -170,6 +170,30 @@ export function ProjectProvider({ children }) {
         }
     }, [projectId]);
 
+    const updateIssueInCache = useCallback((updatedIssue) => {
+        if (!updatedIssue?.id) return;
+
+        setIssues((prev) => {
+            const exists = prev.some((item) => item.id === updatedIssue.id);
+            if (!exists) {
+                return [...prev, updatedIssue];
+            }
+            return prev.map((item) => (item.id === updatedIssue.id ? { ...item, ...updatedIssue } : item));
+        });
+
+        setBacklogIssues((prev) => {
+            if (updatedIssue.sprintId) {
+                return prev.filter((item) => item.id !== updatedIssue.id);
+            }
+
+            const exists = prev.some((item) => item.id === updatedIssue.id);
+            if (!exists) {
+                return [...prev, updatedIssue];
+            }
+            return prev.map((item) => (item.id === updatedIssue.id ? { ...item, ...updatedIssue } : item));
+        });
+    }, []);
+
     // ── Initial Load ───────────────────────────────────────────
     useEffect(() => {
         if (!projectId) return;
@@ -297,6 +321,7 @@ export function ProjectProvider({ children }) {
         refreshWorkflows,
         refreshIssueTypes,
         refreshIssuePriorities,
+        updateIssueInCache,
     };
 
     return (

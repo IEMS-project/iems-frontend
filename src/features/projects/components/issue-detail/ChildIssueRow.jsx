@@ -6,6 +6,22 @@ import { issueService } from "@/features/projects/api/issueService";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "../IssueCard";
 import { getStatusStyle } from "../../utils/issueStyles";
 import InlineDropdown from "../inline-editors/InlineDropdown";
+import Avatar from "@/components/ui/Avatar";
+
+const resolveMemberId = (member) =>
+  member?.accountId ||
+  member?.userId ||
+  member?.user?.accountId ||
+  member?.user?.id ||
+  member?.id;
+
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
 
 export default function ChildIssueRow({ child, issueTypes, issuePriorities, workflowStatuses, members, projectId, onOpenDetail }) {
   const [openField, setOpenField] = useState(null);
@@ -14,7 +30,8 @@ export default function ChildIssueRow({ child, issueTypes, issuePriorities, work
   useEffect(() => setLocal(child), [child]);
 
   const cp = issuePriorities.find(p => p.id === local.priorityId);
-  const ca = members.find(m => (m.accountId || m.id) === local.assigneeId) || local.assignee;
+  const currentAssigneeId = resolveIssueAssigneeId(local);
+  const ca = members.find(m => String(resolveMemberId(m) || "") === String(currentAssigneeId || "")) || local.assignee;
   const caName = ca?.fullName || ca?.userName || ca?.name || ca?.email || null;
   const { icon: CPI, color: cpc } = getPriorityIcon(cp?.name);
   const childTypeName = issueTypes.find(it => it.id === local.issueTypeId)?.name || "TASK";
@@ -41,8 +58,13 @@ export default function ChildIssueRow({ child, issueTypes, issuePriorities, work
   const closeField = () => { setOpenField(null); setAnchorEl(null); };
 
   const statusOptions = workflowStatuses.map(s => ({
-    value: s.id, label: s.name, active: s.id === local.statusId,
-    icon: <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />,
+    value: s.id,
+    label: (
+      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold whitespace-nowrap ${getStatusStyle(s.name)}`}>
+        {s.name}
+      </span>
+    ),
+    active: s.id === local.statusId,
   }));
 
   const priorityOptions = issuePriorities.map(p => {
@@ -50,23 +72,25 @@ export default function ChildIssueRow({ child, issueTypes, issuePriorities, work
     return { value: p.id, label: p.name, active: p.id === local.priorityId, icon: <Icon className={cn("w-3.5 h-3.5", color)} /> };
   });
 
-  const caInitials = caName ? caName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : null;
   const assigneeOptions = [
-    { value: null, label: "Unassigned", active: !local.assigneeId, icon: <User className="w-3.5 h-3.5 text-muted-foreground" /> },
+    { value: null, label: "Unassigned", active: !currentAssigneeId, icon: <User className="w-3.5 h-3.5 text-muted-foreground" /> },
     ...members.map(m => {
       const name = m.fullName || m.userName || m.name || m.email || "?";
-      const id = m.accountId || m.id;
-      const ini = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+      const id = resolveMemberId(m);
       return {
-        value: id, label: name, active: id === local.assigneeId,
-        icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{ini}</div>
+        value: id,
+        label: name,
+        active: String(id || "") === String(currentAssigneeId || ""),
+        icon: <Avatar user={m} name={name} size="xs" />,
       };
     }),
   ];
-  if (local.assigneeId && !members.some(m => (m.accountId || m.id) === local.assigneeId)) {
+  if (currentAssigneeId && !members.some(m => String(resolveMemberId(m) || "") === String(currentAssigneeId))) {
     assigneeOptions.push({
-      value: local.assigneeId, label: caName || "?", active: true,
-      icon: <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{caInitials || "?"}</div>
+      value: currentAssigneeId,
+      label: caName || "?",
+      active: true,
+      icon: <Avatar user={ca} name={caName || "?"} size="xs" />,
     });
   }
 
@@ -106,8 +130,8 @@ export default function ChildIssueRow({ child, issueTypes, issuePriorities, work
       <td className="px-1 py-2 w-28">
         <button type="button" onClick={e => toggle(e, "assignee")}
           className="flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-muted transition-colors">
-          {caInitials
-            ? <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] text-white font-bold shrink-0">{caInitials}</div>
+          {caName
+            ? <Avatar user={ca} name={caName} size="xs" />
             : <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
           <span className="text-xs text-foreground hidden sm:inline truncate">
             {caName ? caName.split(" ")[0] : <span className="text-muted-foreground">—</span>}

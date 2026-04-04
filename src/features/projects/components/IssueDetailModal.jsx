@@ -18,13 +18,22 @@ import IssueActivitySection from "./issue-detail/IssueActivitySection";
 import CollapsibleSection from "./issue-detail/CollapsibleSection";
 
 function initForm(issue) {
+  const resolvedAssigneeId =
+    issue?.assigneeId ||
+    issue?.assignee?.accountId ||
+    issue?.assignee?.userId ||
+    issue?.assignee?.user?.accountId ||
+    issue?.assignee?.user?.id ||
+    issue?.assignee?.id ||
+    "";
+
   return {
     title: issue?.title || "",
     description: issue?.description || "",
     issueTypeId: issue?.issueTypeId || "",
     statusId: issue?.statusId || "",
     priorityId: issue?.priorityId || "",
-    assigneeId: issue?.assigneeId || "",
+    assigneeId: resolvedAssigneeId,
     sprintId: issue?.sprintId || "",
     storyPoints: issue?.storyPoints ?? "",
     dueDate: issue?.dueDate || "",
@@ -66,13 +75,24 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
+  const resolveIssueAssigneeId = (issueData) =>
+    issueData?.assigneeId ||
+    issueData?.assignee?.accountId ||
+    issueData?.assignee?.userId ||
+    issueData?.assignee?.user?.accountId ||
+    issueData?.assignee?.user?.id ||
+    issueData?.assignee?.id ||
+    "";
+
+  const initialAssigneeId = resolveIssueAssigneeId(issue);
+
   const isDirty = issue && (
     form.title !== (issue.title || "") ||
     form.description !== (issue.description || "") ||
     form.issueTypeId !== (issue.issueTypeId || "") ||
     form.statusId !== (issue.statusId || "") ||
     form.priorityId !== (issue.priorityId || "") ||
-    form.assigneeId !== (issue.assigneeId || "") ||
+    String(form.assigneeId || "") !== String(initialAssigneeId || "") ||
     form.sprintId !== (issue.sprintId || "") ||
     String(form.storyPoints) !== String(issue.storyPoints ?? "") ||
     form.dueDate !== (issue.dueDate || "")
@@ -86,7 +106,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
     }
     const dueDateError = validateDates({ startDate: form.dueDate, createdAt: issue?.createdAt });
     if (dueDateError) { toast.warning(dueDateError); return; }
-    
+
     setSaving(true);
     try {
       const patch = {};
@@ -95,14 +115,14 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
       if (form.issueTypeId !== (issue.issueTypeId || "")) patch.issueTypeId = form.issueTypeId;
       if (form.statusId !== (issue.statusId || "")) patch.statusId = form.statusId;
       if (form.priorityId !== (issue.priorityId || "")) patch.priorityId = form.priorityId || null;
-      if (form.assigneeId !== (issue.assigneeId || "")) patch.assigneeId = form.assigneeId || null;
+      if (String(form.assigneeId || "") !== String(initialAssigneeId || "")) patch.assigneeId = form.assigneeId || null;
       if (String(form.storyPoints) !== String(issue.storyPoints ?? "")) {
         patch.storyPoints = form.storyPoints === "" ? null : parseInt(form.storyPoints, 10);
       }
       if (form.dueDate !== (issue.dueDate || "")) patch.dueDate = form.dueDate || null;
 
       if (Object.keys(patch).length > 0) await issueService.updateIssue(projectId, issue.id, patch);
-      
+
       if (form.sprintId !== (issue.sprintId || "")) {
         form.sprintId ? await issueService.moveToSprint(projectId, issue.id, form.sprintId)
           : await issueService.removeFromSprint(projectId, issue.id);
@@ -123,9 +143,16 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
     } catch (e) { toast.error(e?.message || "Error deleting"); }
   };
 
+  const resolveMemberId = (member) =>
+    member?.accountId ||
+    member?.userId ||
+    member?.user?.accountId ||
+    member?.user?.id ||
+    member?.id;
+
   const getAuthorName = (userId) => {
     if (!userId) return null;
-    const m = members.find(m => (m.accountId || m.id) === userId);
+    const m = members.find(m => String(resolveMemberId(m) || "") === String(userId || ""));
     return m?.fullName || m?.userName || m?.name || m?.email || null;
   };
 
@@ -138,7 +165,9 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
   const typeColor = getIssueTypeColor(typeName);
   const priorityObj = issuePriorities.find(p => p.id === form.priorityId);
   const { icon: PriorityIcon, color: prioColor } = getPriorityIcon(priorityObj?.name);
-  const assigneeName = getAuthorName(form.assigneeId) || issue?.assignee?.name || issue?.assignee?.email;
+  const assigneeName = form.assigneeId
+    ? (getAuthorName(form.assigneeId) || issue?.assignee?.name || issue?.assignee?.email)
+    : "";
   const reporterName = getAuthorName(issue.reporterId) || issue?.reporter?.name || issue?.reporter?.email;
 
   return (
@@ -171,7 +200,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
         <div className="h-full flex">
           {/* ════ LEFT COLUMN ════ */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
-            
+
             {/* Issue header — fixed */}
             <div className="flex-shrink-0 px-6 pt-4 pb-3 border-b border-border">
               <div className="flex items-start justify-between gap-3 mb-3">

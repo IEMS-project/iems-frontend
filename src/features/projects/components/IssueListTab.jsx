@@ -3,35 +3,34 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import {
-  Search, Plus, X, ChevronUp, ChevronDown, ChevronDown as ChevDown,
-  Check, Columns, User, ExternalLink,
+  Search, Plus, X, ChevronUp, ChevronDown,
+  Check, Columns, Download, Upload, SlidersHorizontal,
 } from "lucide-react";
 import { useProject } from "@/features/projects/context/ProjectContext";
-import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCard";
 import IssueDetailModal from "./IssueDetailModal";
 import CreateIssueModal from "./CreateIssueModal";
 import Skeleton from "@/components/ui/Skeleton";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { validateDates, todayStr } from "@/features/projects/utils/dateValidation";
-import { getStatusStyle } from "../utils/issueStyles";
+import Modal from "@/components/ui/Modal";
 import IssueRow from "./issue-table/IssueRow";
+import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
 
 // ── Column definitions ─────────────────────────────────────────────────────
 
 const ALL_COLUMNS = [
-  { key: "key",        label: "Key",          sortable: false, defaultVisible: true,  width: "w-28" },
-  { key: "title",      label: "Title",        sortable: true,  defaultVisible: true,  width: "min-w-[200px]" },
-  { key: "status",     label: "Status",       sortable: true,  defaultVisible: true,  width: "w-36" },
-  { key: "priority",   label: "Priority",     sortable: true,  defaultVisible: true,  width: "w-32" },
-  { key: "assignee",   label: "Assignee",     sortable: false, defaultVisible: true,  width: "w-40" },
-  { key: "sprint",     label: "Sprint",       sortable: true,  defaultVisible: true,  width: "w-36" },
-  { key: "storyPoints",label: "SP",           sortable: true,  defaultVisible: true,  width: "w-16" },
-  { key: "dueDate",    label: "Due Date",     sortable: true,  defaultVisible: true,  width: "w-32" },
-  { key: "type",       label: "Type",         sortable: false, defaultVisible: false, width: "w-28" },
-  { key: "reporter",   label: "Reporter",     sortable: false, defaultVisible: false, width: "w-36" },
-  { key: "parent",     label: "Parent",       sortable: false, defaultVisible: false, width: "w-28" },
+  { key: "key", label: "Key", sortable: false, defaultVisible: true, width: "w-28" },
+  { key: "title", label: "Title", sortable: true, defaultVisible: true, width: "min-w-[200px]" },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true, width: "w-36" },
+  { key: "priority", label: "Priority", sortable: true, defaultVisible: true, width: "w-32" },
+  { key: "assignee", label: "Assignee", sortable: false, defaultVisible: true, width: "w-40" },
+  { key: "sprint", label: "Sprint", sortable: true, defaultVisible: true, width: "w-36" },
+  { key: "storyPoints", label: "SP", sortable: true, defaultVisible: true, width: "w-16" },
+  { key: "dueDate", label: "Due Date", sortable: true, defaultVisible: true, width: "w-32" },
+  { key: "type", label: "Type", sortable: false, defaultVisible: false, width: "w-28" },
+  { key: "reporter", label: "Reporter", sortable: false, defaultVisible: false, width: "w-36" },
+  { key: "parent", label: "Parent", sortable: false, defaultVisible: false, width: "w-28" },
 ];
 
 
@@ -85,14 +84,109 @@ function ColumnToggleDropdown({ visibleColumns, onToggle, onClose, anchorEl }) {
 // ── Main component ──────────────────────────────────────────────────────────
 
 const SORT_FIELDS = ["title", "status", "priority", "sprint", "storyPoints", "dueDate"];
+const PAGE_SIZE = 8;
+
+const resolveMemberId = (member) =>
+  member?.accountId ||
+  member?.userId ||
+  member?.user?.accountId ||
+  member?.user?.id ||
+  member?.id;
+
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
+
+function ImportIssuesModal({
+  open,
+  importing,
+  selectedFile,
+  downloadingTemplate,
+  onClose,
+  onFileChange,
+  onSubmit,
+  onDownloadTemplate,
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Import Issues from Excel"
+      className="max-w-lg"
+      footer={(
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={importing}
+            className="px-3 py-2 rounded-md border border-border text-sm hover:bg-muted transition-colors disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={importing}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            <Upload className="w-4 h-4" />
+            {importing ? "Importing..." : "Import"}
+          </button>
+        </div>
+      )}
+    >
+      <div className="space-y-3 text-sm">
+        <p className="text-muted-foreground">
+          Upload an .xlsx file with columns: Issue Key, Issue Type, Title, Description, Priority, Assignee Email, Sprint Name, Story Points, Due Date.
+        </p>
+        <button
+          type="button"
+          onClick={onDownloadTemplate}
+          disabled={importing || downloadingTemplate}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+        >
+          <Download className="w-4 h-4" />
+          {downloadingTemplate ? "Downloading template..." : "Download Template"}
+        </button>
+        <input
+          type="file"
+          accept=".xlsx"
+          onChange={onFileChange}
+          disabled={importing}
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+        />
+        {selectedFile && (
+          <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Selected file: <span className="font-medium text-foreground">{selectedFile.name}</span>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
 
 export default function IssueListTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const {
-    issues, workflowStatuses, issueTypes, issuePriorities, members, sprints,
-    issuesLoading, refreshIssues,
+    workflowStatuses, issueTypes, issuePriorities, members, sprints,
+    updateIssueInCache,
   } = useProject();
+
+  const [issues, setIssues] = useState([]);
+  const [issuesLoading, setIssuesLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageInfo, setPageInfo] = useState({
+    page: 0,
+    size: PAGE_SIZE,
+    totalElements: 0,
+    totalPages: 0,
+    last: true,
+  });
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -105,12 +199,49 @@ export default function IssueListTab() {
 
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [selectedImportFile, setSelectedImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
   // Column visibility
   const defaultVisible = new Set(ALL_COLUMNS.filter(c => c.defaultVisible).map(c => c.key));
   const [visibleColumns, setVisibleColumns] = useState(defaultVisible);
   const [showColDropdown, setShowColDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterBtnRef = useRef(null);
   const colBtnRef = useRef(null);
+
+  const loadPagedIssues = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setIssuesLoading(true);
+      const result = await issueService.getIssuesPaged(projectId, page, PAGE_SIZE);
+      setIssues(Array.isArray(result?.content) ? result.content : []);
+      setPageInfo({
+        page: result?.page ?? page,
+        size: result?.size ?? PAGE_SIZE,
+        totalElements: result?.totalElements ?? 0,
+        totalPages: result?.totalPages ?? 0,
+        last: result?.last ?? true,
+      });
+    } catch (error) {
+      setIssues([]);
+      setPageInfo({ page, size: PAGE_SIZE, totalElements: 0, totalPages: 0, last: true });
+      toast.error(error?.message || "Failed to load issues");
+    } finally {
+      setIssuesLoading(false);
+    }
+  }, [projectId, page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [projectId]);
+
+  useEffect(() => {
+    loadPagedIssues();
+  }, [loadPagedIssues]);
 
   const toggleColumn = useCallback((key) => {
     setVisibleColumns(prev => {
@@ -127,7 +258,7 @@ export default function IssueListTab() {
   const memberMap = useMemo(() => {
     const map = {};
     members.forEach(m => {
-      const id = m.accountId || m.id || m.userId;
+      const id = resolveMemberId(m);
       if (id) map[id] = m;
     });
     return map;
@@ -140,7 +271,11 @@ export default function IssueListTab() {
     else { setSortField(field); setSortDir("asc"); }
   };
 
-  const hasActiveFilters = filterStatus || filterType || filterPriority || filterAssignee || filterSprint || search;
+  const activeFilterCount = useMemo(
+    () => [filterStatus, filterType, filterPriority, filterAssignee, filterSprint].filter(Boolean).length,
+    [filterStatus, filterType, filterPriority, filterAssignee, filterSprint]
+  );
+  const hasActiveFilters = Boolean(search?.trim()) || activeFilterCount > 0;
 
   const clearFilters = () => {
     setSearch(""); setFilterStatus(""); setFilterType("");
@@ -154,7 +289,19 @@ export default function IssueListTab() {
     if (filterStatus) list = list.filter(i => i.statusId === filterStatus);
     if (filterType) list = list.filter(i => i.issueTypeId === filterType);
     if (filterPriority) list = list.filter(i => i.priorityId === filterPriority);
-    if (filterAssignee) list = list.filter(i => (i.assigneeId || i.assignee?.id) === filterAssignee);
+    if (filterAssignee) {
+      const selectedMember = members.find((m) => String(resolveMemberId(m) || "") === String(filterAssignee));
+      const selectedEmail = String(selectedMember?.email || selectedMember?.user?.email || "").trim().toLowerCase();
+      list = list.filter((i) => {
+        const issueAssigneeId = resolveIssueAssigneeId(i);
+        const sameId = String(issueAssigneeId || "").trim().toLowerCase() === String(filterAssignee).trim().toLowerCase();
+        if (sameId) return true;
+
+        if (!selectedEmail) return false;
+        const issueAssigneeEmail = String(i.assignee?.email || i.assigneeEmail || "").trim().toLowerCase();
+        return issueAssigneeEmail && issueAssigneeEmail === selectedEmail;
+      });
+    }
     if (filterSprint) {
       if (filterSprint === "__backlog__") list = list.filter(i => !i.sprintId);
       else list = list.filter(i => i.sprintId === filterSprint);
@@ -173,7 +320,7 @@ export default function IssueListTab() {
       return sortDir === "asc" ? va - vb : vb - va;
     });
     return list;
-  }, [issues, search, filterStatus, filterType, filterPriority, filterAssignee, filterSprint,
+  }, [issues, members, search, filterStatus, filterType, filterPriority, filterAssignee, filterSprint,
     sortField, sortDir, statusMap, priorityMap, sprintMap]);
 
   const SortIcon = ({ field }) => {
@@ -195,6 +342,80 @@ export default function IssueListTab() {
   );
 
   const colCount = visibleColumns.size;
+
+  const handleImportFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setSelectedImportFile(file);
+  };
+
+  const handleDownloadTemplate = async () => {
+    if (!projectId || downloadingTemplate) return;
+    try {
+      setDownloadingTemplate(true);
+      const { blob, fileName } = await issueService.downloadIssueImportTemplate(projectId);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName || "issue-import-template.xlsx";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Template downloaded successfully");
+    } catch (error) {
+      toast.error(error?.message || "Failed to download template");
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  };
+
+  const handleImportIssues = async () => {
+    if (!projectId) return;
+    if (!selectedImportFile) {
+      toast.warning("Please choose an Excel file to import");
+      return;
+    }
+
+    const fileName = selectedImportFile.name?.toLowerCase() || "";
+    if (!fileName.endsWith(".xlsx")) {
+      toast.error("Only .xlsx files are supported");
+      return;
+    }
+
+    try {
+      setImporting(true);
+      const result = await issueService.importIssuesFromExcel(projectId, selectedImportFile);
+      toast.success(result?.message || "Issues imported successfully");
+      setShowImport(false);
+      setSelectedImportFile(null);
+      await loadPagedIssues();
+    } catch (error) {
+      toast.error(error?.message || "Failed to import issues");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleExportIssues = async () => {
+    if (!projectId || exporting) return;
+    try {
+      setExporting(true);
+      const { blob, fileName } = await issueService.downloadIssuesExport(projectId);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName || "issues-export.xlsx";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Issues exported successfully");
+    } catch (error) {
+      toast.error(error?.message || "Failed to export issues");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (issuesLoading) {
     return (
@@ -220,46 +441,47 @@ export default function IssueListTab() {
           />
         </div>
 
-        {/* Status filter */}
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-2 py-2 text-sm">
-          <option value="">{t("issues.filters.status", "Status: All")}</option>
-          {workflowStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+        <div className="relative">
+          <button
+            ref={filterBtnRef}
+            type="button"
+            onClick={() => setShowFilterDropdown(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+            <span className={cn(
+              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-medium",
+              activeFilterCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              {activeFilterCount}
+            </span>
+          </button>
+          {showFilterDropdown && (
+            <IssueFiltersDropdown
+              onClose={() => setShowFilterDropdown(false)}
+              onClear={clearFilters}
+              anchorEl={filterBtnRef.current}
+              workflowStatuses={workflowStatuses}
+              issueTypes={issueTypes}
+              issuePriorities={issuePriorities}
+              members={members}
+              sprints={sprints}
+              includeBacklogSprintOption
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterPriority={filterPriority}
+              setFilterPriority={setFilterPriority}
+              filterAssignee={filterAssignee}
+              setFilterAssignee={setFilterAssignee}
+              filterSprint={filterSprint}
+              setFilterSprint={setFilterSprint}
+            />
+          )}
+        </div>
 
-        {/* Type filter */}
-        <select value={filterType} onChange={e => setFilterType(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-2 py-2 text-sm">
-          <option value="">{t("issues.filters.type", "Type: All")}</option>
-          {issueTypes.map(tp => <option key={tp.id} value={tp.id}>{tp.name}</option>)}
-        </select>
-
-        {/* Priority filter */}
-        <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-2 py-2 text-sm">
-          <option value="">{t("issues.filters.priority", "Priority: All")}</option>
-          {issuePriorities.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-
-        {/* Assignee filter */}
-        <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-2 py-2 text-sm">
-          <option value="">{t("issues.filters.assignee", "Assignee: All")}</option>
-          {members.map(m => {
-            const id = m.accountId || m.id || m.userId;
-            return <option key={id} value={id}>{m.fullName || m.userName || m.email || id}</option>;
-          })}
-        </select>
-
-        {/* Sprint filter */}
-        <select value={filterSprint} onChange={e => setFilterSprint(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-2 py-2 text-sm">
-          <option value="">{t("issues.filters.sprint", "Sprint: All")}</option>
-          <option value="__backlog__">Backlog</option>
-          {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-
-        {/* Clear */}
         {hasActiveFilters && (
           <button onClick={clearFilters}
             className="flex items-center gap-1 px-2 py-2 rounded-md border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
@@ -268,7 +490,9 @@ export default function IssueListTab() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{filteredSorted.length} {t("issues.issues", "issues")}</span>
+          <span className="text-sm text-muted-foreground">
+            {pageInfo.totalElements} {t("issues.issues", "issues")}
+          </span>
 
           {/* Column toggle button */}
           <div className="relative">
@@ -292,6 +516,25 @@ export default function IssueListTab() {
           </div>
 
           <button
+            type="button"
+            onClick={handleExportIssues}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+          >
+            <Download className="w-4 h-4" />
+            {exporting ? "Exporting..." : "Export"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            Import Excel
+          </button>
+
+          <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
@@ -306,17 +549,17 @@ export default function IssueListTab() {
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50 sticky top-0 z-10">
             <tr>
-              {visibleColumns.has("key")         && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Key" /></th>}
-              {visibleColumns.has("title")        && <th className="px-3 py-2.5 text-left min-w-[200px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
-              {visibleColumns.has("status")       && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
-              {visibleColumns.has("priority")     && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
-              {visibleColumns.has("assignee")     && <th className="px-3 py-2.5 text-left w-40"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
-              {visibleColumns.has("sprint")       && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
-              {visibleColumns.has("storyPoints")  && <th className="px-3 py-2.5 text-center w-16"><ThBtn field="storyPoints" label="SP" /></th>}
-              {visibleColumns.has("dueDate")      && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="dueDate" label="Due Date" /></th>}
-              {visibleColumns.has("type")         && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Type" /></th>}
-              {visibleColumns.has("reporter")     && <th className="px-3 py-2.5 text-left w-36"><ThLabel label="Reporter" /></th>}
-              {visibleColumns.has("parent")       && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Parent" /></th>}
+              {visibleColumns.has("key") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Key" /></th>}
+              {visibleColumns.has("title") && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
+              {visibleColumns.has("status") && <th className="px-3 py-2.5 text-left w-36 min-w-[9rem] whitespace-nowrap"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
+              {visibleColumns.has("priority") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
+              {visibleColumns.has("assignee") && <th className="px-3 py-2.5 text-left w-40"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
+              {visibleColumns.has("sprint") && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
+              {visibleColumns.has("storyPoints") && <th className="px-3 py-2.5 text-center w-16"><ThBtn field="storyPoints" label="SP" /></th>}
+              {visibleColumns.has("dueDate") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="dueDate" label="Due Date" /></th>}
+              {visibleColumns.has("type") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Type" /></th>}
+              {visibleColumns.has("reporter") && <th className="px-3 py-2.5 text-left w-36"><ThLabel label="Reporter" /></th>}
+              {visibleColumns.has("parent") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Parent" /></th>}
             </tr>
           </thead>
           <tbody>
@@ -347,7 +590,10 @@ export default function IssueListTab() {
                   issuesMap={issuesMap}
                   projectId={projectId}
                   onOpenDetail={setSelectedIssue}
-                  onUpdated={refreshIssues}
+                  onUpdated={(updatedIssue) => {
+                    setIssues((prev) => prev.map((item) => (item.id === updatedIssue.id ? { ...item, ...updatedIssue } : item)));
+                    updateIssueInCache?.(updatedIssue);
+                  }}
                 />
               ))
             )}
@@ -355,19 +601,56 @@ export default function IssueListTab() {
         </table>
       </div>
 
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+          disabled={issuesLoading || page <= 0}
+          className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-60"
+        >
+          Prev
+        </button>
+        <span className="text-sm text-muted-foreground">
+          Page {Math.max((pageInfo.page ?? 0) + 1, 1)} / {Math.max(pageInfo.totalPages, 1)}
+        </span>
+        <button
+          type="button"
+          onClick={() => setPage((prev) => prev + 1)}
+          disabled={issuesLoading || pageInfo.last || pageInfo.totalPages <= 1}
+          className="px-3 py-1.5 rounded-md border border-border text-sm hover:bg-muted disabled:opacity-60"
+        >
+          Next
+        </button>
+      </div>
+
       {/* Issue Detail Modal */}
       <IssueDetailModal
         open={!!selectedIssue}
         onClose={() => setSelectedIssue(null)}
         issue={selectedIssue}
-        onUpdate={async () => { setSelectedIssue(null); await refreshIssues(); }}
+        onUpdate={async () => { setSelectedIssue(null); await loadPagedIssues(); }}
       />
 
       {/* Create Issue Modal */}
       <CreateIssueModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        onCreated={async () => { setShowCreate(false); await refreshIssues(); }}
+        onCreated={async () => { setShowCreate(false); await loadPagedIssues(); }}
+      />
+
+      <ImportIssuesModal
+        open={showImport}
+        importing={importing}
+        selectedFile={selectedImportFile}
+        downloadingTemplate={downloadingTemplate}
+        onClose={() => {
+          if (importing) return;
+          setShowImport(false);
+          setSelectedImportFile(null);
+        }}
+        onFileChange={handleImportFileChange}
+        onSubmit={handleImportIssues}
+        onDownloadTemplate={handleDownloadTemplate}
       />
     </div>
   );

@@ -32,6 +32,7 @@ const INITIAL_BASIC_INFO = {
 export default function CreateProjectModal({ open, onClose, onCreated }) {
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [initializingStepData, setInitializingStepData] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState(null);
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
 
@@ -56,7 +57,57 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setPriorities([]);
         setIssueTypes([]);
         setActiveIconPicker(null);
+        setInitializingStepData(false);
         onClose();
+    };
+
+    const loadProjectDefaults = async (projectId) => {
+        setInitializingStepData(true);
+        try {
+            const [workflows, priorList, issueTypeList] = await Promise.all([
+                workflowService.getWorkflows(projectId),
+                projectService.getIssuePriorities(projectId),
+                projectService.getIssueTypes(projectId),
+            ]);
+
+            if (workflows.length > 0) {
+                const wf = workflows[0];
+                const statuses = await workflowService.getStatuses(projectId, wf.id);
+                setWorkflowData({
+                    id: wf.id,
+                    name: wf.name || "Default Workflow",
+                    statuses: statuses.map(s => ({ id: s.id, name: s.name, color: s.color || "#6B7280" })),
+                });
+            } else {
+                setWorkflowData({ id: null, name: "Default Workflow", statuses: [] });
+            }
+
+            if (priorList.length > 0) {
+                setPriorities(priorList.map((p, i) => ({
+                    id: p.id,
+                    name: p.name,
+                    color: p.color || "#6B7280",
+                    level: p.level ?? i + 1,
+                })));
+            } else {
+                setPriorities([]);
+            }
+
+            if (issueTypeList.length > 0) {
+                setIssueTypes(issueTypeList.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    description: t.description || "",
+                    iconUrl: t.iconUrl || "",
+                })));
+            } else {
+                setIssueTypes([]);
+            }
+        } catch (error) {
+            toast.error(error?.message || "Failed to load project defaults");
+        } finally {
+            setInitializingStepData(false);
+        }
     };
 
     const handleNameChange = (value) => {
@@ -94,52 +145,10 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             const created = await projectService.createProject(projectData);
             const projectId = created.id;
             setCreatedProjectId(projectId);
-
-            // Load backend-seeded defaults in parallel
-            const [workflows, priorList, issueTypeList] = await Promise.all([
-                workflowService.getWorkflows(projectId),
-                projectService.getIssuePriorities(projectId),
-                projectService.getIssueTypes(projectId),
-            ]);
-
-            // Populate workflow step with existing data
-            if (workflows.length > 0) {
-                const wf = workflows[0];
-                const statuses = await workflowService.getStatuses(projectId, wf.id);
-                setWorkflowData({
-                    id: wf.id,
-                    name: wf.name || "Default Workflow",
-                    statuses: statuses.map(s => ({ id: s.id, name: s.name, color: s.color || "#6B7280" })),
-                });
-            } else {
-                setWorkflowData({ id: null, name: "Default Workflow", statuses: [] });
-            }
-
-            // Populate priority step with existing data
-            if (priorList.length > 0) {
-                setPriorities(priorList.map((p, i) => ({
-                    id: p.id,
-                    name: p.name,
-                    color: p.color || "#6B7280",
-                    level: p.level ?? i + 1,
-                })));
-            } else {
-                setPriorities([]);
-            }
-
-            // Populate issue types step with existing data
-            if (issueTypeList.length > 0) {
-                setIssueTypes(issueTypeList.map(t => ({
-                    id: t.id,
-                    name: t.name,
-                    description: t.description || "",
-                    iconUrl: t.iconUrl || "",
-                })));
-            } else {
-                setIssueTypes([]);
-            }
-
             setStep(1);
+            setLoading(false);
+            loadProjectDefaults(projectId);
+            return;
         } catch (error) {
             toast.error(error?.message || "Failed to create project");
         } finally {
@@ -156,32 +165,29 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                 await workflowService.updateWorkflow(createdProjectId, workflowData.id, {
                     name: workflowData.name,
                 });
-                for (const status of workflowData.statuses) {
-                    if (status._removed && status.id) {
-                        await workflowService.deleteStatus(createdProjectId, workflowData.id, status.id);
-                    } else if (status.id && !status._removed) {
-                        await workflowService.updateStatus(createdProjectId, workflowData.id, status.id, {
-                            name: status.name,
-                            color: status.color,
-                        });
-                    } else if (!status.id && !status._removed && status.name.trim()) {
-                        await workflowService.createStatus(createdProjectId, workflowData.id, {
-                            name: status.name,
-                            color: status.color,
-                        });
-                    }
-                }
+                await workflowService.syncStatuses(
+                    createdProjectId,
+                    workflowData.id,
+                    workflowData.statuses.map((status) => ({
+                        id: status.id || null,
+                        name: status.name,
+                        color: status.color,
+                        _removed: Boolean(status._removed),
+                    }))
+                );
             } else if (workflowData.name.trim()) {
                 // No backend workflow was seeded — create from scratch
                 const wf = await workflowService.createWorkflow(createdProjectId, { name: workflowData.name });
-                for (const status of workflowData.statuses) {
-                    if (!status._removed && status.name.trim()) {
-                        await workflowService.createStatus(createdProjectId, wf.id, {
-                            name: status.name,
-                            color: status.color,
-                        });
-                    }
-                }
+                await workflowService.syncStatuses(
+                    createdProjectId,
+                    wf.id,
+                    workflowData.statuses.map((status) => ({
+                        id: status.id || null,
+                        name: status.name,
+                        color: status.color,
+                        _removed: Boolean(status._removed),
+                    }))
+                );
             }
             setStep(2);
         } catch (error) {
@@ -195,24 +201,16 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     const handleStep3Next = async () => {
         setLoading(true);
         try {
-            let levelCounter = 1;
-            for (const priority of priorities) {
-                if (priority._removed && priority.id) {
-                    await projectService.deleteIssuePriority(createdProjectId, priority.id);
-                } else if (priority.id && !priority._removed) {
-                    await projectService.updateIssuePriority(createdProjectId, priority.id, {
-                        name: priority.name,
-                        color: priority.color,
-                        level: levelCounter++,
-                    });
-                } else if (!priority.id && !priority._removed && priority.name.trim()) {
-                    await projectService.createIssuePriority(createdProjectId, {
-                        name: priority.name,
-                        color: priority.color,
-                        level: levelCounter++,
-                    });
-                }
-            }
+            await projectService.syncIssuePriorities(
+                createdProjectId,
+                priorities.map((priority) => ({
+                    id: priority.id || null,
+                    name: priority.name,
+                    color: priority.color,
+                    iconUrl: priority.iconUrl || null,
+                    _removed: Boolean(priority._removed),
+                }))
+            );
             setStep(3);
         } catch (error) {
             toast.error(error?.message || "Failed to save priorities");
@@ -225,23 +223,16 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     const handleStep4Finish = async () => {
         setLoading(true);
         try {
-            for (const issueType of issueTypes) {
-                if (issueType._removed && issueType.id) {
-                    await projectService.deleteIssueType(createdProjectId, issueType.id);
-                } else if (issueType.id && !issueType._removed) {
-                    await projectService.updateIssueType(createdProjectId, issueType.id, {
-                        name: issueType.name,
-                        description: issueType.description,
-                        iconUrl: issueType.iconUrl || null,
-                    });
-                } else if (!issueType.id && !issueType._removed && issueType.name.trim()) {
-                    await projectService.createIssueType(createdProjectId, {
-                        name: issueType.name,
-                        description: issueType.description,
-                        iconUrl: issueType.iconUrl || null,
-                    });
-                }
-            }
+            await projectService.syncIssueTypes(
+                createdProjectId,
+                issueTypes.map((issueType) => ({
+                    id: issueType.id || null,
+                    name: issueType.name,
+                    description: issueType.description,
+                    iconUrl: issueType.iconUrl || null,
+                    _removed: Boolean(issueType._removed),
+                }))
+            );
             toast.success("Project created successfully");
             onCreated?.();
             handleClose();
@@ -326,21 +317,39 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
 
     // ── Step indicator ────────────────────────────────────────────
     const stepIndicator = (
-        <div className="flex items-center gap-0 mt-2">
-            {STEP_TITLES.map((title, i) => (
-                <React.Fragment key={i}>
-                    <div className={`flex items-center gap-1.5 text-xs ${i <= step ? "text-blue-500" : "text-muted-foreground"}`}>
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < step ? "bg-blue-500 text-white" : i === step ? "bg-blue-500 text-white" : "bg-muted text-muted-foreground"
-                            }`}>
-                            {i < step ? "✓" : i + 1}
+        <div className="mt-3 rounded-full border border-border bg-muted p-1">
+            <div className="flex items-center gap-1 overflow-x-auto">
+                {STEP_TITLES.map((title, i) => {
+                    const isActive = i === step;
+                    const isDone = i < step;
+
+                    return (
+                        <div
+                            key={i}
+                            className={`min-w-[140px] flex-1 rounded-full border px-3 py-1.5 transition-all duration-200 ${isActive
+                                    ? "border-primary bg-primary text-primary-foreground shadow"
+                                    : isDone
+                                        ? "border-border bg-background text-foreground"
+                                        : "border-transparent bg-transparent text-muted-foreground"
+                                }`}
+                        >
+                            <div className="flex items-center gap-2 whitespace-nowrap">
+                                <div
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${isActive
+                                            ? "bg-primary-foreground/15 text-primary-foreground"
+                                            : isDone
+                                                ? "bg-primary/10 text-primary"
+                                                : "bg-background text-muted-foreground"
+                                        }`}
+                                >
+                                    {isDone ? "✓" : i + 1}
+                                </div>
+                                <span className="text-xs font-medium">{title}</span>
+                            </div>
                         </div>
-                        <span className={`font-medium whitespace-nowrap ${i === step ? "text-blue-500" : ""}`}>{title}</span>
-                    </div>
-                    {i < STEP_TITLES.length - 1 && (
-                        <div className={`flex-1 h-px mx-2 min-w-[16px] ${i < step ? "bg-blue-500" : "bg-border"}`} />
-                    )}
-                </React.Fragment>
-            ))}
+                    );
+                })}
+            </div>
         </div>
     );
 
@@ -356,9 +365,9 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                 </>
             ) : step === 1 ? (
                 <>
-                    <Button variant="secondary" onClick={() => setStep(2)} disabled={loading}>Skip</Button>
-                    <Button onClick={handleStep2Next} disabled={loading}>
-                        {loading ? "Saving…" : "Next →"}
+                    <Button variant="secondary" onClick={() => setStep(2)} disabled={loading || initializingStepData}>Skip</Button>
+                    <Button onClick={handleStep2Next} disabled={loading || initializingStepData}>
+                        {initializingStepData ? "Loading…" : loading ? "Saving…" : "Next →"}
                     </Button>
                 </>
             ) : step === 2 ? (
@@ -391,7 +400,12 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         <Modal
             open={open}
             onClose={handleClose}
-            title={<div><span>Create New Project</span>{stepIndicator}</div>}
+            title={
+                <div className="space-y-1">
+                    <span className="text-base font-semibold tracking-tight">Create New Project</span>
+                    {stepIndicator}
+                </div>
+            }
             footer={footer}
         >
             {/* ── Step 1: Basic Information ── */}
@@ -438,6 +452,11 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             {/* ── Step 2: Workflow ── */}
             {step === 1 && (
                 <div className="space-y-4">
+                    {initializingStepData && (
+                        <div className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+                            Loading default workflow, priorities, and issue types...
+                        </div>
+                    )}
                     <p className="text-sm text-muted-foreground">
                         Review and customize the default workflow. You can change this later in project settings.
                     </p>

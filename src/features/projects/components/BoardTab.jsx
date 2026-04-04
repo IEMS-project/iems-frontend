@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import { GripVertical, Plus, Search, Check, X, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Search, Check, X, Trash2, SlidersHorizontal, ChevronDown } from "lucide-react";
 import {
   DndContext, DragOverlay,
   PointerSensor, useSensor, useSensors, closestCenter,
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import IssueCard from "./IssueCard";
 import IssueDetailModal from "./IssueDetailModal";
 import CreateIssueModal from "./CreateIssueModal";
+import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { sprintService } from "@/features/projects/api/sprintService";
@@ -29,6 +30,14 @@ const COL_PRESET_COLORS = [
   "#6b7280", "#3b82f6", "#10b981", "#f59e0b",
   "#f97316", "#ef4444", "#8b5cf6", "#06b6d4",
 ];
+
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
 
 // ── Sortable column shell — grip handle activates dnd-kit ────────
 function SortableColumn({ id, children }) {
@@ -102,6 +111,12 @@ export default function BoardTab() {
   const [loadingSprintIssues, setLoadingSprintIssues] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterBtnRef = useRef(null);
 
   // Tracks the active drag (card or column) for DragOverlay + modifier selection
   const [activeItem, setActiveItem] = useState(null);
@@ -181,13 +196,27 @@ export default function BoardTab() {
         i.issueKey?.toLowerCase().includes(q)
       );
     }
+    if (filterStatus) filtered = filtered.filter((i) => String(i.statusId || "") === String(filterStatus));
+    if (filterType) filtered = filtered.filter((i) => String(i.issueTypeId || "") === String(filterType));
+    if (filterPriority) filtered = filtered.filter((i) => String(i.priorityId || "") === String(filterPriority));
+    if (filterAssignee) filtered = filtered.filter((i) => String(resolveIssueAssigneeId(i) || "") === String(filterAssignee));
     const columns = {};
     workflowStatuses.forEach(status => { columns[status.id] = { status, issues: [] }; });
     filtered.forEach(issue => {
       if (columns[issue.statusId]) columns[issue.statusId].issues.push(issue);
     });
     return columns;
-  }, [sprintIssues, workflowStatuses, searchQuery]);
+  }, [sprintIssues, workflowStatuses, searchQuery, filterStatus, filterType, filterPriority, filterAssignee]);
+
+  const activeFilterCount = [filterStatus, filterType, filterPriority, filterAssignee].filter(Boolean).length;
+  const hasActiveFilters = Boolean(searchQuery?.trim()) || activeFilterCount > 0;
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterStatus("");
+    setFilterType("");
+    setFilterPriority("");
+    setFilterAssignee("");
+  };
 
   // ── Unified drag handlers ─────────────────────────────────────
 
@@ -377,31 +406,76 @@ export default function BoardTab() {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={selectedSprintId}
-          onChange={e => setSelectedSprintId(e.target.value)}
-          className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm font-medium min-w-[180px]"
-        >
-          {sprints.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.name} {s.status === "ACTIVE" ? "★" : ""}
-            </option>
-          ))}
-        </select>
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[180px] flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder={t("issues.search", "Search...")}
+            placeholder={t("issues.search", "Search issues...")}
             className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-foreground text-sm"
           />
         </div>
-        <span className="text-sm text-muted-foreground ml-auto">
-          {sprintIssues.length} {t("issues.issues", "issues")}
-        </span>
+        <div className="relative">
+          <button
+            ref={filterBtnRef}
+            type="button"
+            onClick={() => setShowFilterDropdown((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+            <span className={cn(
+              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-medium",
+              activeFilterCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              {activeFilterCount}
+            </span>
+          </button>
+          {showFilterDropdown && (
+            <IssueFiltersDropdown
+              anchorEl={filterBtnRef.current}
+              onClose={() => setShowFilterDropdown(false)}
+              onClear={clearFilters}
+              workflowStatuses={workflowStatuses}
+              issueTypes={issueTypes}
+              issuePriorities={issuePriorities}
+              members={members}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterPriority={filterPriority}
+              setFilterPriority={setFilterPriority}
+              filterAssignee={filterAssignee}
+              setFilterAssignee={setFilterAssignee}
+            />
+          )}
+        </div>
+        {hasActiveFilters && (
+          <button onClick={clearFilters}
+            className="flex items-center gap-1 px-2 py-2 rounded-md border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <X className="w-3.5 h-3.5" />{t("issues.clearFilters", "Clear")}
+          </button>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <select
+            value={selectedSprintId}
+            onChange={e => setSelectedSprintId(e.target.value)}
+            className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm font-medium min-w-[180px]"
+          >
+            {sprints.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.name} {s.status === "ACTIVE" ? "★" : ""}
+              </option>
+            ))}
+          </select>
+          <span className="text-sm text-muted-foreground">
+            {sprintIssues.length} {t("issues.issues", "issues")}
+          </span>
+        </div>
       </div>
 
       {/* Board */}

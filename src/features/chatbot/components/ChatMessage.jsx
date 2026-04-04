@@ -60,7 +60,7 @@ const CodeBlock = ({ language, children }) => {
   );
 };
 
-const ChatMessage = ({ message, isUser = false, timestamp }) => {
+const ChatMessage = ({ message, isUser = false, timestamp, attachments = [] }) => {
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`${isUser ? 'max-w-[85%] sm:max-w-[80%] order-first' : 'w-full'}`}>
@@ -69,7 +69,21 @@ const ChatMessage = ({ message, isUser = false, timestamp }) => {
           : 'text-foreground'
           }`}>
           {isUser ? (
-            <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+            <div>
+              {attachments.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {attachments.map((attachment) => (
+                    <span
+                      key={attachment.id || attachment.name || attachment}
+                      className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-[11px]"
+                    >
+                      {attachment.name || attachment}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+            </div>
           ) : (
             <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-p:text-foreground prose-headings:text-foreground prose-li:text-foreground prose-strong:text-foreground">
               <ReactMarkdown

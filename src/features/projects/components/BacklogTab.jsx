@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import {
@@ -8,9 +8,11 @@ import {
 } from "@dnd-kit/core";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
+import Avatar from "@/components/ui/Avatar";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCard";
 import CreateIssueModal from "./CreateIssueModal";
 import IssueDetailModal from "./IssueDetailModal";
+import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { sprintService } from "@/features/projects/api/sprintService";
@@ -18,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Plus, ChevronDown, ChevronRight, Play, CheckCircle2, Search,
-  Layers, GripVertical,
+  Layers, GripVertical, SlidersHorizontal, X,
 } from "lucide-react";
 
 const SPRINT_STATUS_COLORS = {
@@ -27,6 +29,14 @@ const SPRINT_STATUS_COLORS = {
   COMPLETED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
 };
+
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
 
 // ── Droppable zone with blue-ring highlight on hover ────────────
 function DroppableZone({ id, children, className, disabled }) {
@@ -98,7 +108,7 @@ export default function BacklogTab() {
   const { projectId } = useParams();
   const {
     issues, backlogIssues, sprints, issueTypes, issuePriorities,
-    members, issuesLoading, sprintsLoading, refreshIssues, refreshSprints,
+    members, workflowStatuses, issuesLoading, sprintsLoading, refreshIssues, refreshSprints,
   } = useProject();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -106,6 +116,12 @@ export default function BacklogTab() {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [expandedSprints, setExpandedSprints] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterBtnRef = useRef(null);
   const [activeIssue, setActiveIssue] = useState(null);
 
   // Multi-select
@@ -149,12 +165,29 @@ export default function BacklogTab() {
   }, [localIssues, localBacklog]);
 
   const filterIssues = (list) => {
-    if (!searchQuery) return list;
-    const q = searchQuery.toLowerCase();
-    return list.filter(i =>
-      i.title?.toLowerCase().includes(q) ||
-      i.issueKey?.toLowerCase().includes(q)
-    );
+    let out = list;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      out = out.filter(i =>
+        i.title?.toLowerCase().includes(q) ||
+        i.issueKey?.toLowerCase().includes(q)
+      );
+    }
+    if (filterStatus) out = out.filter((i) => String(i.statusId || "") === String(filterStatus));
+    if (filterType) out = out.filter((i) => String(i.issueTypeId || "") === String(filterType));
+    if (filterPriority) out = out.filter((i) => String(i.priorityId || "") === String(filterPriority));
+    if (filterAssignee) out = out.filter((i) => String(resolveIssueAssigneeId(i) || "") === String(filterAssignee));
+    return out;
+  };
+
+  const activeFilterCount = [filterStatus, filterType, filterPriority, filterAssignee].filter(Boolean).length;
+  const hasActiveFilters = Boolean(searchQuery?.trim()) || activeFilterCount > 0;
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterStatus("");
+    setFilterType("");
+    setFilterPriority("");
+    setFilterAssignee("");
   };
 
   const toggleSprint = (sprintId) => {
@@ -310,8 +343,8 @@ export default function BacklogTab() {
       <div className="space-y-4">
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[180px] flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
@@ -321,9 +354,54 @@ export default function BacklogTab() {
               className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-foreground text-sm"
             />
           </div>
-          <Button size="sm" onClick={() => { setCreateSprintId(null); setShowCreateModal(true); }}>
-            <Plus className="w-4 h-4 mr-1" /> {t("issues.createIssue", "Create Issue")}
-          </Button>
+          <div className="relative">
+            <button
+              ref={filterBtnRef}
+              type="button"
+              onClick={() => setShowFilterDropdown((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              <span className={cn(
+                "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-medium",
+                activeFilterCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              )}>
+                {activeFilterCount}
+              </span>
+            </button>
+            {showFilterDropdown && (
+              <IssueFiltersDropdown
+                anchorEl={filterBtnRef.current}
+                onClose={() => setShowFilterDropdown(false)}
+                onClear={clearFilters}
+                workflowStatuses={workflowStatuses}
+                issueTypes={issueTypes}
+                issuePriorities={issuePriorities}
+                members={members}
+                filterStatus={filterStatus}
+                setFilterStatus={setFilterStatus}
+                filterType={filterType}
+                setFilterType={setFilterType}
+                filterPriority={filterPriority}
+                setFilterPriority={setFilterPriority}
+                filterAssignee={filterAssignee}
+                setFilterAssignee={setFilterAssignee}
+              />
+            )}
+          </div>
+          {hasActiveFilters && (
+            <button onClick={clearFilters}
+              className="flex items-center gap-1 px-2 py-2 rounded-md border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <X className="w-3.5 h-3.5" />{t("issues.clearFilters", "Clear")}
+            </button>
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" onClick={() => { setCreateSprintId(null); setShowCreateModal(true); }}>
+              <Plus className="w-4 h-4 mr-1" /> {t("issues.createIssue", "Create Issue")}
+            </Button>
+          </div>
         </div>
 
         {/* Sprint Sections */}
@@ -537,11 +615,12 @@ function IssueRow({ issue, issueTypes, issuePriorities, members, onClick, sprint
           {issue.storyPoints}
         </span>
       )}
-      {issue.assigneeId && (
-        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0" title={assigneeName}>
-          {(assigneeName || "?")[0]?.toUpperCase()}
-        </div>
-      )}
+      <Avatar
+        user={assigneeObj}
+        name={assigneeName || "Unassigned"}
+        size="xs"
+        className={!assigneeName ? "bg-muted text-muted-foreground" : ""}
+      />
       {/* Move-to-sprint dropdown (backlog items only) */}
       {sprints && onMoveToSprint && (
         <select

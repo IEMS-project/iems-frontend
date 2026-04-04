@@ -69,6 +69,14 @@ export const projectService = {
     return data?.data || data;
   },
 
+  async addProjectMembersBatch(projectId, members) {
+    const data = await request(`${BASE}/${projectId}/members/batch`, {
+      method: "POST",
+      body: { members },
+    });
+    return data?.data || data;
+  },
+
   async removeProjectMember(projectId, accountId) {
     const data = await request(`${BASE}/${projectId}/members/${accountId}`, {
       method: "DELETE",
@@ -200,6 +208,14 @@ export const projectService = {
     return data?.data || data;
   },
 
+  async syncIssueTypes(projectId, issueTypes) {
+    const data = await request(`${BASE}/${projectId}/issue-types/sync`, {
+      method: "POST",
+      body: { issueTypes },
+    });
+    return data?.data || data || [];
+  },
+
   async updateIssueType(projectId, id, payload) {
     const data = await request(`${BASE}/${projectId}/issue-types/${id}`, {
       method: "PATCH",
@@ -227,6 +243,14 @@ export const projectService = {
       body: payload,
     });
     return data?.data || data;
+  },
+
+  async syncIssuePriorities(projectId, priorities) {
+    const data = await request(`${BASE}/${projectId}/issue-priorities/sync`, {
+      method: "POST",
+      body: { priorities },
+    });
+    return data?.data || data || [];
   },
 
   async updateIssuePriority(projectId, id, payload) {

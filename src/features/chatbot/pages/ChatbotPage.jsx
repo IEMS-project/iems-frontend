@@ -3,8 +3,9 @@ import ChatMessage from '@/features/chatbot/components/ChatMessage';
 import ChatInput from '@/features/chatbot/components/ChatInput';
 import ConversationManager from '@/features/chatbot/components/ConversationManager';
 import chatbotService from '@/features/chatbot/api/chatbotService';
+import { documentService } from '@/features/projects/api/documentService';
 
-const Chatbot = () => {
+const Chatbot = ({ projectId = null }) => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,15 +16,30 @@ const Chatbot = () => {
   const [isCreatingNewConversation, setIsCreatingNewConversation] = useState(false);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [refreshConversations, setRefreshConversations] = useState(0);
+  const [embeddableDocs, setEmbeddableDocs] = useState([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
+  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (autoScrollEnabled) {
+      scrollToBottom();
+    }
+  }, [messages, autoScrollEnabled]);
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setAutoScrollEnabled(distanceFromBottom < 80);
+  };
 
   // Add welcome message only when a conversation is selected
   useEffect(() => {
@@ -39,15 +55,17 @@ const Chatbot = () => {
     }
   }, [activeConversationId, isCreatingNewConversation]);
 
-  // Load conversations on mount
+  // Load conversations on mount and when switching project scope
   useEffect(() => {
     const loadConversations = async () => {
       try {
-        // Load conversations and set active conversation if exists
-        const data = await chatbotService.getConversations();
+        setMessages([]);
+        setActiveConversationId(null);
+        setIsCreatingNewConversation(false);
+
+        const data = await chatbotService.getConversations(projectId);
         if (data && data.current_conversation) {
           setActiveConversationId(data.current_conversation.id);
-          // Load messages for current conversation
           await handleConversationSelect(data.current_conversation.id);
         }
       } catch (error) {
@@ -56,7 +74,75 @@ const Chatbot = () => {
     };
 
     loadConversations();
-  }, []);
+  }, [projectId]);
+
+  useEffect(() => {
+    const loadEmbeddableDocs = async () => {
+      if (!projectId) {
+        setEmbeddableDocs([]);
+        setSelectedDocumentIds([]);
+        setShowDocumentPicker(false);
+        return;
+      }
+
+      try {
+        const docs = await documentService.getEmbeddableDocuments(projectId);
+        setEmbeddableDocs(docs || []);
+        setSelectedDocumentIds(prev => prev.filter(id => (docs || []).some(d => d.id === id)));
+      } catch (err) {
+        console.error('Failed to load embeddable docs:', err);
+      }
+    };
+
+    loadEmbeddableDocs();
+  }, [projectId, refreshConversations]);
+
+  const toggleSelectedDocument = (docId) => {
+    setSelectedDocumentIds(prev =>
+      prev.includes(docId)
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  const renderDocumentSelector = () => {
+    if (!projectId || embeddableDocs.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          onClick={() => setShowDocumentPicker(prev => !prev)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <span className="text-xs text-muted-foreground">
+            Tai lieu RAG ready cua du an ({selectedDocumentIds.length} da chon)
+          </span>
+          <span className="text-xs text-blue-600">{showDocumentPicker ? 'An' : 'Chon tai lieu'}</span>
+        </button>
+
+        {showDocumentPicker && (
+          <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto mt-3">
+            {embeddableDocs.map(doc => (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => toggleSelectedDocument(doc.id)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selectedDocumentIds.includes(doc.id)
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-background text-foreground border-border hover:bg-muted'
+                  }`}
+              >
+                {doc.fileName}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const handleConversationSelect = async (conversationId) => {
     setActiveConversationId(conversationId);
@@ -124,10 +210,15 @@ const Chatbot = () => {
       setIsCreatingNewConversation(true);
     }
 
+    const selectedAttachments = embeddableDocs
+      .filter(doc => selectedDocumentIds.includes(doc.id))
+      .map(doc => ({ id: doc.id, name: doc.fileName }));
+
     const userMessage = {
       id: Date.now(),
       message: question,
       isUser: true,
+      attachments: selectedAttachments,
       timestamp: new Date().toISOString()
     };
 
@@ -214,7 +305,9 @@ const Chatbot = () => {
         },
         // conversationId - để null để backend tự động tạo conversation mới khi cần
         // Nếu đang tạo conversation mới hoặc không có active conversation, để null
-        isCreatingNewConversation || !activeConversationId ? null : activeConversationId
+        isCreatingNewConversation || !activeConversationId ? null : activeConversationId,
+        projectId,
+        selectedDocumentIds
       );
     } catch (error) {
       console.error('Error sending message:', error);
@@ -243,12 +336,13 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
         {/* Sidebar */}
-        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border flex flex-col hidden md:flex`}>
+        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border hidden md:flex md:flex-col`}>
           <ConversationManager
             activeConversationId={activeConversationId}
+            projectId={projectId}
             onConversationSelect={handleConversationSelect}
             onNewConversation={handleNewConversation}
             onToggleSidebar={() => setShowSidebar(!showSidebar)}
@@ -265,6 +359,7 @@ const Chatbot = () => {
             <div className="absolute left-0 top-0 h-full w-80 bg-card border-r border-border">
               <ConversationManager
                 activeConversationId={activeConversationId}
+                projectId={projectId}
                 onConversationSelect={handleConversationSelect}
                 onNewConversation={handleNewConversation}
                 onToggleSidebar={() => setShowSidebar(!showSidebar)}
@@ -306,13 +401,17 @@ const Chatbot = () => {
               ) : (
                 <>
                   {/* Messages Container */}
-                  <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+                  <div
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                  >
                     {/* Show question for new conversation or no conversation - only when no messages */}
                     {(isCreatingNewConversation || (!activeConversationId && !isCreatingNewConversation)) && messages.length === 0 && (
                       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                         <div className="text-center mb-8">
                           <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                            Bạn dự định làm gì hôm nay?
+                            {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
                           </h1>
                         </div>
                       </div>
@@ -323,6 +422,7 @@ const Chatbot = () => {
                         key={msg.id}
                         message={msg.message}
                         isUser={msg.isUser}
+                        attachments={msg.attachments || []}
                         timestamp={msg.timestamp}
                       />
                     ))}
@@ -362,7 +462,8 @@ const Chatbot = () => {
                     </div>
                   )}
 
-                  {/* Chat Input */}
+                  {renderDocumentSelector()}
+
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     isLoading={isLoading}
@@ -373,13 +474,17 @@ const Chatbot = () => {
               /* No conversation selected - show welcome message with same logic */
               <>
                 {/* Messages Container */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+                <div
+                  ref={messagesContainerRef}
+                  onScroll={handleMessagesScroll}
+                  className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                >
                   {/* Show question for no conversation - only when no messages */}
                   {messages.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                       <div className="text-center mb-8">
                         <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                          Bạn dự định làm gì hôm nay?
+                          {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
                         </h1>
                       </div>
                     </div>
@@ -390,6 +495,7 @@ const Chatbot = () => {
                       key={msg.id}
                       message={msg.message}
                       isUser={msg.isUser}
+                      attachments={msg.attachments || []}
                       timestamp={msg.timestamp}
                     />
                   ))}
@@ -428,6 +534,8 @@ const Chatbot = () => {
                     </p>
                   </div>
                 )}
+
+                {renderDocumentSelector()}
 
                 <ChatInput
                   onSendMessage={handleSendMessage}

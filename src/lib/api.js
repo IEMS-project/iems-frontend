@@ -1,5 +1,7 @@
+import axios from "axios";
+
 const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
-const CHATBOT_BASE_URL = import.meta.env.VITE_CHATBOT_URL || "http://localhost:8000";
+const CHATBOT_BASE_URL = import.meta.env.VITE_CHATBOT_URL || `${GATEWAY_BASE_URL}/ai-service`;
 const STORAGE_KEY = "iems.auth";
 
 function getStoredTokens() {
@@ -7,7 +9,7 @@ function getStoredTokens() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
-  } catch (_error) {
+  } catch {
     return null;
   }
 }
@@ -41,6 +43,28 @@ function clearAuthAndRedirect() {
 
 let refreshingPromise = null;
 
+const gatewayClient = axios.create({
+  baseURL: GATEWAY_BASE_URL,
+});
+
+function toWithCredentials(credentials = "include") {
+  return credentials === "include";
+}
+
+function normalizeAxiosError(error) {
+  if (!error?.isAxiosError) {
+    return error instanceof Error ? error : new Error("Request failed");
+  }
+
+  const status = error.response?.status;
+  const data = error.response?.data;
+  const message = data?.message || data?.error || error.message || "Request failed";
+  const normalizedError = new Error(message);
+  normalizedError.status = status;
+  normalizedError.data = data;
+  return normalizedError;
+}
+
 async function refreshAccessToken() {
   if (refreshingPromise) return refreshingPromise;
 
@@ -48,24 +72,18 @@ async function refreshAccessToken() {
     try {
       const tokens = getStoredTokens();
       const refreshToken = tokens?.refreshToken;
-      const refreshBody = refreshToken ? JSON.stringify({ refreshToken }) : undefined;
+      const refreshBody = refreshToken ? { refreshToken } : undefined;
 
-      const res = await fetch(`${GATEWAY_BASE_URL}/iam-service/api/auth/refresh`, {
-        method: "POST",
-        headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
-        body: refreshBody,
-        credentials: "include",
-      });
+      const res = await axios.post(
+        `${GATEWAY_BASE_URL}/iam-service/api/auth/refresh`,
+        refreshBody,
+        {
+          withCredentials: true,
+          headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
+        },
+      );
 
-      const contentType = res.headers.get("content-type") || "";
-      const isJson = contentType.includes("application/json");
-      const data = isJson ? await res.json().catch(() => null) : null;
-
-      if (!res.ok) {
-        const msg = data?.message || data?.error || res.statusText;
-        console.error("[Token Refresh] Refresh failed:", msg);
-        throw new Error(msg || "Refresh failed");
-      }
+      const data = res.data;
 
       const payload = data?.data || data;
       if (!payload?.accessToken) {
@@ -85,6 +103,61 @@ async function refreshAccessToken() {
 
   return refreshingPromise;
 }
+
+gatewayClient.interceptors.request.use((config) => {
+  const withAuth = config.withAuth !== false;
+  if (!withAuth) return config;
+
+  const tokens = getStoredTokens();
+  if (tokens?.accessToken) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${tokens.accessToken}`;
+  }
+
+  return config;
+});
+
+gatewayClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalConfig = error?.config;
+    const status = error?.response?.status;
+
+    if (!originalConfig || status !== 401) {
+      throw normalizeAxiosError(error);
+    }
+
+    const isRefreshCall = String(originalConfig.url || "").includes("/iam-service/api/auth/refresh");
+    const withAuth = originalConfig.withAuth !== false;
+    const retryOn401 = originalConfig.retryOn401 !== false;
+
+    if (isRefreshCall || !withAuth || !retryOn401 || originalConfig._retry) {
+      throw normalizeAxiosError(error);
+    }
+
+    originalConfig._retry = true;
+    console.log(`[API] Received 401 for ${originalConfig.method?.toUpperCase()} ${originalConfig.url}, attempting token refresh...`);
+
+    try {
+      const newAccessToken = await refreshAccessToken();
+
+      if (!newAccessToken) {
+        const refreshError = new Error("Token refresh failed - no new access token");
+        refreshError.status = 401;
+        throw refreshError;
+      }
+
+      originalConfig.headers = originalConfig.headers || {};
+      originalConfig.headers.Authorization = `Bearer ${newAccessToken}`;
+      console.log(`[API] Retrying ${originalConfig.method?.toUpperCase()} ${originalConfig.url} with refreshed token`);
+      return gatewayClient.request(originalConfig);
+    } catch (refreshError) {
+      console.error(`[API] Token refresh failed for ${originalConfig.method?.toUpperCase()} ${originalConfig.url}:`, refreshError.message);
+      clearAuthAndRedirect();
+      throw normalizeAxiosError(refreshError);
+    }
+  },
+);
 
 function hasContentType(headers = {}) {
   return Object.keys(headers).some((key) => key.toLowerCase() === "content-type");
@@ -125,20 +198,9 @@ function prepareBody(body, headers) {
   return JSON.stringify(body);
 }
 
-async function parseResponse(res) {
-  const contentType = res.headers.get("content-type") || "";
-  const isJson = contentType.includes("application/json");
-  const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
-
-  if (!res.ok) {
-    const message = (isJson ? data?.message || data?.error : data) || res.statusText;
-    const error = new Error(message || "Request failed");
-    error.status = res.status;
-    error.data = data;
-    throw error;
-  }
-
-  return data;
+function prepareDataForAxios(body, headers, isFormData) {
+  if (isFormData) return body;
+  return prepareBody(body, headers);
 }
 
 async function baseRequest(path, {
@@ -152,55 +214,78 @@ async function baseRequest(path, {
   isFormData = false,
 } = {}) {
   const finalHeaders = { ...headers };
-  const tokens = getStoredTokens();
 
-  if (withAuth && tokens?.accessToken) {
-    finalHeaders["Authorization"] = `Bearer ${tokens.accessToken}`;
+  const data = prepareDataForAxios(body, finalHeaders, isFormData);
+  const requestConfig = {
+    url: path,
+    method,
+    baseURL: baseUrl,
+    headers: finalHeaders,
+    data,
+    withCredentials: toWithCredentials(credentials),
+    withAuth,
+    retryOn401,
+  };
+
+  try {
+    const response = await gatewayClient.request(requestConfig);
+    return response.data;
+  } catch (error) {
+    throw normalizeAxiosError(error);
   }
+}
 
-  // Don't add Content-Type for FormData, let browser set it with boundary
-  const preparedBody = isFormData ? body : prepareBody(body, finalHeaders);
+async function fetchWithAuthRefresh(url, {
+  method = "GET",
+  headers = {},
+  body,
+  withAuth = true,
+  retryOn401 = true,
+  credentials = "include",
+} = {}) {
+  const finalHeaders = { ...headers };
+  const preparedBody = prepareBody(body, finalHeaders);
 
-  let response = await fetch(`${baseUrl}${path}`, {
+  const attachAccessToken = () => {
+    if (!withAuth) return;
+    const tokens = getStoredTokens();
+    if (tokens?.accessToken) {
+      finalHeaders.Authorization = `Bearer ${tokens.accessToken}`;
+    }
+  };
+
+  attachAccessToken();
+
+  let response = await fetch(url, {
     method,
     headers: finalHeaders,
     body: preparedBody,
     credentials,
   });
 
-  // Handle Unauthorized/Forbidden from expired access token - attempt to refresh token
-  const shouldRetryWithRefresh = (response.status === 401 || response.status === 403) && withAuth && retryOn401;
-  if (shouldRetryWithRefresh) {
-    console.log(`[API] Received ${response.status} for ${method} ${path}, attempting token refresh...`);
+  if (response.status === 401 && withAuth && retryOn401) {
     try {
       const newAccessToken = await refreshAccessToken();
-
       if (!newAccessToken) {
-        const err = new Error("Token refresh failed - no new access token");
-        err.status = 401;
-        throw err;
+        const refreshError = new Error("Token refresh failed - no new access token");
+        refreshError.status = 401;
+        throw refreshError;
       }
 
-      // Retry request with new token
-      finalHeaders["Authorization"] = `Bearer ${newAccessToken}`;
-      console.log(`[API] Retrying ${method} ${path} with refreshed token`);
-
-      response = await fetch(`${baseUrl}${path}`, {
+      finalHeaders.Authorization = `Bearer ${newAccessToken}`;
+      response = await fetch(url, {
         method,
         headers: finalHeaders,
         body: preparedBody,
         credentials,
       });
     } catch (error) {
-      console.error(`[API] Token refresh failed for ${method} ${path}:`, error.message);
       clearAuthAndRedirect();
-      const err = new Error(error.message || "Token refresh failed");
-      err.status = error?.status || 401;
-      throw err;
+      throw normalizeAxiosError(error);
     }
   }
 
-  return parseResponse(response);
+  return response;
 }
 
 function request(path, options = {}) {
@@ -216,7 +301,7 @@ function chatbotRequest(path, options = {}) {
     ...options,
     baseUrl: CHATBOT_BASE_URL,
     credentials: options.credentials ?? "omit",
-    retryOn401: false,
+    retryOn401: options.retryOn401 ?? true,
   });
 }
 
@@ -226,6 +311,7 @@ export {
   getStoredTokens,
   setStoredTokens,
   baseRequest,
+  fetchWithAuthRefresh,
   request,
   requestNoAuth,
   chatbotRequest,
