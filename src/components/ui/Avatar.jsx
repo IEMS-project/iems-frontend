@@ -49,6 +49,7 @@ export default function Avatar({ user, src, name = "", size = "md", className = 
 	// - Otherwise scan `user` keys (top-level and one-level nested objects) and pick the first value
 	//   whose key name contains common image indicators (image, avatar, photo, picture, url, src)
 	const looksLikeUrl = (v) => typeof v === 'string' && v.length > 0 && /^(https?:)?\/\//i.test(v);
+	const looksLikeRelativeImagePath = (v) => typeof v === 'string' && /^(\/|\.\.?\/).+/i.test(v);
 
 	let imageSrc = src;
 	if (!imageSrc && typeof user === 'string') {
@@ -60,7 +61,13 @@ export default function Avatar({ user, src, name = "", size = "md", className = 
 		if (typeof v === 'string') {
 			const trimmed = v.trim();
 			if (trimmed === '' || trimmed.toLowerCase() === 'null') return false;
-			return looksLikeUrl(trimmed) || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(trimmed);
+			return (
+				looksLikeUrl(trimmed) ||
+				looksLikeRelativeImagePath(trimmed) ||
+				trimmed.startsWith('data:image/') ||
+				trimmed.startsWith('blob:') ||
+				/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(trimmed)
+			);
 		}
 		return false;
 	};
