@@ -274,7 +274,7 @@ export default function Members() {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-2">
-                            {t("projects.detail.members.form.user")}
+                                {t("projects.detail.members.form.user")}
                             </label>
                             <UserSelect
                                 value={addForm.userId}
@@ -285,7 +285,7 @@ export default function Members() {
 
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-2">
-                            {t("projects.detail.members.form.role")}
+                                {t("projects.detail.members.form.role")}
                             </label>
                             <select
                                 value={addForm.roleId}
@@ -426,7 +426,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
         try {
             const promises = [];
             const allCodes = PERMISSION_GROUPS.flatMap(g => g.perms.map(p => p.code));
-            
+
             allCodes.forEach(code => {
                 const origGranted = directPerms.granted.has(code);
                 const origDenied = directPerms.denied.has(code);
@@ -437,12 +437,12 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
 
                 promises.push((async () => {
                     if (origGranted || origDenied) {
-                         await projectService.resetMemberPermission(projectId, member.userId, code);
+                        await projectService.resetMemberPermission(projectId, member.userId, code);
                     }
                     if (draftGranted) {
-                         await projectService.grantMemberPermission(projectId, member.userId, code);
+                        await projectService.grantMemberPermission(projectId, member.userId, code);
                     } else if (draftDenied) {
-                         await projectService.denyMemberPermission(projectId, member.userId, code);
+                        await projectService.denyMemberPermission(projectId, member.userId, code);
                     }
                 })());
             });
@@ -619,53 +619,53 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                             {PERMISSION_GROUPS.map(({ group, perms }) => {
                                 const isGroupChecked = perms.length > 0 && perms.every(p => isEffective(p.code, draftDirectPerms));
                                 const isGroupIndeterminate = !isGroupChecked && perms.some(p => isEffective(p.code, draftDirectPerms));
-                                
+
                                 return (
-                                <div key={group}>
-                                    <div className="flex items-center gap-2 mb-2 cursor-pointer select-none">
-                                        <Checkbox
-                                            checked={isGroupChecked ? true : isGroupIndeterminate ? "indeterminate" : false}
-                                            disabled={isAdminRoleMember || savingPerms}
-                                            onChange={(e) => handleTogglePermGroup(perms, e.target.checked)}
-                                        />
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0 leading-none">
-                                            {group}
-                                        </p>
+                                    <div key={group}>
+                                        <div className="flex items-center gap-2 mb-2 cursor-pointer select-none">
+                                            <Checkbox
+                                                checked={isGroupChecked ? true : isGroupIndeterminate ? "indeterminate" : false}
+                                                disabled={isAdminRoleMember || savingPerms}
+                                                onChange={(e) => handleTogglePermGroup(perms, e.target.checked)}
+                                            />
+                                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0 leading-none">
+                                                {group}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2 ml-5">
+                                            {perms.map(({ code, label }) => {
+                                                const state = getPermState(code, draftDirectPerms);
+                                                const isLocked = isAdminRoleMember || savingPerms;
+
+                                                let badge = null;
+
+                                                if (state === "denied") {
+                                                    badge = <Badge variant="red" className="ml-2 scale-90 origin-left">Denied</Badge>;
+                                                } else if (state === "granted") {
+                                                    badge = <Badge variant="green" className="ml-2 scale-90 origin-left">Direct</Badge>;
+                                                } else if (state === "role") {
+                                                    badge = <Badge variant="blue" className="ml-2 scale-90 origin-left">Role</Badge>;
+                                                }
+
+                                                return (
+                                                    <label
+                                                        key={code}
+                                                        className={`flex items-center gap-2 cursor-pointer select-none py-1 ${isLocked ? "opacity-50 pointer-events-none" : ""}`}
+                                                    >
+                                                        <Checkbox
+                                                            checked={isEffective(code, draftDirectPerms)}
+                                                            disabled={isLocked}
+                                                            onChange={(e) => handleTogglePerm(code, e.target.checked)}
+                                                        />
+                                                        <span className="text-sm text-foreground">
+                                                            {label}
+                                                        </span>
+                                                        {badge}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                    <div className="space-y-2 ml-5">
-                                        {perms.map(({ code, label }) => {
-                                            const state = getPermState(code, draftDirectPerms);
-                                            const isLocked = isAdminRoleMember || savingPerms;
-
-                                            let badge = null;
-
-                                            if (state === "denied") {
-                                                badge = <Badge variant="red" className="ml-2 scale-90 origin-left">Denied</Badge>;
-                                            } else if (state === "granted") {
-                                                badge = <Badge variant="green" className="ml-2 scale-90 origin-left">Direct</Badge>;
-                                            } else if (state === "role") {
-                                                badge = <Badge variant="blue" className="ml-2 scale-90 origin-left">Role</Badge>;
-                                            }
-
-                                            return (
-                                                <label
-                                                    key={code}
-                                                    className={`flex items-center gap-2 cursor-pointer select-none py-1 ${isLocked ? "opacity-50 pointer-events-none" : ""}`}
-                                                >
-                                                    <Checkbox
-                                                        checked={isEffective(code, draftDirectPerms)}
-                                                        disabled={isLocked}
-                                                        onChange={(e) => handleTogglePerm(code, e.target.checked)}
-                                                    />
-                                                    <span className="text-sm text-foreground">
-                                                        {label}
-                                                    </span>
-                                                    {badge}
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
                                 );
                             })}
                         </div>
