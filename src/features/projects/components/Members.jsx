@@ -10,6 +10,7 @@ import UserSelect from "./UserSelect";
 import { useParams } from "react-router-dom";
 import { projectService } from "@/features/projects/api/projectService";
 import { useProject } from "@/features/projects/context/ProjectContext";
+import { userService } from "@/features/profile/api/userService";
 import { toast } from "sonner";
 import { Shield, Search, UserPlus, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -73,7 +74,7 @@ const PERMISSION_GROUPS = [
 export default function Members() {
     const { t } = useTranslation();
     const { projectId } = useParams();
-    const { members, roles, assignableUsers, membersLoading, rolesLoading, refreshMembers } = useProject();
+    const { members, roles, membersLoading, rolesLoading, refreshMembers } = useProject();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [detailMember, setDetailMember] = useState(null);
@@ -90,6 +91,30 @@ export default function Members() {
             (m.roleName || m.role || "").toLowerCase().includes(q)
         );
     }, [members, searchQuery]);
+
+    const memberAccountIds = useMemo(
+        () => new Set(members.map((m) => String(m.userId)).filter(Boolean)),
+        [members]
+    );
+
+    const searchAssignableUsers = useCallback(async (query, page, size) => {
+        const result = await userService.searchUserBasicInfos({
+            query,
+            page,
+            size,
+            excludeAccountIds: [],
+        });
+
+        return {
+            ...result,
+            items: (result.items || []).map((u) => ({
+                ...u,
+                userId: u.id || u.userId,
+                id: u.id || u.userId,
+                alreadyMember: memberAccountIds.has(String(u.id || u.userId)),
+            })),
+        };
+    }, [memberAccountIds]);
 
     const handleAddMember = async () => {
         if (!addForm.userId) {
@@ -228,45 +253,54 @@ export default function Members() {
                 open={showAddModal}
                 onClose={() => { setShowAddModal(false); setAddForm({ userId: "", roleId: "" }); }}
                 title={t("projects.detail.members.add")}
+                className="max-w-2xl !max-h-[95vh]"
+                contentClassName="!overflow-visible !overflow-y-visible"
                 footer={
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={() => { setShowAddModal(false); setAddForm({ userId: "", roleId: "" }); }}>
                             {t("ui.common.cancel")}
                         </Button>
-                        <Button onClick={handleAddMember} disabled={addLoading}>
-                            {addLoading ? "..." : t("ui.common.add")}
+                        <Button onClick={handleAddMember} disabled={addLoading || !addForm.userId || !addForm.roleId}>
+                            {addLoading ? t("ui.common.loading", { defaultValue: "Loading..." }) : t("ui.common.add")}
                         </Button>
                     </div>
                 }
             >
                 <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
-                            {t("projects.detail.members.form.user")}
-                        </label>
-                        <UserSelect
-                            assignableUsers={assignableUsers}
-                            value={addForm.userId}
-                            onChange={id => setAddForm(f => ({ ...f, userId: id }))}
-                        />
+                    <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+                        Search by name or email. Results are loaded in pages to avoid loading all users at once.
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">
+                            {t("projects.detail.members.form.user")}
+                            </label>
+                            <UserSelect
+                                value={addForm.userId}
+                                onChange={(id) => setAddForm((f) => ({ ...f, userId: id }))}
+                                searchUsers={searchAssignableUsers}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-foreground mb-2">
                             {t("projects.detail.members.form.role")}
-                        </label>
-                        <select
-                            value={addForm.roleId}
-                            onChange={e => setAddForm(f => ({ ...f, roleId: e.target.value }))}
-                            disabled={rolesLoading}
-                            className="w-full rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30 disabled:opacity-50"
-                        >
-                            <option value="">
-                                {rolesLoading ? "Loading roles..." : t("projects.detail.members.form.selectRole")}
-                            </option>
-                            {roles.map(r => (
-                                <option key={r.id} value={r.id}>{r.roleName || r.name}</option>
-                            ))}
-                        </select>
+                            </label>
+                            <select
+                                value={addForm.roleId}
+                                onChange={e => setAddForm(f => ({ ...f, roleId: e.target.value }))}
+                                disabled={rolesLoading}
+                                className="w-full rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30 disabled:opacity-50"
+                            >
+                                <option value="">
+                                    {rolesLoading ? "Loading roles..." : t("projects.detail.members.form.selectRole")}
+                                </option>
+                                {roles.map(r => (
+                                    <option key={r.id} value={r.id}>{r.roleName || r.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
             </Modal>

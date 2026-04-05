@@ -4,7 +4,6 @@ import { projectService } from '@/features/projects/api/projectService';
 import { issueService } from '@/features/projects/api/issueService';
 import { sprintService } from '@/features/projects/api/sprintService';
 import { workflowService } from '@/features/projects/api/workflowService';
-import { userService } from '@/features/profile/api/userService';
 
 const ProjectContext = createContext(null);
 
@@ -16,7 +15,6 @@ export function ProjectProvider({ children }) {
     const [projectData, setProjectData] = useState(null);
     const [members, setMembers] = useState([]);
     const [roles, setRoles] = useState([]);
-    const [assignableUsers, setAssignableUsers] = useState([]);
 
     // New entities
     const [issues, setIssues] = useState([]);
@@ -234,7 +232,7 @@ export function ProjectProvider({ children }) {
                 const [
                     membersData, rolesData, issuesData, backlogData,
                     sprintsData, workflowsData, issueTypesData,
-                    prioritiesData, usersData
+                    prioritiesData
                 ] = await Promise.all([
                     projectService.getProjectMembers(projectId).catch(() => []),
                     projectService.getProjectRoles(projectId).catch(() => []),
@@ -244,7 +242,6 @@ export function ProjectProvider({ children }) {
                     workflowService.getWorkflows(projectId).catch(() => []),
                     projectService.getIssueTypes(projectId).catch(() => []),
                     projectService.getIssuePriorities(projectId).catch(() => []),
-                    userService.getAssignableUsers().catch(() => []),
                 ]);
 
                 setMembers(Array.isArray(membersData) ? membersData : []);
@@ -254,7 +251,6 @@ export function ProjectProvider({ children }) {
                 setSprints(Array.isArray(sprintsData) ? sprintsData : []);
                 setIssueTypes(Array.isArray(issueTypesData) ? issueTypesData : []);
                 setIssuePriorities(Array.isArray(prioritiesData) ? prioritiesData : []);
-                setAssignableUsers(Array.isArray(usersData) ? usersData : []);
 
                 // Workflows & statuses
                 const wfList = Array.isArray(workflowsData) ? workflowsData : [];
@@ -295,7 +291,6 @@ export function ProjectProvider({ children }) {
         projectData,
         members,
         roles,
-        assignableUsers,
         issues,
         backlogIssues,
         sprints,

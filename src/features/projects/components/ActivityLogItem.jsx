@@ -42,6 +42,17 @@ function StatusBadge({ value, workflowStatuses }) {
  */
 export default function ActivityLogItem({ log, workflowStatuses = [], showIssue = false }) {
     const { icon: Icon, colorClass } = getActivityMeta(log.action);
+    const issueCodeFromDetails = (() => {
+        if (typeof log.details !== "string") return null;
+        const match = log.details.match(/\b[A-Z][A-Z0-9]+-\d+\b/);
+        return match ? match[0] : null;
+    })();
+    const issueCode =
+        log.taskCode ||
+        log.issueKey ||
+        log.issueCode ||
+        log.code ||
+        issueCodeFromDetails;
 
     // Resolve status from/to — prefer explicit fields, fallback: parse details "KEY: A → B"
     let fromVal = log.oldValue ?? null;
@@ -68,8 +79,8 @@ export default function ActivityLogItem({ log, workflowStatuses = [], showIssue 
                         <Avatar name={log.userName || "?"} size="xs" className="flex-shrink-0" />
                     )}
                     <span className="text-xs font-semibold text-foreground truncate">{log.userName || "Unknown"}</span>
-                    {showIssue && log.issueKey && (
-                        <span className="text-xs text-muted-foreground shrink-0">· {log.issueKey}</span>
+                    {showIssue && issueCode && (
+                        <span className="text-xs text-muted-foreground shrink-0">· {issueCode}</span>
                     )}
                     <span
                         className="text-xs text-muted-foreground shrink-0 ml-auto"

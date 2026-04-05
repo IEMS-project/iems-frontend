@@ -1,12 +1,22 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Avatar from '@/components/ui/Avatar.jsx';
 
-export default function UserSelect({ assignableUsers = [], value = '', onChange }) {
+const MIN_QUERY_LENGTH = 1;
+const PAGE_SIZE = 20;
+
+export default function UserSelect({ assignableUsers = [], value = '', onChange, searchUsers }) {
   const { t } = useTranslation();
+  const isRemoteMode = typeof searchUsers === 'function';
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const ref = useRef();
+  const listRef = useRef();
 
   useEffect(() => {
     function onDoc(e) {
@@ -16,24 +26,126 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
     return () => document.removeEventListener('click', onDoc);
   }, []);
 
-  const selected = useMemo(() => {
-    return assignableUsers.find(u => (u.userId || u.id) === value) || null;
-  }, [assignableUsers, value]);
+  useEffect(() => {
+    if (!isRemoteMode) return;
+    if (!open) {
+      setQuery('');
+      setOptions([]);
+      setPage(0);
+      setHasMore(false);
+    }
+  }, [isRemoteMode, open]);
 
-  const filtered = useMemo(() => {
+  const selected = useMemo(() => {
+    const source = isRemoteMode ? options : assignableUsers;
+    return source.find((u) => (u.userId || u.id) === value) || selectedUser;
+  }, [isRemoteMode, options, assignableUsers, selectedUser, value]);
+
+  const filteredLocalOptions = useMemo(() => {
+    if (isRemoteMode) return [];
     const q = query.trim().toLowerCase();
     if (!q) return assignableUsers;
-    return assignableUsers.filter(u => {
+    return assignableUsers.filter((u) => {
       const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim().toLowerCase();
       return fullName.includes(q) || (u.email || '').toLowerCase().includes(q);
     });
-  }, [assignableUsers, query]);
+  }, [assignableUsers, isRemoteMode, query]);
+
+  const runSearch = useCallback(async (keyword, nextPage, append = false) => {
+    if (typeof searchUsers !== 'function') return;
+    if (import.meta.env.DEV) {
+      console.debug('[UserSelect] searchUsers call', { keyword, page: nextPage, append });
+    }
+    if (keyword.trim().length < MIN_QUERY_LENGTH) {
+      setOptions([]);
+      setHasMore(false);
+      setPage(0);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await searchUsers(keyword, nextPage, PAGE_SIZE);
+      const incoming = Array.isArray(result?.items) ? result.items : [];
+      const normalized = incoming.map((u) => ({
+        ...u,
+        id: u.id || u.userId,
+        userId: u.userId || u.id,
+      }));
+
+      setOptions((prev) => {
+        if (!append) return normalized;
+        const byId = new Map(prev.map((item) => [item.id || item.userId, item]));
+        normalized.forEach((item) => byId.set(item.id || item.userId, item));
+        return Array.from(byId.values());
+      });
+      setPage(nextPage);
+      setHasMore(Boolean(result?.hasMore));
+    } catch (error) {
+      console.error('User search failed:', error);
+      if (!append) {
+        setOptions([]);
+      }
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchUsers]);
+
+  useEffect(() => {
+    if (!isRemoteMode) return;
+    if (!open) return;
+    const timer = setTimeout(() => {
+      runSearch(query, 0, false);
+      if (listRef.current) {
+        listRef.current.scrollTop = 0;
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [isRemoteMode, open, query, runSearch]);
+
+  const handleScroll = (e) => {
+    if (!isRemoteMode) return;
+    if (!hasMore || loading) return;
+    const target = e.currentTarget;
+    const nearBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 24;
+    if (nearBottom) {
+      runSearch(query, page + 1, true);
+    }
+  };
+
+  const renderEmptyState = () => {
+    if (!isRemoteMode) {
+      return (
+        <div className="p-3 text-sm text-muted-foreground">{t('select.noResults')}</div>
+      );
+    }
+
+    if (query.trim().length < MIN_QUERY_LENGTH) {
+      return (
+        <div className="p-3 text-sm text-muted-foreground">
+          {t('projects.detail.members.form.searchMinChars', { count: MIN_QUERY_LENGTH, defaultValue: `Type at least ${MIN_QUERY_LENGTH} characters to search` })}
+        </div>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className="p-3 text-sm text-muted-foreground">{t('ui.common.loading', { defaultValue: 'Loading...' })}</div>
+      );
+    }
+
+    return (
+      <div className="p-3 text-sm text-muted-foreground">{t('select.noResults')}</div>
+    );
+  };
 
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen(s => !s)}
+        onClick={() => setOpen((s) => !s)}
         className={`w-full rounded-md border border-input bg-background px-3 py-2 text-left text-sm flex items-center gap-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${/* keep custom classes if passed via props later */''}`}
       >
         <Avatar user={selected || {}} size={8} />
@@ -45,8 +157,8 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1 z-50 rounded-md border border-input bg-popover text-popover-foreground shadow-md max-h-60 overflow-auto">
-          <div className="p-2">
+        <div className="absolute left-0 right-0 mt-1 z-50 rounded-md border border-input bg-popover text-popover-foreground shadow-md max-h-72 overflow-hidden">
+          <div className="p-2 border-b border-border/70">
             <input
               autoFocus
               value={query}
@@ -55,26 +167,39 @@ export default function UserSelect({ assignableUsers = [], value = '', onChange 
               className="w-full rounded-md border border-input px-2 py-1 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div>
-            {filtered.map(u => {
+          <div ref={listRef} onScroll={handleScroll} className="max-h-56 overflow-auto">
+            {(isRemoteMode ? options : filteredLocalOptions).map((u) => {
               const id = u.userId || u.id;
               const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
+              const isDisabled = Boolean(u.alreadyMember);
               return (
                 <div
                   key={id}
-                  onClick={() => { onChange && onChange(id); setOpen(false); setQuery(''); }}
-                  className="flex items-center gap-3 p-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                  onClick={() => {
+                    if (isDisabled) return;
+                    onChange && onChange(id, u);
+                    setSelectedUser(u);
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                  className={`flex items-center gap-3 p-2 ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'}`}
                 >
                   <Avatar user={u} size={7} />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate text-foreground">{fullName || u.email}</div>
                     <div className="text-sm text-muted-foreground truncate">{u.email}</div>
+                    {isDisabled && (
+                      <div className="text-xs text-amber-600 dark:text-amber-400">Already in project</div>
+                    )}
                   </div>
                 </div>
               );
             })}
-            {filtered.length === 0 && (
-              <div className="p-3 text-sm text-muted-foreground">{t('select.noResults')}</div>
+
+            {(isRemoteMode ? options : filteredLocalOptions).length === 0 && renderEmptyState()}
+
+            {isRemoteMode && options.length > 0 && loading && (
+              <div className="p-3 text-sm text-muted-foreground border-t border-border/70">{t('ui.common.loading', { defaultValue: 'Loading...' })}</div>
             )}
           </div>
         </div>

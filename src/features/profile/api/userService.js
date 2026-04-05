@@ -32,6 +32,36 @@ export const userService = {
     return data?.data || data || [];
   },
 
+  async searchUserBasicInfos({ query = "", page = 0, size = 20, excludeAccountIds = [] } = {}) {
+    const params = new URLSearchParams();
+    params.set("q", query);
+    params.set("page", String(page));
+    params.set("size", String(size));
+    (excludeAccountIds || []).forEach((id) => {
+      if (id) params.append("excludeAccountIds", String(id));
+    });
+
+    if (import.meta.env.DEV) {
+      console.debug("[userService] GET /iam-service/users/basic-infos/search", {
+        query,
+        page,
+        size,
+        excludeCount: (excludeAccountIds || []).length,
+      });
+    }
+
+    const data = await request(`/iam-service/users/basic-infos/search?${params.toString()}`);
+    const pageData = data?.data || data || {};
+    return {
+      items: Array.isArray(pageData.content) ? pageData.content : [],
+      page: Number.isInteger(pageData.number) ? pageData.number : page,
+      size: Number.isInteger(pageData.size) ? pageData.size : size,
+      totalPages: Number.isInteger(pageData.totalPages) ? pageData.totalPages : 0,
+      totalElements: Number.isInteger(pageData.totalElements) ? pageData.totalElements : 0,
+      hasMore: pageData.last === false,
+    };
+  },
+
   async getProjectManagerCandidates() {
     const data = await request("/iam-service/users/project-manager-candidates");
     return data?.data || data || [];

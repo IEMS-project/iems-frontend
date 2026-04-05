@@ -1,5 +1,5 @@
 import React from "react";
-import Badge from "@/components/ui/Badge";
+import Avatar from "@/components/ui/Avatar";
 import { Bug, BookOpen, Zap, CheckSquare, Layers, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Minus } from "lucide-react";
 
 // Map issue type name → icon
@@ -48,6 +48,21 @@ export function getPriorityIcon(priorityName) {
   return { icon: Minus, color: "text-gray-400" };
 }
 
+const resolveIssueAssigneeId = (issue) =>
+  issue?.assigneeId ||
+  issue?.assignee?.accountId ||
+  issue?.assignee?.userId ||
+  issue?.assignee?.user?.accountId ||
+  issue?.assignee?.user?.id ||
+  issue?.assignee?.id;
+
+const resolveMemberId = (member) =>
+  member?.accountId ||
+  member?.userId ||
+  member?.id ||
+  member?.user?.accountId ||
+  member?.user?.id;
+
 export default function IssueCard({
   issue,
   issueTypes = [],
@@ -69,7 +84,8 @@ export default function IssueCard({
 
   const { icon: PriorityIcon, color: prioColor } = getPriorityIcon(priorityName);
 
-  const assigneeObj = members.find(m => (m.accountId || m.id) === issue.assigneeId) || issue?.assignee;
+  const assigneeId = resolveIssueAssigneeId(issue);
+  const assigneeObj = members.find(m => String(resolveMemberId(m) || "") === String(assigneeId || "")) || issue?.assignee;
   const assigneeName = assigneeObj?.fullName || assigneeObj?.userName || assigneeObj?.name || assigneeObj?.email;
 
   return (
@@ -105,14 +121,14 @@ export default function IssueCard({
           )}
         </div>
 
-        {/* Assignee avatar placeholder */}
-        {issue.assigneeId && (
-          <div
-            className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] text-white font-bold"
-            title={assigneeName || issue.assigneeId}
-          >
-            {(assigneeName || "?")[0]?.toUpperCase()}
-          </div>
+        {/* Assignee avatar */}
+        {(assigneeObj || assigneeId) && (
+          <Avatar
+            user={assigneeObj}
+            name={assigneeName || "Unassigned"}
+            size="xs"
+            className={!assigneeName ? "bg-muted text-muted-foreground" : ""}
+          />
         )}
       </div>
     </div>
