@@ -8,9 +8,11 @@ const DEFAULT_MODELS = [
 
 const ChatInput = ({
   onSendMessage,
+  onSelectOption,
   isLoading = false,
   disabled = false,
   models = DEFAULT_MODELS,
+  quickOptions = [],
 }) => {
   const [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState(models[0]?.id ?? '');
@@ -36,6 +38,31 @@ const ChatInput = ({
   return (
     <div className=" border-border bg-background backdrop-blur">
       <div className="p-4">
+        {quickOptions.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {quickOptions.map((option) => (
+              <button
+                key={option.id || option.label}
+                type="button"
+                onClick={() => {
+                  const prompt = option.prompt || option.label;
+                  if (!prompt || isTyping) return;
+                  if (onSelectOption) {
+                    onSelectOption(prompt);
+                  } else {
+                    onSendMessage(prompt);
+                  }
+                }}
+                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                disabled={isTyping}
+                title={option.prompt || option.label}
+              >
+                {option.label || option.prompt}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-sm"
