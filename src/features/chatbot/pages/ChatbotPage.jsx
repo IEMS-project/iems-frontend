@@ -20,6 +20,7 @@ const Chatbot = ({ projectId = null }) => {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [quickOptions, setQuickOptions] = useState([]);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -96,6 +97,46 @@ const Chatbot = ({ projectId = null }) => {
 
     loadEmbeddableDocs();
   }, [projectId, refreshConversations]);
+
+  useEffect(() => {
+    const loadQuickOptions = async () => {
+      const options = await chatbotService.getQuickOptions(projectId);
+      if (options.length > 0) {
+        setQuickOptions(options);
+        return;
+      }
+
+      // Fallback defaults when API is temporarily unavailable.
+      setQuickOptions([
+        {
+          id: 'important_my_tasks',
+          label: 'Cong viec quan trong cua toi',
+          prompt: 'Lay cac cong viec quan trong cua toi hom nay'
+        },
+        {
+          id: 'analysis',
+          label: 'Phan tich cong viec',
+          prompt: 'Phan tich cong viec hien tai va de xuat uu tien'
+        },
+        {
+          id: 'move_to_in_progress',
+          label: 'Chuyen issue sang In Progress',
+          prompt: 'Chuyen issue IEMS-1 sang In Progress'
+        },
+        {
+          id: 'move_to_done',
+          label: 'Chuyen issue sang Done',
+          prompt: 'Chuyen issue IEMS-1 sang Done'
+        }
+      ]);
+    };
+
+    loadQuickOptions();
+  }, [projectId]);
+
+  const handleSelectQuickOption = (prompt) => {
+    handleSendMessage(prompt);
+  };
 
   const toggleSelectedDocument = (docId) => {
     setSelectedDocumentIds(prev =>
@@ -424,6 +465,7 @@ const Chatbot = ({ projectId = null }) => {
                         isUser={msg.isUser}
                         attachments={msg.attachments || []}
                         timestamp={msg.timestamp}
+                        projectId={projectId}
                       />
                     ))}
 
@@ -466,7 +508,9 @@ const Chatbot = ({ projectId = null }) => {
 
                   <ChatInput
                     onSendMessage={handleSendMessage}
+                    onSelectOption={handleSelectQuickOption}
                     isLoading={isLoading}
+                    quickOptions={quickOptions}
                   />
                 </>
               )
@@ -497,6 +541,7 @@ const Chatbot = ({ projectId = null }) => {
                       isUser={msg.isUser}
                       attachments={msg.attachments || []}
                       timestamp={msg.timestamp}
+                      projectId={projectId}
                     />
                   ))}
 
@@ -539,7 +584,9 @@ const Chatbot = ({ projectId = null }) => {
 
                 <ChatInput
                   onSendMessage={handleSendMessage}
+                  onSelectOption={handleSelectQuickOption}
                   isLoading={isLoading}
+                  quickOptions={quickOptions}
                 />
               </>
             )}

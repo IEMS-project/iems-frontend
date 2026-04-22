@@ -182,6 +182,17 @@ class ChatbotService {
     };
   }
 
+  async getQuickOptions(projectId = null) {
+    try {
+      const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : "";
+      const res = await chatbotRequest(`/api/ai/options${query}`);
+      return res?.options || [];
+    } catch (error) {
+      console.error("Error getting quick options:", error);
+      return [];
+    }
+  }
+
   async renameConversation(conversationId, newName) {
     try {
       return await chatbotRequest(`/api/ai/conversations/${conversationId}/rename?new_name=${encodeURIComponent(newName)}`, {
