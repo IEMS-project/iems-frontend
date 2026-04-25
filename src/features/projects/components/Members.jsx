@@ -69,6 +69,13 @@ const PERMISSION_GROUPS = [
             { code: "MEMBER_ROLE_ASSIGN", label: "Assign role" },
         ],
     },
+    {
+        group: "Documents",
+        perms: [
+            { code: "DOCUMENT_VIEW", label: "View" },
+            { code: "DOCUMENT_MODIFY", label: "Modify" },
+        ],
+    },
 ];
 
 export default function Members() {
