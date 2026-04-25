@@ -27,9 +27,12 @@ import { toast } from 'sonner';
 import { formatBytes, formatDate } from '@/lib/utils';
 import { documentService } from '@/features/projects/api/documentService';
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import ProjectDocumentDetailPanel from './ProjectDocumentDetailPanel';
+import Avatar from '@/components/ui/Avatar';
+import { cn } from '@/lib/utils';
 
 // Helper to get file icon by type/extension
 const getFileIcon = (isFolder, fileType = '', fileName = '') => {
@@ -70,6 +73,9 @@ export default function DocumentsTab() {
     const [previewDoc, setPreviewDoc] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [updatingEmbedDocId, setUpdatingEmbedDocId] = useState(null);
+    const [selectedDoc, setSelectedDoc] = useState(null);
+    const [showSidebar, setShowSidebar] = useState(false);
+    const [movePath, setMovePath] = useState([]);
 
     // Inputs State
     const [newFolderName, setNewFolderName] = useState('');
@@ -185,19 +191,28 @@ export default function DocumentsTab() {
     const submitMove = async () => {
         if (!showMove) return;
         const targetId = moveTargetId === 'root' ? null : moveTargetId;
+        
+        // Cycle prevention
         if (targetId === showMove.id) {
             toast.error("Cannot move a folder into itself.");
             return;
         }
+
         try {
             await documentService.moveDocument(projectId, showMove.id, targetId);
             toast.success(t('projectDocuments.moveSuccess', 'Moved successfully'));
             setShowMove(null);
             setMoveTargetId('');
+            setMovePath([]);
             loadDocuments();
         } catch (err) {
             toast.error(err?.message || t('ui.common.error'));
         }
+    };
+
+    const handleSelectRow = (doc) => {
+        setSelectedDoc(doc);
+        setShowSidebar(true);
     };
 
     const confirmDelete = (doc) => {
@@ -283,8 +298,28 @@ export default function DocumentsTab() {
         );
     }
 
+    const currentMoveFolderId = moveTargetId === 'root' ? null : moveTargetId;
+    const moveBreadcrumbs = (() => {
+        const path = [];
+        let curr = currentMoveFolderId;
+        while (curr) {
+            const folder = allFolders.find(d => d.id === curr);
+            if (folder) {
+                path.unshift(folder);
+                curr = folder.parentId;
+            } else { break; }
+        }
+        return path;
+    })();
+
+    const moveSubfolders = allFolders.filter(f => 
+        (currentMoveFolderId ? f.parentId === currentMoveFolderId : !f.parentId) &&
+        f.id !== showMove?.id // Don't show current folder itself
+    );
+
     return (
-        <div className="space-y-4">
+        <div className="flex h-[calc(100vh-200px)] overflow-hidden -m-4">
+            <div className="flex-1 flex flex-col min-w-0 p-4 space-y-4 overflow-y-auto">
             {/* Header / Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 overflow-x-auto text-lg font-bold text-foreground whitespace-nowrap">
@@ -388,10 +423,20 @@ export default function DocumentsTab() {
                                 visibleDocuments.map(doc => (
                                     <tr
                                         key={doc.id}
-                                        className="hover:bg-muted/30 transition-colors group cursor-pointer"
-                                        onDoubleClick={() => handlePreview(doc)}
+                                        className={cn(
+                                            "hover:bg-muted/30 transition-colors group cursor-pointer",
+                                            selectedDoc?.id === doc.id && "bg-blue-50/50 dark:bg-blue-900/20"
+                                        )}
+                                        onClick={() => handleSelectRow(doc)}
+                                        onDoubleClick={() => {
+                                            if (doc.isFolder) {
+                                                setCurrentFolderId(doc.id);
+                                            } else {
+                                                handlePreview(doc);
+                                            }
+                                        }}
                                     >
-                                        <td className="px-4 py-3" onClick={() => doc.isFolder && setCurrentFolderId(doc.id)}>
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-muted rounded">
                                                     {getFileIcon(doc.isFolder, doc.fileType, doc.fileName)}
@@ -476,6 +521,16 @@ export default function DocumentsTab() {
                     </table>
                 </div>
             </Card>
+        </div>
+
+        {showSidebar && selectedDoc && (
+            <ProjectDocumentDetailPanel
+                projectId={projectId}
+                selectedItem={selectedDoc}
+                documents={documents}
+                onClose={() => setShowSidebar(false)}
+            />
+        )}
 
             {/* Modals */}
             <ConfirmDialog
@@ -535,30 +590,96 @@ export default function DocumentsTab() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={!!showMove} onOpenChange={(open) => !open && setShowMove(null)}>
-                <DialogContent>
+            <Dialog open={!!showMove} onOpenChange={(open) => !open && (setShowMove(null), setMoveTargetId(''), setMovePath([]))}>
+                <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{t('projectDocuments.move', 'Move')} "{showMove?.fileName}"</DialogTitle>
+                        <DialogDescription>
+                            Select destination folder:
+                        </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 space-y-2">
-                        <p className="text-sm text-muted-foreground">Select destination folder:</p>
-                        <select
-                            className="w-full p-2 border border-input rounded-md bg-background focus:ring-2 focus:ring-ring"
-                            value={moveTargetId}
-                            onChange={e => setMoveTargetId(e.target.value)}
-                        >
-                            <option value="root">/ (Root)</option>
-                            {allFolders
-                                .filter(f => f.id !== showMove?.id && f.parentId !== showMove?.id) // very simple cycle prevention
-                                .map(f => (
-                                    <option key={f.id} value={f.id}>{f.fileName}</option>
-                                ))
-                            }
-                        </select>
+                    
+                    <div className="py-4">
+                        {/* Folder Navigator UI similar to image7.png */}
+                        <div className="border rounded-md bg-muted/20">
+                            <div className="bg-muted/50 px-3 py-2 border-b flex items-center gap-2 overflow-x-auto no-scrollbar">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 px-2 text-xs"
+                                    onClick={() => setMoveTargetId('root')}
+                                >
+                                    Home
+                                </Button>
+                                {moveBreadcrumbs.map(f => (
+                                    <React.Fragment key={f.id}>
+                                        <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-7 px-2 text-xs"
+                                            onClick={() => setMoveTargetId(f.id)}
+                                        >
+                                            {f.fileName}
+                                        </Button>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+
+                            <div className="p-2 min-h-[200px] max-h-[300px] overflow-y-auto grid grid-cols-3 gap-2">
+                                {currentMoveFolderId && (
+                                    <div 
+                                        className="flex flex-col items-center p-2 rounded-md hover:bg-muted cursor-pointer"
+                                        onClick={() => {
+                                            const parent = allFolders.find(f => f.id === currentMoveFolderId)?.parentId;
+                                            setMoveTargetId(parent || 'root');
+                                        }}
+                                    >
+                                        <div className="w-12 h-12 flex items-center justify-center">
+                                            <CornerLeftUp className="w-6 h-6 text-muted-foreground" />
+                                        </div>
+                                        <span className="text-xs text-muted-foreground mt-1 text-center font-medium">..</span>
+                                    </div>
+                                )}
+
+                                {moveSubfolders.length === 0 && (
+                                    <div className="col-span-3 flex flex-col items-center justify-center py-10 text-muted-foreground">
+                                        <FolderIcon className="w-8 h-8 opacity-20 mb-2" />
+                                        <p className="text-xs italic">Folder is empty</p>
+                                    </div>
+                                )}
+
+                                {moveSubfolders.map(f => (
+                                    <div 
+                                        key={f.id} 
+                                        className="flex flex-col items-center p-2 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer group"
+                                        onClick={() => setMoveTargetId(f.id)}
+                                    >
+                                        <div className="w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-110">
+                                            <FolderIcon className="w-10 h-10 text-yellow-500 fill-yellow-200 dark:fill-yellow-900/50" />
+                                        </div>
+                                        <span className="text-xs mt-1 text-center font-medium line-clamp-1 w-full px-1" title={f.fileName}>
+                                            {f.fileName}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                Moving to: <span className="font-bold">{moveTargetId === 'root' ? 'Home' : allFolders.find(f => f.id === moveTargetId)?.fileName}</span>
+                            </p>
+                        </div>
                     </div>
+
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowMove(null)}>{t('ui.common.cancel', 'Cancel')}</Button>
-                        <Button onClick={submitMove}>{t('projectDocuments.move', 'Move')}</Button>
+                        <Button variant="outline" onClick={() => (setShowMove(null), setMoveTargetId(''), setMovePath([]))}>
+                            {t('ui.common.cancel', 'Cancel')}
+                        </Button>
+                        <Button onClick={submitMove}>
+                            {t('projectDocuments.move', 'Move Here')}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

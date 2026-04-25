@@ -84,5 +84,10 @@ export const documentService = {
       }
     );
     return data?.data || data;
+  },
+
+  async getItemActivities(projectId, docId, type = "FILE") {
+    const data = await request(`${BASE}/${projectId}/documents/${docId}/activities?type=${type}`);
+    return data?.data || data || [];
   }
 };

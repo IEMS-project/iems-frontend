@@ -93,6 +93,11 @@ export const userService = {
     return data?.data || data || null;
   },
 
+  async getUserByAccountId(accountId) {
+    const data = await request(`/iam-service/users/by-account/${accountId}`);
+    return data?.data || data || null;
+  },
+
   async getUsersByIds(userIds) {
     const promises = userIds.map((id) => this.getUserById(id));
     const results = await Promise.allSettled(promises);
