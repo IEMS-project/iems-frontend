@@ -4,7 +4,8 @@ import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/utils";
 import Button from "@/components/ui/Button";
-import Textarea from "@/components/ui/Textarea";
+import MentionInput, { CommentContent } from "@/components/ui/MentionInput";
+import Skeleton from "@/components/ui/Skeleton";
 import { getActivityMeta } from "../../utils/issueStyles";
 import IssueAvatar from "./IssueAvatar";
 import CollapsibleSection from "./CollapsibleSection";
@@ -24,9 +25,28 @@ function StatusBadge({ value, workflowStatuses }) {
   );
 }
 
+function ActivitySkeleton() {
+  return (
+    <div className="space-y-3 pb-3">
+      {[1, 2, 3].map((item) => (
+        <div key={item} className="rounded-lg bg-muted/50 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <Skeleton className="h-6 w-6 rounded-full" />
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="mt-2 h-3 w-2/3" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function IssueActivitySection({
   projectId,
   issueId,
+  targetCommentId,
   members,
   workflowStatuses,
   collapsed,
@@ -100,6 +120,19 @@ export default function IssueActivitySection({
   }, [issueId]);
 
   useEffect(() => {
+    if (!targetCommentId || loadingComments || comments.length === 0) return;
+
+    setActiveTab("comments");
+
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById(`comment-${targetCommentId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [targetCommentId, loadingComments, comments]);
+
+  useEffect(() => {
     const el = activitySentinelRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
@@ -112,24 +145,29 @@ export default function IssueActivitySection({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
-      await issueService.addComment(projectId, issueId, { content: newComment.trim() });
+      await issueService.addComment(projectId, issueId, { 
+        content: newComment.trim(),
+        parentCommentId: replyingTo?.id
+      });
       setNewComment("");
+      setReplyingTo(null);
       await loadComments();
     } catch (e) {
       toast.error(e?.message || "Error");
     }
   };
 
-  const handleAddReply = async (parentCommentId) => {
-    if (!replyText.trim()) return;
-    try {
-      await issueService.addComment(projectId, issueId, { content: replyText.trim(), parentCommentId });
-      setReplyText("");
-      setReplyingTo(null);
-      await loadComments();
-    } catch (e) {
-      toast.error(e?.message || "Error");
+  const handleStartReply = (comment) => {
+    setReplyingTo(comment);
+    const authorName = comment.authorName || getAuthorName(comment.authorId) || "user";
+    const authorId = comment.authorId;
+    const mention = `@[${authorName}](${authorId}) `;
+    if (!newComment.includes(mention)) {
+      setNewComment(prev => mention + prev);
     }
+    // Scroll to input
+    document.getElementById("main-comment-input")?.focus();
+    document.getElementById("main-comment-input")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const getAuthorName = (userId) => {
@@ -152,7 +190,14 @@ export default function IssueActivitySection({
     const replies = repliesByParent[comment.id] || [];
     return (
       <div key={comment.id} className={isReply ? "pl-8 mt-2" : ""}>
-        <div className={`rounded-lg p-3 ${isReply ? "bg-muted/40 border-l-2 border-blue-400" : "bg-muted/60"}`}>
+        <div
+          id={`comment-${comment.id}`}
+          className={`rounded-lg p-3 transition-colors ${
+            String(comment.id) === String(targetCommentId)
+              ? "bg-primary/10 ring-2 ring-primary/40"
+              : isReply ? "bg-muted/40 border-l-2 border-blue-400" : "bg-muted/60"
+          }`}
+        >
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-2">
               <IssueAvatar name={name} />
@@ -163,26 +208,16 @@ export default function IssueActivitySection({
             </div>
             {!isReply && (
               <button
-                onClick={() => replyingTo === comment.id ? (setReplyingTo(null), setReplyText("")) : (setReplyingTo(comment.id), setReplyText(""))}
+                onClick={() => handleStartReply(comment)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-500 transition-colors"
               >
-                <CornerDownRight className="w-3 h-3" />{replyingTo === comment.id ? "Cancel" : "Reply"}
+                <CornerDownRight className="w-3 h-3" />Reply
               </button>
             )}
           </div>
-          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap"><CommentContent content={comment.content} /></p>
         </div>
         {replies.length > 0 && <div className="space-y-2 mt-2">{replies.map(r => renderComment(r, true))}</div>}
-        {replyingTo === comment.id && (
-          <div className="pl-8 mt-2 flex gap-2">
-            <Textarea value={replyText} onChange={e => setReplyText(e.target.value)} rows={2} placeholder="Reply..." className="flex-1 text-sm"
-              onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) handleAddReply(comment.id); }} autoFocus />
-            <div className="flex flex-col gap-1 self-end">
-              <Button size="sm" onClick={() => handleAddReply(comment.id)} disabled={!replyText.trim()}><Send className="w-3.5 h-3.5" /></Button>
-              <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyText(""); }}><X className="w-3.5 h-3.5" /></Button>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -230,7 +265,7 @@ export default function IssueActivitySection({
   };
 
   return (
-    <div className="px-6 py-4">
+    <div className="mx-5 mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-border dark:bg-card">
       <CollapsibleSection
         title="Activity"
         collapsed={collapsed}
@@ -259,7 +294,9 @@ export default function IssueActivitySection({
         </div>
 
         <div className="space-y-3 pb-3">
-          {(loadingComments || loadingLogs) && <p className="text-sm text-muted-foreground italic">Loading...</p>}
+          {(activeTab === "comments" && loadingComments) || (activeTab === "history" && loadingLogs) ? (
+            <ActivitySkeleton />
+          ) : null}
 
           {activeTab === "comments" && !loadingComments && (
             topLevelComments.length === 0
@@ -282,18 +319,38 @@ export default function IssueActivitySection({
         </div>
 
         {activeTab === "comments" && (
-          <div className="flex gap-2 border-t border-border pt-3 mt-1">
-            <Textarea
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              placeholder="Add a comment... (Ctrl+Enter to send)"
-              rows={2}
-              className="flex-1 text-sm"
-              onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) handleAddComment(); }}
-            />
-            <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()} className="self-end">
-              <Send className="w-4 h-4" />
-            </Button>
+          <div className="border-t border-border pt-4 mt-2">
+            {replyingTo && (
+              <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-t-lg border-x border-t border-blue-100 dark:border-blue-800 text-xs">
+                <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-medium">
+                  <CornerDownRight className="w-3 h-3" />
+                  Replying to <span className="font-bold">{replyingTo.authorName || getAuthorName(replyingTo.authorId)}</span>
+                </span>
+                <button onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-red-500">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <MentionInput
+                  id="main-comment-input"
+                  value={newComment}
+                  onChange={setNewComment}
+                  projectId={projectId}
+                  placeholder={replyingTo ? "Write a reply..." : "Add a comment... type @ to mention someone"}
+                  rows={4}
+                  onKeyDown={e => { if (e.key === "Enter" && e.ctrlKey) handleAddComment(); }}
+                  className={replyingTo ? "rounded-t-none border-t-0" : ""}
+                />
+              </div>
+              <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim()} className="self-end rounded-lg h-10 w-10 p-0 shrink-0">
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 px-1">
+              Tip: Press <kbd className="font-sans font-semibold text-foreground">Ctrl + Enter</kbd> to send quickly
+            </p>
           </div>
         )}
       </CollapsibleSection>

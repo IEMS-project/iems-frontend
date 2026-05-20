@@ -1,24 +1,85 @@
-import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useOutletContext } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useOutletContext, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { AlarmClock, CalendarDays, CheckCircle2, ClipboardList, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Calendar from "@/components/ui/Calendar";
-import { useProject } from "@/features/projects/context/ProjectContext";
-import Skeleton from "@/components/ui/Skeleton";
-import StatsCard from "@/components/ui/StatsCard";
+import DonutChart, { buildDonutSlices } from "@/components/ui/DonutChart";
 import Progress from "@/components/ui/Progress";
+import Skeleton from "@/components/ui/Skeleton";
 import { projectService } from "@/features/projects/api/projectService";
 import ActivityLogItem from "@/features/projects/components/ActivityLogItem";
-import { CheckCircle2, RefreshCw, ClipboardList, AlarmClock } from "lucide-react";
+import { useProject } from "@/features/projects/context/ProjectContext";
+
+function formatDate(dateString) {
+    if (!dateString) return "-";
+    const [y, m, d] = dateString.split("T")[0].split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("vi-VN");
+}
+
+function compactColor(index) {
+    const colors = [
+        "hsl(var(--primary))",
+        "hsl(142 70% 45%)",
+        "hsl(38 92% 50%)",
+        "hsl(0 75% 55%)",
+        "hsl(188 78% 41%)",
+        "hsl(262 83% 58%)",
+    ];
+    return colors[index % colors.length];
+}
+
+function Metric({ title, value, icon: Icon, tone = "text-primary" }) {
+    return (
+        <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/70 px-3 py-2.5">
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${tone}`}>
+                <Icon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+                <span className="block truncate text-xs text-muted-foreground">{title}</span>
+                <span className="block text-lg font-semibold leading-tight text-foreground">{value}</span>
+            </span>
+        </div>
+    );
+}
+
+function CompactBreakdown({ title, items, maxValue, emptyText }) {
+    return (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <p className="text-sm font-semibold text-foreground">{title}</p>
+            <div className="mt-3 space-y-2.5">
+                {items.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-muted-foreground">{emptyText}</p>
+                ) : (
+                    items.map((item) => (
+                        <div key={item.key} className="space-y-1">
+                            <div className="flex items-center justify-between gap-3 text-xs">
+                                <span className="truncate text-foreground">{item.label}</span>
+                                <span className="shrink-0 font-semibold text-muted-foreground">{item.value}</span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{
+                                        width: `${maxValue > 0 ? Math.max(8, (item.value / maxValue) * 100) : 0}%`,
+                                        backgroundColor: item.color,
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function ProjectOverviewPage() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const { projectData } = useOutletContext();
-
     const { issues = [], issuesLoading, workflowStatuses = [], issuePriorities = [], issueTypes = [] } = useProject();
 
-    // Recent activities
     const [activities, setActivities] = useState([]);
     const [activitiesLoading, setActivitiesLoading] = useState(true);
     const [activityLoadingMore, setActivityLoadingMore] = useState(false);
@@ -34,7 +95,7 @@ export default function ProjectOverviewPage() {
         activityHasMoreRef.current = false;
         activityLoadingMoreRef.current = false;
         projectService.getActivities(projectId, 0, 20)
-            .then(res => {
+            .then((res) => {
                 setActivities(res.content || []);
                 activityHasMoreRef.current = !res.last;
             })
@@ -48,317 +109,245 @@ export default function ProjectOverviewPage() {
         setActivityLoadingMore(true);
         const next = activityPageRef.current + 1;
         projectService.getActivities(projectId, next, 20)
-            .then(res => {
-                setActivities(prev => [...prev, ...(res.content || [])]);
+            .then((res) => {
+                setActivities((prev) => [...prev, ...(res.content || [])]);
                 activityHasMoreRef.current = !res.last;
                 activityPageRef.current = next;
             })
-            .catch(() => { })
-            .finally(() => { activityLoadingMoreRef.current = false; setActivityLoadingMore(false); });
+            .catch(() => {})
+            .finally(() => {
+                activityLoadingMoreRef.current = false;
+                setActivityLoadingMore(false);
+            });
     }, [projectId]);
 
     useEffect(() => {
         const el = activitySentinelRef.current;
         if (!el) return;
-        const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) loadMoreActivities(); }, { threshold: 0.1 });
+        const obs = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) loadMoreActivities();
+        }, { threshold: 0.1 });
         obs.observe(el);
         return () => obs.disconnect();
     }, [loadMoreActivities, activitiesLoading]);
 
-    // Statistics
-    const stats = useMemo(() => {
-        const total = issues.length;
-        let completed = 0, inProgress = 0, todo = 0;
+    const overview = useMemo(() => {
+        const statusById = new Map(workflowStatuses.map((status) => [status.id, status]));
+        const priorityById = new Map(issuePriorities.map((priority) => [priority.id, priority]));
+        const typeById = new Map(issueTypes.map((type) => [type.id, type]));
+        const statusCounts = new Map();
+        const priorityCounts = new Map();
+        const typeCounts = new Map();
+        const today = new Date();
+        const nextWeek = new Date();
+        today.setHours(0, 0, 0, 0);
+        nextWeek.setDate(today.getDate() + 7);
+
+        let completed = 0;
+        let inProgress = 0;
+        let todo = 0;
+        let dueSoon = 0;
+
         issues.forEach((issue) => {
-            const category = workflowStatuses.find(s => s.id === issue.statusId)?.category || 'TODO';
-            if (category === 'DONE') completed++;
-            else if (category === 'IN_PROGRESS') inProgress++;
+            const status = statusById.get(issue.statusId);
+            const category = status?.category || "TODO";
+            if (category === "DONE") completed++;
+            else if (category === "IN_PROGRESS") inProgress++;
             else todo++;
-        });
-        return { total, completed, inProgress, todo, progress: total > 0 ? Math.round((completed / total) * 100) : 0 };
-    }, [issues, workflowStatuses]);
 
-    const statusBreakdown = useMemo(() => {
-        const counts = {};
-        issues.forEach((issue) => {
-            const label = workflowStatuses.find(s => s.id === issue.statusId)?.name || 'Unknown';
-            counts[label] = (counts[label] || 0) + 1;
-        });
-        return counts;
-    }, [issues, workflowStatuses]);
+            const statusLabel = status?.name || "Unknown";
+            statusCounts.set(statusLabel, {
+                key: statusLabel,
+                label: statusLabel,
+                value: (statusCounts.get(statusLabel)?.value || 0) + 1,
+                color: status?.color || compactColor(statusCounts.size),
+            });
 
-    const priorityBreakdown = useMemo(() => {
-        const counts = {};
-        issues.forEach((issue) => {
-            const label = issuePriorities.find(p => p.id === issue.priorityId)?.name || 'None';
-            counts[label] = (counts[label] || 0) + 1;
-        });
-        return counts;
-    }, [issues, issuePriorities]);
+            const priority = priorityById.get(issue.priorityId);
+            const priorityLabel = priority?.name || "None";
+            priorityCounts.set(priorityLabel, {
+                key: priorityLabel,
+                label: priorityLabel,
+                value: (priorityCounts.get(priorityLabel)?.value || 0) + 1,
+                color: priority?.color || compactColor(priorityCounts.size + 2),
+            });
 
-    const workTypesBreakdown = useMemo(() => {
-        const counts = {};
-        issues.forEach((issue) => {
-            const label = issueTypes.find(t => t.id === issue.issueTypeId)?.name || 'Task';
-            counts[label] = (counts[label] || 0) + 1;
+            const type = typeById.get(issue.issueTypeId);
+            const typeLabel = type?.name || "Task";
+            typeCounts.set(typeLabel, {
+                key: typeLabel,
+                label: typeLabel,
+                value: (typeCounts.get(typeLabel)?.value || 0) + 1,
+                color: compactColor(typeCounts.size + 3),
+            });
+
+            if (issue.dueDate && category !== "DONE") {
+                const [y, m, d] = issue.dueDate.toString().split("T")[0].split("-").map(Number);
+                const due = new Date(y, m - 1, d);
+                if (due >= today && due <= nextWeek) dueSoon++;
+            }
         });
+
         const total = issues.length;
-        return Object.entries(counts).map(([type, count]) => ({
-            type, count, percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        }));
-    }, [issues, issueTypes]);
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const statusItems = Array.from(statusCounts.values());
+        const priorityItems = Array.from(priorityCounts.values());
+        const typeItems = Array.from(typeCounts.values());
+
+        return {
+            total,
+            completed,
+            inProgress,
+            todo,
+            dueSoon,
+            progress,
+            statusSlices: buildDonutSlices(statusItems),
+            priorityItems,
+            typeItems,
+            priorityMax: Math.max(...priorityItems.map((item) => item.value), 0),
+            typeMax: Math.max(...typeItems.map((item) => item.value), 0),
+        };
+    }, [issues, issuePriorities, issueTypes, workflowStatuses]);
+
+    const displayedProgress = projectData?.progress ?? overview.progress;
 
     return (
-        <div className="space-y-6">
-            {/* Project Description */}
-            {projectData && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{t('projects.form.description')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-foreground">
-                            {projectData.description || t('projects.detail.overview.noData')}
-                        </p>
-                        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <div className="text-xs uppercase text-muted-foreground">{t('projects.form.startDate')}</div>
-                                <div className="text-foreground">
-                                    {projectData.startDate
-                                        ? (() => { const [y, m, d] = projectData.startDate.split("T")[0].split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString('vi-VN'); })()
-                                        : '-'}
+        <div className="space-y-4">
+            <Card className="overflow-hidden">
+                <CardContent className="p-4">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,1fr)]">
+                        <div className="min-w-0 space-y-4">
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="min-w-0">
+                                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                                        {projectData?.description || t("projects.detail.overview.noData")}
+                                    </p>
+                                </div>
+                                <div className="grid shrink-0 grid-cols-2 gap-2 text-xs sm:min-w-72">
+                                    <div className="rounded-lg bg-muted px-3 py-2">
+                                        <p className="text-muted-foreground">{t("projects.form.startDate")}</p>
+                                        <p className="font-medium text-foreground">{formatDate(projectData?.startDate)}</p>
+                                    </div>
+                                    <div className="rounded-lg bg-muted px-3 py-2">
+                                        <p className="text-muted-foreground">{t("projects.form.endDate")}</p>
+                                        <p className="font-medium text-foreground">{formatDate(projectData?.endDate)}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <div className="text-xs uppercase text-muted-foreground">{t('projects.form.endDate')}</div>
-                                <div className="text-foreground">
-                                    {projectData.endDate
-                                        ? (() => { const [y, m, d] = projectData.endDate.split("T")[0].split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString('vi-VN'); })()
-                                        : '-'}
+
+                            {issuesLoading ? (
+                                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                                    {Array.from({ length: 4 }).map((_, index) => (
+                                        <Skeleton key={index} className="h-16 rounded-xl" />
+                                    ))}
                                 </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                                    <Metric title={t("projects.detail.overview.statistics.totalTasks")} value={overview.total} icon={ClipboardList} />
+                                    <Metric title={t("projects.detail.overview.statistics.completed")} value={overview.completed} icon={CheckCircle2} tone="text-emerald-600" />
+                                    <Metric title={t("projects.detail.overview.statistics.inProgress")} value={overview.inProgress} icon={RefreshCw} tone="text-blue-600" />
+                                    <Metric title={t("ui.common.dueSoon")} value={overview.dueSoon} icon={AlarmClock} tone="text-amber-600" />
+                                </div>
+                            )}
+
+                            <div className="rounded-xl border border-border bg-background/70 px-3 py-3">
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                    <span className="text-sm font-medium text-foreground">{t("projects.detail.overview.statistics.completionRate")}</span>
+                                    <span className="text-sm font-semibold text-foreground">{displayedProgress}%</span>
+                                </div>
+                                <Progress value={displayedProgress} />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
 
-            {/* Top row: Stats + Progress (left) | Recent Activity scroll (right) */}
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-                {/* Left: Stats cards + Progress */}
-                <div className="xl:col-span-2 space-y-6">
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {issuesLoading ? (
-                            Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
+                            <Skeleton className="h-full min-h-64 rounded-2xl" />
                         ) : (
-                            <>
-                                <StatsCard
-                                    title={t('projects.detail.overview.statistics.completed')}
-                                    value={stats.completed}
-                                    helper={`${t('ui.common.of')} ${stats.total} ${t('projects.detail.tasks.title').toLowerCase()}`}
-                                    icon={<CheckCircle2 className="h-5 w-5" />}
-                                    accent="green"
-                                />
-                                <StatsCard
-                                    title={t('projects.detail.overview.statistics.inProgress')}
-                                    value={stats.inProgress}
-                                    helper={t('ui.common.processing')}
-                                    icon={<RefreshCw className="h-5 w-5" />}
-                                    accent="purple"
-                                />
-                                <StatsCard
-                                    title={t('projects.detail.overview.statistics.totalTasks')}
-                                    value={stats.total}
-                                    helper={t('ui.common.created')}
-                                    icon={<ClipboardList className="h-5 w-5" />}
-                                    accent="blue"
-                                />
-                                <StatsCard
-                                    title={t('ui.common.dueSoon')}
-                                    value={0}
-                                    helper={t('ui.common.inNext7Days')}
-                                    icon={<AlarmClock className="h-5 w-5" />}
-                                    accent="orange"
-                                />
-                            </>
+                            <DonutChart
+                                compact
+                                title={t("projects.detail.overview.charts.statusBreakdown")}
+                                meta={t("dashboard.marketPanel.taskCount", { count: overview.total })}
+                                centerValue={overview.total}
+                                centerLabel={t("projects.detail.overview.statistics.totalTasks")}
+                                slices={overview.statusSlices}
+                            />
                         )}
                     </div>
+                </CardContent>
+            </Card>
 
-                    {/* Progress */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t('projects.detail.overview.statistics.completionRate')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-muted-foreground">{projectData?.progress ?? stats.progress}%</span>
-                            </div>
-                            <Progress value={projectData?.progress ?? stats.progress} />
-                        </CardContent>
-                    </Card>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {issuesLoading ? (
+                        <>
+                            <Skeleton className="h-52 rounded-2xl" />
+                            <Skeleton className="h-52 rounded-2xl" />
+                        </>
+                    ) : (
+                        <>
+                            <CompactBreakdown
+                                title={t("projects.detail.overview.charts.priorityBreakdown")}
+                                items={overview.priorityItems}
+                                maxValue={overview.priorityMax}
+                                emptyText={t("projects.detail.overview.noData")}
+                            />
+                            <CompactBreakdown
+                                title={t("projects.detail.overview.charts.workTypesBreakdown")}
+                                items={overview.typeItems}
+                                maxValue={overview.typeMax}
+                                emptyText={t("projects.detail.overview.noData")}
+                            />
+                        </>
+                    )}
                 </div>
 
-                {/* Right: Recent Activity (scrollable) */}
-                <Card className="flex flex-col">
-                    <CardHeader>
-                        <CardTitle>{t('projects.detail.overview.recentActivity', 'Recent Activity')}</CardTitle>
+                <Card className="min-h-0">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <CalendarDays className="h-4 w-4" />
+                            {t("dashboard.calendar.title")}
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 min-h-0 p-0">
-                        {activitiesLoading ? (
-                            <div className="space-y-3 px-4 pb-4">
-                                {Array.from({ length: 6 }).map((_, i) => (
-                                    <Skeleton key={i} className="h-10 w-full" />
-                                ))}
-                            </div>
-                        ) : activities.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8 px-4">
-                                {t('projects.detail.overview.noActivity', 'No recent activity')}
-                            </p>
-                        ) : (
-                            <div className="overflow-y-auto max-h-[340px] px-4 pb-2">
-                                {activities.map((activity, idx) => (
+                    <CardContent className="max-h-[390px] overflow-hidden px-4 pb-4">
+                        <Calendar projectId={projectId} />
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card className="min-h-0">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base">{t("projects.detail.overview.recentActivity", "Recent Activity")}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {activitiesLoading ? (
+                        <div className="grid gap-3 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <Skeleton key={index} className="h-10 w-full" />
+                            ))}
+                        </div>
+                    ) : activities.length === 0 ? (
+                        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                            {t("projects.detail.overview.noActivity", "No recent activity")}
+                        </p>
+                    ) : (
+                        <div className="max-h-72 overflow-y-auto px-4 pb-2">
+                            <div className="grid gap-x-5 xl:grid-cols-2">
+                                {activities.map((activity, index) => (
                                     <ActivityLogItem
-                                        key={activity.id || idx}
+                                        key={activity.id || index}
                                         log={activity}
                                         workflowStatuses={workflowStatuses}
                                         showIssue
                                     />
                                 ))}
-                                <div ref={activitySentinelRef} className="h-px" />
-                                {activityLoadingMore && (
-                                    <p className="text-xs text-muted-foreground text-center py-2">Loading...</p>
-                                )}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Charts + Calendar */}
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-                <div className="space-y-6 xl:col-span-2">
-                    {/* Status Overview */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t('projects.detail.overview.charts.statusBreakdown')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {issuesLoading ? (
-                                <Skeleton className="h-48 w-full" />
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-center">
-                                        <div className="relative h-48 w-48">
-                                            <svg className="h-48 w-48 transform -rotate-90">
-                                                <circle cx="96" cy="96" r="80" fill="none" stroke="#e5e7eb" strokeWidth="16" />
-                                                {Object.entries(statusBreakdown).map(([status, count], idx) => {
-                                                    const total = Object.values(statusBreakdown).reduce((a, b) => a + b, 0);
-                                                    const percentage = total > 0 ? (count / total) * 100 : 0;
-                                                    const offset = Object.entries(statusBreakdown)
-                                                        .slice(0, idx)
-                                                        .reduce((sum, [, c]) => sum + (total > 0 ? (c / total) * 100 : 0) / 100 * 502.4, 0);
-                                                    const statusObj = workflowStatuses.find(s => s.name === status);
-                                                    return (
-                                                        <circle
-                                                            key={status}
-                                                            cx="96" cy="96" r="80" fill="none"
-                                                            stroke={statusObj?.color || "#9ca3af"}
-                                                            strokeWidth="16"
-                                                            strokeDasharray={`${(percentage / 100) * 502.4} 502.4`}
-                                                            strokeDashoffset={-offset}
-                                                        />
-                                                    );
-                                                })}
-                                            </svg>
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="text-center">
-                                                    <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-                                                    <div className="text-xs text-muted-foreground">{t('projects.detail.overview.statistics.totalTasks')}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {Object.entries(statusBreakdown).map(([status, count]) => {
-                                            const statusObj = workflowStatuses.find(s => s.name === status);
-                                            return (
-                                                <div key={status} className="flex items-center gap-2">
-                                                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: statusObj?.color || "#9ca3af" }} />
-                                                    <span className="text-sm text-foreground">{status}: {count}</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                            <div ref={activitySentinelRef} className="h-px" />
+                            {activityLoadingMore && (
+                                <p className="py-2 text-center text-xs text-muted-foreground">Loading...</p>
                             )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Priority Breakdown */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t('projects.detail.overview.charts.priorityBreakdown')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {issuesLoading ? (
-                                <Skeleton className="h-48 w-full" />
-                            ) : (
-                                <div className="space-y-2">
-                                    {Object.entries(priorityBreakdown).map(([priority, count]) => {
-                                        const pObj = issuePriorities.find(p => p.name === priority);
-                                        return (
-                                            <div key={priority} className="flex items-center justify-between">
-                                                <span className="text-sm text-foreground">{priority}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-6 rounded" style={{ width: `${(count / Math.max(...Object.values(priorityBreakdown), 1)) * 200}px`, backgroundColor: pObj?.color || "#3b82f6" }} />
-                                                    <span className="text-sm font-medium w-8 text-right text-foreground">{count}</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Work Types */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t('projects.detail.overview.charts.workTypesBreakdown')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {issuesLoading ? (
-                                <Skeleton className="h-32 w-full" />
-                            ) : (
-                                <div className="space-y-3">
-                                    {workTypesBreakdown.map(({ type, count, percentage }) => (
-                                        <div key={type}>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-medium text-foreground">{type}</span>
-                                                <span className="text-sm text-muted-foreground">{percentage}% • {count}</span>
-                                            </div>
-                                            <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                                <div className="h-full bg-blue-500 dark:bg-blue-400 rounded-full transition-all" style={{ width: `${percentage}%` }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Calendar */}
-                <div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{t('dashboard.calendar.title')}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Calendar projectId={projectId} />
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

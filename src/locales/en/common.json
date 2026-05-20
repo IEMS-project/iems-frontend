@@ -41,6 +41,46 @@
     "detail": "Detail"
   },
   "dashboard": {
+    "header": {
+      "eyebrow": "IEMS Workspace",
+      "subtitle": "Track progress, key tasks, and recent activity."
+    },
+    "marketPanel": {
+      "eyebrow": "Overview",
+      "title": "Analytics IEMS",
+      "projectsCta": "Projects",
+      "distributionTitle": "Task flow",
+      "taskCount": "{{count}} task",
+      "completionTitle": "Completion rate",
+      "taskLabel": "task",
+      "completionMeta": "{{completed}}/{{total}}",
+      "promoTitle": "Promo area",
+      "promoDescription": "Sprint banner, announcement, or internal promotion.",
+      "promoCta": "Open",
+      "segments": {
+        "backlog": "Backlog",
+        "doing": "Doing",
+        "done": "Done",
+        "overdue": "Late"
+      }
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "emptyTitle": "No activity yet",
+      "emptyDescription": "Project updates will appear here.",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "types": {
+        "created": "Task created",
+        "updated": "Updated",
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "commented": "Commented",
+        "activity": "Activity"
+      }
+    },
     "projectOverview": {
       "title": "Project Overview",
       "project": "Project",
@@ -52,6 +92,7 @@
     },
     "myTasks": {
       "title": "My Tasks",
+      "todayTitle": "Today tasks",
       "noTasks": "No tasks available",
       "noDueDate": "No due date",
       "overdue": "Overdue {{days}} days",
@@ -1298,7 +1339,20 @@
     }
   },
   "profile": {
-    "title": "Personal Profile",
+    "title": "User Profile",
+    "tabs": {
+      "personalInfo": "Personal Info",
+      "notifications": "Notifications"
+    },
+    "notificationSettings": {
+      "title": "Notification Settings",
+      "emailTitle": "Email Notifications",
+      "emailDesc": "Choose which events you want to receive via email.",
+      "taskAssigned": "When assigned a task",
+      "projectJoined": "When joined a project",
+      "taskDueSoon": "When task is due soon (1 day)",
+      "saveSuccess": "Notification settings updated successfully"
+    },
     "stats": {
       "projectsCompleted": "Projects Completed",
       "tasksCompleted": "Tasks Completed",
@@ -1359,6 +1413,13 @@
     "settings": "Settings",
     "notifications": "Notifications",
     "logout": "Logout"
+  },
+  "settingsPage": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark mode.",
+    "language": "Language",
+    "languageDescription": "Choose the display language."
   },
   "comments": {
     "title": "Comments",
@@ -1474,6 +1535,11 @@
     }
   },
   "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark mode.",
+    "language": "Language",
+    "languageDescription": "Choose the display language.",
     "workflow": "Workflow",
     "issueTypes": "Issue Types",
     "priorities": "Priorities",

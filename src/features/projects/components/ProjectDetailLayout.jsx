@@ -24,7 +24,7 @@ const tabs = [
     { id: "tasks", label: "tasks", path: "tasks" },
     { id: "agent", label: "agent", path: "agent" },
     { id: "timeline", label: "timeline", path: "timeline" },
-    { id: "burndown", label: "burndown", path: "burndown" },
+    { id: "burndown", label: "burndown", path: "burndown", premiumOnly: true },
     { id: "sprints", label: "sprints", path: "sprints" },
     { id: "members", label: "members", path: "members" },
     { id: "settings", label: "settings", path: "settings" },
@@ -180,7 +180,9 @@ function ProjectDetailLayoutContent() {
 
                     {/* Tab Navigation */}
                     <nav className="flex items-center gap-1" aria-label="Tabs">
-                        {tabs.map((tab) => {
+                        {tabs
+                            .filter(tab => !tab.premiumOnly || projectData?.ownerSubscription === "PREMIUM")
+                            .map((tab) => {
                             const isActive = currentTab === tab.id;
                             return (
                                 <button

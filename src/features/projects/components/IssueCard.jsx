@@ -110,6 +110,20 @@ export default function IssueCard({
         {issue.title}
       </p>
 
+      {/* Labels dots */}
+      {issue.labels && issue.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {issue.labels.map(l => (
+            <div 
+              key={l.id} 
+              className="h-1.5 w-6 rounded-full" 
+              style={{ backgroundColor: l.color }}
+              title={l.name}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Bottom row: priority + story points + assignee */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

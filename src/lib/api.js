@@ -62,6 +62,12 @@ function normalizeAxiosError(error) {
   const normalizedError = new Error(message);
   normalizedError.status = status;
   normalizedError.data = data;
+
+  // Auto-trigger premium upgrade modal on 402 Payment Required
+  if (status === 402) {
+    window.dispatchEvent(new CustomEvent("premium:required", { detail: { message } }));
+  }
+
   return normalizedError;
 }
 

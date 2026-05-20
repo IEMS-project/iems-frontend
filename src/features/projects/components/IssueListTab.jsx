@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   Search, Plus, X, ChevronUp, ChevronDown,
   Check, Columns, Download, Upload, SlidersHorizontal,
@@ -172,6 +172,7 @@ function ImportIssuesModal({
 export default function IssueListTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     workflowStatuses, issueTypes, issuePriorities, members, sprints,
     updateIssueInCache,
@@ -238,6 +239,35 @@ export default function IssueListTab() {
   useEffect(() => {
     setPage(0);
   }, [projectId]);
+
+  useEffect(() => {
+    const issueId = searchParams.get("issueId");
+    if (!issueId || !projectId) return;
+
+    const localIssue = issues.find((issue) => String(issue.id) === String(issueId));
+    if (localIssue) {
+      setSelectedIssue(localIssue);
+      return;
+    }
+
+    let cancelled = false;
+    issueService.getIssueById(projectId, issueId)
+      .then((issue) => {
+        if (!cancelled && issue) setSelectedIssue(issue);
+      })
+      .catch((error) => toast.error(error?.message || "Failed to load issue"));
+
+    return () => { cancelled = true; };
+  }, [searchParams, projectId, issues]);
+
+  const closeSelectedIssue = () => {
+    setSelectedIssue(null);
+    if (searchParams.has("issueId")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("issueId");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   useEffect(() => {
     loadPagedIssues();
@@ -417,14 +447,6 @@ export default function IssueListTab() {
     }
   };
 
-  if (issuesLoading) {
-    return (
-      <div className="space-y-2">
-        {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -563,7 +585,15 @@ export default function IssueListTab() {
             </tr>
           </thead>
           <tbody>
-            {filteredSorted.length === 0 ? (
+            {issuesLoading ? (
+              Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                <tr key={`issue-loading-${index}`} className="border-b border-border last:border-0">
+                  <td colSpan={colCount} className="px-3 py-2">
+                    <Skeleton className="h-8 w-full rounded-md" />
+                  </td>
+                </tr>
+              ))
+            ) : filteredSorted.length === 0 ? (
               <tr>
                 <td colSpan={colCount} className="px-3 py-10 text-center text-sm text-muted-foreground">
                   {hasActiveFilters
@@ -626,9 +656,10 @@ export default function IssueListTab() {
       {/* Issue Detail Modal */}
       <IssueDetailModal
         open={!!selectedIssue}
-        onClose={() => setSelectedIssue(null)}
+        onClose={closeSelectedIssue}
         issue={selectedIssue}
-        onUpdate={async () => { setSelectedIssue(null); await loadPagedIssues(); }}
+        targetCommentId={searchParams.get("commentId")}
+        onUpdate={async () => { closeSelectedIssue(); await loadPagedIssues(); }}
       />
 
       {/* Create Issue Modal */}

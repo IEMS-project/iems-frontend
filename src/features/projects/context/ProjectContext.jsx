@@ -221,23 +221,19 @@ export function ProjectProvider({ children }) {
                 setLoading(false);
             }
 
-            // Load everything else in parallel
+            // Load CRITICAL data in parallel (needed for UI immediately)
             try {
                 setMembersLoading(true);
                 setRolesLoading(true);
-                setIssuesLoading(true);
                 setSprintsLoading(true);
                 setWorkflowsLoading(true);
 
                 const [
-                    membersData, rolesData, issuesData, backlogData,
-                    sprintsData, workflowsData, issueTypesData,
-                    prioritiesData
+                    membersData, rolesData, sprintsData, workflowsData,
+                    issueTypesData, prioritiesData
                 ] = await Promise.all([
                     projectService.getProjectMembers(projectId).catch(() => []),
                     projectService.getProjectRoles(projectId).catch(() => []),
-                    issueService.getIssues(projectId).catch(() => []),
-                    issueService.getBacklog(projectId).catch(() => []),
                     sprintService.getSprints(projectId).catch(() => []),
                     workflowService.getWorkflows(projectId).catch(() => []),
                     projectService.getIssueTypes(projectId).catch(() => []),
@@ -246,8 +242,6 @@ export function ProjectProvider({ children }) {
 
                 setMembers(Array.isArray(membersData) ? membersData : []);
                 setRoles(Array.isArray(rolesData) ? rolesData : []);
-                setIssues(Array.isArray(issuesData) ? issuesData : []);
-                setBacklogIssues(Array.isArray(backlogData) ? backlogData : []);
                 setSprints(Array.isArray(sprintsData) ? sprintsData : []);
                 setIssueTypes(Array.isArray(issueTypesData) ? issueTypesData : []);
                 setIssuePriorities(Array.isArray(prioritiesData) ? prioritiesData : []);
@@ -265,9 +259,24 @@ export function ProjectProvider({ children }) {
             } finally {
                 setMembersLoading(false);
                 setRolesLoading(false);
-                setIssuesLoading(false);
                 setSprintsLoading(false);
                 setWorkflowsLoading(false);
+            }
+
+            // LAZY-LOAD issue data after critical data is ready
+            // (Issues/backlog can be fetched in background without blocking UI)
+            try {
+                setIssuesLoading(true);
+                const [issuesData, backlogData] = await Promise.all([
+                    issueService.getIssues(projectId).catch(() => []),
+                    issueService.getBacklog(projectId).catch(() => []),
+                ]);
+                setIssues(Array.isArray(issuesData) ? issuesData : []);
+                setBacklogIssues(Array.isArray(backlogData) ? backlogData : []);
+            } catch (error) {
+                console.error("Error loading issues:", error);
+            } finally {
+                setIssuesLoading(false);
             }
         };
 

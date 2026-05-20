@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
+import PremiumBadge from "@/components/ui/PremiumBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Table,
@@ -62,6 +63,7 @@ export default function AccountsTable({
                             <TableRow>
                                 <TableHead>{t("admin.accessControl.accounts.username")}</TableHead>
                                 <TableHead>{t("admin.accessControl.accounts.status")}</TableHead>
+                                <TableHead>Gói</TableHead>
                                 <TableHead>{t("admin.accessControl.accounts.roles")}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -88,6 +90,13 @@ export default function AccountsTable({
                                             <Badge variant={acc.enabled ? "green" : "red"}>
                                                 {acc.enabled ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                             </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <PremiumBadge
+                                                subscriptionType={acc.subscriptionType}
+                                                premiumUntil={acc.premiumUntil}
+                                                size="sm"
+                                            />
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">

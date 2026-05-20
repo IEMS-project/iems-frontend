@@ -1,18 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
-  Home,
-  FolderKanban,
-  CheckSquare,
-  Calendar,
-  MessageSquare,
   Bot,
+  CalendarDays,
+  CheckSquare,
+  Crown,
   FileText,
-  Users,
-  Moon,
-  Sun,
+  FolderKanban,
+  Home,
+  MessageSquare,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,21 +25,51 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useTheme } from "@/theme/ThemeProvider";
-import Toggle from "@/components/ui/Toggle";
 import UserProfile from "@/layouts/UserProfile";
 import { projectService } from "@/features/projects/api/projectService";
 import { useUnreadCounts } from "@/context/UnreadCountsContext";
 import { getStoredTokens } from "@/lib/api";
+import { cn } from "@/lib/utils";
+
+function getProjectDotClass(project) {
+  const key = String(project?.projectKey || project?.name || project?.id || "iems");
+  const colors = ["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-cyan-500", "bg-rose-500"];
+  return colors[key.charCodeAt(0) % colors.length];
+}
+
+function SidebarNavLink({ item, isActive, hasUnread }) {
+  if (!item) return null;
+
+  const Icon = item.icon;
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip={item.title}
+        isActive={isActive}
+        className={cn(
+          "h-9 rounded-lg border border-transparent px-2.5 text-sidebar-foreground/82 transition-colors hover:border-primary/15 hover:bg-primary/10 hover:text-primary",
+          "data-[active=true]:border-primary/25 data-[active=true]:bg-primary/12 data-[active=true]:font-semibold data-[active=true]:text-primary"
+        )}
+      >
+        <NavLink to={item.url} className="flex items-center gap-2">
+          <Icon className="h-4 w-4" />
+          <span>{item.title}</span>
+          {hasUnread && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar() {
   const { t } = useTranslation();
-  const { theme, toggleTheme } = useTheme();
   const { state } = useSidebar();
   const location = useLocation();
   const collapsed = state === "collapsed";
@@ -49,66 +78,31 @@ export function AppSidebar() {
   const { getTotal, refreshUnreadCounts } = useUnreadCounts();
   const hasUnread = getTotal() > 0;
 
-  // Check if user has IAM ADMIN role
   const isIamAdmin = useMemo(() => {
     const tokens = getStoredTokens();
     const roles = tokens?.userInfo?.roles || [];
     return Array.isArray(roles) && roles.includes("ADMIN");
   }, []);
 
-  // Menu items (excluding Projects as it's handled separately)
-  const allItems = [
-    {
-      title: t("sidebar.dashboard"),
-      url: "/dashboard",
-      icon: Home,
-    },
-    {
-      title: t("sidebar.tasks"),
-      url: "/tasks",
-      icon: CheckSquare,
-    },
+  const navItems = useMemo(
+    () => [
+      { title: t("sidebar.dashboard"), url: "/dashboard", icon: Home },
+      { title: t("sidebar.tasks"), url: "/tasks", icon: CheckSquare },
+      { title: t("sidebar.messages"), url: "/messages", icon: MessageSquare },
+      { title: t("sidebar.chatbot"), url: "/chatbot", icon: Bot },
+      { title: t("sidebar.documents"), url: "/documents", icon: FileText },
+      { title: t("sidebar.calendar"), url: "/calendar", icon: CalendarDays },
+      { title: t("sidebar.accessControl"), url: "/admin/access-control", icon: Shield, requiresAdmin: true },
+      { title: "Quản lý gói Premium", url: "/admin/subscription", icon: Crown, requiresAdmin: true },
+    ],
+    [t]
+  );
 
-    {
-      title: t("sidebar.messages"),
-      url: "/messages",
-      icon: MessageSquare,
-    },
-    {
-      title: t("sidebar.chatbot"),
-      url: "/chatbot",
-      icon: Bot,
-    },
-    {
-      title: t("sidebar.documents"),
-      url: "/documents",
-      icon: FileText,
-    },
-    // Departments removed from backend
-    // {
-    //   title: t('sidebar.departments'),
-    //   url: "/departments",
-    //   icon: Users,
-    // },
-    {
-      title: t("sidebar.accessControl"),
-      url: "/admin/access-control",
-      icon: Shield,
-      requiresAdmin: true, // Only show for IAM ADMIN
-    },
-  ];
+  const items = useMemo(
+    () => navItems.filter((item) => !item.requiresAdmin || isIamAdmin),
+    [isIamAdmin, navItems]
+  );
 
-  // Filter items based on user role
-  const items = useMemo(() => {
-    return allItems.filter((item) => {
-      if (item.requiresAdmin) {
-        return isIamAdmin;
-      }
-      return true;
-    });
-  }, [isIamAdmin, t]);
-
-  // Load projects
   useEffect(() => {
     const loadProjects = async () => {
       try {
@@ -122,39 +116,52 @@ export function AppSidebar() {
         setLoadingProjects(false);
       }
     };
+
     loadProjects();
+
+    const handleProjectsChanged = (event) => {
+      const deletedProjectId = event?.detail?.deletedProjectId;
+      if (deletedProjectId) {
+        setProjects((prev) => prev.filter((project) => String(project.id) !== String(deletedProjectId)));
+      }
+      loadProjects();
+    };
+
+    window.addEventListener("projects:changed", handleProjectsChanged);
+    return () => window.removeEventListener("projects:changed", handleProjectsChanged);
   }, []);
 
-  // Đảm bảo sidebar luôn có số tin nhắn chưa đọc mới nhất,
-  // ngay cả khi người dùng chưa mở trang Tin nhắn.
   useEffect(() => {
     if (refreshUnreadCounts) {
       refreshUnreadCounts().catch(() => {});
     }
   }, [refreshUnreadCounts]);
 
-  // Check if current path is a project detail page
   const isProjectDetailPage =
     location.pathname.startsWith("/projects/") &&
     location.pathname !== "/projects";
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" className="border-sidebar-border/70 bg-sidebar/72 backdrop-blur-xl dark:bg-sidebar/68">
+      <SidebarHeader className="border-b border-sidebar-border/70 px-3 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="h-12 rounded-xl border border-transparent text-sidebar-foreground hover:border-primary/15 hover:bg-primary/10 hover:text-primary"
+            >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-base font-bold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20">
                   I
                 </div>
                 {!collapsed && (
-                  <div className="flex flex-col">
-                    <div className="text-base font-semibold leading-tight">
+                  <div className="flex min-w-0 flex-col">
+                    <div className="truncate text-sm font-semibold leading-tight">
                       {t("sidebar.appName")}
                     </div>
-                    <div className="text-xs text-sidebar-foreground/70">
-                      {t("sidebar.appDescription")}
+                    <div className="truncate text-xs text-sidebar-foreground/62">
+                      Quản lý dự án thông minh
                     </div>
                   </div>
                 )}
@@ -164,59 +171,37 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-1 py-3">
         <SidebarGroup>
-          <SidebarGroupLabel>{t("sidebar.mainFeatures")}</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-2 text-[11px] font-semibold uppercase tracking-wide text-sidebar-foreground/58">
+            {t("sidebar.mainFeatures")}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {/* Dashboard - always on top */}
-              {items
-                .filter((item) => item.url === "/dashboard")
-                .map((item) => {
-                  const isActive = location.pathname === item.url;
-                  const showUnreadBadge = item.url === "/messages" && hasUnread;
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        tooltip={item.title}
-                        isActive={isActive}
-                      >
-                        <NavLink
-                          to={item.url}
-                          className="flex items-center gap-2"
-                        >
-                          <item.icon />
-                          <span>{item.title}</span>
-                          {showUnreadBadge && (
-                            <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+            <SidebarMenu className="gap-1.5">
+              <SidebarNavLink
+                item={items.find((item) => item.url === "/dashboard")}
+                isActive={location.pathname === "/dashboard"}
+                hasUnread={false}
+              />
 
-              {/* Projects - always below Dashboard with submenu */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   tooltip={t("sidebar.projects")}
-                  isActive={
-                    location.pathname === "/projects" || isProjectDetailPage
-                  }
+                  isActive={location.pathname === "/projects" || isProjectDetailPage}
+                  className="h-9 rounded-lg border border-transparent px-2.5 text-sidebar-foreground/82 transition-colors hover:border-primary/15 hover:bg-primary/10 hover:text-primary data-[active=true]:border-primary/25 data-[active=true]:bg-primary/12 data-[active=true]:font-semibold data-[active=true]:text-primary"
                 >
                   <NavLink to="/projects">
-                    <FolderKanban />
+                    <FolderKanban className="h-4 w-4" />
                     <span>{t("sidebar.projects")}</span>
                   </NavLink>
                 </SidebarMenuButton>
-                <SidebarMenuSub>
-                  {/* All Projects Link */}
+                <SidebarMenuSub className="ml-4 border-sidebar-border/70 py-1">
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton
                       asChild
                       isActive={location.pathname === "/projects"}
+                      className="text-sidebar-foreground/76 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-primary/12 data-[active=true]:font-medium data-[active=true]:text-primary"
                     >
                       <NavLink to="/projects">
                         <span>{t("sidebar.allProjects")}</span>
@@ -225,25 +210,28 @@ export function AppSidebar() {
                   </SidebarMenuSubItem>
                   {loadingProjects ? (
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton disabled>
+                      <SidebarMenuSubButton disabled className="text-sidebar-foreground/58 opacity-100">
                         <span>{t("sidebar.loading")}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : projects.length === 0 ? (
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton disabled>
+                      <SidebarMenuSubButton disabled className="text-sidebar-foreground/58 opacity-100">
                         <span>{t("sidebar.noProjects")}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ) : (
                     projects.map((project) => {
-                      const isActive = location.pathname.startsWith(
-                        `/projects/${project.id}`,
-                      );
+                      const isActive = location.pathname.startsWith(`/projects/${project.id}`);
                       return (
                         <SidebarMenuSubItem key={project.id}>
-                          <SidebarMenuSubButton asChild isActive={isActive}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={isActive}
+                            className="text-sidebar-foreground/76 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-primary/12 data-[active=true]:font-medium data-[active=true]:text-primary"
+                          >
                             <NavLink to={`/projects/${project.id}/overview`}>
+                              <span className={cn("h-2 w-2 rounded-full", getProjectDotClass(project))} />
                               <span className="truncate">{project.name}</span>
                             </NavLink>
                           </SidebarMenuSubButton>
@@ -254,81 +242,59 @@ export function AppSidebar() {
                 </SidebarMenuSub>
               </SidebarMenuItem>
 
-              {/* Other menu items (except Dashboard, which is already rendered) */}
               {items
                 .filter((item) => item.url !== "/dashboard")
-                .map((item) => {
-                  const isActive = location.pathname === item.url;
-                  const showUnreadBadge = item.url === "/messages" && hasUnread;
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        tooltip={item.title}
-                        isActive={isActive}
-                      >
-                        <NavLink
-                          to={item.url}
-                          className="flex items-center gap-2"
-                        >
-                          <item.icon />
-                          <span>{item.title}</span>
-                          {showUnreadBadge && (
-                            <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-destructive" />
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                .map((item) => (
+                  <SidebarNavLink
+                    key={item.url}
+                    item={item}
+                    isActive={location.pathname === item.url}
+                    hasUnread={item.url === "/messages" && hasUnread}
+                  />
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarGroup>
+      <SidebarFooter className="border-t border-sidebar-border/70 px-3 py-3">
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Theme Toggle */}
               <SidebarMenuItem>
                 {collapsed ? (
                   <SidebarMenuButton
-                    tooltip={
-                      theme === "dark"
-                        ? t("sidebar.lightMode")
-                        : t("sidebar.darkMode")
-                    }
-                    onClick={toggleTheme}
+                    tooltip="Gói Premium"
+                    asChild
+                    className="text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-300 dark:hover:bg-amber-400/10 dark:hover:text-amber-200"
                   >
-                    {theme === "dark" ? (
-                      <Moon className="h-4 w-4" />
-                    ) : (
-                      <Sun className="h-4 w-4" />
-                    )}
+                    <NavLink to="/premium">
+                      <Crown className="h-4 w-4" />
+                    </NavLink>
                   </SidebarMenuButton>
                 ) : (
-                  <div className="flex w-full items-center justify-between rounded-md px-2 py-1.5">
-                    <div className="flex items-center gap-2 text-sm">
-                      {theme === "dark" ? (
-                        <Moon className="h-4 w-4" />
-                      ) : (
-                        <Sun className="h-4 w-4" />
-                      )}
-                      <span>{t("sidebar.darkMode")}</span>
-                    </div>
-                    <Toggle checked={theme === "dark"} onChange={toggleTheme} />
-                  </div>
+                  <NavLink
+                    to="/premium"
+                    className="group/premium flex w-full items-center gap-3 rounded-xl border border-[#ffd76a]/90 bg-gradient-to-br from-[#fff9df] via-[#ffd85a] to-[#e3a51b] px-2.5 py-2.5 text-sm text-[#3a2403] shadow-sm shadow-[#ffd85a]/35 transition-all hover:border-[#ffe58a] hover:from-[#fffdf0] hover:via-[#ffe16f] hover:to-[#f0b72a] hover:shadow-md hover:shadow-[#ffd85a]/45 dark:border-[#ffe58a]/55 dark:from-[#ffe58a]/30 dark:via-[#f6c236]/30 dark:to-[#8a5a12]/55 dark:text-[#fff7d4]"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70 text-[#9a640d] shadow-sm ring-1 ring-[#ffe58a]/80 dark:bg-white/14 dark:text-[#ffe58a] dark:ring-[#ffe58a]/35">
+                      <Crown className="h-4 w-4" />
+                    </span>
+                    <span className="flex min-w-0 flex-col leading-tight">
+                      <span className="truncate text-xs font-semibold">Gói Premium</span>
+                      <span className="truncate text-[11px] text-[#5d3a0a] dark:text-[#ffe9a3]/80">Xem và nâng cấp gói</span>
+                    </span>
+                    <Sparkles className="ml-auto h-3.5 w-3.5 text-[#9a640d] drop-shadow-sm dark:text-[#ffe58a]" />
+                  </NavLink>
                 )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="my-1 bg-sidebar-border" />
 
-        {/* User Profile */}
-        <SidebarGroup>
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <UserProfile />
           </SidebarGroupContent>

@@ -57,7 +57,7 @@ export default function Breadcrumb() {
   if (customBreadcrumbs && Array.isArray(customBreadcrumbs) && customBreadcrumbs.length > 0) {
     return (
       <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-1.5">
+        <ol className="flex min-w-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/55 px-2.5 py-1.5 shadow-sm shadow-slate-900/[0.02] backdrop-blur">
           {customBreadcrumbs.map((crumb, index) => {
             const isLast = index === customBreadcrumbs.length - 1;
             // Last item should be bold (current location)
@@ -67,25 +67,25 @@ export default function Breadcrumb() {
                 {crumb.onClick ? (
                   <button
                     onClick={crumb.onClick}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="max-w-40 truncate text-muted-foreground transition-colors hover:text-primary"
                   >
                     {crumb.label}
                   </button>
                 ) : crumb.to ? (
                   <Link
                     to={crumb.to}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="max-w-40 truncate text-muted-foreground transition-colors hover:text-primary"
                   >
                     {crumb.label}
                   </Link>
                 ) : (
                   <span className={cn(
-                    "text-foreground",
+                    "max-w-56 truncate text-foreground",
                     isCurrentLocation && "font-semibold"
                   )}>{crumb.label}</span>
                 )}
                 {!isLast && (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                 )}
               </li>
             );
@@ -140,7 +140,7 @@ export default function Breadcrumb() {
 
   return (
     <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
-      <ol className="flex items-center gap-1.5">
+      <ol className="flex min-w-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/55 px-2.5 py-1.5 shadow-sm shadow-slate-900/[0.02] backdrop-blur">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;
           return (
@@ -148,15 +148,15 @@ export default function Breadcrumb() {
               {crumb.to ? (
                 <Link
                   to={crumb.to}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="max-w-40 truncate text-muted-foreground transition-colors hover:text-primary"
                 >
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-foreground font-medium">{crumb.label}</span>
+                <span className="max-w-56 truncate font-semibold text-foreground">{crumb.label}</span>
               )}
               {!isLast && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" />
               )}
             </li>
           );

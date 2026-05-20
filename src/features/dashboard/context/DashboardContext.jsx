@@ -1,8 +1,35 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { projectService } from '@/features/projects/api/projectService';
-import { taskService } from '@/features/tasks/api/taskService';
+import { issueService } from '@/features/projects/api/issueService';
 
 const DashboardContext = createContext(undefined);
+
+function computeStats(tasks) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let inProgress = 0, completed = 0, overdue = 0, total = 0;
+
+    (Array.isArray(tasks) ? tasks : []).forEach((task) => {
+        total++;
+        const category = (task.statusCategory || '').toString().toUpperCase();
+        const isDone = category === 'DONE';
+        const isInProgress = category === 'IN_PROGRESS';
+
+        if (isDone) { completed++; return; }
+        if (isInProgress) inProgress++;
+
+        if (!isDone && task.dueDate) {
+            try {
+                const [y, m, d] = task.dueDate.toString().split('T')[0].split('-').map(Number);
+                const due = new Date(y, m - 1, d);
+                if (due < today) overdue++;
+            } catch (_) { /* ignore */ }
+        }
+    });
+
+    return { total, inProgress, completed, overdue, todo: total - inProgress - completed };
+}
 
 export function DashboardProvider({ children }) {
     const [projects, setProjects] = useState([]);
@@ -10,10 +37,10 @@ export function DashboardProvider({ children }) {
     const [projectsLoading, setProjectsLoading] = useState(true);
     const [tasksLoading, setTasksLoading] = useState(true);
 
-    // Combined loading state
     const loading = projectsLoading || tasksLoading;
 
-    // Refresh functions
+    const stats = useMemo(() => computeStats(tasks), [tasks]);
+
     const refreshProjects = useCallback(async () => {
         try {
             setProjectsLoading(true);
@@ -30,7 +57,7 @@ export function DashboardProvider({ children }) {
     const refreshTasks = useCallback(async () => {
         try {
             setTasksLoading(true);
-            const data = await taskService.getMyTasks();
+            const data = await issueService.getMyAssignedIssues();
             setTasks(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error loading tasks:', error);
@@ -40,26 +67,19 @@ export function DashboardProvider({ children }) {
         }
     }, []);
 
-    // Initial load - load both in parallel
     useEffect(() => {
-        console.log('[DashboardContext] Loading dashboard data...');
-        
-        Promise.all([
-            refreshProjects(),
-            refreshTasks()
-        ]).then(() => {
-            console.log('[DashboardContext] Dashboard data loaded successfully');
-        });
+        Promise.all([refreshProjects(), refreshTasks()]);
     }, [refreshProjects, refreshTasks]);
 
     const value = {
         projects,
         tasks,
+        stats,
         loading,
         projectsLoading,
         tasksLoading,
         refreshProjects,
-        refreshTasks
+        refreshTasks,
     };
 
     return (

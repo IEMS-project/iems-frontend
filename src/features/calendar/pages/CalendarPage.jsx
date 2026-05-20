@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import FullCalendar from "@fullcalendar/react";
@@ -6,23 +6,15 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
-import { useSearchParams } from "react-router-dom";
-import { taskService } from "@/features/tasks/api/taskService";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { projectService } from "@/features/projects/api/projectService";
+import { issueService } from "@/features/projects/api/issueService";
 import { translatePriority } from "@/lib/i18n";
-
-const initialEvents = [
-    { id: "1", title: "Quarterly Budget Review", start: "2025-09-05", backgroundColor: "#fde68a", borderColor: "#f59e0b" },
-    { id: "2", title: "Project Deadline", start: "2025-09-09T13:00:00", end: "2025-09-09T14:00:00", backgroundColor: "#fde68a", borderColor: "#f59e0b" },
-    { id: "3", title: "Team Meeting", start: "2025-09-18T10:00:00", end: "2025-09-18T11:00:00", backgroundColor: "#bfdbfe", borderColor: "#60a5fa" },
-    { id: "4", title: "Lunch with Client", start: "2025-09-19T12:00:00", end: "2025-09-19T13:15:00", backgroundColor: "#bbf7d0", borderColor: "#34d399" },
-    { id: "5", title: "Product Launch", start: "2025-09-21", end: "2025-09-24", allDay: true, backgroundColor: "#e9d5ff", borderColor: "#c084fc" },
-    { id: "6", title: "Sales Conference", start: "2025-09-22T14:30:00", end: "2025-09-22T14:45:00", backgroundColor: "#fecaca", borderColor: "#f87171" },
-    { id: "7", title: "Team Meeting", start: "2025-09-23T09:00:00", end: "2025-09-23T10:00:00", backgroundColor: "#bfdbfe", borderColor: "#60a5fa" },
-    { id: "8", title: "Marketing Strategy", start: "2025-09-27T10:00:00", end: "2025-09-27T11:30:00", backgroundColor: "#bbf7d0", borderColor: "#34d399" }
-];
+import IssueEventPopover from "@/features/calendar/components/IssueEventPopover";
 
 export default function CalendarPage() {
     const calendarRef = useRef(null);
+    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [title, setTitle] = useState("");
     const [activeView, setActiveView] = useState("dayGridMonth");
@@ -30,116 +22,91 @@ export default function CalendarPage() {
     const [errorMessage, setErrorMessage] = useState("");
     const [searchParams] = useSearchParams();
 
+    // Project filter
+    const [projects, setProjects] = useState([]);
+    const [selectedProjectId, setSelectedProjectId] = useState("all");
+
+    // Popover state
+    const [popover, setPopover] = useState(null); // { event, position }
+
+    // Load projects for filter
     useEffect(() => {
-        async function loadTasks() {
-            setIsLoading(true);
-            setErrorMessage("");
-            try {
-                const projectId = searchParams.get("projectId");
-                const res = projectId
-                    ? await taskService.getTasksByProject(projectId)
-                    : await taskService.getMyTasks();
-                const tasks = res?.data?.data || res?.data || res || [];
+        projectService.getMyProjects()
+            .then(data => setProjects(Array.isArray(data) ? data : []))
+            .catch(() => {});
+    }, []);
 
-                function addOneDay(dateStr) {
-                    if (!dateStr) return undefined;
-                    const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
-                    const date = new Date(y, m - 1, d + 1);
-                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                }
+    const loadIssues = useCallback(async () => {
+        setIsLoading(true);
+        setErrorMessage("");
+        try {
+            const projectId = selectedProjectId !== "all" ? selectedProjectId : searchParams.get("projectId");
+            let issues = [];
 
-                const mapped = (Array.isArray(tasks) ? tasks : []).map((t) => {
-                    const start = t?.startDate || t?.createdAt?.slice(0, 10);
-                    const endInclusive = t?.dueDate || t?.updatedAt?.slice(0, 10) || t?.startDate;
-                    return {
-                        id: t.id,
-                        title: `${t.title}${t.projectName ? " (" + t.projectName + ")" : ""}`,
-                        start: start,
-                        end: addOneDay(endInclusive),
-                        allDay: true,
-                        extendedProps: {
-                            status: t.status,
-                            priority: t.priority,
-                            projectId: t.projectId,
-                            projectName: t.projectName,
-                            assignedToName: t.assignedToName
-                        }
-                    };
-                });
-
-                setEvents(mapped);
-            } catch (e) {
-                setErrorMessage("Không tải được danh sách công việc");
-            } finally {
-                setIsLoading(false);
+            if (projectId) {
+                issues = await issueService.getIssues(projectId);
+            } else {
+                // Load all issues from all projects (up to 5)
+                const projs = projects.slice(0, 5);
+                const results = await Promise.allSettled(
+                    projs.map(p => issueService.getIssues(p.id || p.projectId))
+                );
+                issues = results
+                    .filter(r => r.status === "fulfilled")
+                    .flatMap(r => {
+                        const d = r.value;
+                        return Array.isArray(d) ? d : (Array.isArray(d?.content) ? d.content : []);
+                    });
             }
-        }
-        loadTasks();
-    }, [searchParams]);
 
-    function handleDateSelect(selectionInfo) {
-        const title = prompt("Tiêu đề sự kiện?");
-        const calendarApi = selectionInfo.view.calendar;
-        calendarApi.unselect();
-        if (title) {
-            const newEvent = {
-                id: String(Date.now()),
-                title,
-                start: selectionInfo.startStr,
-                end: selectionInfo.endStr,
-                allDay: selectionInfo.allDay
-            };
-            setEvents(prev => [...prev, newEvent]);
+            function addOneDay(dateStr) {
+                if (!dateStr) return undefined;
+                const [y, m, d] = dateStr.split("T")[0].split("-").map(Number);
+                const date = new Date(y, m - 1, d + 1);
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+            }
+
+            const mapped = (Array.isArray(issues) ? issues : [])
+                .filter(t => t.startDate || t.dueDate)
+                .map(t => ({
+                    id: t.id,
+                    title: `${t.issueKey ? t.issueKey + " " : ""}${t.title || ""}`,
+                    start: t.startDate?.slice(0, 10) || t.dueDate?.slice(0, 10),
+                    end: addOneDay(t.dueDate?.slice(0, 10)),
+                    allDay: true,
+                    extendedProps: {
+                        status: t.statusName || t.status,
+                        priority: t.priority,
+                        projectId: t.projectId,
+                        projectName: t.projectName,
+                        assignedToName: t.assigneeName || t.assignedToName,
+                        issueKey: t.issueKey,
+                    },
+                }));
+
+            setEvents(mapped);
+        } catch (e) {
+            setErrorMessage("Không tải được danh sách công việc");
+        } finally {
+            setIsLoading(false);
         }
-    }
+    }, [selectedProjectId, searchParams, projects]);
+
+    useEffect(() => {
+        if (projects.length >= 0) loadIssues();
+    }, [loadIssues]);
 
     function handleEventClick(clickInfo) {
-        if (confirm(`Xóa sự kiện "${clickInfo.event.title}"?`)) {
-            setEvents(prev => prev.filter(e => e.id !== clickInfo.event.id));
-        }
-    }
-
-    function handleAddQuickEvent() {
-        const api = calendarRef.current?.getApi();
-        const dateStr = api?.getDate()?.toISOString().slice(0, 10);
-        const newEvent = { id: String(Date.now()), title: "Sự kiện mới", start: dateStr, allDay: true };
-        setEvents(prev => [...prev, newEvent]);
-    }
-
-    function handlePrev() {
-        const api = calendarRef.current?.getApi();
-        api?.prev();
-        setTitle(api?.view?.title || "");
-    }
-
-    function handleNext() {
-        const api = calendarRef.current?.getApi();
-        api?.next();
-        setTitle(api?.view?.title || "");
-    }
-
-    function handleToday() {
-        const api = calendarRef.current?.getApi();
-        api?.today();
-        setTitle(api?.view?.title || "");
-    }
-
-    function changeView(viewName) {
-        const api = calendarRef.current?.getApi();
-        api?.changeView(viewName);
-        setActiveView(viewName);
-        setTitle(api?.view?.title || "");
-    }
-
-    function getIsDarkMode() {
-        if (typeof window === "undefined") return false;
-        const hasDarkClass = document.documentElement.classList.contains("dark");
-        if (hasDarkClass) return true;
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        clickInfo.jsEvent.preventDefault();
+        const rect = clickInfo.jsEvent.target.getBoundingClientRect();
+        setPopover({
+            event: clickInfo.event,
+            position: { x: rect.left + rect.width / 2, y: rect.bottom + 8 },
+        });
     }
 
     function hueFromString(str) {
-        if (!str) return 210; // default blue hue
+        if (!str) return 210;
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             hash = (hash << 5) - hash + str.charCodeAt(i);
@@ -149,17 +116,13 @@ export default function CalendarPage() {
     }
 
     function computeEventColors(projectId, priority) {
-        const priorityLabel = translatePriority(priority);
-        const isDark = getIsDarkMode();
+        const isDark = document.documentElement.classList.contains("dark");
         const hue = hueFromString(projectId || "default");
-        const lightnessBase = isDark ? 22 : 85; // background lightness
+        const lightnessBase = isDark ? 22 : 85;
         const borderLightness = isDark ? 40 : 60;
         const satBase = isDark ? 60 : 70;
-        const priorityDelta = ["Cao", "Cao nhất"].includes(priorityLabel)
-            ? (isDark ? 8 : -12)
-            : priorityLabel === "Trung bình"
-                ? 0
-                : (isDark ? -8 : 8);
+        const priorityLabel = translatePriority(priority);
+        const priorityDelta = ["Cao", "Cao nhất"].includes(priorityLabel) ? (isDark ? 8 : -12) : (["Trung bình"].includes(priorityLabel) ? 0 : (isDark ? -8 : 8));
         const bg = `hsl(${hue}, ${satBase}%, ${Math.max(5, Math.min(95, lightnessBase + priorityDelta))}%)`;
         const bd = `hsl(${hue}, ${satBase + 10}%, ${borderLightness}%)`;
         const text = isDark ? "#e5e7eb" : "#111827";
@@ -167,28 +130,39 @@ export default function CalendarPage() {
     }
 
     function onEventDidMount(arg) {
-        const priority = arg.event.extendedProps?.priority;
-        const projectId = arg.event.extendedProps?.projectId;
-        const { backgroundColor, borderColor, textColor } = computeEventColors(projectId, priority);
-        const el = arg.el;
-        el.style.backgroundColor = backgroundColor;
-        el.style.borderColor = borderColor;
-        el.style.color = textColor;
+        const { backgroundColor, borderColor, textColor } = computeEventColors(
+            arg.event.extendedProps?.projectId,
+            arg.event.extendedProps?.priority
+        );
+        arg.el.style.backgroundColor = backgroundColor;
+        arg.el.style.borderColor = borderColor;
+        arg.el.style.color = textColor;
     }
 
-    const Legend = useMemo(() => (
-        <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }}></span>Ưu tiên cao</span>
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#f59e0b" }}></span>Ưu tiên trung bình</span>
-            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: "#10b981" }}></span>Ưu tiên thấp</span>
-        </div>
-    ), []);
+    function handlePrev() { const api = calendarRef.current?.getApi(); api?.prev(); setTitle(api?.view?.title || ""); }
+    function handleNext() { const api = calendarRef.current?.getApi(); api?.next(); setTitle(api?.view?.title || ""); }
+    function handleToday() { const api = calendarRef.current?.getApi(); api?.today(); setTitle(api?.view?.title || ""); }
+    function changeView(viewName) {
+        const api = calendarRef.current?.getApi();
+        api?.changeView(viewName);
+        setActiveView(viewName);
+        setTitle(api?.view?.title || "");
+    }
 
     return (
         <div className="space-y-6">
+            {popover && (
+                <IssueEventPopover
+                    event={popover.event}
+                    position={popover.position}
+                    onClose={() => setPopover(null)}
+                />
+            )}
+
             <Card>
                 <CardHeader>
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        {/* Left controls */}
                         <div className="flex items-center gap-2">
                             <Button variant="secondary" onClick={handleToday}>Hôm nay</Button>
                             <div className="inline-flex rounded-md shadow-sm">
@@ -196,26 +170,44 @@ export default function CalendarPage() {
                                 <button onClick={handleNext} className="px-3 py-2 border-t border-b border-r border-gray-300 rounded-r-md text-sm hover:bg-gray-50 dark:border-gray-700">›</button>
                             </div>
                         </div>
+
                         <CardTitle className="text-center md:text-left">{title || "Lịch làm việc"}</CardTitle>
-                        <div className="flex items-center gap-3">
+
+                        {/* Right controls */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Project filter */}
+                            <select
+                                value={selectedProjectId}
+                                onChange={e => setSelectedProjectId(e.target.value)}
+                                className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 shadow-sm hover:border-gray-400 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                            >
+                                <option value="all">Tất cả projects</option>
+                                {projects.map(p => (
+                                    <option key={p.id || p.projectId} value={p.id || p.projectId}>
+                                        {p.name || p.title}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* View switcher */}
                             <div className="inline-flex rounded-md border border-gray-300 overflow-hidden dark:border-gray-700">
-                                <button onClick={() => changeView("dayGridMonth")} className={`px-3 py-2 text-sm ${activeView === 'dayGridMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Tháng</button>
-                                <button onClick={() => changeView("timeGridWeek")} className={`px-3 py-2 text-sm ${activeView === 'timeGridWeek' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Tuần</button>
-                                <button onClick={() => changeView("timeGridDay")} className={`px-3 py-2 text-sm ${activeView === 'timeGridDay' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Ngày</button>
-                                <button onClick={() => changeView("listMonth")} className={`px-3 py-2 text-sm ${activeView === 'listMonth' ? 'bg-gray-900 text-white' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>Danh sách</button>
+                                {[["dayGridMonth", "Tháng"], ["timeGridWeek", "Tuần"], ["timeGridDay", "Ngày"], ["listMonth", "Danh sách"]].map(([view, label]) => (
+                                    <button
+                                        key={view}
+                                        onClick={() => changeView(view)}
+                                        className={`px-3 py-2 text-sm transition-colors ${activeView === view ? "bg-gray-900 text-white dark:bg-indigo-600" : "hover:bg-gray-50 dark:hover:bg-gray-800"}`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
                             </div>
-                            {Legend}
-                            <Button onClick={handleAddQuickEvent}>+ Sự kiện mới</Button>
                         </div>
                     </div>
                 </CardHeader>
+
                 <CardContent>
-                    {isLoading && (
-                        <div className="py-8 text-center text-sm text-gray-600 dark:text-gray-300">Đang tải công việc...</div>
-                    )}
-                    {!isLoading && errorMessage && (
-                        <div className="py-8 text-center text-sm text-red-600">{errorMessage}</div>
-                    )}
+                    {isLoading && <div className="py-8 text-center text-sm text-gray-500">Đang tải...</div>}
+                    {!isLoading && errorMessage && <div className="py-8 text-center text-sm text-red-500">{errorMessage}</div>}
                     {!isLoading && !errorMessage && (
                         <div style={{ minHeight: 640 }}>
                             <FullCalendar
@@ -229,27 +221,19 @@ export default function CalendarPage() {
                                 slotMinTime="07:00:00"
                                 slotMaxTime="21:00:00"
                                 scrollTime="09:00:00"
-                                businessHours={{ startTime: "07:00", endTime: "21:00" }}
                                 selectable
                                 selectMirror
                                 dayMaxEventRows
                                 events={events}
-                                select={handleDateSelect}
                                 eventClick={handleEventClick}
                                 eventDidMount={onEventDidMount}
                                 datesSet={(arg) => setTitle(arg.view.title)}
-                                buttonText={{
-                                    today: "Hôm nay",
-                                    month: "Tháng",
-                                    week: "Tuần",
-                                    day: "Ngày",
-                                    list: "Danh sách"
-                                }}
+                                eventClassNames={() => "rounded-md border text-xs px-1 cursor-pointer"}
+                                buttonText={{ today: "Hôm nay", month: "Tháng", week: "Tuần", day: "Ngày", list: "Danh sách" }}
                                 views={{
                                     timeGridWeek: { titleFormat: { year: "numeric", month: "long" } },
                                     listMonth: { listDayFormat: true }
                                 }}
-                                eventClassNames={() => "rounded-md border text-xs px-1"}
                             />
                         </div>
                     )}
@@ -258,4 +242,3 @@ export default function CalendarPage() {
         </div>
     );
 }
-

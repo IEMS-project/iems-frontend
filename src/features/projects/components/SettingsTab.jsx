@@ -271,6 +271,7 @@ function IssueTypesSection() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", description: "", iconUrl: "" });
+  const [originalEditForm, setOriginalEditForm] = useState(null); // snapshot for dirty-check
   const [activeIconPicker, setActiveIconPicker] = useState(null);
 
   const handleAdd = async () => {
@@ -292,23 +293,38 @@ function IssueTypesSection() {
   };
 
   const startEdit = (type) => {
+    const initial = { name: type.name, description: type.description || "", iconUrl: type.iconUrl || "" };
     setEditingId(type.id);
-    setEditForm({ name: type.name, description: type.description || "", iconUrl: type.iconUrl || "" });
+    setEditForm(initial);
+    setOriginalEditForm(initial);
     setActiveIconPicker(null);
   };
 
   const handleSaveEdit = async () => {
     if (!editForm.name.trim()) return;
+    // Skip API call if nothing changed
+    const trimmedName = editForm.name.trim();
+    if (
+      originalEditForm &&
+      trimmedName === originalEditForm.name &&
+      editForm.description === originalEditForm.description &&
+      editForm.iconUrl === originalEditForm.iconUrl
+    ) {
+      setEditingId(null);
+      setOriginalEditForm(null);
+      return;
+    }
     try {
       setSaving(true);
       await projectService.updateIssueType(projectId, editingId, {
-        name: editForm.name.trim(),
+        name: trimmedName,
         description: editForm.description,
         iconUrl: editForm.iconUrl || null,
       });
       toast.success(t("settings.typeUpdated", "Issue type updated"));
       await refreshIssueTypes();
       setEditingId(null);
+      setOriginalEditForm(null);
     } catch (e) {
       toast.error(e?.message || "Error");
     } finally { setSaving(false); }
@@ -360,7 +376,7 @@ function IssueTypesSection() {
                 <Button size="sm" onClick={handleSaveEdit} disabled={saving}>
                   {saving ? "..." : t("ui.common.save", "Save")}
                 </Button>
-                <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+                <Button size="sm" variant="secondary" onClick={() => { setEditingId(null); setOriginalEditForm(null); }}>
                   {t("ui.common.cancel", "Cancel")}
                 </Button>
               </div>

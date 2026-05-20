@@ -1,141 +1,196 @@
-import React, { useMemo, useState } from "react";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
-import Select from "@/components/ui/select";
-import Button from "@/components/ui/Button";
-import Modal from "@/components/ui/Modal";
-import { Card, CardContent } from "@/components/ui/Card";
+import React, { useState } from "react";
+import {
+    Bell,
+    CheckCheck,
+    CheckCircle2,
+    MessageSquare,
+    RefreshCw,
+    Rocket,
+    Target,
+    Users,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import SectionHeader from "@/components/ui/SectionHeader";
+import EmptyState from "@/components/ui/EmptyState";
+import { useNotifications } from "@/hooks/useNotifications";
+import { HighlightedNotificationText } from "@/features/notifications/utils/notificationDisplay.jsx";
+import { getNotificationTarget } from "@/features/notifications/utils/notificationNavigation";
+import { cn } from "@/lib/utils";
 
-const mockDepartments = [
-  { id: "d1", name: "Phát triển" },
-  { id: "d2", name: "Marketing" },
-  { id: "d3", name: "Thiết kế" },
+const TYPE_CONFIG = {
+    ISSUE_ASSIGNED: { icon: Target, label: "Assigned to issue", color: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" },
+    ISSUE_COMMENTED: { icon: MessageSquare, label: "New comment", color: "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300" },
+    MEMBER_ADDED: { icon: Users, label: "Added to project", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" },
+    SPRINT_STARTED: { icon: Rocket, label: "Sprint started", color: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" },
+    SPRINT_COMPLETED: { icon: CheckCircle2, label: "Sprint completed", color: "bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300" },
+};
+
+const FILTERS = [
+    { key: "all", label: "All" },
+    { key: "unread", label: "Unread" },
 ];
 
-const mockUsers = [
-  { id: "u1", name: "Nguyễn Văn A" },
-  { id: "u2", name: "Trần Thị B" },
-  { id: "u3", name: "Lê Văn C" },
-];
+function NotificationRow({ notification, onClick }) {
+    const config = TYPE_CONFIG[notification.type] || { icon: Bell, label: "Notification", color: "bg-muted text-muted-foreground" };
+    const Icon = config.icon;
+    const timeAgo = notification.createdAt
+        ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: vi })
+        : "";
 
-const mockProjects = [
-  { id: "p1", name: "IEMS Core" },
-  { id: "p2", name: "Mobile App" },
-  { id: "p3", name: "Website" },
-];
-
-export default function Notifications() {
-  const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, when: "10:15 01/09/2025", senderName: "Nguyễn Văn A", title: "Họp sprint", message: "Họp sprint lúc 14:00 hôm nay ở phòng họp 2." },
-    { id: 2, when: "09:00 01/09/2025", senderName: "Trần Thị B", title: "Deploy staging", message: "Deployment staging 11:00 - kiểm tra regression cases." },
-    { id: 3, when: "18:30 31/08/2025", senderName: "Lê Văn C", title: "Nghỉ lễ", message: "Nghỉ lễ Quốc khánh 02/09 - chúc mọi người nghỉ vui." },
-  ]);
-  const [targetType, setTargetType] = useState("department");
-  const [targetId, setTargetId] = useState("");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-
-  const targetOptions = useMemo(() => {
-    if (targetType === "department") return mockDepartments;
-    if (targetType === "user") return mockUsers;
-    return mockProjects;
-  }, [targetType]);
-
-  const canSend = title.trim() && message.trim() && targetId;
-
-  const handleSend = () => {
-    if (!canSend) return;
-    const option = targetOptions.find(o => o.id === targetId);
-    const newItem = {
-      id: Date.now(),
-      when: new Date().toLocaleString('vi-VN'),
-      senderName: "Bạn",
-      title: title.trim(),
-      message: message.trim(),
-    };
-    setNotifications(prev => [newItem, ...prev]);
-    setTitle("");
-    setMessage("");
-    setTargetId("");
-    setOpen(false);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)} className="px-4">Tạo thông báo</Button>
-      </div>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Tạo thông báo"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setOpen(false)}>Hủy</Button>
-            <Button onClick={handleSend} disabled={!canSend}>Gửi</Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Select
-              label="Gửi đến"
-              value={targetType}
-              onChange={e => { setTargetType(e.target.value); setTargetId(""); }}
-            >
-              <option value="department">Phòng ban</option>
-              <option value="user">Cá nhân</option>
-              <option value="project">Dự án</option>
-            </Select>
-            <Select
-              label={targetType === 'department' ? 'Chọn phòng ban' : targetType === 'user' ? 'Chọn cá nhân' : 'Chọn dự án'}
-              value={targetId}
-              onChange={e => setTargetId(e.target.value)}
-            >
-              <option value="">-- Chọn --</option>
-              {targetOptions.map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </Select>
-          </div>
-          <Input
-            label="Tiêu đề"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Nhập tiêu đề thông báo"
-          />
-          <Textarea
-            label="Nội dung"
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Nhập nội dung thông báo"
-            rows={5}
-          />
-        </div>
-      </Modal>
-
-      <Card className="mt-2">
-        <CardContent className="p-0">
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
-            {notifications.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500 dark:text-gray-400">Chưa có thông báo nào</div>
-            ) : notifications.map(n => (
-              <div key={n.id} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{n.when}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300">Người gửi: <span className="font-medium text-gray-900 dark:text-gray-100">{n.senderName}</span></div>
-                </div>
-                <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{n.title}</div>
-                <div className="mt-1 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{n.message}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    return (
+        <button
+            type="button"
+            onClick={() => onClick(notification)}
+            className={cn(
+                "group flex w-full gap-4 px-5 py-4 text-left transition-colors hover:bg-accent/60",
+                !notification.read && "bg-primary/5"
+            )}
+        >
+            <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", config.color)}>
+                <Icon className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="flex items-start justify-between gap-3">
+                    <span className={cn("text-sm font-semibold leading-snug", notification.read ? "text-foreground/80" : "text-foreground")}>
+                        <HighlightedNotificationText text={notification.title} notification={notification} />
+                    </span>
+                    {!notification.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                </span>
+                {notification.body && (
+                    <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                        <HighlightedNotificationText text={notification.body} notification={notification} />
+                    </span>
+                )}
+                <span className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-medium", config.color)}>
+                        {config.label}
+                    </span>
+                    {notification.projectName && <span className="text-[11px] text-muted-foreground">{notification.projectName}</span>}
+                    {timeAgo && <span className="ml-auto text-[11px] text-muted-foreground">{timeAgo}</span>}
+                </span>
+            </span>
+        </button>
+    );
 }
 
+export default function NotificationsPage() {
+    const navigate = useNavigate();
+    const [activeFilter, setActiveFilter] = useState("all");
+    const {
+        notifications,
+        unreadCount,
+        loading,
+        page,
+        totalPages,
+        fetchNotifications,
+        loadMore,
+        markRead,
+        markAllRead,
+    } = useNotifications();
 
+    const displayed = activeFilter === "unread"
+        ? notifications.filter((notification) => !notification.read)
+        : notifications;
+
+    const handleClick = (notification) => {
+        if (!notification.read) markRead(notification.id);
+        const target = getNotificationTarget(notification);
+        if (target) navigate(target);
+    };
+
+    return (
+        <div className="w-full space-y-6">
+            <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-sm">
+                <CardHeader className="pb-3">
+                    <SectionHeader
+                        icon={Bell}
+                        title="Notifications"
+                        description={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}` : "All notifications are up to date."}
+                        action={
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => fetchNotifications(0)}
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                    title="Refresh"
+                                >
+                                    <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                                </button>
+                                {unreadCount > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={markAllRead}
+                                        className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                                    >
+                                        <CheckCheck className="h-4 w-4" />
+                                        Mark all read
+                                    </button>
+                                )}
+                            </div>
+                        }
+                    />
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <div className="mb-4 flex w-fit gap-1 rounded-lg bg-muted p-1">
+                        {FILTERS.map((filter) => (
+                            <button
+                                key={filter.key}
+                                type="button"
+                                onClick={() => setActiveFilter(filter.key)}
+                                className={cn(
+                                    "flex h-8 items-center rounded-md px-3 text-sm font-medium transition-colors",
+                                    activeFilter === filter.key
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                {filter.label}
+                                {filter.key === "unread" && unreadCount > 0 && (
+                                    <span className="ml-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="-mx-6 border-t border-border">
+                        {loading && displayed.length === 0 ? (
+                            <div className="p-12 text-center">
+                                <RefreshCw className="mx-auto mb-3 h-7 w-7 animate-spin text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">Loading notifications...</p>
+                            </div>
+                        ) : displayed.length === 0 ? (
+                            <div className="p-12">
+                                <EmptyState
+                                    icon={Bell}
+                                    title={activeFilter === "unread" ? "All caught up!" : "No notifications yet"}
+                                    description={activeFilter === "unread"
+                                        ? "You have no unread notifications."
+                                        : "Notifications will appear here when something happens in your projects."}
+                                />
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-border">
+                                {displayed.map((notification) => (
+                                    <NotificationRow key={notification.id} notification={notification} onClick={handleClick} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {!loading && page + 1 < totalPages && (
+                        <div className="-mx-6 border-t border-border px-6 pt-4 text-center">
+                            <button type="button" onClick={loadMore} className="text-sm font-medium text-primary hover:underline">
+                                Load more
+                            </button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

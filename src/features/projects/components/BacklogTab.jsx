@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   DndContext, DragOverlay,
   PointerSensor, useSensor, useSensors,
@@ -106,6 +106,7 @@ function DraggableIssueRow({ issue, containerId, issueTypes, issuePriorities, me
 export default function BacklogTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     issues, backlogIssues, sprints, issueTypes, issuePriorities,
     members, workflowStatuses, issuesLoading, sprintsLoading, refreshIssues, refreshSprints,
@@ -132,6 +133,35 @@ export default function BacklogTab() {
   const [localBacklog, setLocalBacklog] = useState(backlogIssues);
   React.useEffect(() => { setLocalIssues(issues); }, [issues]);
   React.useEffect(() => { setLocalBacklog(backlogIssues); }, [backlogIssues]);
+
+  React.useEffect(() => {
+    const issueId = searchParams.get("issueId");
+    if (!issueId || !projectId) return;
+
+    const localIssue = [...localIssues, ...localBacklog].find((issue) => String(issue.id) === String(issueId));
+    if (localIssue) {
+      setSelectedIssue(localIssue);
+      return;
+    }
+
+    let cancelled = false;
+    issueService.getIssueById(projectId, issueId)
+      .then((issue) => {
+        if (!cancelled && issue) setSelectedIssue(issue);
+      })
+      .catch((error) => toast.error(error?.message || "Failed to load issue"));
+
+    return () => { cancelled = true; };
+  }, [searchParams, projectId, localIssues, localBacklog]);
+
+  const closeSelectedIssue = () => {
+    setSelectedIssue(null);
+    if (searchParams.has("issueId")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("issueId");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -584,9 +614,10 @@ export default function BacklogTab() {
       />
       <IssueDetailModal
         open={!!selectedIssue}
-        onClose={() => setSelectedIssue(null)}
+        onClose={closeSelectedIssue}
         issue={selectedIssue}
-        onUpdate={() => setSelectedIssue(null)}
+        targetCommentId={searchParams.get("commentId")}
+        onUpdate={closeSelectedIssue}
       />
     </DndContext>
   );

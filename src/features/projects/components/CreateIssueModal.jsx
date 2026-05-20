@@ -4,6 +4,9 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import AssigneeSelect from "@/components/ui/AssigneeSelect";
+import TypeSelect from "@/components/ui/TypeSelect";
+import PrioritySelect from "@/components/ui/PrioritySelect";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
@@ -145,16 +148,12 @@ export default function CreateIssueModal({
           <label className="block text-sm font-medium text-foreground mb-1">
             {t("issues.form.type", "Type")}
           </label>
-          <select
+          <TypeSelect
+            issueTypes={issueTypes}
             value={formData.issueTypeId}
-            onChange={e => handleChange("issueTypeId", e.target.value)}
-            className="w-full rounded-md border border-border bg-background text-foreground p-2 text-sm"
-          >
-            <option value="">{t("issues.form.selectType", "Select type")}</option>
-            {issueTypes.map(type => (
-              <option key={type.id} value={type.id}>{type.name}</option>
-            ))}
-          </select>
+            onChange={e => handleChange("issueTypeId", e)}
+            placeholder={t("issues.form.selectType", "Select type")}
+          />
         </div>
 
         {/* Priority */}
@@ -162,16 +161,12 @@ export default function CreateIssueModal({
           <label className="block text-sm font-medium text-foreground mb-1">
             {t("issues.form.priority", "Priority")}
           </label>
-          <select
+          <PrioritySelect
+            issuePriorities={issuePriorities}
             value={formData.priorityId}
-            onChange={e => handleChange("priorityId", e.target.value)}
-            className="w-full rounded-md border border-border bg-background text-foreground p-2 text-sm"
-          >
-            <option value="">{t("issues.form.selectPriority", "Select priority")}</option>
-            {issuePriorities.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+            onChange={e => handleChange("priorityId", e)}
+            placeholder={t("issues.form.selectPriority", "Select priority")}
+          />
         </div>
 
         {/* Assignee */}
@@ -179,20 +174,12 @@ export default function CreateIssueModal({
           <label className="block text-sm font-medium text-foreground mb-1">
             {t("issues.form.assignee", "Assignee")}
           </label>
-          <select
+          <AssigneeSelect
+            members={members}
             value={formData.assigneeId}
-            onChange={e => handleChange("assigneeId", e.target.value)}
-            className="w-full rounded-md border border-border bg-background text-foreground p-2 text-sm"
-          >
-            <option value="">{t("issues.form.selectAssignee", "Select assignee")}</option>
-            {members.map(m => (
-              <option key={m.userId} value={m.userId}>
-                {m.userName
-                  ? `${m.userName}${m.userEmail ? ` (${m.userEmail})` : ""}`
-                  : m.userEmail || String(m.userId)}
-              </option>
-            ))}
-          </select>
+            onChange={e => handleChange("assigneeId", e)}
+            placeholder={t("issues.form.selectAssignee", "Select assignee")}
+          />
         </div>
 
         {/* Sprint */}

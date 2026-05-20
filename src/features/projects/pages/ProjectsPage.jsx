@@ -52,6 +52,7 @@ export default function Projects() {
     const handleProjectCreated = async () => {
         const updatedProjects = await projectService.getProjectsTable();
         setProjects(updatedProjects);
+        window.dispatchEvent(new CustomEvent("projects:changed"));
     };
 
     const handleEditProject = (project) => {
@@ -81,6 +82,9 @@ export default function Projects() {
             // Reload projects
             const updatedProjects = await projectService.getProjectsTable();
             setProjects(updatedProjects);
+            window.dispatchEvent(new CustomEvent("projects:changed", {
+                detail: { deletedProjectId: deletingProject.id },
+            }));
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error(error?.message || t("ui.common.error"));
@@ -113,6 +117,7 @@ export default function Projects() {
             // Reload projects
             const updatedProjects = await projectService.getProjectsTable();
             setProjects(updatedProjects);
+            window.dispatchEvent(new CustomEvent("projects:changed"));
 
             setShowModal(false);
             setEditingProject(null);

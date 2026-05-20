@@ -10,7 +10,7 @@ import { useParams } from "react-router-dom";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCard";
 import { isFibonacci } from "./FibonacciStoryPointInput";
 import { validateDates } from "@/features/projects/utils/dateValidation";
-import { Trash2, Save, MoreHorizontal } from "lucide-react";
+import { Trash2, Save, MoreHorizontal, X } from "lucide-react";
 import { getStatusStyle } from "../utils/issueStyles";
 import IssueSidebar from "./issue-detail/IssueSidebar";
 import IssueSubtasksSection from "./issue-detail/IssueSubtasksSection";
@@ -40,7 +40,7 @@ function initForm(issue) {
   };
 }
 
-export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDelete }) {
+export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDelete, targetCommentId }) {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const { issueTypes, issuePriorities, workflowStatuses, members, sprints, refreshIssues } = useProject();
@@ -175,20 +175,74 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
       <Modal
         open={open}
         onClose={onClose}
-        className="!max-w-5xl !h-[95vh] !max-h-[95vh]"
-        contentClassName="overflow-hidden p-0"
+        className="!max-w-[1180px] !h-[92vh] !max-h-[92vh] !rounded-2xl overflow-hidden"
+        contentClassName="overflow-hidden p-0 bg-slate-50 dark:bg-background"
         title={
-          <div className="flex items-center gap-2">
-            <TypeIcon className={`w-4 h-4 ${typeColor}`} />
-            <span className="text-xs font-mono text-muted-foreground">{issue.issueKey}</span>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    <TypeIcon className={`h-3.5 w-3.5 ${typeColor}`} />
+                    <span className="font-mono">{issue.issueKey}</span>
+                  </span>
+                  <select
+                    value={form.statusId}
+                    onChange={e => set("statusId", e.target.value)}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${getStatusStyle(currentStatus?.name)}`}
+                  >
+                    {workflowStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                    <TypeIcon className={`h-3.5 w-3.5 ${typeColor}`} />{typeName}
+                  </span>
+                  {priorityObj && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                      <PriorityIcon className={`h-3.5 w-3.5 ${prioColor}`} />{priorityObj.name}
+                    </span>
+                  )}
+                </div>
+                <input
+                  value={form.title}
+                  onChange={e => set("title", e.target.value)}
+                  className="w-full rounded-lg border border-transparent bg-transparent py-1 text-2xl font-semibold leading-tight text-foreground outline-none transition-colors hover:border-border hover:bg-muted/30 focus:border-primary/40 focus:bg-background focus:px-3"
+                  placeholder="Issue title"
+                />
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <div className="relative" ref={moreRef}>
+                  <button
+                    onClick={() => setShowMoreMenu(v => !v)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    aria-label="More actions"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  {showMoreMenu && (
+                    <div className="absolute right-0 top-10 z-20 min-w-[150px] rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-xl">
+                      <button onClick={() => { setShowMoreMenu(false); handleDelete(); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-muted">
+                        <Trash2 className="h-3.5 w-3.5" /> Delete issue
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={onClose}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         }
         footer={
-          <div className="flex justify-between items-center">
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="w-4 h-4 mr-1" /> Delete
-            </Button>
-            <div className="flex gap-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              {isDirty ? "You have unsaved changes" : "No pending changes"}
+            </p>
+            <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={onClose}>Close</Button>
               <Button size="sm" onClick={handleSave} disabled={!isDirty || saving} className="min-w-[80px]">
                 <Save className="w-4 h-4 mr-1" />{saving ? "Saving..." : "Save"}
@@ -197,12 +251,12 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           </div>
         }
       >
-        <div className="h-full flex">
+        <div className="h-full flex bg-slate-50 dark:bg-background">
           {/* ════ LEFT COLUMN ════ */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
 
             {/* Issue header — fixed */}
-            <div className="flex-shrink-0 px-6 pt-4 pb-3 border-b border-border">
+            <div className="hidden">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <input
                   value={form.title}
@@ -210,7 +264,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
                   className="flex-1 text-lg font-semibold bg-transparent text-foreground border-0 border-b-2 border-transparent hover:border-border focus:border-blue-500 focus:outline-none py-0.5 transition-colors leading-snug"
                   placeholder="Issue title"
                 />
-                <div className="relative shrink-0" ref={moreRef}>
+                <div className="relative shrink-0">
                   <button onClick={() => setShowMoreMenu(v => !v)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
@@ -247,7 +301,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
             {/* Scrollable main content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               {/* Description */}
-              <div className="flex-shrink-0 px-6 py-4 border-b border-border">
+              <div className="m-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-border dark:bg-card">
                 <CollapsibleSection
                   title="Description"
                   collapsed={collapsed.description}
@@ -281,6 +335,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
                 key={refreshKey}
                 projectId={projectId}
                 issueId={issue.id}
+                targetCommentId={targetCommentId}
                 members={members}
                 workflowStatuses={workflowStatuses}
                 collapsed={collapsed.activity}
@@ -292,7 +347,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           </div>
 
           {/* ════ RIGHT SIDEBAR ════ */}
-          <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden">
+          <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden bg-slate-100/80 dark:bg-muted/25">
             <IssueSidebar
               form={form}
               onChangeField={set}
@@ -314,6 +369,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           open={!!subModalIssue}
           onClose={() => setSubModalIssue(null)}
           issue={subModalIssue}
+          targetCommentId={targetCommentId}
           onUpdate={() => {
             setRefreshKey(k => k + 1);
             setSubModalIssue(null);

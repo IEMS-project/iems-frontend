@@ -86,7 +86,7 @@ export default function Members() {
     const [searchQuery, setSearchQuery] = useState("");
     const [detailMember, setDetailMember] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [addForm, setAddForm] = useState({ userId: "", roleId: "" });
+    const [addForm, setAddForm] = useState({ userIds: [], roleId: "" });
     const [addLoading, setAddLoading] = useState(false);
 
     const filteredMembers = useMemo(() => {
@@ -124,7 +124,7 @@ export default function Members() {
     }, [memberAccountIds]);
 
     const handleAddMember = async () => {
-        if (!addForm.userId) {
+        if (!addForm.userIds.length) {
             toast.warning(t("projects.detail.members.messages.userRequired"));
             return;
         }
@@ -134,14 +134,18 @@ export default function Members() {
         }
         setAddLoading(true);
         try {
-            await projectService.addProjectMember(projectId, {
-                accountId: addForm.userId,
-                roleId: addForm.roleId,
-            });
+            await projectService.addProjectMembersBatch(
+                projectId,
+                addForm.userIds.map(accountId => ({ accountId, roleId: addForm.roleId }))
+            );
             await refreshMembers();
             setShowAddModal(false);
-            setAddForm({ userId: "", roleId: "" });
-            toast.success(t("projects.detail.members.messages.added"));
+            setAddForm({ userIds: [], roleId: "" });
+            toast.success(
+                addForm.userIds.length === 1
+                    ? t("projects.detail.members.messages.added")
+                    : `${addForm.userIds.length} members added successfully`
+            );
         } catch (e) {
             toast.error(e?.message || t("projects.detail.members.messages.loadError"));
         } finally {
@@ -258,24 +262,35 @@ export default function Members() {
             {/* Add Member Modal */}
             <Modal
                 open={showAddModal}
-                onClose={() => { setShowAddModal(false); setAddForm({ userId: "", roleId: "" }); }}
+                onClose={() => { setShowAddModal(false); setAddForm({ userIds: [], roleId: "" }); }}
                 title={t("projects.detail.members.add")}
                 className="max-w-2xl !max-h-[95vh]"
                 contentClassName="!overflow-visible !overflow-y-visible"
                 footer={
-                    <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => { setShowAddModal(false); setAddForm({ userId: "", roleId: "" }); }}>
-                            {t("ui.common.cancel")}
-                        </Button>
-                        <Button onClick={handleAddMember} disabled={addLoading || !addForm.userId || !addForm.roleId}>
-                            {addLoading ? t("ui.common.loading", { defaultValue: "Loading..." }) : t("ui.common.add")}
-                        </Button>
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">
+                            {addForm.userIds.length > 0
+                                ? `${addForm.userIds.length} user${addForm.userIds.length > 1 ? 's' : ''} selected`
+                                : 'No users selected'}
+                        </span>
+                        <div className="flex gap-2">
+                            <Button variant="secondary" onClick={() => { setShowAddModal(false); setAddForm({ userIds: [], roleId: "" }); }}>
+                                {t("ui.common.cancel")}
+                            </Button>
+                            <Button onClick={handleAddMember} disabled={addLoading || !addForm.userIds.length || !addForm.roleId}>
+                                {addLoading
+                                    ? t("ui.common.loading", { defaultValue: "Loading..." })
+                                    : addForm.userIds.length > 1
+                                        ? `Add ${addForm.userIds.length} Members`
+                                        : t("ui.common.add")}
+                            </Button>
+                        </div>
                     </div>
                 }
             >
                 <div className="space-y-4">
                     <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-                        Search by name or email. Results are loaded in pages to avoid loading all users at once.
+                        Search by name or email. You can select multiple users at once.
                     </div>
 
                     <div className="space-y-4">
@@ -284,8 +299,9 @@ export default function Members() {
                                 {t("projects.detail.members.form.user")}
                             </label>
                             <UserSelect
-                                value={addForm.userId}
-                                onChange={(id) => setAddForm((f) => ({ ...f, userId: id }))}
+                                multiple
+                                value={addForm.userIds}
+                                onChange={(ids) => setAddForm((f) => ({ ...f, userIds: ids }))}
                                 searchUsers={searchAssignableUsers}
                             />
                         </div>

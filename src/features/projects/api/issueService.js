@@ -204,4 +204,9 @@ export const issueService = {
     const data = await request(`${BASE}/${projectId}/activities/issues/${issueId}?page=${page}&size=${size}`);
     return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
   },
+
+  async getMyAssignedIssues() {
+    const data = await request("/project-service/issues/my-assigned");
+    return data?.data || data || [];
+  },
 };

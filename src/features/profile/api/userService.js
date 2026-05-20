@@ -11,6 +11,11 @@ export const userService = {
     return data?.data || data || null;
   },
 
+  async getMySubscription() {
+    const data = await request("/iam-service/api/accounts/me/subscription");
+    return data?.data || data || null;
+  },
+
   async updateMyProfile(payload) {
     const data = await request("/iam-service/users/me", {
       method: "PUT",
@@ -136,6 +141,23 @@ export const userService = {
     const data = await request("/document-service/api/documents/upload/avatar", {
       method: "POST",
       body: formData,
+    });
+    return data?.data || data;
+  },
+
+  async getNotificationPreferences() {
+    try {
+      const data = await request("/iam-service/users/me/notification-preferences");
+      return data?.data || { emailAssigned: true, emailMemberAdded: true, emailDueSoon: true, inAppToast: true };
+    } catch (_) {
+      return { emailAssigned: true, emailMemberAdded: true, emailDueSoon: true, inAppToast: true };
+    }
+  },
+
+  async updateNotificationPreferences(prefs) {
+    const data = await request("/iam-service/users/me/notification-preferences", {
+      method: "PATCH",
+      body: prefs,
     });
     return data?.data || data;
   },

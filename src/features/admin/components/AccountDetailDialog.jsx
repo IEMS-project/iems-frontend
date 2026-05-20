@@ -1,5 +1,5 @@
 import React from "react";
-import { UserCircle2, Lock, Unlock, KeyRound } from "lucide-react";
+import { UserCircle2, Lock, Unlock, KeyRound, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import Select from "@/components/ui/Select";
 import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
+import PremiumBadge from "@/components/ui/PremiumBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Dialog,
@@ -85,6 +86,12 @@ export default function AccountDetailDialog({
                                         <Badge variant={accountEnabledDraft ? "green" : "red"}>
                                             {accountEnabledDraft ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                         </Badge>
+                                        <PremiumBadge
+                                            subscriptionType={account.subscriptionType}
+                                            premiumUntil={account.premiumUntil}
+                                            showExpiry
+                                            size="sm"
+                                        />
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">

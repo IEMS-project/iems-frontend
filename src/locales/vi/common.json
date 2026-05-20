@@ -41,6 +41,46 @@
     "detail": "Chi tiết"
   },
   "dashboard": {
+    "header": {
+      "eyebrow": "Không gian làm việc IEMS",
+      "subtitle": "Tóm tắt tiến độ, nhiệm vụ quan trọng và log gần đây."
+    },
+    "marketPanel": {
+      "eyebrow": "Tổng quan",
+      "title": "Analytics IEMS",
+      "projectsCta": "Dự án",
+      "distributionTitle": "Luồng nhiệm vụ",
+      "taskCount": "{{count}} nhiệm vụ",
+      "completionTitle": "Tỉ lệ hoàn thành",
+      "taskLabel": "nhiệm vụ",
+      "completionMeta": "{{completed}}/{{total}}",
+      "promoTitle": "Khu vực giới thiệu",
+      "promoDescription": "Banner sprint, thông báo hoặc quảng cáo nội bộ.",
+      "promoCta": "Mở",
+      "segments": {
+        "backlog": "Tồn đọng",
+        "doing": "Đang làm",
+        "done": "Hoàn thành",
+        "overdue": "Trễ hạn"
+      }
+    },
+    "recentActivity": {
+      "title": "Log gần đây",
+      "emptyTitle": "Chưa có hoạt động nào",
+      "emptyDescription": "Khi có cập nhật trong dự án, timeline sẽ hiển thị tại đây.",
+      "justNow": "Vừa xong",
+      "minutesAgo": "{{count}} phút trước",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước",
+      "types": {
+        "created": "Tạo nhiệm vụ",
+        "updated": "Cập nhật",
+        "assigned": "Phân công",
+        "completed": "Hoàn thành",
+        "commented": "Bình luận",
+        "activity": "Hoạt động"
+      }
+    },
     "projectOverview": {
       "title": "Tổng quan dự án",
       "project": "Dự án",
@@ -52,6 +92,7 @@
     },
     "myTasks": {
       "title": "Nhiệm vụ của tôi",
+      "todayTitle": "Task hôm nay",
       "noTasks": "Không có nhiệm vụ nào",
       "noDueDate": "Không có hạn",
       "overdue": "Quá hạn {{days}} ngày",
@@ -1336,6 +1377,19 @@
   },
   "profile": {
     "title": "Hồ sơ cá nhân",
+    "tabs": {
+      "personalInfo": "Thông tin cá nhân",
+      "notifications": "Thông báo"
+    },
+    "notificationSettings": {
+      "title": "Cài đặt thông báo",
+      "emailTitle": "Thông báo qua Email",
+      "emailDesc": "Chọn các sự kiện bạn muốn nhận thông báo qua email.",
+      "taskAssigned": "Khi được giao nhiệm vụ",
+      "projectJoined": "Khi được thêm vào dự án",
+      "taskDueSoon": "Khi nhiệm vụ sắp đến hạn (1 ngày)",
+      "saveSuccess": "Cập nhật cài đặt thành công"
+    },
     "stats": {
       "projectsCompleted": "Dự án hoàn thành",
       "tasksCompleted": "Nhiệm vụ hoàn thành",
@@ -1396,6 +1450,13 @@
     "settings": "Cài đặt",
     "notifications": "Thông báo",
     "logout": "Đăng xuất"
+  },
+  "settingsPage": {
+    "title": "Cài đặt",
+    "appearance": "Giao diện",
+    "appearanceDescription": "Chuyển đổi giữa chế độ sáng và tối.",
+    "language": "Ngôn ngữ",
+    "languageDescription": "Chọn ngôn ngữ hiển thị."
   },
   "comments": {
     "title": "Bình luận",

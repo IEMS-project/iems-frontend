@@ -76,6 +76,40 @@ export const iamService = {
     });
     return data?.data || data;
   },
+
+  // ── Subscription management (Admin) ─────────────────────────────────────
+
+  /** Admin: upgrade a user to Premium for N days */
+  async upgradeAccountToPremium(accountId, durationDays) {
+    const data = await request(`/iam-service/api/accounts/${accountId}/upgrade`, {
+      method: "POST",
+      body: { durationDays },
+    });
+    return data?.data || data;
+  },
+
+  /** Admin: downgrade a user to Free */
+  async downgradeAccountToFree(accountId) {
+    const data = await request(`/iam-service/api/accounts/${accountId}/downgrade`, {
+      method: "POST",
+    });
+    return data?.data || data;
+  },
+
+  /** Current user: upgrade own account to Premium */
+  async upgradeMyAccount(durationDays) {
+    const data = await request("/iam-service/api/accounts/me/upgrade", {
+      method: "POST",
+      body: { durationDays },
+    });
+    return data?.data || data;
+  },
+
+  /** Current user: get own subscription status */
+  async getMySubscription() {
+    const data = await request("/iam-service/api/accounts/me/subscription");
+    return data?.data || data;
+  },
 };
 
 

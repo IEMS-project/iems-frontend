@@ -5,6 +5,7 @@ import { issueService } from "@/features/projects/api/issueService";
 import ChildIssueRow from "./ChildIssueRow";
 import CollapsibleSection from "./CollapsibleSection";
 import Button from "@/components/ui/Button";
+import Skeleton from "@/components/ui/Skeleton";
 
 const IssueSubtasksSection = forwardRef(({
   projectId,
@@ -19,17 +20,21 @@ const IssueSubtasksSection = forwardRef(({
   onChildrenCountChange
 }, ref) => {
   const [children, setChildren] = useState([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [subtaskTitle, setSubtaskTitle] = useState("");
 
   const loadChildren = async () => {
     try {
+      setLoadingChildren(true);
       const d = await issueService.getChildren(projectId, issueId);
       const arr = Array.isArray(d) ? d : [];
       setChildren(arr);
       onChildrenCountChange?.(arr.length);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoadingChildren(false);
     }
   };
 
@@ -58,10 +63,10 @@ const IssueSubtasksSection = forwardRef(({
   }).length;
   const progress = children.length ? Math.round((doneChildren / children.length) * 100) : 0;
 
-  if (children.length === 0 && !addingSubtask) return null;
+  if (!loadingChildren && children.length === 0 && !addingSubtask) return null;
 
   return (
-    <div className="flex-shrink-0 px-6 py-4 border-b border-border">
+    <div className="mx-5 mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-border dark:bg-card">
       <CollapsibleSection
         title={`Child Issues${children.length ? ` (${children.length})` : ""}`}
         collapsed={collapsed}
@@ -75,6 +80,25 @@ const IssueSubtasksSection = forwardRef(({
           )
         }
       >
+        {loadingChildren ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-1.5 flex-1 rounded-full" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+            <div className="overflow-hidden rounded-md border border-border">
+              {[1, 2].map((item) => (
+                <div key={item} className="grid grid-cols-[1fr_96px_112px_128px] gap-3 border-b border-border/50 p-2 last:border-0">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Progress bar */}
         {children.length > 0 && (
           <div className="mb-3 flex items-center gap-2">
@@ -127,6 +151,8 @@ const IssueSubtasksSection = forwardRef(({
               <X className="w-3.5 h-3.5" />
             </Button>
           </div>
+        )}
+          </>
         )}
       </CollapsibleSection>
     </div>

@@ -1,10 +1,12 @@
 import React, { useMemo, useRef, useState } from "react";
-import { User, Flag, Layers, Zap, Hash, Calendar, CalendarDays } from "lucide-react";
+import { User, Flag, Layers, Zap, Hash, Calendar, CalendarDays, Tag } from "lucide-react";
 import FibonacciStoryPointInput from "../FibonacciStoryPointInput";
 import { todayStr } from "@/features/projects/utils/dateValidation";
 import Avatar from "@/components/ui/Avatar";
 import InlineDropdown from "../inline-editors/InlineDropdown";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "../IssueCard";
+import LabelBadge from "./LabelBadge";
+import LabelSelector from "./LabelSelector";
 import { cn } from "@/lib/utils";
 
 function DetailField({ label, icon: Icon, children: content }) {
@@ -22,6 +24,7 @@ export default function IssueSidebar({
   form,
   onChangeField,
   issue,
+  onUpdate,
   members,
   issuePriorities,
   issueTypes,
@@ -29,6 +32,13 @@ export default function IssueSidebar({
   assigneeName,
   reporterName
 }) {
+  // Unify props: if onUpdate is provided (Page), we use issue as form and onUpdate as change handler
+  const isPagePattern = !!onUpdate;
+  const currentForm = isPagePattern ? issue : form;
+  const handleChange = isPagePattern ? (field, value) => onUpdate({ [field]: value }) : onChangeField;
+
+  if (!currentForm) return null;
+
   const selectClass = "w-full rounded-md border border-border bg-background text-foreground px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40";
 
   const [openField, setOpenField] = useState(null);
@@ -45,8 +55,8 @@ export default function IssueSidebar({
     member?.id;
 
   const selectedAssignee = useMemo(
-    () => members.find((m) => String(resolveMemberId(m) || "") === String(form.assigneeId || "")),
-    [members, form.assigneeId]
+    () => members.find((m) => String(resolveMemberId(m) || "") === String(currentForm.assigneeId || "")),
+    [members, currentForm.assigneeId]
   );
 
   const assigneeOptions = useMemo(() => {
@@ -54,7 +64,7 @@ export default function IssueSidebar({
       {
         value: "",
         label: "Unassigned",
-        active: !form.assigneeId,
+        active: !currentForm.assigneeId,
         icon: <User className="w-3.5 h-3.5 text-muted-foreground" />,
       },
       ...members
@@ -65,27 +75,27 @@ export default function IssueSidebar({
           return {
             value: id,
             label: name,
-            active: String(id) === String(form.assigneeId || ""),
+            active: String(id) === String(currentForm.assigneeId || ""),
             icon: <Avatar user={m} name={name} size="xs" />,
           };
         })
         .filter(Boolean),
     ];
 
-    if (form.assigneeId && !members.some((m) => String(resolveMemberId(m) || "") === String(form.assigneeId))) {
+    if (currentForm.assigneeId && !members.some((m) => String(resolveMemberId(m) || "") === String(currentForm.assigneeId))) {
       options.push({
-        value: form.assigneeId,
-        label: assigneeName || String(form.assigneeId),
+        value: currentForm.assigneeId,
+        label: assigneeName || String(currentForm.assigneeId),
         active: true,
-        icon: <Avatar user={issue?.assignee} name={assigneeName || String(form.assigneeId)} size="xs" />,
+        icon: <Avatar user={issue?.assignee} name={assigneeName || String(currentForm.assigneeId)} size="xs" />,
       });
     }
 
     return options;
-  }, [members, form.assigneeId, assigneeName, issue?.assignee]);
+  }, [members, currentForm.assigneeId, assigneeName, issue?.assignee]);
 
   const selectedAssigneeName =
-    !form.assigneeId
+    !currentForm.assigneeId
       ? ""
       : (
         selectedAssignee?.fullName ||
@@ -96,8 +106,8 @@ export default function IssueSidebar({
         ""
       );
 
-  const currentPriority = issuePriorities.find((p) => String(p.id) === String(form.priorityId || ""));
-  const currentType = issueTypes.find((it) => String(it.id) === String(form.issueTypeId || ""));
+  const currentPriority = issuePriorities.find((p) => String(p.id) === String(currentForm.priorityId || ""));
+  const currentType = issueTypes.find((it) => String(it.id) === String(currentForm.issueTypeId || ""));
   const { icon: CurrentPriorityIcon, color: currentPriorityColor } = getPriorityIcon(currentPriority?.name);
   const CurrentTypeIcon = getIssueTypeIcon(currentType?.name);
   const currentTypeColor = getIssueTypeColor(currentType?.name);
@@ -107,7 +117,7 @@ export default function IssueSidebar({
       {
         value: "",
         label: "None",
-        active: !form.priorityId,
+        active: !currentForm.priorityId,
         icon: <Flag className="w-3.5 h-3.5 text-muted-foreground" />,
       },
       ...issuePriorities.map((p) => {
@@ -115,12 +125,12 @@ export default function IssueSidebar({
         return {
           value: p.id,
           label: p.name,
-          active: String(p.id) === String(form.priorityId || ""),
+          active: String(p.id) === String(currentForm.priorityId || ""),
           icon: <Icon className={cn("w-3.5 h-3.5", color)} />,
         };
       }),
     ];
-  }, [issuePriorities, form.priorityId]);
+  }, [issuePriorities, currentForm.priorityId]);
 
   const typeOptions = useMemo(() => {
     return issueTypes.map((it) => {
@@ -129,11 +139,11 @@ export default function IssueSidebar({
       return {
         value: it.id,
         label: it.name,
-        active: String(it.id) === String(form.issueTypeId || ""),
+        active: String(it.id) === String(currentForm.issueTypeId || ""),
         icon: <TypeIcon className={cn("w-3.5 h-3.5", typeColor)} />,
       };
     });
-  }, [issueTypes, form.issueTypeId]);
+  }, [issueTypes, currentForm.issueTypeId]);
 
   return (
     <div className="p-5 space-y-0">
@@ -173,7 +183,7 @@ export default function IssueSidebar({
             <InlineDropdown
               options={assigneeOptions}
               onSelect={(value) => {
-                onChangeField("assigneeId", value || "");
+                handleChange("assigneeId", value || "");
                 setOpenField(null);
                 setAnchorEl(null);
               }}
@@ -231,7 +241,7 @@ export default function IssueSidebar({
             <InlineDropdown
               options={priorityOptions}
               onSelect={(value) => {
-                onChangeField("priorityId", value || "");
+                handleChange("priorityId", value || "");
                 setOpenField(null);
                 setAnchorEl(null);
               }}
@@ -243,6 +253,31 @@ export default function IssueSidebar({
             />
           )}
         </>
+      </DetailField>
+
+      {/* Labels */}
+      <DetailField label="Labels" icon={Tag}>
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {currentForm.labels && currentForm.labels.map(l => (
+            <LabelBadge 
+              key={l.id} 
+              label={l} 
+              onRemove={(id) => {
+                const newLabels = currentForm.labels.filter(lbl => lbl.id !== id);
+                handleChange("labels", newLabels);
+                handleChange("labelIds", newLabels.map(lbl => lbl.id));
+              }} 
+            />
+          ))}
+          <LabelSelector 
+            projectId={issue?.projectId} 
+            selectedLabels={currentForm.labels || []} 
+            onChange={(newLabels) => {
+              handleChange("labels", newLabels);
+              handleChange("labelIds", newLabels.map(lbl => lbl.id));
+            }} 
+          />
+        </div>
       </DetailField>
 
       {/* Type */}
@@ -276,7 +311,7 @@ export default function IssueSidebar({
             <InlineDropdown
               options={typeOptions}
               onSelect={(value) => {
-                onChangeField("issueTypeId", value || "");
+                handleChange("issueTypeId", value || "");
                 setOpenField(null);
                 setAnchorEl(null);
               }}
@@ -292,7 +327,7 @@ export default function IssueSidebar({
 
       {/* Sprint */}
       <DetailField label="Sprint" icon={Zap}>
-        <select value={form.sprintId || ""} onChange={e => onChangeField("sprintId", e.target.value)} className={selectClass}>
+        <select value={currentForm.sprintId || ""} onChange={e => handleChange("sprintId", e.target.value)} className={selectClass}>
           <option value="">Backlog</option>
           {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -301,8 +336,8 @@ export default function IssueSidebar({
       {/* Story Points */}
       <DetailField label="Story Points" icon={Hash}>
         <FibonacciStoryPointInput
-          value={form.storyPoints}
-          onChange={v => onChangeField("storyPoints", v)}
+          value={currentForm.storyPoints}
+          onChange={v => handleChange("storyPoints", v)}
           placeholder="—"
           className={selectClass}
         />
@@ -313,8 +348,8 @@ export default function IssueSidebar({
         <input
           type="date"
           min={todayStr()}
-          value={form.dueDate || ""}
-          onChange={e => onChangeField("dueDate", e.target.value)}
+          value={currentForm.dueDate || ""}
+          onChange={e => handleChange("dueDate", e.target.value)}
           className={selectClass}
         />
       </DetailField>

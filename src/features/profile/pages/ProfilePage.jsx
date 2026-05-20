@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaBuilding, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaProjectDiagram, FaTasks, FaTrophy, FaChartLine, FaClock, FaUsers } from "react-icons/fa";
+import { FaEnvelope, FaBuilding, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import Avatar from "@/components/ui/Avatar.jsx";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
-import StatsCard from "@/components/ui/StatsCard";
 import { userService } from "@/features/profile/api/userService";
 import Skeleton from "@/components/ui/Skeleton";
 import ImageCropModal from "@/components/ui/ImageCropModal";
+import PremiumBadge from "@/components/ui/PremiumBadge";
 import { textColors, borderColors, buttonColors, cn } from "@/theme/colors";
 
 export default function Profile() {
@@ -20,6 +19,7 @@ export default function Profile() {
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
 	const [profile, setProfile] = useState(null);
+	const [subscription, setSubscription] = useState(null);
 	const [formData, setFormData] = useState({
 		firstName: "",
 		lastName: "",
@@ -32,22 +32,18 @@ export default function Profile() {
 	const [cropModalOpen, setCropModalOpen] = useState(false);
 	const [imageSrcForCrop, setImageSrcForCrop] = useState(null);
 
-	// Mock data for statistics
-	const userStats = {
-		projectsCompleted: 24,
-		tasksCompleted: 156,
-		departmentsJoined: 3,
-		hoursWorked: 1840
-	};
-
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			try {
 				setLoading(true);
-				const data = await userService.getMyProfile();
+				const [data, subscriptionData] = await Promise.all([
+					userService.getMyProfile(),
+					userService.getMySubscription().catch(() => null),
+				]);
 				if (!mounted) return;
 				setProfile(data);
+				setSubscription(subscriptionData);
 				setFormData({
 					firstName: data?.firstName || "",
 					lastName: data?.lastName || "",
@@ -58,18 +54,20 @@ export default function Profile() {
 					gender: data?.gender || "",
 				});
 			} catch (e) {
-				setError(e?.message || t('profile.messages.loadFailed'));
+				setError(e?.message || t("profile.messages.loadFailed"));
 			} finally {
 				setLoading(false);
 			}
 		})();
-		return () => { mounted = false; };
-	}, []);
+		return () => {
+			mounted = false;
+		};
+	}, [t]);
 
 	const handleInputChange = (field, value) => {
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
-			[field]: value
+			[field]: value,
 		}));
 	};
 
@@ -84,34 +82,35 @@ export default function Profile() {
 			};
 			const updated = await userService.updateMyProfile(payload);
 			setProfile(updated);
-			setSuccess(t('profile.messages.updateSuccess'));
+			setSuccess(t("profile.messages.updateSuccess"));
 			setIsEditing(false);
 		} catch (e) {
-			setError(e?.message || t('profile.messages.updateFailed'));
+			setError(e?.message || t("profile.messages.updateFailed"));
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	const handleCancel = () => {
-		// Reset form về trạng thái ban đầu
 		setIsEditing(false);
+		setFormData((prev) => ({
+			...prev,
+			phone: profile?.phone || "",
+			address: profile?.address || "",
+		}));
 	};
 
 	const handlePickAvatar = async (e) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		// Read file and show crop modal
 		const reader = new FileReader();
 		reader.onload = () => {
 			setImageSrcForCrop(reader.result);
 			setCropModalOpen(true);
 		};
 		reader.readAsDataURL(file);
-
-		// Reset input
-		e.target.value = '';
+		e.target.value = "";
 	};
 
 	const handleCropComplete = async (croppedImageBlob) => {
@@ -121,15 +120,13 @@ export default function Profile() {
 			setSuccess("");
 			setCropModalOpen(false);
 
-			// Create File from Blob
-			const croppedFile = new File([croppedImageBlob], 'avatar.jpg', { type: 'image/jpeg' });
-
+			const croppedFile = new File([croppedImageBlob], "avatar.jpg", { type: "image/jpeg" });
 			await userService.uploadAvatar(croppedFile);
 			const fresh = await userService.getMyProfile();
 			setProfile(fresh);
-			setSuccess(t('profile.messages.avatarUploadSuccess'));
+			setSuccess(t("profile.messages.avatarUploadSuccess"));
 		} catch (e) {
-			setError(e?.message || t('profile.messages.avatarUploadFailed'));
+			setError(e?.message || t("profile.messages.avatarUploadFailed"));
 		} finally {
 			setAvatarUploading(false);
 			setImageSrcForCrop(null);
@@ -138,16 +135,13 @@ export default function Profile() {
 
 	const fullName = `${formData.firstName || ""} ${formData.lastName || ""}`.trim() || "Người dùng";
 	const showSkeleton = loading && !profile;
+	const subscriptionType = subscription?.subscriptionType || profile?.subscriptionType || "FREE";
+	const premiumUntil = subscription?.premiumUntil || profile?.premiumUntil;
 
 	if (showSkeleton) {
 		return (
 			<div className="space-y-6">
 				<Skeleton className="h-10 w-1/3" />
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					{Array.from({ length: 4 }).map((_, idx) => (
-						<Skeleton key={idx} className="h-32 w-full rounded-xl" />
-					))}
-				</div>
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 					<div className="lg:col-span-4 space-y-4">
 						<Skeleton className="h-64 w-full rounded-xl" />
@@ -165,256 +159,146 @@ export default function Profile() {
 
 	return (
 		<div className="space-y-6">
-			{/* Statistics Cards */}
-			{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-				<StatsCard
-					title={t('profile.stats.projectsCompleted')}
-					value={userStats.projectsCompleted}
-					icon={<FaProjectDiagram className="h-5 w-5" />}
-					trend="+12%"
-					trendUp={true}
-					accent="indigo"
-				/>
-				<StatsCard
-					title={t('profile.stats.tasksCompleted')}
-					value={userStats.tasksCompleted}
-					icon={<FaTasks className="h-5 w-5" />}
-					trend="+8%"
-					trendUp={true}
-					accent="green"
-				/>
-				<StatsCard
-					title={t('profile.stats.departmentsJoined')}
-					value={userStats.departmentsJoined}
-					icon={<FaBuilding className="h-5 w-5" />}
-					trend="+1"
-					trendUp={true}
-					accent="orange"
-				/>
-				<StatsCard
-					title={t('profile.stats.hoursWorked')}
-					value={userStats.hoursWorked}
-					icon={<FaClock className="h-5 w-5" />}
-					trend="+15%"
-					trendUp={true}
-					accent="purple"
-				/>
-			</div> */}
-
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-				{/* Thông tin cơ bản - Chiếm 4/12 cột */}
-				<div className="lg:col-span-4">
-					<Card className="p-8 h-full">
-						<div className="text-center">
-							<div className="relative inline-block">
-								<Avatar
-									src={profile?.image || null}
-									name={fullName}
-									size={24}
-									className="mx-auto"
-								/>
-								<label className={cn(
-									"absolute bottom-0 right-0 h-10 w-10 rounded-full flex items-center justify-center transition-colors cursor-pointer",
-									buttonColors.primary
-								)}>
-									<FaEdit className="h-5 w-5" />
-									<input type="file" accept="image/*" className="hidden" onChange={handlePickAvatar} disabled={avatarUploading} />
-								</label>
-							</div>
-							<h2 className={cn("mt-6 text-2xl font-semibold", textColors.primary)}>
-								{fullName}
-							</h2>
-							{/* Role info removed - now in Account entity */}
-							<div className="flex items-center gap-4 text-base">
-								<FaEnvelope className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{formData.email}</span>
-							</div>
-							<div className="flex items-center gap-4 text-base">
-								<FaPhone className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{formData.phone}</span>
-							</div>
-							<div className="flex items-center gap-4 text-base">
-								<FaMapMarkerAlt className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{formData.address}</span>
-							</div>
-							<div className="flex items-center gap-4 text-base">
-								<FaCalendarAlt className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
-							</div>
-							<div className="flex items-center gap-4 text-base">
-								<FaUsers className={cn("h-5 w-5", textColors.muted)} />
-								<span className={textColors.secondary}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</span>
-							</div>
-							{/* Contract type removed - not in User entity */}
+				<div className="lg:col-span-4 space-y-6">
+					<Card className="p-6 flex flex-col items-center text-center">
+						<div className="relative group mb-4">
+							<Avatar user={profile} size="2xl" className="ring-4 ring-indigo-500/10" />
+							<label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+								<FaEdit className="h-6 w-6" />
+								<input type="file" accept="image/*" className="hidden" onChange={handlePickAvatar} />
+							</label>
+							{avatarUploading && (
+								<div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+									<div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+								</div>
+							)}
 						</div>
 
-						<div className={cn("mt-8 pt-6 border-t", borderColors.default)}>
-							<div className={cn("flex items-center justify-between text-sm", textColors.muted)}>
-								<span>{t('profile.fields.lastUpdated')}</span>
+						<h2 className={cn("text-2xl font-bold", textColors.primary)}>{fullName}</h2>
+						<p className={cn("text-sm mb-4", textColors.muted)}>
+							@{profile?.userName || profile?.email?.split("@")[0]}
+						</p>
+						<div className="mb-6">
+							<PremiumBadge
+								subscriptionType={subscriptionType}
+								premiumUntil={premiumUntil}
+								showExpiry
+								size="md"
+							/>
+						</div>
+
+						<div className="w-full space-y-4 text-left">
+							<div className="flex items-center gap-3 text-sm">
+								<FaEnvelope className="h-4 w-4 text-gray-400" />
+								<span className={textColors.secondary}>{profile?.email}</span>
+							</div>
+							<div className="flex items-center gap-3 text-sm">
+								<FaBuilding className="h-4 w-4 text-gray-400" />
+								<span className={textColors.secondary}>{profile?.role || "Thành viên"}</span>
+							</div>
+						</div>
+
+						<div className={cn("w-full mt-8 pt-6 border-t", borderColors.default)}>
+							<div className={cn("flex items-center justify-between text-xs", textColors.muted)}>
+								<span>{t("profile.fields.lastUpdated")}</span>
 								<span>{profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</span>
 							</div>
 						</div>
 					</Card>
 				</div>
 
-				{/* Chi tiết thông tin - Chiếm 8/12 cột */}
 				<div className="lg:col-span-8">
-		<Card className="p-8 h-full">
-			<div className="flex items-center justify-between mb-8">
-				<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
-					{t('profile.detailInfo')}
-				</h3>
-				{!isEditing ? (
-					<Button
-						onClick={() => setIsEditing(true)}
-						className="flex items-center gap-2 text-base px-6 py-3"
-					>
-						<FaEdit className="h-5 w-5" />
-						{t('profile.actions.edit')}
-					</Button>
-				) : (
-					<div className="flex gap-3">
-						<Button
-							onClick={handleSave}
-							className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}
-						>
-							<FaSave className="h-5 w-5" />
-							{t('profile.actions.save')}
-						</Button>
-						<Button
-							onClick={handleCancel}
-							variant="outline"
-							className="flex items-center gap-2 text-base px-6 py-3"
-						>
-							<FaTimes className="h-5 w-5" />
-							{t('profile.actions.cancel')}
-						</Button>
-					</div>
-				)}
-			</div>
-			
-			<div className="space-y-8">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.fullName')}</label>
-						<p className={cn("text-lg", textColors.primary)}>{formData.firstName} {formData.lastName}</p>
-					</div>
+					<Card className="p-8">
+						<div className="flex items-center justify-between mb-8">
+							<h3 className={cn("text-2xl font-semibold", textColors.primary)}>
+								{t("profile.detailInfo")}
+							</h3>
+							{!isEditing ? (
+								<Button onClick={() => setIsEditing(true)} className="flex items-center gap-2 text-base px-6 py-3">
+									<FaEdit className="h-5 w-5" />
+									{t("profile.actions.edit")}
+								</Button>
+							) : (
+								<div className="flex gap-3">
+									<Button onClick={handleSave} className={cn("flex items-center gap-2 text-base px-6 py-3", buttonColors.success)}>
+										<FaSave className="h-5 w-5" />
+										{t("profile.actions.save")}
+									</Button>
+									<Button onClick={handleCancel} variant="outline" className="flex items-center gap-2 text-base px-6 py-3">
+										<FaTimes className="h-5 w-5" />
+										{t("profile.actions.cancel")}
+									</Button>
+								</div>
+							)}
+						</div>
 
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.fullName")}</label>
+								<p className={cn("text-lg font-medium", textColors.primary)}>{fullName}</p>
+							</div>
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.email")}</label>
+								<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
+							</div>
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.phone")}</label>
+								{isEditing ? (
+									<Input
+										value={formData.phone}
+										onChange={(e) => handleInputChange("phone", e.target.value)}
+										placeholder={t("profile.placeholders.enterPhone")}
+										className="text-base"
+									/>
+								) : (
+									<p className={cn("text-lg", textColors.primary)}>{formData.phone || "-"}</p>
+								)}
+							</div>
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.address")}</label>
+								{isEditing ? (
+									<Input
+										value={formData.address}
+										onChange={(e) => handleInputChange("address", e.target.value)}
+										placeholder={t("profile.placeholders.enterAddress")}
+										className="text-base"
+									/>
+								) : (
+									<p className={cn("text-lg", textColors.primary)}>{formData.address || "-"}</p>
+								)}
+							</div>
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.dob")}</label>
+								<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : "-"}</p>
+							</div>
+							<div>
+								<label className={cn("block text-sm font-medium mb-2", textColors.secondary)}>{t("profile.fields.gender")}</label>
+								<p className={cn("text-lg", textColors.primary)}>
+									{profile?.gender === "MALE"
+										? t("profile.gender.male")
+										: profile?.gender === "FEMALE"
+											? t("profile.gender.female")
+											: profile?.gender || "-"}
+								</p>
+							</div>
+						</div>
 
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.email')}</label>
-						{isEditing ? (
-							<Input
-								type="email"
-								value={formData.email}
-								onChange={(e) => handleInputChange('email', e.target.value)}
-								placeholder={t('profile.placeholders.enterEmail')}
-								className="text-base py-3"
-							/>
-						) : (
-							<p className={cn("text-lg", textColors.primary)}>{formData.email}</p>
-						)}
-					</div>							<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
-							{t('profile.fields.phone')}
-						</label>
-						{isEditing ? (
-							<Input
-								value={formData.phone}
-								onChange={(e) => handleInputChange('phone', e.target.value)}
-								placeholder={t('profile.placeholders.enterPhone')}
-								className="text-base py-3"
-							/>
-						) : (
-							<p className={cn("text-lg", textColors.primary)}>{formData.phone}</p>
-						)}
-					</div>
-
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.personalID')}</label>
-						<p className={cn("text-lg", textColors.primary)}>{profile?.personalID || ''}</p>
-					</div>
-
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankAccountNumber')}</label>
-						{isEditing ? (
-							<Input
-								value={formData.bankAccountNumber}
-								onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
-								placeholder={t('profile.placeholders.enterBankAccount')}
-								className="text-base py-3"
-							/>
-						) : (
-							<p className={cn("text-lg", textColors.primary)}>{formData.bankAccountNumber}</p>
-						)}
-					</div>
-
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.bankName')}</label>
-						{isEditing ? (
-							<Input
-								value={formData.bankName}
-								onChange={(e) => handleInputChange('bankName', e.target.value)}
-								placeholder={t('profile.placeholders.enterBankName')}
-								className="text-base py-3"
-							/>
-						) : (
-							<p className={cn("text-lg", textColors.primary)}>{formData.bankName}</p>
-						)}
-					</div>							<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>
-							{t('profile.fields.address')}
-						</label>
-						{isEditing ? (
-							<Input
-								value={formData.address}
-								onChange={(e) => handleInputChange('address', e.target.value)}
-								placeholder={t('profile.placeholders.enterAddress')}
-								className="text-base py-3"
-							/>
-						) : (
-							<p className={cn("text-lg", textColors.primary)}>{formData.address}</p>
-						)}
-					</div>
-
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.dob')}</label>
-						<p className={cn("text-lg", textColors.primary)}>{profile?.dob ? new Date(profile.dob).toLocaleDateString() : ''}</p>
-					</div>
-
-					<div>
-						<label className={cn("block text-base font-medium mb-3", textColors.secondary)}>{t('profile.fields.gender')}</label>
-						<p className={cn("text-lg", textColors.primary)}>{profile?.gender === 'MALE' ? t('profile.gender.male') : profile?.gender === 'FEMALE' ? t('profile.gender.female') : (profile?.gender || '')}</p>
-					</div>
-
-					{/* Fields removed: contractType, startDate, role (not in User entity) */}
+						{error && <p className="mt-6 text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>}
+						{success && <p className="mt-6 text-sm text-green-600 dark:text-green-400 font-medium">{success}</p>}
+					</Card>
 				</div>
+			</div>
+
+			<ImageCropModal
+				isOpen={cropModalOpen}
+				onClose={() => {
+					setCropModalOpen(false);
+					setImageSrcForCrop(null);
+				}}
+				imageSrc={imageSrcForCrop}
+				onCropComplete={handleCropComplete}
+			/>
 		</div>
-
-		{/* Removed Giới thiệu bản thân section as requested */}
-			</Card>
-		</div>
-	</div>
-
-	{(loading || avatarUploading) && (
-		<p className={cn("text-sm", textColors.muted)}>{t('profile.messages.loading')}</p>
-	)}
-	{error && (
-		<p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-	)}
-	{success && (
-		<p className="text-sm text-green-600 dark:text-green-400">{success}</p>
-	)}
-
-	<ImageCropModal
-		isOpen={cropModalOpen}
-		onClose={() => {
-			setCropModalOpen(false);
-			setImageSrcForCrop(null);
-		}}
-		imageSrc={imageSrcForCrop}
-		onCropComplete={handleCropComplete}
-	/>
-</div>
 	);
 }

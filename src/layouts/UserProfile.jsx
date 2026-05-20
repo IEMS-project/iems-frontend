@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { User2, ChevronUp, CreditCard, Bell, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +14,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Avatar from "@/components/ui/Avatar";
+import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext.jsx";
 
 export default function UserProfile() {
@@ -26,14 +25,14 @@ export default function UserProfile() {
 	const user = userProfile ? {
 		firstName: userProfile.firstName || '',
 		lastName: userProfile.lastName || '',
-		name: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
+		name: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'Người dùng',
 		email: userProfile.email || '',
 		role: userProfile.role || '',
 		avatar: userProfile.image || null,
 	} : {
 		firstName: '',
 		lastName: '',
-		name: "User",
+		name: "Người dùng",
 		email: "",
 		role: "",
 		avatar: null,
@@ -48,8 +47,8 @@ export default function UserProfile() {
 			<SidebarMenuItem>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-							<Avatar user={user} size="sm" />
+						<SidebarMenuButton size="lg" className="text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+							<UserAvatar user={user} size="sm" className="ring-sidebar-border" />
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs text-sidebar-foreground/70">{user.email}</span>
@@ -65,7 +64,7 @@ export default function UserProfile() {
 					>
 						<DropdownMenuLabel className="p-0 font-normal">
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-								<Avatar user={user} size="sm" />
+								<UserAvatar user={user} size="sm" />
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-semibold">{user.name}</span>
 									<span className="truncate text-xs text-muted-foreground">{user.email}</span>

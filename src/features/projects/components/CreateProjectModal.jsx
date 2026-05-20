@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -34,6 +34,8 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     const [loading, setLoading] = useState(false);
     const [initializingStepData, setInitializingStepData] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState(null);
+    // Snapshots of backend-seeded defaults — used for dirty-checking
+    const snapshotRef = useRef({ workflowData: null, priorities: null, issueTypes: null });
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
 
     const [basicInfo, setBasicInfo] = useState({ ...INITIAL_BASIC_INFO });
@@ -58,6 +60,7 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setIssueTypes([]);
         setActiveIconPicker(null);
         setInitializingStepData(false);
+        snapshotRef.current = { workflowData: null, priorities: null, issueTypes: null };
         onClose();
     };
 
@@ -70,39 +73,34 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                 projectService.getIssueTypes(projectId),
             ]);
 
+            let wfState = { id: null, name: "Default Workflow", statuses: [] };
             if (workflows.length > 0) {
                 const wf = workflows[0];
                 const statuses = await workflowService.getStatuses(projectId, wf.id);
-                setWorkflowData({
+                wfState = {
                     id: wf.id,
                     name: wf.name || "Default Workflow",
                     statuses: statuses.map(s => ({ id: s.id, name: s.name, color: s.color || "#6B7280" })),
-                });
-            } else {
-                setWorkflowData({ id: null, name: "Default Workflow", statuses: [] });
+                };
             }
+            setWorkflowData(wfState);
 
-            if (priorList.length > 0) {
-                setPriorities(priorList.map((p, i) => ({
-                    id: p.id,
-                    name: p.name,
-                    color: p.color || "#6B7280",
-                    level: p.level ?? i + 1,
-                })));
-            } else {
-                setPriorities([]);
-            }
+            const priorState = priorList.length > 0
+                ? priorList.map((p, i) => ({ id: p.id, name: p.name, color: p.color || "#6B7280", level: p.level ?? i + 1 }))
+                : [];
+            setPriorities(priorState);
 
-            if (issueTypeList.length > 0) {
-                setIssueTypes(issueTypeList.map(t => ({
-                    id: t.id,
-                    name: t.name,
-                    description: t.description || "",
-                    iconUrl: t.iconUrl || "",
-                })));
-            } else {
-                setIssueTypes([]);
-            }
+            const issueTypeState = issueTypeList.length > 0
+                ? issueTypeList.map(t => ({ id: t.id, name: t.name, description: t.description || "", iconUrl: t.iconUrl || "" }))
+                : [];
+            setIssueTypes(issueTypeState);
+
+            // Save snapshots for dirty-checking in each Next handler
+            snapshotRef.current = {
+                workflowData: JSON.stringify(wfState),
+                priorities: JSON.stringify(priorState),
+                issueTypes: JSON.stringify(issueTypeState),
+            };
         } catch (error) {
             toast.error(error?.message || "Failed to load project defaults");
         } finally {
@@ -158,10 +156,13 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
 
     // ── Step 2: reconcile workflow changes ────────────────────────
     const handleStep2Next = async () => {
+        // Skip API if nothing changed from backend defaults
+        const isDirty = snapshotRef.current.workflowData !== JSON.stringify(workflowData);
+        if (!isDirty) { setStep(2); return; }
+
         setLoading(true);
         try {
             if (workflowData.id) {
-                // Update workflow name
                 await workflowService.updateWorkflow(createdProjectId, workflowData.id, {
                     name: workflowData.name,
                 });
@@ -199,6 +200,10 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
 
     // ── Step 3: reconcile priority changes ────────────────────────
     const handleStep3Next = async () => {
+        // Skip API if nothing changed from backend defaults
+        const isDirty = snapshotRef.current.priorities !== JSON.stringify(priorities);
+        if (!isDirty) { setStep(3); return; }
+
         setLoading(true);
         try {
             await projectService.syncIssuePriorities(
@@ -221,6 +226,15 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
 
     // ── Step 4: reconcile issue type changes ──────────────────────
     const handleStep4Finish = async () => {
+        // Skip API if nothing changed from backend defaults
+        const isDirty = snapshotRef.current.issueTypes !== JSON.stringify(issueTypes);
+        if (!isDirty) {
+            toast.success("Project created successfully");
+            onCreated?.();
+            handleClose();
+            return;
+        }
+
         setLoading(true);
         try {
             await projectService.syncIssueTypes(

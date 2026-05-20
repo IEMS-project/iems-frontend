@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { GripVertical, Plus, Search, Check, X, Trash2, SlidersHorizontal, ChevronDown } from "lucide-react";
 import {
   DndContext, DragOverlay,
@@ -101,6 +101,7 @@ function DraggableCard({ issue, children }) {
 export default function BoardTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     sprints, workflowStatuses, workflows, issueTypes, issuePriorities, members,
     issuesLoading, workflowsLoading, refreshIssues, refreshWorkflows,
@@ -141,6 +142,35 @@ export default function BoardTab() {
 
   // Multi-select
   const [selectedIssueIds, setSelectedIssueIds] = useState(new Set());
+
+  useEffect(() => {
+    const issueId = searchParams.get("issueId");
+    if (!issueId || !projectId) return;
+
+    const localIssue = sprintIssues.find((issue) => String(issue.id) === String(issueId));
+    if (localIssue) {
+      setSelectedIssue(localIssue);
+      return;
+    }
+
+    let cancelled = false;
+    issueService.getIssueById(projectId, issueId)
+      .then((issue) => {
+        if (!cancelled && issue) setSelectedIssue(issue);
+      })
+      .catch((error) => toast.error(error?.message || "Failed to load issue"));
+
+    return () => { cancelled = true; };
+  }, [searchParams, projectId, sprintIssues]);
+
+  const closeSelectedIssue = () => {
+    setSelectedIssue(null);
+    if (searchParams.has("issueId")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("issueId");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -711,9 +741,10 @@ export default function BoardTab() {
       />
       <IssueDetailModal
         open={!!selectedIssue}
-        onClose={() => setSelectedIssue(null)}
+        onClose={closeSelectedIssue}
         issue={selectedIssue}
-        onUpdate={() => { setSelectedIssue(null); loadSprintIssues(); }}
+        targetCommentId={searchParams.get("commentId")}
+        onUpdate={() => { closeSelectedIssue(); loadSprintIssues(); }}
       />
       <CreateIssueModal
         open={!!createStatusId}
