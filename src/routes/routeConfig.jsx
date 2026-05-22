@@ -1,8 +1,6 @@
+import { lazy, Suspense } from "react";
 import { Navigate } from "react-router-dom";
 
-import AdminAccessControlPage from "@/features/admin/pages/AdminAccessControlPage";
-import AdminAnalyticsPage from "@/features/admin/pages/AdminAnalyticsPage";
-import AdminSubscriptionPage from "@/features/admin/pages/AdminSubscriptionPage";
 import AdminLoginPage from "@/features/auth/pages/AdminLoginPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import PermissionDeniedPage from "@/features/auth/pages/PermissionDeniedPage";
@@ -12,6 +10,8 @@ import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import DocumentsPage from "@/features/documents/pages/DocumentsPage";
 import MessagesPage from "@/features/messages/pages/MessagesPage";
 import NotificationsPage from "@/features/notifications/pages/NotificationsPage";
+import PaymentCancelPage from "@/features/payments/pages/PaymentCancelPage";
+import PaymentReturnPage from "@/features/payments/pages/PaymentReturnPage";
 import PremiumUpgradePage from "@/features/profile/pages/PremiumUpgradePage";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/profile/pages/SettingsPage";
@@ -29,6 +29,14 @@ import ProjectMembersPage from "@/features/projects/pages/ProjectMembersPage";
 import ProjectOverviewPage from "@/features/projects/pages/ProjectOverviewPage";
 import ProjectTimelinePage from "@/features/projects/pages/ProjectTimelinePage";
 import ProjectsPage from "@/features/projects/pages/ProjectsPage";
+
+const AdminAccessControlPage = lazy(() => import("@/features/admin/pages/AdminAccessControlPage"));
+const AdminAnalyticsPage = lazy(() => import("@/features/admin/pages/AdminAnalyticsPage"));
+const AdminSubscriptionPage = lazy(() => import("@/features/admin/pages/AdminSubscriptionPage"));
+
+function withPageSuspense(element) {
+    return <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading...</div>}>{element}</Suspense>;
+}
 
 export const publicRoutes = [
     { path: "/login", element: <LoginPage /> },
@@ -65,14 +73,16 @@ export const appRoutes = [
     { path: "/chatbot", element: <ChatbotPage /> },
     { path: "/calendar", element: <CalendarPage /> },
     { path: "/notifications", element: <NotificationsPage /> },
+    { path: "/payment/return", element: <PaymentReturnPage /> },
+    { path: "/payment/cancel", element: <PaymentCancelPage /> },
     { path: "/profile", element: <ProfilePage /> },
     { path: "/settings", element: <SettingsPage /> },
-    { path: "/admin", element: <AdminAnalyticsPage /> },
+    { path: "/admin", element: withPageSuspense(<AdminAnalyticsPage />) },
     { path: "/premium", element: <PremiumUpgradePage /> },
     { path: "/permission-denied", element: <PermissionDeniedPage /> },
 ];
 
 export const adminRoutes = [
-    { path: "/admin/access-control", element: <AdminAccessControlPage /> },
-    { path: "/admin/subscription", element: <AdminSubscriptionPage /> },
+    { path: "/admin/access-control", element: withPageSuspense(<AdminAccessControlPage />) },
+    { path: "/admin/subscription", element: withPageSuspense(<AdminSubscriptionPage />) },
 ];

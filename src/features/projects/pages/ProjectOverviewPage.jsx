@@ -1,20 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlarmClock, CalendarDays, CheckCircle2, ClipboardList, RefreshCw } from "lucide-react";
+import {
+    Activity,
+    AlarmClock,
+    CalendarDays,
+    Layers3,
+    Users,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import Calendar from "@/components/ui/Calendar";
-import DonutChart, { buildDonutSlices } from "@/components/ui/DonutChart";
-import Progress from "@/components/ui/Progress";
+import Avatar from "@/components/ui/Avatar";
+import DonutChart from "@/components/ui/DonutChart";
 import Skeleton from "@/components/ui/Skeleton";
+import { buildDonutSlices } from "@/components/ui/donutUtils";
 import { projectService } from "@/features/projects/api/projectService";
-import ActivityLogItem from "@/features/projects/components/ActivityLogItem";
 import { useProject } from "@/features/projects/context/ProjectContext";
+import { getActivityMeta } from "@/features/projects/utils/issueStyles";
+import { cn, timeAgo } from "@/lib/utils";
+
+function parseDate(dateString) {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.toString().split("T")[0].split("-").map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+}
 
 function formatDate(dateString) {
-    if (!dateString) return "-";
-    const [y, m, d] = dateString.split("T")[0].split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString("vi-VN");
+    const date = parseDate(dateString);
+    return date ? date.toLocaleDateString("vi-VN") : "-";
 }
 
 function compactColor(index) {
@@ -29,48 +42,308 @@ function compactColor(index) {
     return colors[index % colors.length];
 }
 
-function Metric({ title, value, icon: Icon, tone = "text-primary" }) {
+function getIssueCode(log) {
+    if (typeof log?.details === "string") {
+        const match = log.details.match(/\b[A-Z][A-Z0-9]+-\d+\b/);
+        if (match) return match[0];
+    }
+    return log?.taskCode || log?.issueKey || log?.issueCode || log?.code || null;
+}
+
+function AnalyticBars({ title, icon, items, total, emptyText }) {
     return (
-        <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background/70 px-3 py-2.5">
-            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted ${tone}`}>
-                <Icon className="h-4 w-4" />
-            </span>
-            <span className="min-w-0">
-                <span className="block truncate text-xs text-muted-foreground">{title}</span>
-                <span className="block text-lg font-semibold leading-tight text-foreground">{value}</span>
-            </span>
+        <Card className="h-full">
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                    {createElement(icon, { className: "h-4 w-4 text-muted-foreground" })}
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {items.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                        {emptyText}
+                    </p>
+                ) : (
+                    items.map((item) => {
+                        const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                        return (
+                            <button
+                                key={item.key}
+                                type="button"
+                                className="group w-full rounded-lg border border-transparent p-2 text-left transition-all hover:border-border hover:bg-muted/45"
+                            >
+                                <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                                    <span className="min-w-0 truncate font-medium text-foreground">{item.label}</span>
+                                    <span className="shrink-0 text-muted-foreground">
+                                        <span className="font-semibold text-foreground">{item.value}</span> · {percent}%
+                                    </span>
+                                </div>
+                                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        className="h-full rounded-full transition-all group-hover:scale-x-[1.02]"
+                                        style={{ width: `${Math.max(4, percent)}%`, backgroundColor: item.color }}
+                                    />
+                                </div>
+                            </button>
+                        );
+                    })
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function StatusBreakdownWidget({ title, meta, total, slices, items, emptyText }) {
+    const [activeKey, setActiveKey] = useState(null);
+    const activeSlice = slices.find((slice) => slice.key === activeKey);
+
+    return (
+        <Card>
+            <CardHeader className="pb-3">
+
+                <CardTitle className="text-base">{title}</CardTitle>
+                {meta ? <p className="text-xs text-muted-foreground">{meta}</p> : null}
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-center">
+                    <div className="flex items-center justify-center gap-5 lg:justify-end">
+                        {items.length === 0 ? (
+                            <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                                {emptyText}
+                            </p>
+                        ) : (
+                            <>
+                                <div className="relative grid h-60 w-60 shrink-0 place-items-center">
+                                    <svg viewBox="0 0 120 120" className="-rotate-90 overflow-visible" aria-hidden="true">
+                                        <circle cx="60" cy="60" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="13" />
+                                        {slices.map((slice) => {
+                                            const isActive = slice.key === activeKey;
+                                            const isDimmed = activeKey && !isActive;
+                                            return (
+                                                <circle
+                                                    key={slice.key}
+                                                    cx="60"
+                                                    cy="60"
+                                                    r={slice.radius}
+                                                    fill="none"
+                                                    stroke={slice.color}
+                                                    strokeWidth={isActive ? 20 : 13}
+                                                    strokeDasharray={slice.dashArray}
+                                                    strokeDashoffset={slice.dashOffset}
+                                                    className={cn("cursor-pointer transition-all", isDimmed ? "opacity-25" : "opacity-100")}
+                                                    style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                                                    onMouseEnter={() => setActiveKey(slice.key)}
+                                                    onMouseLeave={() => setActiveKey(null)}
+                                                />
+                                            );
+                                        })}
+                                    </svg>
+                                    <div className="absolute grid h-40 w-40 place-items-center rounded-full border border-border bg-card text-center">
+                                        <div>
+                                            <p className="text-xl font-bold text-foreground">{activeSlice ? activeSlice.value : total}</p>
+                                            <p className="max-w-16 truncate text-[11px] text-muted-foreground">
+                                                {activeSlice ? activeSlice.label : "Total"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid gap-1.5">
+                                    {items.map((item) => (
+                                        <button
+                                            key={item.key}
+                                            type="button"
+                                            className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                                            onMouseEnter={() => setActiveKey(item.key)}
+                                            onMouseLeave={() => setActiveKey(null)}
+                                        >
+                                            <span className="flex min-w-0 items-center gap-2">
+                                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                                                <span className="truncate">{item.label}</span>
+                                            </span>
+                                            <span className="font-semibold text-foreground">{item.value}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function TimelineCard({ projectData, progress, t }) {
+    const start = parseDate(projectData?.startDate);
+    const end = parseDate(projectData?.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const totalMs = start && end ? Math.max(end - start, 1) : 1;
+    const elapsedMs = start ? Math.max(today - start, 0) : 0;
+    const todayPercent = start && end ? Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100))) : 0;
+    const daysLeft = end ? Math.ceil((end - today) / (24 * 60 * 60 * 1000)) : null;
+
+    return (
+        <Card>
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    {t("projects.detail.tabs.timeline", "Timeline")}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg bg-muted/60 px-3 py-2">
+                        <p className="text-xs text-muted-foreground">{t("projects.form.startDate")}</p>
+                        <p className="text-sm font-semibold text-foreground">{formatDate(projectData?.startDate)}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/60 px-3 py-2">
+                        <p className="text-xs text-muted-foreground">{t("projects.form.endDate")}</p>
+                        <p className="text-sm font-semibold text-foreground">{formatDate(projectData?.endDate)}</p>
+                    </div>
+                </div>
+
+                <div className="mt-5">
+                    <div className="relative h-3 rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+                        <span
+                            className="absolute top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-foreground shadow-sm"
+                            style={{ left: `${todayPercent}%` }}
+                            title={t("ui.common.today", "Today")}
+                        />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{t("projects.form.startDate")}</span>
+                        <span>
+                            {daysLeft == null
+                                ? t("projects.detail.overview.noData")
+                                : daysLeft >= 0
+                                    ? `${daysLeft} ${t("ui.common.daysLeft", "days left")}`
+                                    : t("projects.status.completed", "Completed")}
+                        </span>
+                        <span>{t("projects.form.endDate")}</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ActivityFeed({ activities, loading, loadingMore, sentinelRef, workflowStatuses, t }) {
+    if (loading) {
+        return (
+            <div className="space-y-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                    <Skeleton key={index} className="h-14 rounded-xl" />
+                ))}
+            </div>
+        );
+    }
+
+    if (activities.length === 0) {
+        return (
+            <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center">
+                <Activity className="mx-auto h-6 w-6 text-muted-foreground" />
+                <p className="mt-2 text-sm font-medium text-foreground">
+                    {t("projects.detail.overview.noActivity", "No recent activity")}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-h-[430px] space-y-1 overflow-y-auto pr-1">
+
+            {activities.map((activity, index) => {
+                const { icon: Icon, color } = getActivityMeta(activity.action);
+                const issueCode = getIssueCode(activity);
+                return (
+                    <div
+                        key={activity.id || index}
+                        className="group flex gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-muted/45"
+                    >
+                        <div className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full", color)}>
+                            <Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                                {activity.userImage ? (
+                                    <img src={activity.userImage} alt={activity.userName || ""} className="h-5 w-5 rounded-full object-cover" />
+                                ) : (
+                                    <Avatar name={activity.userName || "?"} size="xs" />
+                                )}
+                                <span className="truncate text-xs font-semibold text-foreground">{activity.userName || "Unknown"}</span>
+                                <span className="ml-auto shrink-0 text-[11px] text-muted-foreground" title={activity.createdAt ? new Date(activity.createdAt).toLocaleString() : ""}>
+                                    {timeAgo(activity.createdAt)}
+                                </span>
+                            </div>
+                            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                                {issueCode ? <span className="font-medium text-foreground">{issueCode}</span> : null}
+                                {issueCode ? " · " : ""}
+                                {activity.details || activity.action}
+                            </p>
+                            {activity.action === "ISSUE_STATUS_CHANGED" && (activity.oldValue || activity.newValue) ? (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {[activity.oldValue, activity.newValue].filter(Boolean).map((value) => {
+                                        const status = workflowStatuses.find((item) => item.id === value || item.name === value);
+                                        return (
+                                            <span key={value} className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px] text-foreground">
+                                                {status?.name || value}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+                            ) : null}
+                        </div>
+                    </div>
+                );
+            })}
+            <div ref={sentinelRef} className="h-px" />
+            {loadingMore ? <p className="py-2 text-center text-xs text-muted-foreground">Loading...</p> : null}
         </div>
     );
 }
 
-function CompactBreakdown({ title, items, maxValue, emptyText }) {
+function MembersPanel({ members, loading, t }) {
+    const visibleMembers = members.slice(0, 5);
+
     return (
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <p className="text-sm font-semibold text-foreground">{title}</p>
-            <div className="mt-3 space-y-2.5">
-                {items.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-muted-foreground">{emptyText}</p>
+        <Card>
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    {t("projects.detail.tabs.members", "Members")}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="space-y-2">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <Skeleton key={index} className="h-9 rounded-lg" />
+                        ))}
+                    </div>
                 ) : (
-                    items.map((item) => (
-                        <div key={item.key} className="space-y-1">
-                            <div className="flex items-center justify-between gap-3 text-xs">
-                                <span className="truncate text-foreground">{item.label}</span>
-                                <span className="shrink-0 font-semibold text-muted-foreground">{item.value}</span>
-                            </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full transition-all"
-                                    style={{
-                                        width: `${maxValue > 0 ? Math.max(8, (item.value / maxValue) * 100) : 0}%`,
-                                        backgroundColor: item.color,
-                                    }}
+                    <div className="space-y-3">
+                        <div className="flex -space-x-2">
+                            {visibleMembers.map((member) => (
+                                <Avatar
+                                    key={member.userId || member.id}
+                                    user={{ avatar: member.userImage, name: member.userName || member.userEmail }}
+                                    name={member.userName || member.userEmail}
+                                    size="sm"
+                                    className="border-2 border-card"
                                 />
-                            </div>
+                            ))}
                         </div>
-                    ))
+                        <p className="text-sm text-muted-foreground">
+                            <span className="font-semibold text-foreground">{members.length}</span> {t("projects.detail.tabs.members", "Members")}
+                        </p>
+                    </div>
                 )}
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
@@ -78,7 +351,15 @@ export default function ProjectOverviewPage() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const { projectData } = useOutletContext();
-    const { issues = [], issuesLoading, workflowStatuses = [], issuePriorities = [], issueTypes = [] } = useProject();
+    const {
+        issues = [],
+        issuesLoading,
+        workflowStatuses = [],
+        issuePriorities = [],
+        issueTypes = [],
+        members = [],
+        membersLoading,
+    } = useProject();
 
     const [activities, setActivities] = useState([]);
     const [activitiesLoading, setActivitiesLoading] = useState(true);
@@ -99,7 +380,10 @@ export default function ProjectOverviewPage() {
                 setActivities(res.content || []);
                 activityHasMoreRef.current = !res.last;
             })
-            .catch(() => setActivities([]))
+            .catch((error) => {
+                console.error("Error loading activities:", error);
+                setActivities([]);
+            })
             .finally(() => setActivitiesLoading(false));
     }, [projectId]);
 
@@ -114,7 +398,7 @@ export default function ProjectOverviewPage() {
                 activityHasMoreRef.current = !res.last;
                 activityPageRef.current = next;
             })
-            .catch(() => {})
+            .catch((error) => console.error("Error loading more activities:", error))
             .finally(() => {
                 activityLoadingMoreRef.current = false;
                 setActivityLoadingMore(false);
@@ -123,7 +407,7 @@ export default function ProjectOverviewPage() {
 
     useEffect(() => {
         const el = activitySentinelRef.current;
-        if (!el) return;
+        if (!el) return undefined;
         const obs = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) loadMoreActivities();
         }, { threshold: 0.1 });
@@ -139,21 +423,20 @@ export default function ProjectOverviewPage() {
         const priorityCounts = new Map();
         const typeCounts = new Map();
         const today = new Date();
-        const nextWeek = new Date();
         today.setHours(0, 0, 0, 0);
-        nextWeek.setDate(today.getDate() + 7);
 
         let completed = 0;
         let inProgress = 0;
-        let todo = 0;
-        let dueSoon = 0;
+        let overdue = 0;
 
         issues.forEach((issue) => {
             const status = statusById.get(issue.statusId);
             const category = status?.category || "TODO";
-            if (category === "DONE") completed++;
-            else if (category === "IN_PROGRESS") inProgress++;
-            else todo++;
+            if (category === "DONE") completed += 1;
+            if (category === "IN_PROGRESS") inProgress += 1;
+
+            const due = parseDate(issue.dueDate);
+            if (due && due < today && category !== "DONE") overdue += 1;
 
             const statusLabel = status?.name || "Unknown";
             statusCounts.set(statusLabel, {
@@ -180,12 +463,6 @@ export default function ProjectOverviewPage() {
                 value: (typeCounts.get(typeLabel)?.value || 0) + 1,
                 color: compactColor(typeCounts.size + 3),
             });
-
-            if (issue.dueDate && category !== "DONE") {
-                const [y, m, d] = issue.dueDate.toString().split("T")[0].split("-").map(Number);
-                const due = new Date(y, m - 1, d);
-                if (due >= today && due <= nextWeek) dueSoon++;
-            }
         });
 
         const total = issues.length;
@@ -198,156 +475,79 @@ export default function ProjectOverviewPage() {
             total,
             completed,
             inProgress,
-            todo,
-            dueSoon,
+            overdue,
             progress,
+            statusItems,
             statusSlices: buildDonutSlices(statusItems),
             priorityItems,
             typeItems,
-            priorityMax: Math.max(...priorityItems.map((item) => item.value), 0),
-            typeMax: Math.max(...typeItems.map((item) => item.value), 0),
         };
     }, [issues, issuePriorities, issueTypes, workflowStatuses]);
 
-    const displayedProgress = projectData?.progress ?? overview.progress;
-
     return (
         <div className="space-y-4">
-            <Card className="overflow-hidden">
-                <CardContent className="p-4">
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,1fr)]">
-                        <div className="min-w-0 space-y-4">
-                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                                <div className="min-w-0">
-                                    <p className="line-clamp-2 text-sm text-muted-foreground">
-                                        {projectData?.description || t("projects.detail.overview.noData")}
-                                    </p>
-                                </div>
-                                <div className="grid shrink-0 grid-cols-2 gap-2 text-xs sm:min-w-72">
-                                    <div className="rounded-lg bg-muted px-3 py-2">
-                                        <p className="text-muted-foreground">{t("projects.form.startDate")}</p>
-                                        <p className="font-medium text-foreground">{formatDate(projectData?.startDate)}</p>
-                                    </div>
-                                    <div className="rounded-lg bg-muted px-3 py-2">
-                                        <p className="text-muted-foreground">{t("projects.form.endDate")}</p>
-                                        <p className="font-medium text-foreground">{formatDate(projectData?.endDate)}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {issuesLoading ? (
-                                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                                    {Array.from({ length: 4 }).map((_, index) => (
-                                        <Skeleton key={index} className="h-16 rounded-xl" />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                                    <Metric title={t("projects.detail.overview.statistics.totalTasks")} value={overview.total} icon={ClipboardList} />
-                                    <Metric title={t("projects.detail.overview.statistics.completed")} value={overview.completed} icon={CheckCircle2} tone="text-emerald-600" />
-                                    <Metric title={t("projects.detail.overview.statistics.inProgress")} value={overview.inProgress} icon={RefreshCw} tone="text-blue-600" />
-                                    <Metric title={t("ui.common.dueSoon")} value={overview.dueSoon} icon={AlarmClock} tone="text-amber-600" />
-                                </div>
-                            )}
-
-                            <div className="rounded-xl border border-border bg-background/70 px-3 py-3">
-                                <div className="mb-2 flex items-center justify-between gap-3">
-                                    <span className="text-sm font-medium text-foreground">{t("projects.detail.overview.statistics.completionRate")}</span>
-                                    <span className="text-sm font-semibold text-foreground">{displayedProgress}%</span>
-                                </div>
-                                <Progress value={displayedProgress} />
-                            </div>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+                <main className="space-y-4 xl:col-span-8">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                        <div className="space-y-4">
+                            <TimelineCard projectData={projectData} progress={overview.progress} t={t} />
+                            <MembersPanel members={members} loading={membersLoading} t={t} />
                         </div>
 
                         {issuesLoading ? (
-                            <Skeleton className="h-full min-h-64 rounded-2xl" />
+                            <Skeleton className="h-full min-h-[360px] rounded-2xl" />
                         ) : (
-                            <DonutChart
-                                compact
+                            <StatusBreakdownWidget
                                 title={t("projects.detail.overview.charts.statusBreakdown")}
                                 meta={t("dashboard.marketPanel.taskCount", { count: overview.total })}
-                                centerValue={overview.total}
-                                centerLabel={t("projects.detail.overview.statistics.totalTasks")}
+                                total={overview.total}
                                 slices={overview.statusSlices}
+                                items={overview.statusItems}
+                                emptyText={t("projects.detail.overview.noData")}
                             />
                         )}
                     </div>
-                </CardContent>
-            </Card>
 
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {issuesLoading ? (
-                        <>
-                            <Skeleton className="h-52 rounded-2xl" />
-                            <Skeleton className="h-52 rounded-2xl" />
-                        </>
-                    ) : (
-                        <>
-                            <CompactBreakdown
-                                title={t("projects.detail.overview.charts.priorityBreakdown")}
-                                items={overview.priorityItems}
-                                maxValue={overview.priorityMax}
-                                emptyText={t("projects.detail.overview.noData")}
-                            />
-                            <CompactBreakdown
-                                title={t("projects.detail.overview.charts.workTypesBreakdown")}
-                                items={overview.typeItems}
-                                maxValue={overview.typeMax}
-                                emptyText={t("projects.detail.overview.noData")}
-                            />
-                        </>
-                    )}
-                </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <AnalyticBars
+                            title={t("projects.detail.overview.charts.priorityBreakdown")}
+                            icon={AlarmClock}
+                            items={overview.priorityItems}
+                            total={overview.total}
+                            emptyText={t("projects.detail.overview.noData")}
+                        />
+                        <AnalyticBars
+                            title={t("projects.detail.overview.charts.workTypesBreakdown")}
+                            icon={Layers3}
+                            items={overview.typeItems}
+                            total={overview.total}
+                            emptyText={t("projects.detail.overview.noData")}
+                        />
+                    </div>
+                </main>
 
-                <Card className="min-h-0">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <CalendarDays className="h-4 w-4" />
-                            {t("dashboard.calendar.title")}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="max-h-[390px] overflow-hidden px-4 pb-4">
-                        <Calendar projectId={projectId} />
-                    </CardContent>
-                </Card>
+                <aside className="space-y-4 xl:col-span-4">
+                    <Card className="min-h-[420px]">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Activity className="h-4 w-4 text-muted-foreground" />
+                                {t("projects.detail.overview.recentActivity", "Recent Activity")}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ActivityFeed
+                                activities={activities}
+                                loading={activitiesLoading}
+                                loadingMore={activityLoadingMore}
+                                sentinelRef={activitySentinelRef}
+                                workflowStatuses={workflowStatuses}
+                                t={t}
+                            />
+                        </CardContent>
+                    </Card>
+
+                </aside>
             </div>
-
-            <Card className="min-h-0">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-base">{t("projects.detail.overview.recentActivity", "Recent Activity")}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                    {activitiesLoading ? (
-                        <div className="grid gap-3 px-4 pb-4 sm:grid-cols-2 xl:grid-cols-3">
-                            {Array.from({ length: 6 }).map((_, index) => (
-                                <Skeleton key={index} className="h-10 w-full" />
-                            ))}
-                        </div>
-                    ) : activities.length === 0 ? (
-                        <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                            {t("projects.detail.overview.noActivity", "No recent activity")}
-                        </p>
-                    ) : (
-                        <div className="max-h-72 overflow-y-auto px-4 pb-2">
-                            <div className="grid gap-x-5 xl:grid-cols-2">
-                                {activities.map((activity, index) => (
-                                    <ActivityLogItem
-                                        key={activity.id || index}
-                                        log={activity}
-                                        workflowStatuses={workflowStatuses}
-                                        showIssue
-                                    />
-                                ))}
-                            </div>
-                            <div ref={activitySentinelRef} className="h-px" />
-                            {activityLoadingMore && (
-                                <p className="py-2 text-center text-xs text-muted-foreground">Loading...</p>
-                            )}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
         </div>
     );
 }

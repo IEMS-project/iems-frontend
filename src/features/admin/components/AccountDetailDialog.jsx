@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { UserCircle2, Lock, Unlock, KeyRound, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import Select from "@/components/ui/Select";
 import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
-import PremiumBadge from "@/components/ui/PremiumBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Dialog,
@@ -37,6 +36,8 @@ export default function AccountDetailDialog({
     saveMessage,
     saveError,
     hasRolesChanges,
+    onUpgradePremium,
+    onDowngradePremium,
     // User profile props
     userProfile,
     userProfileDraft,
@@ -48,6 +49,62 @@ export default function AccountDetailDialog({
     hasUserProfileChanges,
 }) {
     const { t } = useTranslation();
+    const [selectedDays, setSelectedDays] = useState(30);
+    const [customDays, setCustomDays] = useState("");
+    const [premiumLoading, setPremiumLoading] = useState(false);
+    const [premiumMsg, setPremiumMsg] = useState(null);
+    const isPremium = account?.subscriptionType === "PREMIUM";
+    const expiryText = account?.premiumUntil
+        ? new Date(account.premiumUntil).toLocaleDateString("vi-VN")
+        : "";
+
+    const DURATION_PRESETS = [
+        { label: "7 ngày", days: 7 },
+        { label: "30 ngày", days: 30 },
+        { label: "90 ngày", days: 90 },
+        { label: "365 ngày", days: 365 },
+    ];
+
+    useEffect(() => {
+        setPremiumMsg(null);
+        setPremiumLoading(false);
+        setSelectedDays(30);
+        setCustomDays("");
+    }, [account?.userId, account?.id]);
+
+    const handlePremiumUpgrade = async () => {
+        if (!account || !onUpgradePremium) return;
+        const days = Number(customDays || selectedDays);
+        if (!days || days < 1) {
+            setPremiumMsg({ type: "error", text: "Số ngày không hợp lệ" });
+            return;
+        }
+        setPremiumLoading(true);
+        setPremiumMsg(null);
+        try {
+            await onUpgradePremium(account, days);
+            setPremiumMsg({ type: "success", text: `✓ Đã nâng cấp Premium ${days} ngày` });
+        } catch (error) {
+            setPremiumMsg({ type: "error", text: error?.message || "Lỗi nâng cấp" });
+        } finally {
+            setPremiumLoading(false);
+        }
+    };
+
+    const handlePremiumDowngrade = async () => {
+        if (!account || !onDowngradePremium) return;
+        if (!window.confirm(`Hủy Premium của ${account.username}?`)) return;
+        setPremiumLoading(true);
+        setPremiumMsg(null);
+        try {
+            await onDowngradePremium(account);
+            setPremiumMsg({ type: "success", text: "✓ Đã hạ xuống FREE" });
+        } catch (error) {
+            setPremiumMsg({ type: "error", text: error?.message || "Lỗi hạ cấp" });
+        } finally {
+            setPremiumLoading(false);
+        }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,12 +143,14 @@ export default function AccountDetailDialog({
                                         <Badge variant={accountEnabledDraft ? "green" : "red"}>
                                             {accountEnabledDraft ? t("admin.accessControl.accounts.active") : t("admin.accessControl.accounts.locked")}
                                         </Badge>
-                                        <PremiumBadge
-                                            subscriptionType={account.subscriptionType}
-                                            premiumUntil={account.premiumUntil}
-                                            showExpiry
-                                            size="sm"
-                                        />
+                                        <span
+                                            className={`text-xs font-semibold ${
+                                                isPremium ? "text-amber-600 dark:text-amber-300" : "text-muted-foreground"
+                                            }`}
+                                        >
+                                            {isPremium ? "PREMIUM" : "FREE"}
+                                            {isPremium && expiryText ? ` · hết ${expiryText}` : ""}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
@@ -146,6 +205,94 @@ export default function AccountDetailDialog({
                                         </Button>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Premium Management Section */}
+                            <div className="space-y-3 rounded-md border p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Crown className="h-4 w-4 text-amber-500" />
+                                        <h3 className="font-medium text-sm">Quản lý Premium</h3>
+                                    </div>
+                                    <span
+                                        className={`text-xs font-semibold ${
+                                            isPremium ? "text-amber-600 dark:text-amber-300" : "text-muted-foreground"
+                                        }`}
+                                    >
+                                        {isPremium ? "PREMIUM" : "FREE"}
+                                        {isPremium && expiryText ? ` · hết ${expiryText}` : ""}
+                                    </span>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">
+                                        Nâng cấp Premium / Gia hạn
+                                    </Label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {DURATION_PRESETS.map((p) => (
+                                            <button
+                                                key={p.days}
+                                                onClick={() => {
+                                                    setSelectedDays(p.days);
+                                                    setCustomDays("");
+                                                }}
+                                                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                                                    selectedDays === p.days && !customDays
+                                                        ? "bg-amber-500 border-amber-500 text-white shadow-sm"
+                                                        : "bg-background border-border text-muted-foreground hover:border-amber-400 hover:text-foreground"
+                                                }`}
+                                            >
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            max="3650"
+                                            placeholder="Số ngày tùy chỉnh..."
+                                            value={customDays}
+                                            onChange={(e) => {
+                                                setCustomDays(e.target.value);
+                                                setSelectedDays(null);
+                                            }}
+                                            className="flex-1 h-8 text-sm bg-background"
+                                        />
+                                        <Button
+                                            size="sm"
+                                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shrink-0"
+                                            onClick={handlePremiumUpgrade}
+                                            disabled={premiumLoading || !(customDays || selectedDays)}
+                                        >
+                                            <Crown size={13} className="mr-1" />
+                                            {account.subscriptionType === "PREMIUM" ? "Gia hạn" : "Nâng cấp"}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {account.subscriptionType === "PREMIUM" && (
+                                    <div className="flex justify-end">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-xs text-muted-foreground border-border hover:border-red-400 hover:text-red-600"
+                                            onClick={handlePremiumDowngrade}
+                                            disabled={premiumLoading}
+                                        >
+                                            Hạ xuống FREE
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {premiumMsg && (
+                                    <p
+                                        className={`text-xs font-medium ${
+                                            premiumMsg.type === "success" ? "text-green-600" : "text-red-500"
+                                        }`}
+                                    >
+                                        {premiumMsg.text}
+                                    </p>
+                                )}
                             </div>
                             {/* User Profile Section */}
                             <div className="space-y-3 rounded-md border p-4">

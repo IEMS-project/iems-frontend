@@ -16,8 +16,8 @@ export const chatService = {
       body: form
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getMediaAroundByType(messageId, type = 'MEDIA', before = 5, after = 5) {
@@ -26,8 +26,8 @@ export const chatService = {
     const params = new URLSearchParams({ type, before: String(before), after: String(after) }).toString();
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/around/${encodeURIComponent(messageId)}/by-type?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getLatestByType(conversationId, type = 'MEDIA', limit = 8, before = null) {
@@ -37,8 +37,8 @@ export const chatService = {
     if (before) params.append('before', before);
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/conversations/${encodeURIComponent(conversationId)}/latest-by-type?${params.toString()}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data; // { messages: [], hasMore, nextCursor, type }
   },
   async getConversationsByUser() {
@@ -46,8 +46,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/user`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   // Groups
@@ -59,8 +59,8 @@ export const chatService = {
       method: 'POST', headers, body: JSON.stringify({ name, members })
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getGroup(groupId) {
@@ -68,8 +68,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/groups/${encodeURIComponent(groupId)}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async updateGroupName(groupId, name) {
@@ -80,8 +80,8 @@ export const chatService = {
       method: 'PUT', headers, body: JSON.stringify({ name })
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async updateGroupAvatar(groupId, imageUrl) {
@@ -92,19 +92,19 @@ export const chatService = {
       method: 'PUT', headers, body: JSON.stringify({ imageUrl })
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async createConversation(payload) {
     const tokens = getStoredTokens();
-    const headers = { 'Content-Type':'application/json' };
+    const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    
+
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations`, { method: 'POST', headers, body: JSON.stringify(payload) });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async addMember(conversationId, userId) {
@@ -112,8 +112,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`, { method: 'POST', headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async removeMember(conversationId, userId) {
@@ -121,18 +121,18 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE', headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
-  async getMessages(conversationId, page=0, size=30) {
+  async getMessages(conversationId, page = 0, size = 30) {
     const q = `conversationId=${encodeURIComponent(conversationId)}&page=${page}&size=${size}`;
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages?${q}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async sendDirectOnce({ senderId, recipientId, content }) {
@@ -141,8 +141,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/direct?${q}`, { method: 'POST', headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getMessagesScroll(conversationId, before, limit, userId) {
@@ -156,8 +156,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/scroll?${q}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getConversationById(conversationId) {
@@ -165,8 +165,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async getConversationMembers(conversationId) {
@@ -174,30 +174,30 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/members`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async markRead(conversationId, lastMessageId = null) {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    
+
     const params = new URLSearchParams({
       conversationId
     });
     if (lastMessageId) {
       params.append('lastMessageId', lastMessageId);
     }
-    
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/read?${params}`, { 
-      method: 'POST', 
+
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/read?${params}`, {
+      method: 'POST',
       headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
@@ -206,8 +206,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/unread`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
   async addReaction(messageId, emoji) {
@@ -215,56 +215,56 @@ export const chatService = {
     const headers = {};
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
     const params = new URLSearchParams({ emoji });
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions?${params.toString()}`, { 
-      method: 'POST', 
-      headers 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions?${params.toString()}`, {
+      method: 'POST',
+      headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
   async removeReaction(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions`, { 
-      method: 'DELETE', 
-      headers 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/reactions`, {
+      method: 'DELETE',
+      headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
   async deleteForMe(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/delete`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/delete`, {
+      method: 'POST',
       headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
   async recallMessage(messageId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall`, { 
-      method: 'POST', 
-      headers 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}/recall`, {
+      method: 'POST',
+      headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
@@ -272,15 +272,15 @@ export const chatService = {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin`, { 
-      method: 'POST', 
-      headers, 
-      body: JSON.stringify({ messageId }) 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ messageId })
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
@@ -288,19 +288,19 @@ export const chatService = {
     const tokens = getStoredTokens();
     const headers = { 'Content-Type': 'application/json' };
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin`, { 
-      method: 'POST', 
-      headers, 
-      body: JSON.stringify({ messageId }) 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ messageId })
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
-  
+
   // Reply to message
   async replyToMessage(conversationId, content, replyToMessageId) {
     const tokens = getStoredTokens();
@@ -311,13 +311,13 @@ export const chatService = {
       content,
       replyToMessageId
     });
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/reply?${params}`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/reply?${params}`, {
+      method: 'POST',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -327,8 +327,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/pinned?conversationId=${encodeURIComponent(conversationId)}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -343,8 +343,8 @@ export const chatService = {
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/for-user?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -360,8 +360,8 @@ export const chatService = {
     }
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/conversations/${encodeURIComponent(conversationId)}/messages?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -370,14 +370,14 @@ export const chatService = {
     const tokens = getStoredTokens();
     const headers = {};
     if (tokens?.accessToken) headers.Authorization = `Bearer ${tokens.accessToken}`;
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-read`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-read`, {
+      method: 'POST',
       headers
     });
     if (!res.ok) {
       const ct = res.headers.get('content-type') || '';
-      const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-      throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+      const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+      throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     }
     return res.ok;
   },
@@ -388,8 +388,8 @@ export const chatService = {
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/unread-count`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -403,8 +403,8 @@ export const chatService = {
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/${encodeURIComponent(messageId)}?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -420,8 +420,8 @@ export const chatService = {
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/search?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -435,8 +435,8 @@ export const chatService = {
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/around/${encodeURIComponent(messageId)}?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -451,8 +451,8 @@ export const chatService = {
     });
     const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/messages/between?${params}`, { headers });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -460,13 +460,13 @@ export const chatService = {
   async pinConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin-conversation`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/pin-conversation`, {
+      method: 'POST',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -474,13 +474,13 @@ export const chatService = {
   async unpinConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin-conversation`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/unpin-conversation`, {
+      method: 'POST',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -488,13 +488,13 @@ export const chatService = {
   async markConversationAsUnread(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-unread`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/mark-unread`, {
+      method: 'POST',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -502,13 +502,13 @@ export const chatService = {
   async toggleNotificationSettings(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications`, { 
-      method: 'POST', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}/toggle-notifications`, {
+      method: 'POST',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   },
 
@@ -516,13 +516,13 @@ export const chatService = {
   async deleteGroupConversation(conversationId) {
     const tokens = getStoredTokens();
     const headers = tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
-    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}`, { 
-      method: 'DELETE', 
+    const res = await fetch(`${GATEWAY_BASE_URL}/chat-service/api/conversations/${encodeURIComponent(conversationId)}`, {
+      method: 'DELETE',
       headers
     });
     const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if (!res.ok) throw new Error((data && (data.message||data.error)) || `HTTP ${res.status}`);
+    const data = ct.includes('application/json') ? await res.json().catch(() => null) : null;
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || `HTTP ${res.status}`);
     return data;
   }
 };
@@ -531,13 +531,13 @@ export const chatWs = {
   // In dev, connect directly to chat-service to ensure WebSocket upgrade works
   // Fallback to gateway path otherwise
   wsPath: (typeof window !== 'undefined' && window.location && window.location.port === '5173')
-    ? 'http://localhost:8090/ws'
+    ? 'http://localhost:8091/ws'
     : `${GATEWAY_BASE_URL.replace(/\/$/, '')}/chat-service/ws`,
   convoTopic: (id) => `/topic/conversations/${id}`,
   userTopic: (userId) => `/topic/user-updates/${userId}`,
   sendToConversation: (id) => `/app/conversations/${id}/send`,
   sendDirect: `/app/messages/send`,
-  
+
   // New WebSocket endpoints for advanced features
   replyToMessage: (id) => `/app/conversations/${id}/reply`,
   addReaction: (id) => `/app/conversations/${id}/reaction`,

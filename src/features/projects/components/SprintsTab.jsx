@@ -16,10 +16,26 @@ import {
 } from "lucide-react";
 
 const STATUS_COLORS = {
-  PLANNED: { bg: "bg-gray-100 dark:bg-gray-800", text: "text-gray-700 dark:text-gray-300", dot: "bg-gray-400" },
-  ACTIVE: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500" },
-  COMPLETED: { bg: "bg-green-50 dark:bg-green-900/20", text: "text-green-700 dark:text-green-300", dot: "bg-green-500" },
-  CANCELLED: { bg: "bg-red-50 dark:bg-red-900/20", text: "text-red-700 dark:text-red-300", dot: "bg-red-500" },
+  PLANNED: {
+    card: "border-border bg-card hover:bg-muted/30",
+    badge: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
+  },
+  ACTIVE: {
+    card: "border-blue-400/50 bg-card hover:bg-blue-500/5 dark:border-blue-500/40 dark:hover:bg-blue-500/10",
+    badge: "border-blue-200 bg-blue-100/80 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    dot: "bg-blue-500",
+  },
+  COMPLETED: {
+    card: "border-green-400/50 bg-card hover:bg-green-500/5 dark:border-green-500/40 dark:hover:bg-green-500/10",
+    badge: "border-green-200 bg-green-100/80 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300",
+    dot: "bg-green-500",
+  },
+  CANCELLED: {
+    card: "border-red-400/50 bg-card hover:bg-red-500/5 dark:border-red-500/40 dark:hover:bg-red-500/10",
+    badge: "border-red-200 bg-red-100/80 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300",
+    dot: "bg-red-500",
+  },
 };
 
 export default function SprintsTab() {
@@ -161,13 +177,13 @@ export default function SprintsTab() {
               const colors = STATUS_COLORS[sprint.status] || STATUS_COLORS.PLANNED;
 
               return (
-                <div key={sprint.id} className={`rounded-lg border border-border ${colors.bg} p-4`}>
+                <div key={sprint.id} className={`rounded-lg border p-4 shadow-sm transition-colors ${colors.card}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
                         <h3 className="font-semibold text-foreground">{sprint.name}</h3>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors.text} bg-white/50 dark:bg-black/20`}>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors.badge}`}>
                           {sprint.status}
                         </span>
                       </div>

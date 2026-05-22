@@ -30,14 +30,23 @@ export default function PremiumBadge({ subscriptionType, premiumUntil, size = "m
       ? new Date(premiumUntil) - new Date() < 7 * 24 * 60 * 60 * 1000
       : false;
 
+    const showExpiryLine = showExpiry && expiryText;
+
     return (
-      <span className={`inline-flex items-center font-semibold rounded-full ${sizeClasses[size]}
-        bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm`}>
-        <Crown size={iconSize} className="shrink-0" />
-        PREMIUM
-        {showExpiry && expiryText && (
-          <span className={`ml-1 opacity-80 ${isExpiringSoon ? "text-red-100 font-bold" : ""}`}>
-            · {isExpiringSoon ? "⚠ " : ""}hết {expiryText}
+      <span
+        className={`inline-flex font-semibold ${sizeClasses[size]} bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm ${showExpiryLine ? "flex-col items-start rounded-lg leading-tight" : "items-center rounded-full"
+          }`}
+      >
+        <span className="inline-flex items-center gap-1">
+          <Crown size={iconSize} className="shrink-0" />
+          PREMIUM
+        </span>
+        {showExpiryLine && (
+          <span
+            className={`text-[10px] font-medium opacity-90 ${isExpiringSoon ? "text-red-100 font-bold" : ""
+              }`}
+          >
+            {isExpiringSoon ? "⚠ " : ""}{expiryText}
           </span>
         )}
       </span>

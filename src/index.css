@@ -12,6 +12,47 @@ body,
   min-width: 0;
 }
 
+html {
+  scrollbar-color: hsl(215 16% 72%) hsl(210 40% 94%);
+  scrollbar-width: thin;
+}
+
+.dark {
+  scrollbar-color: hsl(217 16% 36%) hsl(222 47% 8%);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: hsl(210 40% 94%);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(215 16% 72%);
+  border: 2px solid hsl(210 40% 94%);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 16% 58%);
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: hsl(222 47% 8%);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: hsl(217 16% 36%);
+  border-color: hsl(222 47% 8%);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: hsl(217 20% 48%);
+}
+
 /* FullCalendar dark mode adjustments */
 .dark .fc {
   color: rgb(229 231 235);

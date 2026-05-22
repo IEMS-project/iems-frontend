@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock3, FolderTree, Globe, Lock, Star, X, Info, Folder as FolderIcon, File as FileIcon, ShieldCheck } from "lucide-react";
+import { Clock3, FolderTree, Globe, X, Folder as FolderIcon, File as FileIcon } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
 import { documentService } from "@/features/projects/api/documentService";
 import { userService } from "@/features/profile/api/userService";
 import { formatBytes, formatDate } from "@/lib/utils";
@@ -37,7 +38,14 @@ const getFriendlyFileType = (mimeType, isFolder, t) => {
     return sub.charAt(0).toUpperCase() + sub.slice(1);
 };
 
-export default function ProjectDocumentDetailPanel({ selectedItem, projectId, onClose, documents = [] }) {
+const panelClassName = "relative hidden h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm xl:col-span-4 xl:flex 2xl:col-span-3";
+
+export default function ProjectDocumentDetailPanel({
+  selectedItem,
+  projectId,
+  onClose,
+  documents = [],
+}) {
   const { t } = useTranslation();
   const [ownerInfo, setOwnerInfo] = useState(null);
   const [backendActivities, setBackendActivities] = useState([]);
@@ -121,15 +129,15 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
   const ownerDisplayName = ownerInfo?.fullName || ownerInfo?.firstName || ownerInfo?.lastName || t("ui.common.unknown", "Unknown");
 
   return (
-    <div className="relative w-[360px] flex-shrink-0 border-s border-[#e1e7ef] bg-[#f8fafd] flex flex-col h-full animate-in slide-in-from-right duration-300">
-      <div className="sticky top-0 z-10 border-b border-[#e1e7ef] bg-[#f8fafd] px-4 py-3">
+    <aside className={`${panelClassName} animate-in slide-in-from-right duration-300`}>
+      <div className="sticky top-0 z-10 border-b border-border bg-card px-4 py-3">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2">
               {selectedItem.isFolder ? getProjectFolderIcon() : getProjectFileIcon()}
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Badge variant={selectedItem.isFolder ? "blue" : "gray"}>
                 {selectedItem.isFolder ? t("projectDocuments.folder", "Folder") : t("projectDocuments.file", "File")}
-              </p>
+              </Badge>
             </div>
             <h2 className="line-clamp-2 text-sm font-semibold text-foreground">
               {selectedItem.fileName}
@@ -142,20 +150,20 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
       </div>
 
       <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden px-4 pb-4 pt-3 no-scrollbar">
-        <TabsList className="grid h-9 w-full grid-cols-2 bg-white mb-4 shadow-sm border border-[#dde3ea] p-1">
-          <TabsTrigger value="details" className="text-xs data-[state=active]:bg-[#f1f5f9]">{t("ui.common.details", "Details")}</TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs data-[state=active]:bg-[#f1f5f9]">{t("ui.common.activity", "Activity")}</TabsTrigger>
+        <TabsList className="grid h-9 w-full grid-cols-2 bg-muted mb-4 shadow-sm border border-border p-1">
+          <TabsTrigger value="details" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">{t("ui.common.details", "Details")}</TabsTrigger>
+          <TabsTrigger value="activity" className="text-xs data-[state=active]:bg-background data-[state=active]:text-foreground">{t("ui.common.activity", "Activity")}</TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto no-scrollbar">
           <TabsContent value="details" className="mt-0 space-y-4 outline-none">
             {/* Owner Section Styled exactly like Drive's PEOPLE WITH ACCESS */}
-            <div className="rounded-xl border border-[#dde3ea] bg-white p-3 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
               <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center justify-between">
                 {t("projectDocuments.owner", "Owner").toUpperCase()}
               </h3>
-              <div className="flex items-center gap-3 p-2 rounded-xl bg-[#f8fafd] border border-[#f1f5f9]">
-                <Avatar name={ownerDisplayName} size="sm" className="shrink-0 ring-2 ring-white" />
+              <div className="flex items-center gap-3 p-2 rounded-xl bg-muted/40 border border-border">
+                <Avatar name={ownerDisplayName} size="sm" className="shrink-0 ring-2 ring-background" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-bold truncate text-foreground">{ownerDisplayName}</p>
@@ -167,7 +175,7 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
             </div>
 
             {/* Overview Section Styled exactly like Drive */}
-            <div className="rounded-xl border border-[#dde3ea] bg-white p-3 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
               <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
                 {t("projectDocuments.overview", "Overview").toUpperCase()}
               </h3>
@@ -193,7 +201,7 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
                   <span className="text-right text-foreground font-semibold">{formatDate(selectedItem.createdAt, 'dd/MM/yyyy')}</span>
                 </div>
                 {!selectedItem.isFolder && (
-                  <div className="flex items-start justify-between gap-3 pt-1 border-t border-[#f1f5f9]">
+                  <div className="flex items-start justify-between gap-3 pt-1 border-t border-border">
                     <span className="text-muted-foreground/80 font-medium">{t("projectDocuments.columns.size", "Size")}</span>
                     <span className="text-right text-foreground font-semibold">{formatBytes(selectedItem.fileSize)}</span>
                   </div>
@@ -203,7 +211,7 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
 
             {/* AI Status Integrated cleanly */}
             {!selectedItem.isFolder && (
-              <div className="rounded-xl border border-[#dde3ea] bg-white p-3 shadow-sm border-l-4 border-l-blue-400">
+              <div className="rounded-xl border border-border bg-card p-3 shadow-sm border-l-4 border-l-blue-400">
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
                         {t("projectDocuments.aiStatus", "AI Status").toUpperCase()}
@@ -211,7 +219,7 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
                     <Globe className="h-3 w-3 text-blue-400" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${selectedItem.allowEmbedded ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
+                  <div className={`w-2 h-2 rounded-full ${selectedItem.allowEmbedded ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'}`} />
                   <span className="text-xs font-bold text-foreground">
                     {selectedItem.allowEmbedded 
                       ? (selectedItem.aiIndexed ? t("projectDocuments.indexed", "Indexed for AI") : t("projectDocuments.embedEnabled", "AI Embedding Enabled")) 
@@ -225,12 +233,12 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
           <TabsContent value="activity" className="mt-0 space-y-3 outline-none">
             {activityItems.length > 0 ? (
               activityItems.map((item) => (
-                <div key={item.key} className="rounded-xl border border-[#dde3ea] bg-white p-3 shadow-sm hover:ring-1 hover:ring-blue-100 transition-all">
+                <div key={item.key} className="rounded-xl border border-border bg-card p-3 shadow-sm hover:ring-1 hover:ring-primary/20 transition-all">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs text-foreground font-bold leading-relaxed">{item.label}</p>
                       {(item.actorName || item.actorEmail) && (
-                        <p className="truncate text-[10px] text-muted-foreground mt-1 font-medium bg-[#f8fafd] px-1.5 py-0.5 rounded inline-block">
+                        <p className="truncate text-[10px] text-muted-foreground mt-1 font-medium bg-muted px-1.5 py-0.5 rounded inline-block">
                           {item.actorName || item.actorEmail}
                         </p>
                       )}
@@ -242,13 +250,13 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-[#dde3ea] bg-white p-8 text-center text-muted-foreground/40 shadow-sm">
+              <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground/60 shadow-sm">
                 <Clock3 className="w-8 h-8 mx-auto mb-2 opacity-10" />
                 <p className="text-xs font-medium tracking-tight">{t("projectDocuments.noActivity", "No activity yet")}</p>
               </div>
             )}
 
-            <div className="rounded-xl border border-dashed border-[#c9d4e4] bg-white/50 p-4 text-[11px] text-muted-foreground shadow-inner">
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-[11px] text-muted-foreground shadow-inner">
               <div className="mb-2 flex items-center gap-2 font-bold text-foreground/70">
                 <FolderTree className="h-4 w-4 text-blue-400" />
                 {t("documents.fileDetail.location", "Location").toUpperCase()}
@@ -258,6 +266,6 @@ export default function ProjectDocumentDetailPanel({ selectedItem, projectId, on
           </TabsContent>
         </div>
       </Tabs>
-    </div>
+    </aside>
   );
 }

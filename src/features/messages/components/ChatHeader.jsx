@@ -8,6 +8,7 @@ export default function ChatHeader({
   currentUserId,
   getUserName,
   getUserImage,
+  getUserPremium,
   pendingDirect,
   selectedPeerId,
   onShowMessageSearch,
@@ -24,10 +25,11 @@ export default function ChatHeader({
     if (conv) {
       const dir = isDirect(conv);
       const dn = getConversationDisplayName(conv, currentUserId);
-      const avatarSrc = dir ? getUserImage(getPeerId(conv)) : (conv?.avatarUrl || "");
+      const peerId = dir ? getPeerId(conv) : null;
+      const avatarSrc = dir ? getUserImage(peerId) : (conv?.avatarUrl || "");
       return (
         <>
-          <Avatar src={avatarSrc} name={dn} size={10} />
+          <Avatar src={avatarSrc} name={dn} size={10} premium={dir ? getUserPremium?.(peerId) : false} />
           <div className="min-w-0">
             <div className="font-semibold truncate text-foreground">{dn}</div>
             <div className="text-xs text-muted-foreground truncate">
@@ -40,7 +42,7 @@ export default function ChatHeader({
     if (pendingDirect && selectedPeerId) {
       return (
         <>
-          <Avatar src={getUserImage(selectedPeerId)} name={getUserName(selectedPeerId)} size={10} />
+          <Avatar src={getUserImage(selectedPeerId)} name={getUserName(selectedPeerId)} size={10} premium={getUserPremium?.(selectedPeerId)} />
           <div className="font-semibold truncate text-foreground">{getUserName(selectedPeerId)}</div>
         </>
       );

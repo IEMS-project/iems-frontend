@@ -35,6 +35,7 @@ export default function MessageItem({
     currentUserId,
     getUserName,
     getUserImage,
+    getUserPremium,
     onReply,
     stompClient,
     conversationId,
@@ -408,7 +409,7 @@ export default function MessageItem({
                     <div className={`flex  items-start max-w-[70%] ${isMe ? 'flex-row-reverse' : ''}`}>
                         {/* Avatar for others */}
                         {!isMe && showAvatar && (
-                            <Avatar src={senderImg} name={senderName} size={8} className="mb-1" />
+                            <Avatar src={senderImg} name={senderName} size={8} premium={getUserPremium?.(message.senderId)} className="mb-1" />
                         )}
                         {!isMe && !showAvatar && (
                             <div className="w-8 mb-1" />

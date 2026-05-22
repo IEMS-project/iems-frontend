@@ -21,7 +21,8 @@ import {
     CornerLeftUp,
     Pencil,
     MoveRight,
-    Eye
+    Eye,
+    Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatBytes, formatDate } from '@/lib/utils';
@@ -30,6 +31,8 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import EmptyState from "@/components/ui/EmptyState";
 import ProjectDocumentDetailPanel from './ProjectDocumentDetailPanel';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -80,6 +83,7 @@ export default function DocumentsTab() {
     // Inputs State
     const [newFolderName, setNewFolderName] = useState('');
     const [moveTargetId, setMoveTargetId] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (projectId) {
@@ -107,14 +111,16 @@ export default function DocumentsTab() {
 
     // --- Derived Data ---
     const visibleDocuments = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
         return documents
             .filter(d => (currentFolderId ? d.parentId === currentFolderId : !d.parentId))
+            .filter(d => !query || d.fileName?.toLowerCase().includes(query) || d.fileType?.toLowerCase().includes(query))
             .sort((a, b) => {
                 if (a.isFolder && !b.isFolder) return -1;
                 if (!a.isFolder && b.isFolder) return 1;
                 return a.fileName.localeCompare(b.fileName);
             });
-    }, [documents, currentFolderId]);
+    }, [documents, currentFolderId, searchQuery]);
 
     const allFolders = useMemo(() => documents.filter(d => d.isFolder), [documents]);
 
@@ -316,32 +322,45 @@ export default function DocumentsTab() {
         (currentMoveFolderId ? f.parentId === currentMoveFolderId : !f.parentId) &&
         f.id !== showMove?.id // Don't show current folder itself
     );
-
     return (
-        <div className="flex h-[calc(100vh-200px)] overflow-hidden -m-4">
-            <div className="flex-1 flex flex-col min-w-0 p-4 space-y-4 overflow-y-auto">
+        <div className="grid h-[calc(100vh-180px)] min-h-[560px] grid-cols-1 gap-4 overflow-hidden xl:grid-cols-12">
+            <div className={cn(
+                "flex min-w-0 flex-col space-y-4 overflow-hidden xl:col-span-12",
+                selectedDoc && "xl:col-span-8 2xl:col-span-9"
+            )}>
             {/* Header / Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-2 overflow-x-auto text-lg font-bold text-foreground whitespace-nowrap">
-                    <button
-                        onClick={() => setCurrentFolderId(null)}
-                        className="hover:text-blue-600 transition-colors"
-                    >
-                        {t('projectDocuments.title', 'Project Documents')}
-                    </button>
-                    {breadcrumbs.map(f => (
-                        <React.Fragment key={f.id}>
-                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                            <button
-                                onClick={() => setCurrentFolderId(f.id)}
-                                className="hover:text-blue-600 transition-colors"
-                            >
-                                {f.fileName}
-                            </button>
-                        </React.Fragment>
-                    ))}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 overflow-x-auto text-sm text-muted-foreground whitespace-nowrap">
+                        <button
+                            onClick={() => setCurrentFolderId(null)}
+                            className="font-medium text-foreground transition-colors hover:text-primary"
+                        >
+                            {t('projectDocuments.title', 'Project Documents')}
+                        </button>
+                        {breadcrumbs.map(f => (
+                            <React.Fragment key={f.id}>
+                                <ChevronRight className="h-4 w-4 shrink-0" />
+                                <button
+                                    onClick={() => setCurrentFolderId(f.id)}
+                                    className="transition-colors hover:text-primary"
+                                >
+                                    {f.fileName}
+                                </button>
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative min-w-[220px]">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={t('ui.common.search', 'Search')}
+                            className="pl-9"
+                        />
+                    </div>
                     <Button
                         variant="outline"
                         onClick={() => {
@@ -371,61 +390,58 @@ export default function DocumentsTab() {
             </div>
 
             {/* List */}
-            <Card>
-                <div className="overflow-x-auto min-h-[400px]">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
-                            <tr>
-                                <th className="px-4 py-3 font-medium">{t('projectDocuments.columns.name', 'Name')}</th>
-                                <th className="px-4 py-3 font-medium">{t('projectDocuments.columns.size', 'Size')}</th>
-                                <th className="px-4 py-3 font-medium">{t('projectDocuments.columns.date', 'Upload Date')}</th>
-                                <th className="px-4 py-3 font-medium text-right">{t('ui.common.actions', 'Actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
+            <Card className="min-h-0 flex-1 overflow-hidden shadow-sm">
+                <div className="h-full overflow-auto">
+                    <Table>
+                        <TableHeader className="sticky top-0 z-10 bg-muted/60">
+                            <TableRow className="hover:bg-transparent">
+                                <TableHead className="px-4 py-3 uppercase">{t('projectDocuments.columns.name', 'Name')}</TableHead>
+                                <TableHead className="px-4 py-3 uppercase">{t('projectDocuments.columns.size', 'Size')}</TableHead>
+                                <TableHead className="px-4 py-3 uppercase">{t('projectDocuments.columns.date', 'Upload Date')}</TableHead>
+                                <TableHead className="px-4 py-3 text-right uppercase">{t('ui.common.actions', 'Actions')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {currentFolderId && !loading && (
-                                <tr
+                                <TableRow
                                     className="hover:bg-muted/30 transition-colors cursor-pointer"
                                     onClick={() => setCurrentFolderId(getParentId(currentFolderId))}
                                 >
-                                    <td className="px-4 py-3" colSpan={4}>
+                                    <TableCell className="px-4 py-3" colSpan={4}>
                                         <div className="flex items-center gap-3">
                                             <div className="p-2">
                                                 <CornerLeftUp className="w-5 h-5 text-muted-foreground" />
                                             </div>
                                             <span className="font-medium text-muted-foreground">..</span>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             )}
 
                             {loading ? (
-                                <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                                <TableRow>
+                                    <TableCell colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                         {t('ui.common.loading', 'Loading...')}
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ) : visibleDocuments.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                                                {currentFolderId ? <FolderIcon className="w-8 h-8 opacity-50" /> : <FileText className="w-8 h-8 opacity-50" />}
-                                            </div>
-                                            <p className="text-base font-medium text-foreground mb-1">
-                                                {currentFolderId ? t('projectDocuments.folderEmpty', 'This folder is empty') : t('projectDocuments.empty', 'No documents yet')}
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={4} className="p-6">
+                                        <EmptyState
+                                            icon={currentFolderId ? FolderIcon : FileText}
+                                            title={searchQuery ? t('ui.common.noResults', 'No results found') : (currentFolderId ? t('projectDocuments.folderEmpty', 'This folder is empty') : t('projectDocuments.empty', 'No documents yet'))}
+                                            description={searchQuery ? t('projectDocuments.searchEmpty', 'Try a different document name or file type.') : t('projectDocuments.emptyHint', 'Upload a document or create a folder to get started.')}
+                                        />
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 visibleDocuments.map(doc => (
-                                    <tr
+                                    <TableRow
                                         key={doc.id}
                                         className={cn(
-                                            "hover:bg-muted/30 transition-colors group cursor-pointer",
-                                            selectedDoc?.id === doc.id && "bg-blue-50/50 dark:bg-blue-900/20"
+                                            "group cursor-pointer",
+                                            selectedDoc?.id === doc.id && "bg-primary/10"
                                         )}
                                         onClick={() => handleSelectRow(doc)}
                                         onDoubleClick={() => {
@@ -436,12 +452,12 @@ export default function DocumentsTab() {
                                             }
                                         }}
                                     >
-                                        <td className="px-4 py-3">
+                                        <TableCell className="px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-2 bg-muted rounded">
                                                     {getFileIcon(doc.isFolder, doc.fileType, doc.fileName)}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="font-medium text-foreground truncate max-w-[300px]" title={doc.fileName}>
                                                         {doc.fileName}
                                                     </p>
@@ -452,14 +468,14 @@ export default function DocumentsTab() {
                                                     )}
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-muted-foreground">
                                             {doc.isFolder ? '-' : formatBytes(doc.fileSize)}
-                                        </td>
-                                        <td className="px-4 py-3 text-muted-foreground">
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-muted-foreground">
                                             {formatDate(doc.createdAt, 'PPp')}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -513,24 +529,27 @@ export default function DocumentsTab() {
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
             </Card>
         </div>
 
-        {showSidebar && selectedDoc && (
-            <ProjectDocumentDetailPanel
-                projectId={projectId}
-                selectedItem={selectedDoc}
-                documents={documents}
-                onClose={() => setShowSidebar(false)}
-            />
-        )}
+            {selectedDoc && (
+                <ProjectDocumentDetailPanel
+                    projectId={projectId}
+                    selectedItem={selectedDoc}
+                    documents={documents}
+                    onClose={() => {
+                        setSelectedDoc(null);
+                        setShowSidebar(false);
+                    }}
+                />
+            )}
 
             {/* Modals */}
             <ConfirmDialog
@@ -652,7 +671,7 @@ export default function DocumentsTab() {
                                 {moveSubfolders.map(f => (
                                     <div 
                                         key={f.id} 
-                                        className="flex flex-col items-center p-2 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer group"
+                                        className="flex flex-col items-center p-2 rounded-md hover:bg-primary/10 cursor-pointer group"
                                         onClick={() => setMoveTargetId(f.id)}
                                     >
                                         <div className="w-12 h-12 flex items-center justify-center transition-transform group-hover:scale-110">
@@ -666,7 +685,7 @@ export default function DocumentsTab() {
                             </div>
                         </div>
 
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800">
+                        <div className="mt-4 p-3 bg-primary/10 rounded-md border border-primary/20">
                             <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                                 Moving to: <span className="font-bold">{moveTargetId === 'root' ? 'Home' : allFolders.find(f => f.id === moveTargetId)?.fileName}</span>
                             </p>

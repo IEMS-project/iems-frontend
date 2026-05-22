@@ -1088,6 +1088,11 @@ function Messages() {
         const u = getUserInfo(userId);
         return u?.image || "";
     }
+    function getUserPremium(userId) {
+        const u = getUserInfo(userId);
+        if (!u || u.subscriptionType !== "PREMIUM") return false;
+        return !u.premiumUntil || new Date(u.premiumUntil) > new Date();
+    }
 
     const filteredConversations = useMemo(() => {
         const q = (searchQuery || '').toLowerCase();
@@ -1688,6 +1693,7 @@ function Messages() {
                         getPeerId={getPeerId}
                         getUserName={getUserName}
                         getUserImage={getUserImage}
+                        getUserPremium={getUserPremium}
                         onConversationUpdate={() => loadConversations(currentUserId)}
                         loadingConversations={loadingConversations}
                         selectedConversationId={selectedConversationId}
@@ -1700,6 +1706,7 @@ function Messages() {
                             currentUserId={currentUserId}
                             getUserName={getUserName}
                             getUserImage={getUserImage}
+                            getUserPremium={getUserPremium}
                             onSend={onSend}
                             onReply={handleReply}
                             onCancelReply={handleCancelReply}
@@ -1753,6 +1760,7 @@ function Messages() {
                 onClose={() => setShowPinnedMessages(false)}
                 getUserName={getUserName}
                 getUserImage={getUserImage}
+                getUserPremium={getUserPremium}
                 onMessageClick={(message) => jumpToMessage(selectedConversationId, message.id || message._id)}
                 onUnpinMessage={handleUnpinMessage}
                 currentUserId={currentUserId}

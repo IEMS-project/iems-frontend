@@ -13,6 +13,7 @@ export default function ChatArea({
   currentUserId,
   getUserName,
   getUserImage,
+  getUserPremium,
   onSend,
   onReply,
   onCancelReply,
@@ -68,6 +69,7 @@ export default function ChatArea({
         currentUserId={currentUserId}
         getUserName={getUserName}
         getUserImage={getUserImage}
+        getUserPremium={getUserPremium}
         pendingDirect={pendingDirect}
         selectedPeerId={selectedPeerId}
         onShowMessageSearch={handleShowMessageSearch}
@@ -83,6 +85,7 @@ export default function ChatArea({
           ref={pinnedMessagesBannerRef}
           conversationId={selectedConversationId}
           getUserName={getUserName}
+          getUserPremium={getUserPremium}
           onMessageClick={(message) => onJumpToMessage(selectedConversationId, message.id || message._id)}
           onShowAllPinned={onShowPinnedMessages}
           onUnpinMessage={onUnpinMessage}
@@ -95,6 +98,7 @@ export default function ChatArea({
         currentUserId={currentUserId}
         getUserName={getUserName}
         getUserImage={getUserImage}
+        getUserPremium={getUserPremium}
         onReply={onReply}
         onMessageUpdate={onMessageUpdate}
         onJumpToMessage={onJumpToMessage}
@@ -129,6 +133,7 @@ export default function ChatArea({
           currentUserId={currentUserId}
           getUserName={getUserName}
           getUserImage={getUserImage}
+          getUserPremium={getUserPremium}
           onReply={onReply}
           onConversationUpdated={(updated) => {
             // Update local state so header and sidebar reflect changes immediately

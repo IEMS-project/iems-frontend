@@ -8,12 +8,13 @@ const sizeClasses = {
     lg: "h-11 w-11 text-base",
 };
 
-export default function UserAvatar({ user, name, src, size = "sm", className = "" }) {
+export default function UserAvatar({ user, name, src, premium = false, size = "sm", className = "" }) {
     return (
         <Avatar
             user={user}
             name={name}
             src={src}
+            premium={premium}
             size={size}
             className={cn("ring-1 ring-border/70", sizeClasses[size], className)}
         />

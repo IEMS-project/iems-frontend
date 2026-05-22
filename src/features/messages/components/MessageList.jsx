@@ -15,6 +15,7 @@ export default function MessageList({
   currentUserId,
   getUserName,
   getUserImage,
+  getUserPremium,
   onReply,
   onMessageUpdate,
   onJumpToMessage,
@@ -132,6 +133,7 @@ export default function MessageList({
                 currentUserId={currentUserId}
                 getUserName={getUserName}
                 getUserImage={getUserImage}
+                getUserPremium={getUserPremium}
                 onReply={onReply}
                 conversationId={selectedConversationId}
                 onMessageUpdate={onMessageUpdate}

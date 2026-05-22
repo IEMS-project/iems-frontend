@@ -27,6 +27,7 @@ export default function ConversationList({
   getPeerId,
   getUserName,
   getUserImage,
+  getUserPremium,
   onConversationUpdate,
   loadingConversations = false,
   selectedConversationId = null,
@@ -222,7 +223,7 @@ export default function ConversationList({
               const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
               return (
                 <div key={id} onClick={() => startDirectWith(id)} className="flex items-center gap-3 p-2 hover:bg-muted/70 cursor-pointer">
-                  <Avatar src={u.image} name={fullName || u.email || id} size={8} />
+                  <Avatar src={u.image} name={fullName || u.email || id} size={8} premium={getUserPremium?.(id)} />
                   <div className="min-w-0">
                     <div className="text-sm font-medium truncate text-foreground">{fullName || u.email || id}</div>
                     <div className="text-xs text-muted-foreground truncate">{u.email}</div>
@@ -295,7 +296,7 @@ export default function ConversationList({
               {/* Avatar */}
               <div className="flex-shrink-0">
                 {isDir ? (
-                  <Avatar src={peerImg} name={dn} size={12} />
+                  <Avatar src={peerImg} name={dn} size={12} premium={getUserPremium?.(peerId)} />
                 ) : (
                   <Avatar src={c.avatarUrl} name={dn || c.id} size={12} />
                 )}

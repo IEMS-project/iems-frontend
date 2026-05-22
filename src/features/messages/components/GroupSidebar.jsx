@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 
-export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, onConversationUpdated, onClose, onReplyMessage, onReply, onMessageClick, openSearch = false, onSearchOpened }) {
+export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, getUserPremium, onConversationUpdated, onClose, onReplyMessage, onReply, onMessageClick, openSearch = false, onSearchOpened }) {
   const { t } = useTranslation();
   const isOwner = conversation?.createdBy === currentUserId;
   const [editingName, setEditingName] = useState(false);
@@ -364,7 +364,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       <div className="flex-1 overflow-y-auto bg-background">
         <div className="p-4 flex flex-col items-center gap-3">
           <div className="relative">
-            <Avatar src={isDirect ? getUserImage(peerId) : (conversation?.avatarUrl || "")} name={isDirect ? getUserName(peerId) : (conversation?.name || conversation?.id)} size={16} />
+            <Avatar src={isDirect ? getUserImage(peerId) : (conversation?.avatarUrl || "")} name={isDirect ? getUserName(peerId) : (conversation?.name || conversation?.id)} size={16} premium={isDirect ? getUserPremium?.(peerId) : false} />
             {!isDirect && isOwner && (
               <button onClick={handlePickAvatar} className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50 shadow" disabled={uploading} title={t('messages.sidebar.groupAvatar')}>
                 {uploading ? <span className="text-xs">...</span> : <Camera className="w-4 h-4" />}
@@ -461,6 +461,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                             <Avatar
                               src={getUserImage?.(result.senderId)}
                               name={getUserName(result.senderId)}
+                              premium={getUserPremium?.(result.senderId)}
                               size={6}
                             />
                             <div className="flex-1 min-w-0">
@@ -620,7 +621,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
             <div className="pb-4">
               {members.map(uid => (
                 <div key={uid} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50">
-                  <Avatar src={getUserImage(uid)} name={getUserName(uid)} size={10} />
+                  <Avatar src={getUserImage(uid)} name={getUserName(uid)} size={10} premium={getUserPremium?.(uid)} />
                   <div className="text-sm font-medium truncate text-foreground">{getUserName(uid)}</div>
                 </div>
               ))}

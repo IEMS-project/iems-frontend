@@ -16,6 +16,7 @@ export default function MentionInput({
     rows = 3,
     className = "",
     disabled = false,
+    onKeyDown,
 }) {
     const textareaRef = useRef(null);
     const [members, setMembers] = useState([]);
@@ -83,11 +84,13 @@ export default function MentionInput({
     }
 
     function handleKeyDown(e) {
-        if (!showDropdown) return;
-        if (e.key === "ArrowDown") { e.preventDefault(); setDropdownIdx(i => Math.min(i + 1, (filtered.length || 1) - 1)); }
-        if (e.key === "ArrowUp") { e.preventDefault(); setDropdownIdx(i => Math.max(i - 1, 0)); }
-        if (e.key === "Enter" && filtered[dropdownIdx]) { e.preventDefault(); insertMention(filtered[dropdownIdx]); }
-        if (e.key === "Escape") setShowDropdown(false);
+        if (showDropdown) {
+            if (e.key === "ArrowDown") { e.preventDefault(); setDropdownIdx(i => Math.min(i + 1, (filtered.length || 1) - 1)); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); setDropdownIdx(i => Math.max(i - 1, 0)); return; }
+            if (e.key === "Enter" && filtered[dropdownIdx]) { e.preventDefault(); insertMention(filtered[dropdownIdx]); return; }
+            if (e.key === "Escape") setShowDropdown(false);
+        }
+        onKeyDown?.(e);
     }
 
     return (
@@ -100,12 +103,12 @@ export default function MentionInput({
                 placeholder={placeholder}
                 rows={rows}
                 disabled={disabled}
-                className={`w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 ${className}`}
+                className={`w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
             />
 
             {showDropdown && filtered.length > 0 && (
-                <div className="absolute bottom-full left-0 z-50 mb-1 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-                    <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                <div className="absolute bottom-full left-0 z-50 mb-1 w-64 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg">
+                    <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Mention người dùng
                     </p>
                     {filtered.map((m, i) => {
@@ -115,14 +118,14 @@ export default function MentionInput({
                             <button
                                 key={m.userId || m.accountId || m.id || i}
                                 onMouseDown={e => { e.preventDefault(); insertMention(m); }}
-                                className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${i === dropdownIdx ? "bg-indigo-50 dark:bg-indigo-900/30" : "hover:bg-gray-50 dark:hover:bg-gray-800"}`}
+                                className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${i === dropdownIdx ? "bg-primary/10" : "hover:bg-muted"}`}
                             >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                                     {(name || "U").charAt(0).toUpperCase()}
                                 </span>
                                 <span>
-                                    <span className="block font-medium text-gray-900 dark:text-gray-100">{name}</span>
-                                    {email && <span className="block text-xs text-gray-400">{email}</span>}
+                                    <span className="block font-medium text-popover-foreground">{name}</span>
+                                    {email && <span className="block text-xs text-muted-foreground">{email}</span>}
                                 </span>
                             </button>
                         );

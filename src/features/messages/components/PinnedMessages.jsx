@@ -11,6 +11,7 @@ const PinnedMessages = forwardRef(function PinnedMessages({
     onClose, 
     getUserName,
     getUserImage,
+    getUserPremium,
     onMessageClick,
     onUnpinMessage,
     currentUserId
@@ -134,6 +135,7 @@ const PinnedMessages = forwardRef(function PinnedMessages({
                                         <Avatar 
                                             src={getUserImage?.(message.senderId)} 
                                             name={getUserName(message.senderId)} 
+                                            premium={getUserPremium?.(message.senderId)}
                                             size={8} 
                                         />
                                         

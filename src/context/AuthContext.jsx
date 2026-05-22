@@ -18,8 +18,11 @@ export function AuthProvider({ children }) {
 
     setLoadingProfile(true);
     try {
-      const profile = await userService.getMyProfile();
-      setUserProfile(profile);
+      const [profile, subscription] = await Promise.all([
+        userService.getMyProfile(),
+        userService.getMySubscription().catch(() => null),
+      ]);
+      setUserProfile(profile ? { ...profile, ...subscription } : null);
     } catch (error) {
       console.error("Failed to load user profile:", error);
       setUserProfile(null);
@@ -38,8 +41,11 @@ export function AuthProvider({ children }) {
     setSession(payload);
 
     try {
-      const profile = await userService.getMyProfile();
-      setUserProfile(profile);
+      const [profile, subscription] = await Promise.all([
+        userService.getMyProfile(),
+        userService.getMySubscription().catch(() => null),
+      ]);
+      setUserProfile(profile ? { ...profile, ...subscription } : null);
     } catch (error) {
       console.error("Failed to load user profile after login:", error);
     }

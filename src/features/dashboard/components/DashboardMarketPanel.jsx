@@ -1,17 +1,26 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, Megaphone, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Skeleton from "@/components/ui/Skeleton";
+import { promotionService } from "@/features/admin/api/adminPromotionService";
 import { useDashboard } from "@/features/dashboard/context/DashboardContext";
-import DonutChart, { buildDonutSlices } from "@/components/ui/DonutChart";
+import DonutChart from "@/components/ui/DonutChart";
+import { buildDonutSlices } from "@/components/ui/donutUtils";
 import { cn } from "@/lib/utils";
 
 export default function DashboardMarketPanel({ className = "" }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { stats, loading } = useDashboard();
+    const [promotion, setPromotion] = useState(null);
+
+    useEffect(() => {
+        promotionService.getActivePromotions("DASHBOARD")
+            .then((items) => setPromotion(Array.isArray(items) && items.length > 0 ? items[0] : null))
+            .catch(() => setPromotion(null));
+    }, []);
 
     const data = useMemo(() => {
         const total = stats?.total || 0;
@@ -47,28 +56,36 @@ export default function DashboardMarketPanel({ className = "" }) {
             <div className="grid h-full items-stretch gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
                 <button
                     type="button"
-                    onClick={() => navigate("/premium")}
-                    className="flex h-full min-h-64 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-background/70 p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => navigate(promotion?.ctaUrl || "/premium")}
+                    style={promotion?.imageUrl ? { backgroundImage: `url(${promotion.imageUrl})` } : undefined}
+                    className={cn(
+                        "relative flex h-full min-h-64 flex-col justify-between overflow-hidden rounded-2xl border border-border p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        promotion?.imageUrl ? "bg-cover bg-center" : "bg-background/70"
+                    )}
                 >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                    {promotion?.imageUrl && (
+                        <span className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/75 to-background/50" aria-hidden="true" />
+                    )}
+
+                    <span className="relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
                         <Megaphone className="h-5 w-5" />
                     </span>
 
-                    <span>
+                    <span className="relative z-10">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                             <Sparkles className="h-3.5 w-3.5" />
                             {t("dashboard.marketPanel.eyebrow")}
                         </span>
                         <span className="mt-4 block text-xl font-semibold tracking-tight text-foreground">
-                            {t("dashboard.marketPanel.promoTitle")}
+                            {promotion?.title || t("dashboard.marketPanel.promoTitle")}
                         </span>
                         <span className="mt-2 block text-sm text-muted-foreground">
-                            {t("dashboard.marketPanel.promoDescription")}
+                            {promotion?.description || t("dashboard.marketPanel.promoDescription")}
                         </span>
                     </span>
 
-                    <span className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm">
-                        {t("dashboard.marketPanel.promoCta")}
+                    <span className="relative z-10 inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm">
+                        {promotion?.ctaLabel || t("dashboard.marketPanel.promoCta")}
                         <ArrowUpRight className="h-4 w-4" />
                     </span>
                 </button>

@@ -265,7 +265,7 @@ export default function IssueActivitySection({
   };
 
   return (
-    <div className="mx-5 mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-border dark:bg-card">
+    <div className="mx-5 mb-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
       <CollapsibleSection
         title="Activity"
         collapsed={collapsed}

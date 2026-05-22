@@ -17,9 +17,25 @@ import {
 import UserAvatar from "@/components/ui/UserAvatar";
 import { useAuth } from "@/context/AuthContext.jsx";
 
+function isActivePremium(userProfile) {
+	const premiumUntil = userProfile?.premiumUntil;
+
+	if (userProfile?.subscriptionType !== "PREMIUM") return false;
+	return !premiumUntil || new Date(premiumUntil) > new Date();
+}
+
+function SidebarUserAvatar({ user, premium }) {
+	return (
+		<span className="relative inline-flex shrink-0">
+			<UserAvatar user={user} premium={premium} size="sm" className="ring-sidebar-border" />
+		</span>
+	);
+}
+
 export default function UserProfile() {
 	const { t } = useTranslation();
 	const { logout, userProfile } = useAuth();
+	const premium = isActivePremium(userProfile);
 
 	// Format user data from API response
 	const user = userProfile ? {
@@ -29,6 +45,8 @@ export default function UserProfile() {
 		email: userProfile.email || '',
 		role: userProfile.role || '',
 		avatar: userProfile.image || null,
+		subscriptionType: userProfile.subscriptionType,
+		premiumUntil: userProfile.premiumUntil,
 	} : {
 		firstName: '',
 		lastName: '',
@@ -48,7 +66,7 @@ export default function UserProfile() {
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<SidebarMenuButton size="lg" className="text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-							<UserAvatar user={user} size="sm" className="ring-sidebar-border" />
+							<SidebarUserAvatar user={user} premium={premium} />
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs text-sidebar-foreground/70">{user.email}</span>
@@ -64,7 +82,7 @@ export default function UserProfile() {
 					>
 						<DropdownMenuLabel className="p-0 font-normal">
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-								<UserAvatar user={user} size="sm" />
+								<SidebarUserAvatar user={user} premium={premium} />
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-semibold">{user.name}</span>
 									<span className="truncate text-xs text-muted-foreground">{user.email}</span>

@@ -316,6 +316,7 @@ export {
   CHATBOT_BASE_URL,
   getStoredTokens,
   setStoredTokens,
+  refreshAccessToken,
   baseRequest,
   fetchWithAuthRefresh,
   request,

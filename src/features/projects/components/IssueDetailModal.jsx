@@ -176,7 +176,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
         open={open}
         onClose={onClose}
         className="!max-w-[1180px] !h-[92vh] !max-h-[92vh] !rounded-2xl overflow-hidden"
-        contentClassName="overflow-hidden p-0 bg-slate-50 dark:bg-background"
+        contentClassName="overflow-hidden p-0 bg-background"
         title={
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
@@ -251,7 +251,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           </div>
         }
       >
-        <div className="h-full flex bg-slate-50 dark:bg-background">
+        <div className="h-full flex bg-background">
           {/* ════ LEFT COLUMN ════ */}
           <div className="flex-1 min-w-0 flex flex-col min-h-0 border-r border-border">
 
@@ -301,7 +301,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
             {/* Scrollable main content */}
             <div className="flex-1 min-h-0 overflow-y-auto">
               {/* Description */}
-              <div className="m-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-border dark:bg-card">
+              <div className="m-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
                 <CollapsibleSection
                   title="Description"
                   collapsed={collapsed.description}
@@ -347,7 +347,7 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
           </div>
 
           {/* ════ RIGHT SIDEBAR ════ */}
-          <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden bg-slate-100/80 dark:bg-muted/25">
+          <div className="w-80 shrink-0 overflow-y-auto overflow-x-hidden bg-muted/40">
             <IssueSidebar
               form={form}
               onChangeField={set}

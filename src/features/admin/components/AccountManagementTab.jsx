@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -46,26 +46,30 @@ export default function AccountManagementTab() {
     // Account detail dialog
     const [accountDialogOpen, setAccountDialogOpen] = useState(false);
 
+    const loadAccounts = useCallback(async () => {
+        setAccountsLoading(true);
+        setAccountsError("");
+        try {
+            const data = await iamService.getAccounts();
+            setAccounts(Array.isArray(data) ? data : []);
+        } catch (error) {
+            setAccountsError(error?.message || t("admin.accessControl.common.errorLoadingData"));
+        } finally {
+            setAccountsLoading(false);
+        }
+    }, [t]);
+
     useEffect(() => {
         let active = true;
-        const loadAccounts = async () => {
-            setAccountsLoading(true);
-            setAccountsError("");
-            try {
-                const data = await iamService.getAccounts();
-                if (!active) return;
-                setAccounts(Array.isArray(data) ? data : []);
-            } catch (error) {
-                if (active) setAccountsError(error?.message || t("admin.accessControl.common.errorLoadingData"));
-            } finally {
-                if (active) setAccountsLoading(false);
-            }
+        const load = async () => {
+            if (!active) return;
+            await loadAccounts();
         };
-        loadAccounts();
+        load();
         return () => {
             active = false;
         };
-    }, []);
+    }, [loadAccounts]);
 
     const filteredAccounts = useMemo(() => {
         if (!accountSearch.trim()) return accounts;
@@ -77,6 +81,8 @@ export default function AccountManagementTab() {
                 (Array.isArray(acc?.roles) ? acc.roles.join(" ").toLowerCase().includes(q) : false)
         );
     }, [accounts, accountSearch]);
+
+    const resolveAccountId = (account) => account?.id ?? account?.userId;
 
     const handleSelectAccount = async (account) => {
         if (!account) return;
@@ -90,7 +96,10 @@ export default function AccountManagementTab() {
         setUserProfileError("");
         setUserProfileSuccess("");
         try {
-            const detail = await iamService.getAccountById(account.userId).catch(() => account);
+            const accountId = resolveAccountId(account);
+            const detail = accountId
+                ? await iamService.getAccountById(accountId).catch(() => account)
+                : account;
             const effective = detail || account;
             setSelectedAccount(effective);
             setAccountEnabledDraft(!!effective.enabled);
@@ -113,6 +122,33 @@ export default function AccountManagementTab() {
         } finally {
             setAccountDetailLoading(false);
         }
+    };
+
+    const refreshSelectedAccount = async (account) => {
+        const accountId = resolveAccountId(account);
+        if (!accountId) return;
+        try {
+            const detail = await iamService.getAccountById(accountId);
+            if (detail) setSelectedAccount(detail);
+        } catch (error) {
+            // Keep existing data if refresh fails.
+        }
+    };
+
+    const handleUpgradePremium = async (account, days) => {
+        const accountId = resolveAccountId(account);
+        if (!accountId) throw new Error("Missing account id");
+        await iamService.upgradeAccountToPremium(accountId, days);
+        await loadAccounts();
+        await refreshSelectedAccount(account);
+    };
+
+    const handleDowngradePremium = async (account) => {
+        const accountId = resolveAccountId(account);
+        if (!accountId) throw new Error("Missing account id");
+        await iamService.downgradeAccountToFree(accountId);
+        await loadAccounts();
+        await refreshSelectedAccount(account);
     };
 
     const handleRoleChange = (role) => {
@@ -276,15 +312,7 @@ export default function AccountManagementTab() {
                             error={accountsError}
                             searchValue={accountSearch}
                             onSearchChange={setAccountSearch}
-                            onRefresh={async () => {
-                                setAccountsLoading(true);
-                                try {
-                                    const data = await iamService.getAccounts();
-                                    setAccounts(Array.isArray(data) ? data : []);
-                                } finally {
-                                    setAccountsLoading(false);
-                                }
-                            }}
+                            onRefresh={loadAccounts}
                             onSelectAccount={handleSelectAccount}
                             selectedAccountId={selectedAccount?.userId}
                         />
@@ -314,6 +342,8 @@ export default function AccountManagementTab() {
                 saveMessage={accountSaveMessage}
                 saveError={accountSaveError}
                 hasRolesChanges={hasRoleChanges}
+                onUpgradePremium={handleUpgradePremium}
+                onDowngradePremium={handleDowngradePremium}
                 userProfile={userProfile}
                 userProfileDraft={userProfileDraft}
                 onUserProfileChange={setUserProfileDraft}

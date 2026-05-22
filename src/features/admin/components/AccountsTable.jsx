@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
-import PremiumBadge from "@/components/ui/PremiumBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -56,15 +56,23 @@ export default function AccountsTable({
                     {t("admin.accessControl.accounts.noAccounts")}
                 </div>
             ) : (
-                <div className="rounded-md border">
+                <div className="rounded-md border bg-background/80 dark:bg-slate-950/80">
                     <ScrollArea className="h-[360px]">
                         <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/30 dark:bg-slate-900/60">
                             <TableRow>
-                                <TableHead>{t("admin.accessControl.accounts.username")}</TableHead>
-                                <TableHead>{t("admin.accessControl.accounts.status")}</TableHead>
-                                <TableHead>Gói</TableHead>
-                                <TableHead>{t("admin.accessControl.accounts.roles")}</TableHead>
+                                <TableHead className="text-foreground/80 dark:text-slate-200">
+                                    {t("admin.accessControl.accounts.username")}
+                                </TableHead>
+                                <TableHead className="text-foreground/80 dark:text-slate-200">
+                                    {t("admin.accessControl.accounts.status")}
+                                </TableHead>
+                                <TableHead className="text-foreground/80 dark:text-slate-200">
+                                    Gói
+                                </TableHead>
+                                <TableHead className="text-foreground/80 dark:text-slate-200">
+                                    {t("admin.accessControl.accounts.roles")}
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -73,8 +81,10 @@ export default function AccountsTable({
                                 return (
                                     <TableRow
                                         key={acc.userId}
-                                        className={`cursor-pointer ${isActiveRow ? "bg-blue-50 dark:bg-blue-500/10" : ""
-                                            }`}
+                                        className={cn(
+                                            "cursor-pointer dark:bg-slate-950/40 hover:dark:bg-slate-900/60",
+                                            isActiveRow && "bg-blue-50 dark:bg-slate-900/80 dark:text-slate-100"
+                                        )}
                                         onClick={() => onSelectAccount(acc)}
                                     >
                                         <TableCell>
@@ -92,11 +102,15 @@ export default function AccountsTable({
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <PremiumBadge
-                                                subscriptionType={acc.subscriptionType}
-                                                premiumUntil={acc.premiumUntil}
-                                                size="sm"
-                                            />
+                                            <span
+                                                className={`text-xs font-semibold ${
+                                                    acc.subscriptionType === "PREMIUM"
+                                                        ? "text-amber-600 dark:text-amber-300"
+                                                        : "text-muted-foreground"
+                                                }`}
+                                            >
+                                                {acc.subscriptionType === "PREMIUM" ? "PREMIUM" : "FREE"}
+                                            </span>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">
