@@ -88,11 +88,19 @@ export default function IssueCard({
   const assigneeObj = members.find(m => String(resolveMemberId(m) || "") === String(assigneeId || "")) || issue?.assignee;
   const assigneeName = assigneeObj?.fullName || assigneeObj?.userName || assigneeObj?.name || assigneeObj?.email;
 
+  const typeBorderColor = {
+    EPIC: "border-l-purple-500",
+    STORY: "border-l-green-500",
+    TASK: "border-l-blue-500",
+    BUG: "border-l-red-500",
+    SUBTASK: "border-l-cyan-500",
+  }[typeName.toUpperCase()] || "border-l-blue-500";
+
   return (
     <div
-      className={`group rounded-lg border border-border bg-card p-3 cursor-pointer 
-        hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md 
-        transition-all duration-150 ${className}`}
+      className={`group rounded-lg border border-border border-l-[4px] ${typeBorderColor} bg-card p-3 cursor-pointer 
+        hover:border-r-border/80 hover:border-y-border/80 hover:shadow-md hover:-translate-y-0.5
+        transition-all duration-150 ease-out ${className}`}
       onClick={() => onClick?.(issue)}
       draggable={draggable}
       onDragStart={onDragStart}

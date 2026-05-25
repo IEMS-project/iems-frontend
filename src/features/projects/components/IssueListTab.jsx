@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import IssueRow from "./issue-table/IssueRow";
 import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
+import { useAuth } from "@/context/AuthContext";
+import Avatar from "@/components/ui/Avatar";
 
 // ── Column definitions ─────────────────────────────────────────────────────
 
@@ -173,6 +175,9 @@ export default function IssueListTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { userProfile } = useAuth();
+  const currentUserId = userProfile?.id || userProfile?.userId;
+
   const {
     workflowStatuses, issueTypes, issuePriorities, members, sprints,
     updateIssueInCache,
@@ -450,30 +455,75 @@ export default function IssueListTab() {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border/60">
         {/* Search */}
-        <div className="relative min-w-[180px] flex-1 max-w-xs">
+        <div className="relative min-w-[180px] max-w-xs flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t("issues.search", "Search issues...")}
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-foreground text-sm"
+            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
+        {/* Quick Flat Filters: Assignee Avatars */}
+        <div className="flex items-center -space-x-1.5 overflow-hidden">
+          {members.slice(0, 5).map((member) => {
+            const memberId = member.accountId || member.userId || member.id || member?.user?.accountId || member?.user?.id;
+            const isSelected = String(filterAssignee) === String(memberId);
+            const name = member.fullName || member.userName || member.name || member.email || "Team Member";
+            return (
+              <button
+                key={memberId}
+                type="button"
+                onClick={() => setFilterAssignee(prev => String(prev) === String(memberId) ? "" : memberId)}
+                className={cn(
+                  "relative rounded-full transition-all duration-150 hover:-translate-y-0.5",
+                  isSelected ? "ring-2 ring-primary ring-offset-2 scale-105 z-10" : "hover:z-10"
+                )}
+                title={name}
+              >
+                <Avatar user={member} name={name} size="xs" className="h-7 w-7 border-2 border-background" />
+              </button>
+            );
+          })}
+          {members.length > 5 && (
+            <span className="text-xs text-muted-foreground font-semibold pl-2">
+              +{members.length - 5}
+            </span>
+          )}
+        </div>
+
+        {/* Quick Filter: "My Issues" button */}
+        {currentUserId && (
+          <button
+            type="button"
+            onClick={() => setFilterAssignee(prev => String(prev) === String(currentUserId) ? "" : currentUserId)}
+            className={cn(
+              "px-3 py-1 text-xs font-medium rounded-md border transition-all duration-150",
+              String(filterAssignee) === String(currentUserId)
+                ? "bg-primary/10 border-primary text-primary"
+                : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("issues.filters.onlyMyIssues", "Only my issues")}
+          </button>
+        )}
+
+        {/* Filters popover */}
         <div className="relative">
           <button
             ref={filterBtnRef}
             type="button"
             onClick={() => setShowFilterDropdown(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-foreground hover:bg-muted transition-colors"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
             Filters
             <span className={cn(
-              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-medium",
+              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-[10px] font-medium",
               activeFilterCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
               {activeFilterCount}
@@ -504,9 +554,40 @@ export default function IssueListTab() {
           )}
         </div>
 
+        {/* Active filters labels list */}
+        {activeFilterCount > 0 && (
+          <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground">
+            {filterStatus && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Status: {workflowStatuses.find(s => s.id === filterStatus)?.name}
+              </span>
+            )}
+            {filterType && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Type: {issueTypes.find(t => t.id === filterType)?.name}
+              </span>
+            )}
+            {filterPriority && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Priority: {issuePriorities.find(p => p.id === filterPriority)?.name}
+              </span>
+            )}
+            {filterSprint && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Sprint: {filterSprint === "__backlog__" ? "Backlog" : sprints.find(s => s.id === filterSprint)?.name}
+              </span>
+            )}
+            {filterAssignee && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Assignee: {members.find(m => String(m.accountId || m.userId || m.id || m?.user?.accountId || m?.user?.id) === String(filterAssignee))?.fullName || "Selected"}
+              </span>
+            )}
+          </div>
+        )}
+
         {hasActiveFilters && (
           <button onClick={clearFilters}
-            className="flex items-center gap-1 px-2 py-2 rounded-md border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <X className="w-3.5 h-3.5" />{t("issues.clearFilters", "Clear")}
           </button>
         )}
@@ -568,20 +649,20 @@ export default function IssueListTab() {
 
       {/* Table */}
       <div className="rounded-lg border border-border overflow-x-auto">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full w-max text-sm table-auto border-collapse">
           <thead className="bg-muted/50 sticky top-0 z-10">
             <tr>
-              {visibleColumns.has("key") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Key" /></th>}
-              {visibleColumns.has("title") && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
-              {visibleColumns.has("status") && <th className="px-3 py-2.5 text-left w-36 min-w-[9rem] whitespace-nowrap"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
-              {visibleColumns.has("priority") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
-              {visibleColumns.has("assignee") && <th className="px-3 py-2.5 text-left w-40"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
-              {visibleColumns.has("sprint") && <th className="px-3 py-2.5 text-left w-36"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
-              {visibleColumns.has("storyPoints") && <th className="px-3 py-2.5 text-center w-16"><ThBtn field="storyPoints" label="SP" /></th>}
-              {visibleColumns.has("dueDate") && <th className="px-3 py-2.5 text-left w-32"><ThBtn field="dueDate" label="Due Date" /></th>}
-              {visibleColumns.has("type") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Type" /></th>}
-              {visibleColumns.has("reporter") && <th className="px-3 py-2.5 text-left w-36"><ThLabel label="Reporter" /></th>}
-              {visibleColumns.has("parent") && <th className="px-3 py-2.5 text-left w-28"><ThLabel label="Parent" /></th>}
+              {visibleColumns.has("key") && <th className="px-3 py-2.5 text-left min-w-[100px]"><ThLabel label="Key" /></th>}
+              {visibleColumns.has("title") && <th className="px-3 py-2.5 text-left min-w-[280px]"><ThBtn field="title" label={t("issues.columns.title", "Title")} /></th>}
+              {visibleColumns.has("status") && <th className="px-3 py-2.5 text-left min-w-[140px] whitespace-nowrap"><ThBtn field="status" label={t("issues.columns.status", "Status")} /></th>}
+              {visibleColumns.has("priority") && <th className="px-3 py-2.5 text-left min-w-[120px]"><ThBtn field="priority" label={t("issues.columns.priority", "Priority")} /></th>}
+              {visibleColumns.has("assignee") && <th className="px-3 py-2.5 text-left min-w-[150px]"><ThLabel label={t("issues.columns.assignee", "Assignee")} /></th>}
+              {visibleColumns.has("sprint") && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThBtn field="sprint" label={t("issues.columns.sprint", "Sprint")} /></th>}
+              {visibleColumns.has("storyPoints") && <th className="px-3 py-2.5 text-center min-w-[70px]"><ThBtn field="storyPoints" label="SP" /></th>}
+              {visibleColumns.has("dueDate") && <th className="px-3 py-2.5 text-left min-w-[120px]"><ThBtn field="dueDate" label="Due Date" /></th>}
+              {visibleColumns.has("type") && <th className="px-3 py-2.5 text-left min-w-[120px]"><ThLabel label="Type" /></th>}
+              {visibleColumns.has("reporter") && <th className="px-3 py-2.5 text-left min-w-[140px]"><ThLabel label="Reporter" /></th>}
+              {visibleColumns.has("parent") && <th className="px-3 py-2.5 text-left min-w-[110px]"><ThLabel label="Parent" /></th>}
             </tr>
           </thead>
           <tbody>

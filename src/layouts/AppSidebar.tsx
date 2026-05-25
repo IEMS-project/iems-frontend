@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import {
   Bot,
   CalendarDays,
-  CheckSquare,
   CreditCard,
   Crown,
   FileText,
@@ -90,7 +89,6 @@ export function AppSidebar() {
   const navItems = useMemo(
     () => [
       { title: t("sidebar.dashboard"), url: "/dashboard", icon: Home },
-      { title: t("sidebar.tasks"), url: "/tasks", icon: CheckSquare },
       { title: t("sidebar.messages"), url: "/messages", icon: MessageSquare },
       { title: t("sidebar.chatbot"), url: "/chatbot", icon: Bot },
       { title: t("sidebar.documents"), url: "/documents", icon: FileText },

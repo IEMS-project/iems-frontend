@@ -155,7 +155,7 @@ export default function IssueRow({
 
       {/* KEY + TYPE ICON */}
       {isVisible("key") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[100px]")}>
           <div className="flex items-center gap-1.5">
             <TypeIcon className={`w-3.5 h-3.5 flex-shrink-0 ${typeColor}`} />
             <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">{issue.issueKey}</span>
@@ -174,7 +174,7 @@ export default function IssueRow({
 
       {/* TITLE — inline edit */}
       {isVisible("title") && (
-        <td className={cn(cellClass, "max-w-xs")}>
+        <td className={cn(cellClass, "min-w-[280px] max-w-xs")}>
           <button
             type="button"
             className="w-full text-left text-sm font-medium text-foreground hover:text-blue-600 dark:hover:text-blue-400 truncate block transition-colors"
@@ -196,7 +196,7 @@ export default function IssueRow({
 
       {/* STATUS — inline dropdown */}
       {isVisible("status") && (
-        <td className={cn(cellClass, "whitespace-nowrap min-w-[9rem]")}>
+        <td className={cn(cellClass, "whitespace-nowrap min-w-[140px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "status")}
@@ -216,7 +216,7 @@ export default function IssueRow({
 
       {/* PRIORITY — inline dropdown */}
       {isVisible("priority") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[120px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "priority")}
@@ -236,7 +236,7 @@ export default function IssueRow({
 
       {/* ASSIGNEE — inline dropdown */}
       {isVisible("assignee") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[150px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "assignee")}
@@ -256,7 +256,7 @@ export default function IssueRow({
 
       {/* SPRINT — inline dropdown */}
       {isVisible("sprint") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[140px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "sprint")}
@@ -275,7 +275,7 @@ export default function IssueRow({
 
       {/* STORY POINTS — inline number */}
       {isVisible("storyPoints") && (
-        <td className={cn(cellClass, "text-center")}>
+        <td className={cn(cellClass, "text-center min-w-[70px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "storyPoints")}
@@ -296,7 +296,7 @@ export default function IssueRow({
 
       {/* DUE DATE — inline date picker */}
       {isVisible("dueDate") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[120px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "dueDate")}
@@ -322,7 +322,7 @@ export default function IssueRow({
 
       {/* TYPE — inline dropdown */}
       {isVisible("type") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[120px]")}>
           <button
             type="button"
             onClick={e => toggle(e, "type")}
@@ -340,7 +340,7 @@ export default function IssueRow({
 
       {/* REPORTER — read only */}
       {isVisible("reporter") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[140px]")}>
           {reporterName
             ? <div className="flex items-center gap-1.5"><Avatar user={reporter} name={reporterName} size="xs" /><span className="text-xs text-foreground truncate max-w-[90px]">{reporterName}</span></div>
             : <span className="text-xs text-muted-foreground">—</span>
@@ -350,7 +350,7 @@ export default function IssueRow({
 
       {/* PARENT — read only */}
       {isVisible("parent") && (
-        <td className={cellClass}>
+        <td className={cn(cellClass, "min-w-[110px]")}>
           {parent
             ? <span className="text-xs text-muted-foreground font-mono">{parent.issueKey}</span>
             : <span className="text-xs text-muted-foreground">—</span>

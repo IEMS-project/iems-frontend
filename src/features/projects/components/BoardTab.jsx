@@ -25,6 +25,8 @@ import { issueService } from "@/features/projects/api/issueService";
 import { sprintService } from "@/features/projects/api/sprintService";
 import { workflowService } from "@/features/projects/api/workflowService";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import Avatar from "@/components/ui/Avatar";
 
 const COL_PRESET_COLORS = [
   "#6b7280", "#3b82f6", "#10b981", "#f59e0b",
@@ -63,15 +65,17 @@ function SortableColumn({ id, children }) {
   );
 }
 
-// ── Droppable card zone — highlights when a card hovers over ─────
-function DroppableCards({ id, children }) {
+function DroppableCards({ id, isCardDrag, children }) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 p-2 space-y-2 overflow-y-auto min-h-[80px] rounded-b-lg transition-all duration-150 ${isOver ? "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-inset ring-blue-400" : ""
-        }`}
+      className={cn(
+        "flex-1 p-2 space-y-2 overflow-y-auto min-h-[80px] rounded-b-lg transition-all duration-150",
+        isOver && "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-inset ring-blue-400",
+        isCardDrag && !isOver && "border-2 border-dashed border-primary/20 bg-primary/5 m-1 rounded-md"
+      )}
     >
       {children}
     </div>
@@ -102,6 +106,9 @@ export default function BoardTab() {
   const { t } = useTranslation();
   const { projectId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { userProfile } = useAuth();
+  const currentUserId = userProfile?.id || userProfile?.userId;
+
   const {
     sprints, workflowStatuses, workflows, issueTypes, issuePriorities, members,
     issuesLoading, workflowsLoading, refreshIssues, refreshWorkflows,
@@ -436,28 +443,75 @@ export default function BoardTab() {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[180px] flex-1 max-w-xs">
+      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border/60">
+        {/* Search */}
+        <div className="relative min-w-[180px] max-w-xs flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={t("issues.search", "Search issues...")}
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background text-foreground text-sm"
+            className="w-full pl-9 pr-3 py-1.5 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
+
+        {/* Quick Flat Filters: Assignee Avatars */}
+        <div className="flex items-center -space-x-1.5 overflow-hidden">
+          {members.slice(0, 5).map((member) => {
+            const memberId = member.accountId || member.userId || member.id || member?.user?.accountId || member?.user?.id;
+            const isSelected = String(filterAssignee) === String(memberId);
+            const name = member.fullName || member.userName || member.name || member.email || "Team Member";
+            return (
+              <button
+                key={memberId}
+                type="button"
+                onClick={() => setFilterAssignee(prev => String(prev) === String(memberId) ? "" : memberId)}
+                className={cn(
+                  "relative rounded-full transition-all duration-150 hover:-translate-y-0.5",
+                  isSelected ? "ring-2 ring-primary ring-offset-2 scale-105 z-10" : "hover:z-10"
+                )}
+                title={name}
+              >
+                <Avatar user={member} name={name} size="xs" className="h-7 w-7 border-2 border-background" />
+              </button>
+            );
+          })}
+          {members.length > 5 && (
+            <span className="text-xs text-muted-foreground font-semibold pl-2">
+              +{members.length - 5}
+            </span>
+          )}
+        </div>
+
+        {/* Quick Filter: "My Issues" button */}
+        {currentUserId && (
+          <button
+            type="button"
+            onClick={() => setFilterAssignee(prev => String(prev) === String(currentUserId) ? "" : currentUserId)}
+            className={cn(
+              "px-3 py-1 text-xs font-medium rounded-md border transition-all duration-150",
+              String(filterAssignee) === String(currentUserId)
+                ? "bg-primary/10 border-primary text-primary"
+                : "border-border hover:bg-muted text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t("issues.filters.onlyMyIssues", "Only my issues")}
+          </button>
+        )}
+
+        {/* More Filters Popover */}
         <div className="relative">
           <button
             ref={filterBtnRef}
             type="button"
             onClick={() => setShowFilterDropdown((v) => !v)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-foreground hover:bg-muted transition-colors"
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
             Filters
             <span className={cn(
-              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-medium",
+              "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-[10px] font-medium",
               activeFilterCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
               {activeFilterCount}
@@ -483,9 +537,36 @@ export default function BoardTab() {
             />
           )}
         </div>
+
+        {/* Active filters labels list */}
+        {activeFilterCount > 0 && (
+          <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground">
+            {filterStatus && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Status: {workflowStatuses.find(s => s.id === filterStatus)?.name}
+              </span>
+            )}
+            {filterType && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Type: {issueTypes.find(t => t.id === filterType)?.name}
+              </span>
+            )}
+            {filterPriority && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Priority: {issuePriorities.find(p => p.id === filterPriority)?.name}
+              </span>
+            )}
+            {filterAssignee && (
+              <span className="px-2 py-0.5 rounded bg-muted border border-border text-[10px]">
+                Assignee: {members.find(m => String(m.accountId || m.userId || m.id || m?.user?.accountId || m?.user?.id) === String(filterAssignee))?.fullName || "Selected"}
+              </span>
+            )}
+          </div>
+        )}
+
         {hasActiveFilters && (
           <button onClick={clearFilters}
-            className="flex items-center gap-1 px-2 py-2 rounded-md border border-border text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
             <X className="w-3.5 h-3.5" />{t("issues.clearFilters", "Clear")}
           </button>
         )}
@@ -573,7 +654,7 @@ export default function BoardTab() {
                       </div>
 
                       {/* Droppable card zone */}
-                      <DroppableCards id={`drop-${status.id}`}>
+                      <DroppableCards id={`drop-${status.id}`} isCardDrag={isCardDrag}>
                         {loadingSprintIssues ? (
                           <div className="space-y-2">
                             <Skeleton className="h-20 w-full rounded-lg" />
