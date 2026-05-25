@@ -15,9 +15,22 @@ import { ProjectProvider, useProject } from "@/features/projects/context/Project
 import Skeleton from "@/components/ui/Skeleton";
 import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
-import { Pencil } from "lucide-react";
+import { 
+  Pencil, LayoutDashboard, Layers, Kanban, CheckSquare, Bot, CalendarDays, 
+  LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  DndContext, PointerSensor, useSensor, useSensors, closestCenter,
+} from "@dnd-kit/core";
+import {
+  SortableContext, useSortable,
+  horizontalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 
-const tabs = [
+const DEFAULT_TABS = [
     { id: "overview", label: "overview", path: "overview" },
     { id: "backlog", label: "backlog", path: "backlog" },
     { id: "board", label: "board", path: "board" },
@@ -32,12 +45,102 @@ const tabs = [
     { id: "documents", label: "documents", path: "documents" },
 ];
 
+const tabIcons = {
+  overview: LayoutDashboard,
+  backlog: Layers,
+  board: Kanban,
+  tasks: CheckSquare,
+  agent: Bot,
+  timeline: CalendarDays,
+  burndown: LineChart,
+  sprints: Repeat,
+  members: Users,
+  settings: Settings,
+  code: GitBranch,
+  documents: FileText,
+};
+
+// ── Draggable/Reorderable tab component ──────────────────────────────────────────
+function SortableTab({ tab, isActive, labelText, onClick }) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging
+  } = useSortable({ id: tab.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const IconComponent = tabIcons[tab.id];
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-all flex items-center gap-2 cursor-pointer select-none",
+        isActive
+          ? "border-blue-500 text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/40 dark:bg-blue-950/10"
+          : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/30",
+        isDragging ? "opacity-40 scale-95 shadow-md border-blue-400 bg-background z-50" : "hover:scale-[1.01]"
+      )}
+    >
+      {IconComponent && <IconComponent className="w-4 h-4 shrink-0" />}
+      {labelText}
+    </button>
+  );
+}
+
 function ProjectDetailLayoutContent() {
     const { t } = useTranslation();
     const { projectId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const { userProfile } = useAuth();
+
+    const [orderedTabs, setOrderedTabs] = useState(() => {
+        const saved = localStorage.getItem(`iems-project-${projectId}-tabs-order`);
+        if (saved) {
+            try {
+                const savedIds = JSON.parse(saved);
+                if (Array.isArray(savedIds)) {
+                    const ordered = [];
+                    savedIds.forEach(id => {
+                        const tab = DEFAULT_TABS.find(t => t.id === id);
+                        if (tab) ordered.push(tab);
+                    });
+                    DEFAULT_TABS.forEach(tab => {
+                        if (!ordered.some(t => t.id === tab.id)) {
+                            ordered.push(tab);
+                        }
+                    });
+                    return ordered;
+                }
+            } catch (e) {
+                console.error("Failed to parse saved tab order:", e);
+            }
+        }
+        return DEFAULT_TABS;
+    });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    );
+
+    const handleDragEnd = ({ active, over }) => {
+        if (!over || active.id === over.id) return;
+
+        setOrderedTabs((prev) => {
+            const oldIndex = prev.findIndex((t) => t.id === active.id);
+            const newIndex = prev.findIndex((t) => t.id === over.id);
+            const next = arrayMove(prev, oldIndex, newIndex);
+            localStorage.setItem(`iems-project-${projectId}-tabs-order`, JSON.stringify(next.map(t => t.id)));
+            return next;
+        });
+    };
 
     // Get data from ProjectContext
     const { projectData, loading, refreshProject } = useProject();
@@ -146,20 +249,23 @@ function ProjectDetailLayoutContent() {
         <div className="flex flex-col h-full overflow-hidden">
             {/* Project Header with Tab Navigation - Fixed */}
             <div className="shrink-0 border-b border-border bg-background z-10">
-                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                    {/* Project Info */}
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                {/* Row 1: Project Info */}
+                <div className="flex items-center justify-between px-6 pt-4 pb-2">
+                    <div className="flex flex-col gap-1 min-w-0">
+                        {/* Project Category / Breadcrumb */}
+                        <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider select-none">
+                            {t("projects.projectDetail", "Projects")} / {projectData?.name || "..."}
+                        </div>
                         {loading && !projectData ? (
-                            <div className="flex items-center gap-3 min-w-0">
-                                <Skeleton className="h-6 w-48" />
-                                <Skeleton className="h-4 w-32" />
+                            <div className="flex items-center gap-3 min-w-0 mt-1">
+                                <Skeleton className="h-7 w-48" />
+                                <Skeleton className="h-5 w-24" />
                             </div>
                         ) : (
-                            <>
-                                <h1 className="text-xl font-bold truncate text-foreground">{projectData?.name || '-'}</h1>
-                                <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span className=" text-xl font-bold ">-</span>
-                                    <Badge variant="blue" className="whitespace-nowrap">
+                            <div className="flex items-center gap-3 min-w-0 mt-0.5">
+                                <h1 className="text-2xl font-bold truncate text-foreground tracking-tight select-all">{projectData?.name || '-'}</h1>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Badge variant="blue" className="whitespace-nowrap px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-none">
                                         {projectData?.status ? t(getStatusTranslationKey(projectData.status)) : t('dashboard.status.unknown')}
                                     </Badge>
                                     {canEditProject && (
@@ -167,40 +273,44 @@ function ProjectDetailLayoutContent() {
                                             variant="ghost"
                                             size="sm"
                                             onClick={handleEditProject}
-                                            className="ml-2"
+                                            className="ml-1 h-8 w-8 p-0 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                             title={t("projects.editProject")}
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     )}
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
+                </div>
 
-                    {/* Tab Navigation */}
-                    <nav className="flex items-center gap-1" aria-label="Tabs">
-                        {tabs
-                            .filter(tab => !tab.premiumOnly || projectData?.ownerSubscription === "PREMIUM")
-                            .map((tab) => {
-                            const isActive = currentTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => handleTabClick(tab.path)}
-                                    className={`
-                                        whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors
-                                        ${isActive
-                                            ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                                            : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-                                        }
-                                    `}
-                                >
-                                    {t(`projects.detail.tabs.${tab.label}`)}
-                                </button>
-                            );
-                        })}
-                    </nav>
+                {/* Row 2: Draggable Tab Navigation */}
+                <div className="px-6 border-t border-border/30 bg-muted/5">
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={orderedTabs.map(t => t.id)}
+                            strategy={horizontalListSortingStrategy}
+                        >
+                            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="Tabs">
+                                {orderedTabs
+                                    .filter(tab => !tab.premiumOnly || projectData?.ownerSubscription === "PREMIUM")
+                                    .map((tab) => (
+                                        <SortableTab
+                                            key={tab.id}
+                                            tab={tab}
+                                            isActive={currentTab === tab.id}
+                                            labelText={t(`projects.detail.tabs.${tab.label}`)}
+                                            onClick={() => handleTabClick(tab.path)}
+                                        />
+                                    ))}
+                            </nav>
+                        </SortableContext>
+                    </DndContext>
                 </div>
             </div>
 
