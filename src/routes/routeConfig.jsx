@@ -4,7 +4,6 @@ import { Navigate } from "react-router-dom";
 import AdminLoginPage from "@/features/auth/pages/AdminLoginPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import PermissionDeniedPage from "@/features/auth/pages/PermissionDeniedPage";
-import CalendarPage from "@/features/calendar/pages/CalendarPage";
 import ChatbotPage from "@/features/chatbot/pages/ChatbotPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import DocumentsPage from "@/features/documents/pages/DocumentsPage";
@@ -30,8 +29,6 @@ import ProjectOverviewPage from "@/features/projects/pages/ProjectOverviewPage";
 import ProjectTimelinePage from "@/features/projects/pages/ProjectTimelinePage";
 import ProjectsPage from "@/features/projects/pages/ProjectsPage";
 
-const AdminAccessControlPage = lazy(() => import("@/features/admin/pages/AdminAccessControlPage"));
-const AdminAnalyticsPage = lazy(() => import("@/features/admin/pages/AdminAnalyticsPage"));
 const AdminSubscriptionPage = lazy(() => import("@/features/admin/pages/AdminSubscriptionPage"));
 
 function withPageSuspense(element) {
@@ -67,22 +64,20 @@ export const projectDetailRoute = {
 export const appRoutes = [
     { path: "/dashboard", element: <DashboardPage /> },
     { path: "/projects", element: <ProjectsPage /> },
-    { path: "/tasks", element: <Navigate to="/dashboard" replace /> },
     { path: "/messages", element: <MessagesPage /> },
     { path: "/documents", element: <DocumentsPage /> },
     { path: "/chatbot", element: <ChatbotPage /> },
-    { path: "/calendar", element: <CalendarPage /> },
     { path: "/notifications", element: <NotificationsPage /> },
     { path: "/payment/return", element: <PaymentReturnPage /> },
     { path: "/payment/cancel", element: <PaymentCancelPage /> },
     { path: "/profile", element: <ProfilePage /> },
     { path: "/settings", element: <SettingsPage /> },
-    { path: "/admin", element: withPageSuspense(<AdminAnalyticsPage />) },
     { path: "/premium", element: <PremiumUpgradePage /> },
     { path: "/permission-denied", element: <PermissionDeniedPage /> },
 ];
 
 export const adminRoutes = [
-    { path: "/admin/access-control", element: withPageSuspense(<AdminAccessControlPage />) },
-    { path: "/admin/subscription", element: withPageSuspense(<AdminSubscriptionPage />) },
+    { path: "/admin", element: withPageSuspense(<AdminSubscriptionPage />) },
+    { path: "/admin/access-control", element: <Navigate to="/admin?tab=accounts" replace /> },
+    { path: "/admin/subscription", element: <Navigate to="/admin?tab=plans" replace /> },
 ];

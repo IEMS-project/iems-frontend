@@ -1,1 +1,0 @@
-export { default } from '@/features/chatbot/pages/ChatbotPage'; export * from '@/features/chatbot/pages/ChatbotPage';

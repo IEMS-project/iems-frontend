@@ -1,1 +1,0 @@
-export { default } from '@/features/departments/pages/DepartmentsPage'; export * from '@/features/departments/pages/DepartmentsPage';

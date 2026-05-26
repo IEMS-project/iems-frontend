@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { projectService } from "@/features/projects/api/projectService";
 import { toast } from "sonner";
 import { columns } from "@/features/projects/components/projects-columns";
 import { ProjectsDataTable } from "@/features/projects/components/projects-data-table";
 import CreateProjectModal from "@/features/projects/components/CreateProjectModal";
+import { cn } from "@/lib/utils";
 
 export default function Projects() {
     const { t } = useTranslation();
@@ -19,6 +30,7 @@ export default function Projects() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [editingProject, setEditingProject] = useState(null);
     const [deletingProject, setDeletingProject] = useState(null);
     const [formData, setFormData] = useState({
@@ -29,29 +41,31 @@ export default function Projects() {
         status: ""
     });
 
-    // Load projects and users on component mount
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-                const projectsData = await projectService.getProjectsTable();
-                setProjects(projectsData);
-            } catch (error) {
-                console.error("Error loading data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
-    }, []);
+    const expectedDeleteText = useMemo(
+        () => deletingProject ? `delete ${deletingProject.name}` : "",
+        [deletingProject]
+    );
+    const canDelete = deleteConfirmText.trim() === expectedDeleteText;
 
-    const handleCreateProject = () => {
-        setShowCreateModal(true);
+    const loadProjects = async () => {
+        try {
+            setLoading(true);
+            const projectsData = await projectService.getMyProjects();
+            setProjects(Array.isArray(projectsData) ? projectsData : []);
+        } catch (error) {
+            console.error("Error loading projects:", error);
+            toast.error(error?.message || t("ui.common.error"));
+        } finally {
+            setLoading(false);
+        }
     };
 
+    useEffect(() => {
+        loadProjects();
+    }, []);
+
     const handleProjectCreated = async () => {
-        const updatedProjects = await projectService.getProjectsTable();
-        setProjects(updatedProjects);
+        await loadProjects();
         window.dispatchEvent(new CustomEvent("projects:changed"));
     };
 
@@ -60,8 +74,8 @@ export default function Projects() {
         setFormData({
             name: project.name,
             description: project.description || "",
-            startDate: project.startDate ? project.startDate.toString().split('T')[0] : "",
-            endDate: project.endDate ? project.endDate.toString().split('T')[0] : "",
+            startDate: project.startDate ? project.startDate.toString().split("T")[0] : "",
+            endDate: project.endDate ? project.endDate.toString().split("T")[0] : "",
             status: project.status || "PLANNING"
         });
         setShowModal(true);
@@ -69,27 +83,27 @@ export default function Projects() {
 
     const handleDeleteProject = (project) => {
         setDeletingProject(project);
+        setDeleteConfirmText("");
         setShowDeleteDialog(true);
     };
 
     const confirmDeleteProject = async () => {
-        if (!deletingProject) return;
+        if (!deletingProject || !canDelete) return;
 
         try {
             await projectService.deleteProject(deletingProject.id);
             toast.success(t("projects.messages.deleted"));
-
-            // Reload projects
-            const updatedProjects = await projectService.getProjectsTable();
-            setProjects(updatedProjects);
+            await loadProjects();
             window.dispatchEvent(new CustomEvent("projects:changed", {
                 detail: { deletedProjectId: deletingProject.id },
             }));
+            setShowDeleteDialog(false);
         } catch (error) {
             console.error("Error deleting project:", error);
             toast.error(error?.message || t("ui.common.error"));
         } finally {
             setDeletingProject(null);
+            setDeleteConfirmText("");
         }
     };
 
@@ -114,9 +128,7 @@ export default function Projects() {
                 toast.success(t("projects.messages.created"));
             }
 
-            // Reload projects
-            const updatedProjects = await projectService.getProjectsTable();
-            setProjects(updatedProjects);
+            await loadProjects();
             window.dispatchEvent(new CustomEvent("projects:changed"));
 
             setShowModal(false);
@@ -151,8 +163,16 @@ export default function Projects() {
             <div className="space-y-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>{t("projects.title")}</CardTitle>
-                        <Button onClick={handleCreateProject}>{t("projects.createProject")}</Button>
+                        <div>
+                            <CardTitle>{t("projects.title")}</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                {t("projects.myProjectsOnly", "Only projects you own or participate in are shown.")}
+                            </p>
+                        </div>
+                        <Button onClick={() => setShowCreateModal(true)}>
+                            <Plus className="mr-1 h-4 w-4" />
+                            {t("projects.createProject")}
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         <ProjectsDataTable
@@ -190,7 +210,6 @@ export default function Projects() {
                             type="text"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.form.projectNamePlaceholder")}
                             required
                         />
@@ -201,7 +220,6 @@ export default function Projects() {
                             type="date"
                             value={formData.startDate}
                             onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div>
@@ -210,7 +228,6 @@ export default function Projects() {
                             type="date"
                             value={formData.endDate}
                             onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                         />
                     </div>
                     <div className="sm:col-span-2">
@@ -220,7 +237,7 @@ export default function Projects() {
                         <select
                             value={formData.status}
                             onChange={e => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
+                            className="w-full rounded border border-border bg-background p-2 text-sm text-foreground focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:border-blue-400 dark:focus:ring-blue-400/30"
                         >
                             <option value="PLANNING">{t("projects.status.planning")}</option>
                             <option value="IN_PROGRESS">{t("projects.status.inProgress")}</option>
@@ -232,23 +249,45 @@ export default function Projects() {
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30"
                             placeholder={t("projects.form.descriptionPlaceholder")}
                         />
                     </div>
                 </div>
             </Modal>
 
-            <ConfirmDialog
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-                onConfirm={confirmDeleteProject}
-                title={t("projects.deleteProject")}
-                description={t("projects.messages.deleteConfirm", { name: deletingProject?.name })}
-                confirmText={t("ui.common.delete")}
-                cancelText={t("ui.common.cancel")}
-                variant="destructive"
-            />
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{t("projects.deleteProject")}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t("projects.messages.deleteConfirm", { name: deletingProject?.name })}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                            Type <span className="font-semibold text-foreground">{expectedDeleteText}</span> to confirm.
+                        </p>
+                        <Input
+                            value={deleteConfirmText}
+                            onChange={(event) => setDeleteConfirmText(event.target.value)}
+                            placeholder={expectedDeleteText}
+                            autoFocus
+                        />
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>
+                            {t("ui.common.cancel")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDeleteProject}
+                            disabled={!canDelete}
+                            className={cn("bg-red-600 hover:bg-red-700", !canDelete && "pointer-events-none opacity-50")}
+                        >
+                            {t("ui.common.delete")}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <CreateProjectModal
                 open={showCreateModal}

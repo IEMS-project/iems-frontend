@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshCw, UserCircle2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import Badge from "@/components/ui/Badge";
 import Skeleton from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import UserAvatar from "@/components/ui/UserAvatar";
 import {
     Table,
     TableBody,
@@ -25,6 +26,13 @@ export default function AccountsTable({
     onRefresh,
     onSelectAccount,
     selectedAccountId,
+    page = 0,
+    totalPages = 0,
+    totalElements = 0,
+    hasPrevious = false,
+    hasNext = false,
+    onPreviousPage,
+    onNextPage,
 }) {
     const { t } = useTranslation();
 
@@ -56,8 +64,8 @@ export default function AccountsTable({
                     {t("admin.accessControl.accounts.noAccounts")}
                 </div>
             ) : (
-                <div className="rounded-md border bg-background/80 dark:bg-slate-950/80">
-                    <ScrollArea className="h-[360px]">
+                <div className="overflow-hidden rounded-md border bg-background/80 dark:bg-slate-950/80">
+                    <ScrollArea className="h-[420px]">
                         <Table>
                         <TableHeader className="bg-muted/30 dark:bg-slate-900/60">
                             <TableRow>
@@ -88,12 +96,18 @@ export default function AccountsTable({
                                         onClick={() => onSelectAccount(acc)}
                                     >
                                         <TableCell>
-                                            <div className="font-medium flex items-center gap-2">
-                                                <UserCircle2 className="h-4 w-4 text-muted-foreground" />
-                                                {acc.username}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {acc.email}
+                                            <div className="flex items-center gap-3">
+                                                <UserAvatar
+                                                    src={acc.image || acc.userProfile?.image}
+                                                    name={acc.displayName || acc.username || acc.email}
+                                                    size="md"
+                                                />
+                                                <div className="min-w-0">
+                                                    <div className="truncate font-medium">{acc.displayName || acc.username}</div>
+                                                    <div className="truncate text-xs text-muted-foreground">
+                                                        {acc.email}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -127,6 +141,29 @@ export default function AccountsTable({
                         </TableBody>
                     </Table>
                 </ScrollArea>
+                <div className="flex flex-col gap-2 border-t px-3 py-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                        {totalElements} accounts · page {totalPages === 0 ? 0 : page + 1}/{totalPages}
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onPreviousPage}
+                            disabled={!hasPrevious}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onNextPage}
+                            disabled={!hasNext}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
             </div>
             )}
         </>

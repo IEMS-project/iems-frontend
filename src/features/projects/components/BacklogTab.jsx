@@ -696,6 +696,28 @@ export default function BacklogTab() {
         onClose={closeSelectedIssue}
         issue={selectedIssue}
         targetCommentId={searchParams.get("commentId")}
+        onOptimisticUpdate={(updatedIssue) => {
+          setSelectedIssue(updatedIssue);
+          setLocalIssues((prev) => {
+            const without = prev.filter((item) => item.id !== updatedIssue.id);
+            return updatedIssue.sprintId ? [...without, updatedIssue] : without;
+          });
+          setLocalBacklog((prev) => {
+            const without = prev.filter((item) => item.id !== updatedIssue.id);
+            return updatedIssue.sprintId ? without : [...without, updatedIssue];
+          });
+        }}
+        onRollbackUpdate={(previousIssue) => {
+          setSelectedIssue(previousIssue);
+          setLocalIssues((prev) => {
+            const without = prev.filter((item) => item.id !== previousIssue.id);
+            return previousIssue.sprintId ? [...without, previousIssue] : without;
+          });
+          setLocalBacklog((prev) => {
+            const without = prev.filter((item) => item.id !== previousIssue.id);
+            return previousIssue.sprintId ? without : [...without, previousIssue];
+          });
+        }}
         onUpdate={closeSelectedIssue}
       />
     </DndContext>

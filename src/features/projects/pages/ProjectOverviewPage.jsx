@@ -6,11 +6,11 @@ import {
     AlarmClock,
     CalendarDays,
     Layers3,
+    PieChart,
     Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
-import DonutChart from "@/components/ui/DonutChart";
 import Skeleton from "@/components/ui/Skeleton";
 import { buildDonutSlices } from "@/components/ui/donutUtils";
 import { projectService } from "@/features/projects/api/projectService";
@@ -99,74 +99,117 @@ function StatusBreakdownWidget({ title, meta, total, slices, items, emptyText })
     const activeSlice = slices.find((slice) => slice.key === activeKey);
 
     return (
-        <Card>
+        <Card className="h-full overflow-hidden">
             <CardHeader className="pb-3">
-
-                <CardTitle className="text-base">{title}</CardTitle>
-                {meta ? <p className="text-xs text-muted-foreground">{meta}</p> : null}
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <PieChart className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{title}</span>
+                        </CardTitle>
+                        {meta ? <p className="mt-1 truncate text-xs text-muted-foreground">{meta}</p> : null}
+                    </div>
+                </div>
             </CardHeader>
-            <CardContent className="px-5 pb-5">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-center">
-                    <div className="flex items-center justify-center gap-5 lg:justify-end">
-                        {items.length === 0 ? (
-                            <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                                {emptyText}
-                            </p>
-                        ) : (
-                            <>
-                                <div className="relative grid h-60 w-60 shrink-0 place-items-center">
-                                    <svg viewBox="0 0 120 120" className="-rotate-90 overflow-visible" aria-hidden="true">
-                                        <circle cx="60" cy="60" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="13" />
-                                        {slices.map((slice) => {
-                                            const isActive = slice.key === activeKey;
-                                            const isDimmed = activeKey && !isActive;
-                                            return (
-                                                <circle
-                                                    key={slice.key}
-                                                    cx="60"
-                                                    cy="60"
-                                                    r={slice.radius}
-                                                    fill="none"
-                                                    stroke={slice.color}
-                                                    strokeWidth={isActive ? 20 : 13}
-                                                    strokeDasharray={slice.dashArray}
-                                                    strokeDashoffset={slice.dashOffset}
-                                                    className={cn("cursor-pointer transition-all", isDimmed ? "opacity-25" : "opacity-100")}
-                                                    style={{ transformBox: "fill-box", transformOrigin: "center" }}
-                                                    onMouseEnter={() => setActiveKey(slice.key)}
-                                                    onMouseLeave={() => setActiveKey(null)}
-                                                />
-                                            );
-                                        })}
-                                    </svg>
-                                    <div className="absolute grid h-40 w-40 place-items-center rounded-full border border-border bg-card text-center">
-                                        <div>
-                                            <p className="text-xl font-bold text-foreground">{activeSlice ? activeSlice.value : total}</p>
-                                            <p className="max-w-16 truncate text-[11px] text-muted-foreground">
-                                                {activeSlice ? activeSlice.label : "Total"}
-                                            </p>
-                                        </div>
+            <CardContent>
+                {items.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                        {emptyText}
+                    </p>
+                ) : (
+                    <div className="grid min-h-[260px] grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(120px,0.75fr)] xl:grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_minmax(120px,0.7fr)]">
+                        <div className="grid min-w-0 place-items-center">
+                            <div className="relative grid h-44 w-44 place-items-center sm:h-52 sm:w-52 2xl:h-56 2xl:w-56">
+                                <svg viewBox="0 0 120 120" className="-rotate-90 overflow-visible" aria-hidden="true">
+                                    <circle cx="60" cy="60" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="13" />
+                                    {slices.map((slice) => {
+                                        const isActive = slice.key === activeKey;
+                                        const isDimmed = activeKey && !isActive;
+                                        return (
+                                            <circle
+                                                key={slice.key}
+                                                cx="60"
+                                                cy="60"
+                                                r={slice.radius}
+                                                fill="none"
+                                                stroke={slice.color}
+                                                strokeWidth={isActive ? 18 : 13}
+                                                strokeDasharray={slice.dashArray}
+                                                strokeDashoffset={slice.dashOffset}
+                                                className={cn("cursor-pointer transition-all duration-200", isDimmed ? "opacity-25" : "opacity-100")}
+                                                style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                                                onMouseEnter={() => setActiveKey(slice.key)}
+                                                onMouseLeave={() => setActiveKey(null)}
+                                                onFocus={() => setActiveKey(slice.key)}
+                                                onBlur={() => setActiveKey(null)}
+                                                tabIndex={0}
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                                <div className="pointer-events-none absolute grid h-28 w-28 place-items-center rounded-full border border-border bg-card text-center sm:h-32 sm:w-32">
+                                    <div className="min-w-0 px-3">
+                                        <p className="truncate text-2xl font-bold tracking-tight text-foreground">{activeSlice ? activeSlice.value : total}</p>
+                                        <p className="truncate text-xs text-muted-foreground">
+                                            {activeSlice ? activeSlice.label : "Total"}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="grid gap-1.5">
-                                    {items.map((item) => (
-                                        <button
-                                            key={item.key}
-                                            type="button"
-                                            className="flex items-center justify-between gap-3 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                                            onMouseEnter={() => setActiveKey(item.key)}
-                                            onMouseLeave={() => setActiveKey(null)}
-                                        >
-                                            <span className="flex min-w-0 items-center gap-2">
-                                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                                                <span className="truncate">{item.label}</span>
-                                            </span>
-                                            <span className="font-semibold text-foreground">{item.value}</span>
-                                        </button>
-                                    ))}
+                            </div>
+                        </div>
+
+                        <div className="grid min-w-0 gap-1.5">
+                            {items.map((item) => (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    className="flex min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    onMouseEnter={() => setActiveKey(item.key)}
+                                    onMouseLeave={() => setActiveKey(null)}
+                                    onFocus={() => setActiveKey(item.key)}
+                                    onBlur={() => setActiveKey(null)}
+                                >
+                                    <span className="flex min-w-0 items-center gap-2">
+                                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                                        <span className="truncate">{item.label}</span>
+                                    </span>
+                                    <span className="shrink-0 font-semibold text-foreground">{item.value}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function StatusBreakdownSkeleton() {
+    return (
+        <Card className="h-full overflow-hidden">
+            <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-2">
+                        <Skeleton className="h-5 w-44 rounded-md" />
+                        <Skeleton className="h-3 w-24 rounded-md" />
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="grid min-h-[260px] grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(120px,0.75fr)] xl:grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_minmax(120px,0.7fr)]">
+                    <div className="grid min-w-0 place-items-center">
+                        <Skeleton className="h-44 w-44 rounded-full sm:h-52 sm:w-52 2xl:h-56 2xl:w-56" />
+                    </div>
+                    <div className="grid min-w-0 gap-2">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <div key={index} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5">
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                    <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
+                                    <Skeleton className="h-3 w-24 rounded-md" />
                                 </div>
-                            </>
-                        )}
+                                <Skeleton className="h-3 w-8 rounded-md" />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </CardContent>
@@ -174,7 +217,7 @@ function StatusBreakdownWidget({ title, meta, total, slices, items, emptyText })
     );
 }
 
-function TimelineCard({ projectData, progress, t }) {
+function TimelineCard({ projectData, t }) {
     const start = parseDate(projectData?.startDate);
     const end = parseDate(projectData?.endDate);
     const today = new Date();
@@ -182,7 +225,7 @@ function TimelineCard({ projectData, progress, t }) {
 
     const totalMs = start && end ? Math.max(end - start, 1) : 1;
     const elapsedMs = start ? Math.max(today - start, 0) : 0;
-    const todayPercent = start && end ? Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100))) : 0;
+    const timelineProgress = start && end ? Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100))) : 0;
     const daysLeft = end ? Math.ceil((end - today) / (24 * 60 * 60 * 1000)) : null;
 
     return (
@@ -207,10 +250,10 @@ function TimelineCard({ projectData, progress, t }) {
 
                 <div className="mt-5">
                     <div className="relative h-3 rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${timelineProgress}%` }} />
                         <span
                             className="absolute top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-foreground shadow-sm"
-                            style={{ left: `${todayPercent}%` }}
+                            style={{ left: `${timelineProgress}%` }}
                             title={t("ui.common.today", "Today")}
                         />
                     </div>
@@ -490,12 +533,12 @@ export default function ProjectOverviewPage() {
                 <main className="space-y-4 xl:col-span-8">
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
                         <div className="space-y-4">
-                            <TimelineCard projectData={projectData} progress={overview.progress} t={t} />
+                            <TimelineCard projectData={projectData} t={t} />
                             <MembersPanel members={members} loading={membersLoading} t={t} />
                         </div>
 
                         {issuesLoading ? (
-                            <Skeleton className="h-full min-h-[360px] rounded-2xl" />
+                            <StatusBreakdownSkeleton />
                         ) : (
                             <StatusBreakdownWidget
                                 title={t("projects.detail.overview.charts.statusBreakdown")}

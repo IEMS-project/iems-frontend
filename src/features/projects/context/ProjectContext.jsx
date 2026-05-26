@@ -192,6 +192,11 @@ export function ProjectProvider({ children }) {
         });
     }, []);
 
+    const rollbackIssueInCache = useCallback((previousIssue) => {
+        if (!previousIssue?.id) return;
+        updateIssueInCache(previousIssue);
+    }, [updateIssueInCache]);
+
     // ── Initial Load ───────────────────────────────────────────
     useEffect(() => {
         if (!projectId) return;
@@ -326,6 +331,7 @@ export function ProjectProvider({ children }) {
         refreshIssueTypes,
         refreshIssuePriorities,
         updateIssueInCache,
+        rollbackIssueInCache,
     };
 
     return (

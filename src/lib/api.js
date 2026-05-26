@@ -41,6 +41,29 @@ function clearAuthAndRedirect() {
   redirectToLogin();
 }
 
+function isAccountLockedPayload(data) {
+  const message = String(data?.message || data?.error || "").toLowerCase();
+  return message.includes("account is locked") || message.includes("account locked");
+}
+
+function shouldForceLoginFromAxiosError(error) {
+  return error?.response?.status === 403 && isAccountLockedPayload(error.response?.data);
+}
+
+async function shouldForceLoginFromFetchResponse(response) {
+  if (response?.status !== 403) return false;
+
+  try {
+    const contentType = response.headers?.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return isAccountLockedPayload(await response.clone().json());
+    }
+    return isAccountLockedPayload({ message: await response.clone().text() });
+  } catch {
+    return false;
+  }
+}
+
 let refreshingPromise = null;
 
 const gatewayClient = axios.create({
@@ -128,6 +151,11 @@ gatewayClient.interceptors.response.use(
   async (error) => {
     const originalConfig = error?.config;
     const status = error?.response?.status;
+
+    if (shouldForceLoginFromAxiosError(error)) {
+      clearAuthAndRedirect();
+      throw normalizeAxiosError(error);
+    }
 
     if (!originalConfig || status !== 401) {
       throw normalizeAxiosError(error);
@@ -269,6 +297,10 @@ async function fetchWithAuthRefresh(url, {
     credentials,
   });
 
+  if (await shouldForceLoginFromFetchResponse(response)) {
+    clearAuthAndRedirect();
+  }
+
   if (response.status === 401 && withAuth && retryOn401) {
     try {
       const newAccessToken = await refreshAccessToken();
@@ -285,6 +317,10 @@ async function fetchWithAuthRefresh(url, {
         body: preparedBody,
         credentials,
       });
+
+      if (await shouldForceLoginFromFetchResponse(response)) {
+        clearAuthAndRedirect();
+      }
     } catch (error) {
       clearAuthAndRedirect();
       throw normalizeAxiosError(error);

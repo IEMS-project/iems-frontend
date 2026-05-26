@@ -12,11 +12,6 @@ export const projectService = {
     return [];
   },
 
-  async getAllProjects() {
-    const data = await request(`${BASE}/all`);
-    return data?.data || data || [];
-  },
-
   async getProjectsTable() {
     const data = await request(`${BASE}/table`);
     return data?.data || data || [];
@@ -48,14 +43,6 @@ export const projectService = {
       method: "DELETE",
     });
     return data?.data || data;
-  },
-
-  async getProjectsByIds(ids) {
-    const data = await request(`${BASE}/by-ids`, {
-      method: "POST",
-      body: { ids },
-    });
-    return data?.data || data || [];
   },
 
   // ── Members ──────────────────────────────────────────────────
@@ -95,11 +82,11 @@ export const projectService = {
     return data?.data || data;
   },
 
-  async updateMemberStatus(projectId, userId, status) {
-    const data = await request(`${BASE}/${projectId}/members/${userId}/status`, {
-      method: "PATCH",
-      body: { status },
-    });
+  async updateMemberStatus(projectId, accountId, status) {
+    const data = await request(
+      `${BASE}/${projectId}/members/${accountId}/status?status=${encodeURIComponent(status)}`,
+      { method: "PATCH" }
+    );
     return data?.data || data;
   },
 
@@ -166,14 +153,6 @@ export const projectService = {
   async getAllPermissions(projectId) {
     const data = await request(`${BASE}/${projectId}/roles/permissions/all`);
     return data?.data || data || [];
-  },
-
-  async createPermission(projectId, payload) {
-    const data = await request(`${BASE}/${projectId}/roles/permissions`, {
-      method: "POST",
-      body: payload,
-    });
-    return data?.data || data;
   },
 
   async getRolePermissions(projectId, roleId) {
@@ -277,8 +256,4 @@ export const projectService = {
     return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
   },
 
-  async getIssueActivities(projectId, issueId) {
-    const data = await request(`${BASE}/${projectId}/activities/issues/${issueId}`);
-    return data?.data || data || [];
-  },
 };

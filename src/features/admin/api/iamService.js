@@ -5,12 +5,31 @@ export const AVAILABLE_ROLES = ["ADMIN", "USER"];
 
 export const iamService = {
   // Note: Role management endpoints removed - now using UserRole enum
-  // Available roles: ADMIN, USER, MANAGER
+  // Available roles: ADMIN, USER
 
   // Accounts & user access
   async getAccounts() {
     const data = await request("/iam-service/api/accounts");
     return data?.data || data || [];
+  },
+
+  async getAdminAccounts({ page = 0, size = 20, q = "" } = {}) {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("size", String(size));
+    if (q) params.set("q", q);
+
+    const data = await request(`/iam-service/api/accounts/_admin?${params.toString()}`);
+    const pageData = data?.data || data || {};
+    return {
+      items: Array.isArray(pageData.content) ? pageData.content : [],
+      page: Number.isInteger(pageData.number) ? pageData.number : page,
+      size: Number.isInteger(pageData.size) ? pageData.size : size,
+      totalPages: Number.isInteger(pageData.totalPages) ? pageData.totalPages : 0,
+      totalElements: Number.isInteger(pageData.totalElements) ? pageData.totalElements : 0,
+      hasPrevious: pageData.first === false,
+      hasNext: pageData.last === false,
+    };
   },
 
   async getAccountById(id) {
@@ -42,18 +61,18 @@ export const iamService = {
     return data?.data || data;
   },
 
-  async resetAccountPassword(userId, newPassword) {
-    const data = await request(`/iam-service/api/accounts/${userId}/password`, {
-      method: "PUT",
-      body: { newPassword },
-    });
-    return data?.data || data;
-  },
-
   // User profile management
   async getUserByAccountId(accountId) {
     const data = await request(`/iam-service/users/by-account/${accountId}`);
     return data?.data || null;
+  },
+
+  async getUsersByAccountIds(accountIds) {
+    const data = await request(`/iam-service/users/by-account-ids`, {
+      method: "POST",
+      body: { accountIds },
+    });
+    return data?.data || [];
   },
 
   async getUserById(userId) {
@@ -92,15 +111,6 @@ export const iamService = {
   async downgradeAccountToFree(accountId) {
     const data = await request(`/iam-service/api/accounts/${accountId}/downgrade`, {
       method: "POST",
-    });
-    return data?.data || data;
-  },
-
-  /** Current user: upgrade own account to Premium */
-  async upgradeMyAccount(durationDays) {
-    const data = await request("/iam-service/api/accounts/me/upgrade", {
-      method: "POST",
-      body: { durationDays },
     });
     return data?.data || data;
   },

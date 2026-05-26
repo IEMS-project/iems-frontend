@@ -40,10 +40,28 @@ function initForm(issue) {
   };
 }
 
-export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDelete, targetCommentId }) {
+export default function IssueDetailModal({
+  open,
+  onClose,
+  issue,
+  onUpdate,
+  onDelete,
+  targetCommentId,
+  onOptimisticUpdate,
+  onRollbackUpdate,
+}) {
   const { t } = useTranslation();
   const { projectId } = useParams();
-  const { issueTypes, issuePriorities, workflowStatuses, members, sprints, refreshIssues } = useProject();
+  const {
+    issueTypes,
+    issuePriorities,
+    workflowStatuses,
+    members,
+    sprints,
+    refreshIssues,
+    updateIssueInCache,
+    rollbackIssueInCache,
+  } = useProject();
 
   const [form, setForm] = useState(() => initForm(issue));
   const [saving, setSaving] = useState(false);
@@ -107,31 +125,50 @@ export default function IssueDetailModal({ open, onClose, issue, onUpdate, onDel
     const dueDateError = validateDates({ startDate: form.dueDate, createdAt: issue?.createdAt });
     if (dueDateError) { toast.warning(dueDateError); return; }
 
+    const patch = {};
+    if (form.title !== (issue.title || "")) patch.title = form.title;
+    if (form.description !== (issue.description || "")) patch.description = form.description || null;
+    if (form.issueTypeId !== (issue.issueTypeId || "")) patch.issueTypeId = form.issueTypeId;
+    if (form.statusId !== (issue.statusId || "")) patch.statusId = form.statusId;
+    if (form.priorityId !== (issue.priorityId || "")) patch.priorityId = form.priorityId || null;
+    if (String(form.assigneeId || "") !== String(initialAssigneeId || "")) patch.assigneeId = form.assigneeId || null;
+    if (String(form.storyPoints) !== String(issue.storyPoints ?? "")) {
+      patch.storyPoints = form.storyPoints === "" ? null : parseInt(form.storyPoints, 10);
+    }
+    if (form.dueDate !== (issue.dueDate || "")) patch.dueDate = form.dueDate || null;
+
+    const nextSprintId = form.sprintId || null;
+    const sprintChanged = String(nextSprintId || "") !== String(issue.sprintId || "");
+    const optimisticIssue = { ...issue, ...patch, sprintId: nextSprintId };
+    const previousIssue = issue;
+
     setSaving(true);
+    updateIssueInCache(optimisticIssue);
+    onOptimisticUpdate?.(optimisticIssue);
+    setForm(initForm(optimisticIssue));
     try {
-      const patch = {};
-      if (form.title !== (issue.title || "")) patch.title = form.title;
-      if (form.description !== (issue.description || "")) patch.description = form.description || null;
-      if (form.issueTypeId !== (issue.issueTypeId || "")) patch.issueTypeId = form.issueTypeId;
-      if (form.statusId !== (issue.statusId || "")) patch.statusId = form.statusId;
-      if (form.priorityId !== (issue.priorityId || "")) patch.priorityId = form.priorityId || null;
-      if (String(form.assigneeId || "") !== String(initialAssigneeId || "")) patch.assigneeId = form.assigneeId || null;
-      if (String(form.storyPoints) !== String(issue.storyPoints ?? "")) {
-        patch.storyPoints = form.storyPoints === "" ? null : parseInt(form.storyPoints, 10);
+
+      let savedIssue = optimisticIssue;
+      if (Object.keys(patch).length > 0) {
+        savedIssue = await issueService.updateIssue(projectId, issue.id, patch);
+        updateIssueInCache({ ...optimisticIssue, ...savedIssue });
       }
-      if (form.dueDate !== (issue.dueDate || "")) patch.dueDate = form.dueDate || null;
 
-      if (Object.keys(patch).length > 0) await issueService.updateIssue(projectId, issue.id, patch);
-
-      if (form.sprintId !== (issue.sprintId || "")) {
-        form.sprintId ? await issueService.moveToSprint(projectId, issue.id, form.sprintId)
+      if (sprintChanged) {
+        const movedIssue = form.sprintId ? await issueService.moveToSprint(projectId, issue.id, form.sprintId)
           : await issueService.removeFromSprint(projectId, issue.id);
+        updateIssueInCache({ ...savedIssue, ...movedIssue, sprintId: nextSprintId });
       }
       toast.success("Issue updated");
-      await refreshIssues();
       setRefreshKey(k => k + 1);
       onUpdate?.();
-    } catch (e) { toast.error(e?.message || "Error saving"); }
+    } catch (e) {
+      rollbackIssueInCache(previousIssue);
+      onRollbackUpdate?.(previousIssue);
+      setForm(initForm(previousIssue));
+      toast.error(e?.message || "Error saving");
+      refreshIssues();
+    }
     finally { setSaving(false); }
   };
 

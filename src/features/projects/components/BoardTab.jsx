@@ -825,6 +825,18 @@ export default function BoardTab() {
         onClose={closeSelectedIssue}
         issue={selectedIssue}
         targetCommentId={searchParams.get("commentId")}
+        onOptimisticUpdate={(updatedIssue) => {
+          setSelectedIssue(updatedIssue);
+          setSprintIssues((prev) => prev.map((item) => (
+            item.id === updatedIssue.id ? { ...item, ...updatedIssue } : item
+          )));
+        }}
+        onRollbackUpdate={(previousIssue) => {
+          setSelectedIssue(previousIssue);
+          setSprintIssues((prev) => prev.map((item) => (
+            item.id === previousIssue.id ? previousIssue : item
+          )));
+        }}
         onUpdate={() => { closeSelectedIssue(); loadSprintIssues(); }}
       />
       <CreateIssueModal

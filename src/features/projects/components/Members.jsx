@@ -12,7 +12,7 @@ import { projectService } from "@/features/projects/api/projectService";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { userService } from "@/features/profile/api/userService";
 import { toast } from "sonner";
-import { Shield, Search, UserPlus, ChevronRight } from "lucide-react";
+import { Shield, Search, UserPlus, ChevronRight, UserCheck, UserX } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const PERMISSION_GROUPS = [
@@ -339,6 +339,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
     const [editingRole, setEditingRole] = useState(false);
     const [selectedRoleId, setSelectedRoleId] = useState(member.roleId || "");
     const [savingRole, setSavingRole] = useState(false);
+    const [savingStatus, setSavingStatus] = useState(false);
 
     const [rolePerms, setRolePerms] = useState(null); // Set of role perms
     const [directPerms, setDirectPerms] = useState(null); // { granted: Set, denied: Set }
@@ -387,6 +388,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
     };
 
     const isEffective = (code, currentDraft = draftDirectPerms) => {
+        if (member.status !== "ACTIVE") return false;
         const s = getPermState(code, currentDraft);
         return s === "role" || s === "granted";
     };
@@ -505,8 +507,24 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
         }
     };
 
+    const handleStatusChange = async () => {
+        const nextStatus = member.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+        setSavingStatus(true);
+        try {
+            await projectService.updateMemberStatus(projectId, member.userId, nextStatus);
+            await onRefresh();
+            toast.success(nextStatus === "ACTIVE" ? "Member activated" : "Member deactivated");
+            onClose();
+        } catch (e) {
+            toast.error(e?.message || "Failed to update member status");
+        } finally {
+            setSavingStatus(false);
+        }
+    };
+
     const matchedRole = roles.find(r => r.id === member.roleId);
     const isAdminRoleMember = Boolean(matchedRole?.isDefault);
+    const isInactiveMember = member.status !== "ACTIVE";
     const currentRoleName = member.roleName || member.role ||
         matchedRole?.roleName || matchedRole?.name || null;
 
@@ -533,7 +551,23 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                 </div>
             }
             footer={
-                <div className="flex justify-end">
+                <div className="flex justify-between gap-2">
+                    <Button
+                        variant={isInactiveMember ? "secondary" : "ghost"}
+                        onClick={handleStatusChange}
+                        disabled={savingStatus}
+                    >
+                        {isInactiveMember ? (
+                            <UserCheck className="w-4 h-4 mr-1.5" />
+                        ) : (
+                            <UserX className="w-4 h-4 mr-1.5 text-red-500" />
+                        )}
+                        {savingStatus
+                            ? "Saving..."
+                            : isInactiveMember
+                                ? "Activate"
+                                : "Deactivate"}
+                    </Button>
                     <Button variant="secondary" onClick={onClose}>Close</Button>
                 </div>
             }
@@ -594,6 +628,12 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                         </div>
                     )}
 
+                    {isInactiveMember && (
+                        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                            This member is inactive, so they have no effective project permissions until reactivated.
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-end gap-5 text-xs text-muted-foreground mb-4">
                         <div className="flex items-center gap-4">
                             {(() => {
@@ -615,10 +655,10 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                                     </div>
                                 ) : null;
                             })()}
-                            <label className={`flex items-center gap-2 cursor-pointer select-none ${isAdminRoleMember ? "opacity-50 pointer-events-none" : ""}`}>
+                            <label className={`flex items-center gap-2 cursor-pointer select-none ${(isAdminRoleMember || isInactiveMember) ? "opacity-50 pointer-events-none" : ""}`}>
                                 <Checkbox
                                     checked={PERMISSION_GROUPS.every(g => g.perms.every(p => isEffective(p.code, draftDirectPerms)))}
-                                    disabled={isAdminRoleMember || savingPerms || loadingPerms}
+                                    disabled={isAdminRoleMember || isInactiveMember || savingPerms || loadingPerms}
                                     onChange={(e) => handleTogglePermAll(e.target.checked)}
                                 />
                                 <span className="font-semibold text-foreground uppercase tracking-wide">Chọn tất cả</span>
@@ -648,7 +688,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                                         <div className="flex items-center gap-2 mb-2 cursor-pointer select-none">
                                             <Checkbox
                                                 checked={isGroupChecked ? true : isGroupIndeterminate ? "indeterminate" : false}
-                                                disabled={isAdminRoleMember || savingPerms}
+                                                disabled={isAdminRoleMember || isInactiveMember || savingPerms}
                                                 onChange={(e) => handleTogglePermGroup(perms, e.target.checked)}
                                             />
                                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0 leading-none">
@@ -658,7 +698,7 @@ function MemberDetailModal({ member, roles, projectId, onRefresh, onClose }) {
                                         <div className="space-y-2 ml-5">
                                             {perms.map(({ code, label }) => {
                                                 const state = getPermState(code, draftDirectPerms);
-                                                const isLocked = isAdminRoleMember || savingPerms;
+                                                const isLocked = isAdminRoleMember || isInactiveMember || savingPerms;
 
                                                 let badge = null;
 

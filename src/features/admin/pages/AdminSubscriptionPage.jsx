@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BarChart3, CreditCard, Crown, Megaphone, RefreshCw, Shield, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,17 +38,6 @@ function fromDateInput(value) {
   return value ? new Date(value).toISOString() : null;
 }
 
-function SectionHeader({ icon: Icon, title, action }) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold">{title}</h2>
-      </div>
-      {action}
-    </div>
-  );
-}
 
 const PLAN_ORDER = ["week", "month", "year"];
 const PLAN_LABELS = {
@@ -527,7 +517,6 @@ function LimitsTab() {
 }
 
 export default function AdminSubscriptionPage() {
-  const [tab, setTab] = useState("plans");
   const tabs = useMemo(() => [
     { key: "accounts", label: "Accounts", icon: Shield },
     { key: "plans", label: "Plans", icon: Crown },
@@ -536,23 +525,44 @@ export default function AdminSubscriptionPage() {
     { key: "promotions", label: "Promote Area", icon: Megaphone },
     { key: "analytics", label: "Analytics", icon: BarChart3 },
   ], []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab") || "accounts";
+  const tab = tabs.some((item) => item.key === requestedTab) ? requestedTab : "accounts";
   const active = tabs.find((item) => item.key === tab) || tabs[1];
 
+  const handleTabChange = (nextTab) => {
+    setSearchParams(nextTab === "accounts" ? {} : { tab: nextTab });
+  };
+
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background">
-      <SectionHeader icon={active.icon} title="Admin Subscription Center" />
-      <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2">
-        {tabs.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button key={item.key} onClick={() => setTab(item.key)} className={cn("inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium", tab === item.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          );
-        })}
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-background">
+      <div className="shrink-0 overflow-hidden border-b border-border bg-background z-10">
+
+        <div className="overflow-hidden border-t border-border/30 bg-muted/5 px-6">
+          <nav className="flex items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Admin tabs">
+            {tabs.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => handleTabChange(item.key)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-all",
+                    tab === item.key
+                      ? "border-blue-500 bg-blue-50/40 font-semibold text-foreground dark:bg-blue-950/10 dark:text-blue-400"
+                      : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {tab === "accounts" && (
           <div className="p-4">
             <Suspense fallback={<div className="text-sm text-muted-foreground">Loading accounts...</div>}>

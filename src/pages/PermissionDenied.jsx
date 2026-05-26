@@ -1,1 +1,0 @@
-export { default } from '@/features/auth/pages/PermissionDeniedPage'; export * from '@/features/auth/pages/PermissionDeniedPage';

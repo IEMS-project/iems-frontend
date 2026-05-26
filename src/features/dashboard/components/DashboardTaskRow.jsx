@@ -54,7 +54,7 @@ export default function DashboardTaskRow({ task, t }) {
             navigate(`/projects/${projectId}/backlog`);
             return;
         }
-        navigate("/tasks");
+        navigate("/projects");
     };
 
     return (

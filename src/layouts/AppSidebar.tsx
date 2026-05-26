@@ -3,8 +3,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Bot,
-  CalendarDays,
-  CreditCard,
   Crown,
   FileText,
   FolderKanban,
@@ -92,9 +90,7 @@ export function AppSidebar() {
       { title: t("sidebar.messages"), url: "/messages", icon: MessageSquare },
       { title: t("sidebar.chatbot"), url: "/chatbot", icon: Bot },
       { title: t("sidebar.documents"), url: "/documents", icon: FileText },
-      { title: t("sidebar.calendar"), url: "/calendar", icon: CalendarDays },
-      { title: t("sidebar.accessControl"), url: "/admin/access-control", icon: Shield, requiresAdmin: true },
-      { title: "Admin subscriptions", url: "/admin/subscription", icon: CreditCard, requiresAdmin: true },
+      { title: "Admin", url: "/admin", icon: Shield, requiresAdmin: true },
     ],
     [t]
   );

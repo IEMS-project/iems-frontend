@@ -1,11 +1,6 @@
 import { request } from "@/lib/api";
 
 export const userService = {
-  async getAllUsers() {
-    const data = await request("/iam-service/users");
-    return data?.data || data || [];
-  },
-
   async getMyProfile() {
     const data = await request("/iam-service/users/me");
     return data?.data || data || null;
@@ -123,13 +118,6 @@ export const userService = {
     const data = await request(`/iam-service/users/${userId}`, {
       method: "PUT",
       body: payload,
-    });
-    return data?.data || data;
-  },
-
-  async deleteUser(userId) {
-    const data = await request(`/iam-service/users/${userId}`, {
-      method: "DELETE",
     });
     return data?.data || data;
   },

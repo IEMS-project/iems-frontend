@@ -12,20 +12,21 @@ import { projectService } from "@/features/projects/api/projectService";
 import { userService } from "@/features/profile/api/userService";
 import { useAuth } from "@/context/AuthContext";
 import { ProjectProvider, useProject } from "@/features/projects/context/ProjectContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 import Skeleton from "@/components/ui/Skeleton";
 import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
-import { 
-  Pencil, LayoutDashboard, Layers, Kanban, CheckSquare, Bot, CalendarDays, 
-  LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical 
+import {
+    Pencil, LayoutDashboard, Layers, Kanban, CheckSquare, Bot, CalendarDays,
+    LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  DndContext, PointerSensor, useSensor, useSensors, closestCenter,
+    DndContext, PointerSensor, useSensor, useSensors, closestCenter,
 } from "@dnd-kit/core";
 import {
-  SortableContext, useSortable,
-  horizontalListSortingStrategy, arrayMove,
+    SortableContext, useSortable,
+    horizontalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
@@ -46,52 +47,67 @@ const DEFAULT_TABS = [
 ];
 
 const tabIcons = {
-  overview: LayoutDashboard,
-  backlog: Layers,
-  board: Kanban,
-  tasks: CheckSquare,
-  agent: Bot,
-  timeline: CalendarDays,
-  burndown: LineChart,
-  sprints: Repeat,
-  members: Users,
-  settings: Settings,
-  code: GitBranch,
-  documents: FileText,
+    overview: LayoutDashboard,
+    backlog: Layers,
+    board: Kanban,
+    tasks: CheckSquare,
+    agent: Bot,
+    timeline: CalendarDays,
+    burndown: LineChart,
+    sprints: Repeat,
+    members: Users,
+    settings: Settings,
+    code: GitBranch,
+    documents: FileText,
+};
+
+const tabTitleMap = {
+    overview: "Overview",
+    backlog: "Backlog",
+    board: "Board",
+    tasks: "Issues",
+    agent: "AI Assistant",
+    timeline: "Timeline",
+    burndown: "Burndown",
+    sprints: "Sprints",
+    members: "Members",
+    settings: "Settings",
+    code: "Code",
+    documents: "Documents",
 };
 
 // ── Draggable/Reorderable tab component ──────────────────────────────────────────
 function SortableTab({ tab, isActive, labelText, onClick }) {
-  const {
-    attributes, listeners, setNodeRef, transform, transition, isDragging
-  } = useSortable({ id: tab.id });
+    const {
+        attributes, listeners, setNodeRef, transform, transition, isDragging
+    } = useSortable({ id: tab.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
 
-  const IconComponent = tabIcons[tab.id];
+    const IconComponent = tabIcons[tab.id];
 
-  return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      onClick={onClick}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        "whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-all flex items-center gap-2 cursor-pointer select-none",
-        isActive
-          ? "border-blue-500 text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/40 dark:bg-blue-950/10"
-          : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/30",
-        isDragging ? "opacity-40 scale-95 shadow-md border-blue-400 bg-background z-50" : "hover:scale-[1.01]"
-      )}
-    >
-      {IconComponent && <IconComponent className="w-4 h-4 shrink-0" />}
-      {labelText}
-    </button>
-  );
+    return (
+        <button
+            ref={setNodeRef}
+            style={style}
+            onClick={onClick}
+            {...attributes}
+            {...listeners}
+            className={cn(
+                "whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-all flex items-center gap-2 cursor-pointer select-none",
+                isActive
+                    ? "border-blue-500 text-white-600 dark:text-blue-400 font-semibold bg-blue-50/40 dark:bg-blue-950/10"
+                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/30",
+                isDragging ? "opacity-40 scale-95 shadow-md border-blue-400 bg-background z-50" : "hover:scale-[1.01]"
+            )}
+        >
+            {IconComponent && <IconComponent className="w-4 h-4 shrink-0" />}
+            {labelText}
+        </button>
+    );
 }
 
 function ProjectDetailLayoutContent() {
@@ -185,6 +201,11 @@ function ProjectDetailLayoutContent() {
         return "overview";
     }, [location.pathname]);
 
+    const projectTitle = projectData?.name
+        ? `${projectData.name} - ${tabTitleMap[currentTab] || "Project"}`
+        : `Project - ${tabTitleMap[currentTab] || "Project"}`;
+    useDocumentTitle(projectTitle);
+
     const handleTabClick = (tabPath) => {
         navigate(`/projects/${projectId}/${tabPath}`);
     };
@@ -252,10 +273,7 @@ function ProjectDetailLayoutContent() {
                 {/* Row 1: Project Info */}
                 <div className="flex items-center justify-between px-6 pt-4 pb-2">
                     <div className="flex flex-col gap-1 min-w-0">
-                        {/* Project Category / Breadcrumb */}
-                        <div className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider select-none">
-                            {t("projects.projectDetail", "Projects")} / {projectData?.name || "..."}
-                        </div>
+
                         {loading && !projectData ? (
                             <div className="flex items-center gap-3 min-w-0 mt-1">
                                 <Skeleton className="h-7 w-48" />

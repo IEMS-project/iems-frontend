@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
-import { BarChart3, Bot, CalendarDays, FileText, FolderKanban, MessageSquare, Shield, X } from "lucide-react";
+import { BarChart3, Bot, FileText, FolderKanban, MessageSquare, Shield, X } from "lucide-react";
 
 const mobileNavItems = [
-    { to: "/dashboard", label: "Bảng điều khiển", icon: BarChart3 },
-    { to: "/projects", label: "Dự án", icon: FolderKanban },
-    { to: "/messages", label: "Tin nhắn", icon: MessageSquare },
-    { to: "/documents", label: "Tài liệu", icon: FileText },
-    { to: "/chatbot", label: "Trợ lý ảo", icon: Bot },
-    { to: "/calendar", label: "Lịch", icon: CalendarDays },
-    { to: "/admin/access-control", label: "Phân quyền", icon: Shield },
+    { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { to: "/projects", label: "Projects", icon: FolderKanban },
+    { to: "/messages", label: "Messages", icon: MessageSquare },
+    { to: "/documents", label: "Documents", icon: FileText },
+    { to: "/chatbot", label: "AI Assistant", icon: Bot },
+    { to: "/admin", label: "Admin", icon: Shield },
 ];
 
 export default function MobileNavDrawer({ open, onClose }) {
@@ -27,7 +26,7 @@ export default function MobileNavDrawer({ open, onClose }) {
                     </div>
                     <button
                         type="button"
-                        aria-label="Đóng điều hướng"
+                        aria-label="Close navigation"
                         onClick={onClose}
                         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                     >

@@ -16,12 +16,9 @@ export default function Breadcrumb() {
     const routeKeyMap = {
       "/dashboard": "breadcrumb.dashboard",
       "/projects": "breadcrumb.projects",
-      "/tasks": "breadcrumb.tasks",
-      "/calendar": "breadcrumb.calendar",
       "/messages": "breadcrumb.messages",
       "/chatbot": "breadcrumb.chatbot",
       "/documents": "breadcrumb.documents",
-      "/departments": "breadcrumb.departments",
       "/profile": "breadcrumb.profile",
       "/notifications": "breadcrumb.notifications",
       "/admin": "breadcrumb.admin",
@@ -43,10 +40,8 @@ export default function Breadcrumb() {
       "settings": "breadcrumb.settings",
       "documents": "breadcrumb.documents",
       "messages": "breadcrumb.messages",
-      "departments": "breadcrumb.departments",
       "profile": "breadcrumb.profile",
       "notifications": "breadcrumb.notifications",
-      "calendar": "breadcrumb.calendar",
       "access-control": "breadcrumb.accessControl",
       "access": "breadcrumb.accessControl",
     };
@@ -120,8 +115,6 @@ export default function Breadcrumb() {
         const paramKey = Object.keys(params).find(key => params[key] === segment);
         if (paramKey === "projectId") {
           breadcrumbs.push({ label: t('breadcrumb.projectDetail'), to: null });
-        } else if (paramKey === "departmentId") {
-          breadcrumbs.push({ label: t('breadcrumb.departmentDetail'), to: null });
         } else {
           breadcrumbs.push({ label: t('breadcrumb.detail'), to: null });
         }

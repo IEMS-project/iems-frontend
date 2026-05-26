@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
-import Skeleton from "@/components/ui/Skeleton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useProject } from "@/features/projects/context/ProjectContext";
@@ -13,17 +12,19 @@ import { workflowService } from "@/features/projects/api/workflowService";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import {
-  Plus, Pencil, Trash2, Settings2, Layers, Flag, GitBranch,
-  ArrowRight, Shield, ChevronRight
+  Plus, Pencil, Trash2, Layers, Flag, GitBranch,
+  ArrowRight, Shield, ChevronRight, GripVertical
 } from "lucide-react";
+import {
+  DndContext, PointerSensor, closestCenter, useSensor, useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export default function SettingsTab() {
   const { t } = useTranslation();
-  const { projectId } = useParams();
-  const {
-    workflows, workflowStatuses, issueTypes, issuePriorities, roles,
-    workflowsLoading, refreshWorkflows, refreshIssueTypes, refreshIssuePriorities, refreshRoles
-  } = useProject();
 
   const [activeSection, setActiveSection] = useState("workflow");
 
@@ -35,10 +36,10 @@ export default function SettingsTab() {
   ];
 
   return (
-    <div className="flex gap-6 min-h-[500px]">
+    <div className="flex min-h-[500px] flex-col gap-4 lg:flex-row lg:gap-6">
       {/* Sidebar */}
-      <div className="w-48 shrink-0">
-        <nav className="space-y-1">
+      <div className="shrink-0 lg:w-48">
+        <nav className="flex gap-1 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
           {sections.map(section => {
             const Icon = section.icon;
             const isActive = activeSection === section.id;
@@ -46,7 +47,7 @@ export default function SettingsTab() {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
+                className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors lg:w-full
                   ${isActive
                     ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -61,7 +62,7 @@ export default function SettingsTab() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         {activeSection === "workflow" && <WorkflowSection />}
         {activeSection === "issueTypes" && <IssueTypesSection />}
         {activeSection === "priorities" && <PrioritiesSection />}
@@ -75,22 +76,32 @@ export default function SettingsTab() {
 function WorkflowSection() {
   const { t } = useTranslation();
   const { projectId } = useParams();
-  const { workflows, workflowStatuses, refreshWorkflows } = useProject();
+  const { workflows, workflowStatuses, workflowsLoading, refreshWorkflows } = useProject();
+  const [orderedStatuses, setOrderedStatuses] = useState([]);
   const [showAddStatus, setShowAddStatus] = useState(false);
   const [statusForm, setStatusForm] = useState({ name: "", category: "IN_PROGRESS", color: "#3b82f6", sortOrder: 0 });
   const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   // Delete confirmation state
   const [deletingStatusId, setDeletingStatusId] = useState(null);
 
   const defaultWf = workflows.find(w => w.isDefault) || workflows[0];
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  useEffect(() => {
+    setOrderedStatuses(workflowStatuses);
+  }, [workflowStatuses]);
 
   const handleAddStatus = async () => {
-    if (!statusForm.name.trim() || !defaultWf) return;
+    const statusName = statusForm.name.trim();
+    if (!statusName || !defaultWf || saving) return;
     try {
       setSaving(true);
       await workflowService.createStatus(projectId, defaultWf.id, {
-        name: statusForm.name.trim(),
+        name: statusName,
         category: statusForm.category,
         color: statusForm.color,
         sortOrder: workflowStatuses.length + 1,
@@ -108,8 +119,8 @@ function WorkflowSection() {
 
   const confirmDeleteStatus = async () => {
     if (!defaultWf || !deletingStatusId) return;
-    const idx = workflowStatuses.findIndex(s => s.id === deletingStatusId);
-    const targetStatus = idx > 0 ? workflowStatuses[idx - 1] : workflowStatuses[idx + 1];
+    const idx = orderedStatuses.findIndex(s => s.id === deletingStatusId);
+    const targetStatus = idx > 0 ? orderedStatuses[idx - 1] : orderedStatuses[idx + 1];
     try {
       if (targetStatus) {
         const allIssues = await issueService.getIssues(projectId);
@@ -128,56 +139,100 @@ function WorkflowSection() {
     }
   };
 
-  const deletingStatus = workflowStatuses.find(s => s.id === deletingStatusId);
-  const deletingIdx = workflowStatuses.findIndex(s => s.id === deletingStatusId);
-  const deleteTargetStatus = deletingIdx > 0 ? workflowStatuses[deletingIdx - 1] : workflowStatuses[deletingIdx + 1];
+  const handleStatusDragEnd = async ({ active, over }) => {
+    if (!defaultWf || reordering || !over || active.id === over.id) return;
+
+    const oldIndex = orderedStatuses.findIndex(status => status.id === active.id);
+    const newIndex = orderedStatuses.findIndex(status => status.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const previousStatuses = orderedStatuses;
+    const nextStatuses = arrayMove(orderedStatuses, oldIndex, newIndex).map((status, index) => ({
+      ...status,
+      sortOrder: index,
+    }));
+
+    setOrderedStatuses(nextStatuses);
+    setReordering(true);
+
+    try {
+      await workflowService.syncStatuses(projectId, defaultWf.id, nextStatuses.map(status => ({
+        id: status.id,
+        name: status.name,
+        color: status.color,
+        category: status.category,
+      })));
+      toast.success(t("settings.workflowOrderSaved", "Workflow order saved"));
+      await refreshWorkflows();
+    } catch (e) {
+      setOrderedStatuses(previousStatuses);
+      toast.error(e?.message || t("settings.workflowOrderSaveFailed", "Could not save workflow order"));
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const deletingStatus = orderedStatuses.find(s => s.id === deletingStatusId);
+  const deletingIdx = orderedStatuses.findIndex(s => s.id === deletingStatusId);
+  const deleteTargetStatus = deletingIdx > 0 ? orderedStatuses[deletingIdx - 1] : orderedStatuses[deletingIdx + 1];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.workflowStatuses", "Workflow Statuses")}</h3>
-        <Button size="sm" onClick={() => setShowAddStatus(true)}>
+        <Button size="sm" onClick={() => setShowAddStatus(true)} disabled={!defaultWf || workflowsLoading}>
           <Plus className="w-4 h-4 mr-1" /> {t("settings.addStatus", "Add Status")}
         </Button>
       </div>
 
-      <div className="space-y-2">
-        {workflowStatuses.map(status => (
-          <div key={status.id} className="flex items-center gap-3 p-3 rounded-md border border-border bg-card">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: status.color || "#ccc" }} />
-            <span className="font-medium text-foreground flex-1">{status.name}</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{status.category}</span>
-            <span className="text-xs text-muted-foreground">#{status.sortOrder}</span>
-            {workflowStatuses.length > 1 && (
-              <Button size="sm" variant="ghost" onClick={() => setDeletingStatusId(status.id)}>
-                <Trash2 className="w-3.5 h-3.5 text-red-500" />
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
+      {workflowsLoading ? (
+        <div className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+          {t("ui.common.loading", "Loading...")}
+        </div>
+      ) : orderedStatuses.length === 0 ? (
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          {t("settings.noWorkflowStatuses", "No workflow statuses yet. Add one to start configuring the board.")}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStatusDragEnd}>
+          <SortableContext items={orderedStatuses.map(status => status.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {orderedStatuses.map((status, index) => (
+                <SortableWorkflowStatusRow
+                  key={status.id}
+                  status={status}
+                  index={index}
+                  disabled={reordering}
+                  canDelete={orderedStatuses.length > 1}
+                  onDelete={() => setDeletingStatusId(status.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
 
       {/* Transitions visualization */}
-      <div className="mt-6 p-4 rounded-md bg-muted/50 border border-border">
+      {orderedStatuses.length > 0 && <div className="mt-6 p-4 rounded-md bg-muted/50 border border-border">
         <h4 className="text-sm font-semibold text-foreground mb-2">{t("settings.flow", "Workflow Flow")}</h4>
         <div className="flex items-center gap-2 flex-wrap">
-          {workflowStatuses.map((status, idx) => (
+          {orderedStatuses.map((status, idx) => (
             <React.Fragment key={status.id}>
               <span className="px-3 py-1 rounded-md text-sm font-medium text-white" style={{ backgroundColor: status.color || "#666" }}>
                 {status.name}
               </span>
-              {idx < workflowStatuses.length - 1 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
+              {idx < orderedStatuses.length - 1 && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
             </React.Fragment>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Add Status Modal */}
       <Modal open={showAddStatus} onClose={() => setShowAddStatus(false)} title={t("settings.addStatus", "Add Status")}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowAddStatus(false)}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAddStatus} disabled={saving}>{saving ? "..." : t("ui.common.save")}</Button>
+            <Button onClick={handleAddStatus} disabled={saving || !statusForm.name.trim() || !defaultWf}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
@@ -207,6 +262,47 @@ function WorkflowSection() {
         cancelText={t("ui.common.cancel")}
         variant="destructive"
       />
+    </div>
+  );
+}
+
+function SortableWorkflowStatusRow({ status, index, disabled, canDelete, onDelete }) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: status.id, disabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 rounded-md border border-border bg-card p-3 transition-shadow ${
+        isDragging ? "z-50 shadow-lg ring-2 ring-blue-400/40" : ""
+      }`}
+    >
+      <button
+        type="button"
+        className="cursor-grab rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled}
+        aria-label="Reorder workflow status"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="w-4 h-4 rounded" style={{ backgroundColor: status.color || "#ccc" }} />
+      <span className="font-medium text-foreground flex-1">{status.name}</span>
+      <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{status.category}</span>
+      <span className="text-xs text-muted-foreground">#{index + 1}</span>
+      {canDelete && (
+        <Button size="sm" variant="ghost" onClick={onDelete} disabled={disabled}>
+          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -275,11 +371,12 @@ function IssueTypesSection() {
   const [activeIconPicker, setActiveIconPicker] = useState(null);
 
   const handleAdd = async () => {
-    if (!form.name.trim()) return;
+    const name = form.name.trim();
+    if (!name || saving) return;
     try {
       setSaving(true);
       await projectService.createIssueType(projectId, {
-        name: form.name.trim(),
+        name,
         description: form.description,
         iconUrl: form.iconUrl || null,
       });
@@ -301,7 +398,7 @@ function IssueTypesSection() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editForm.name.trim()) return;
+    if (!editForm.name.trim() || saving) return;
     // Skip API call if nothing changed
     const trimmedName = editForm.name.trim();
     if (
@@ -349,7 +446,11 @@ function IssueTypesSection() {
         </Button>
       </div>
       <div className="space-y-2">
-        {issueTypes.map(type => (
+        {issueTypes.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+            {t("settings.noIssueTypes", "No issue types yet.")}
+          </div>
+        ) : issueTypes.map(type => (
           <div key={type.id} className="rounded-md border border-border bg-card">
             {editingId === type.id ? (
               <div className="flex items-center gap-2 p-3">
@@ -406,7 +507,7 @@ function IssueTypesSection() {
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => { setShowAdd(false); setActiveIconPicker(null); }}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={saving}>{saving ? "..." : t("ui.common.save")}</Button>
+            <Button onClick={handleAdd} disabled={saving || !form.name.trim()}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
@@ -438,10 +539,11 @@ function PrioritiesSection() {
   const [saving, setSaving] = useState(false);
 
   const handleAdd = async () => {
-    if (!form.name.trim()) return;
+    const name = form.name.trim();
+    if (!name || saving) return;
     try {
       setSaving(true);
-      await projectService.createIssuePriority(projectId, { name: form.name.trim(), color: form.color });
+      await projectService.createIssuePriority(projectId, { name, color: form.color });
       toast.success(t("settings.priorityAdded", "Priority added"));
       await refreshIssuePriorities();
       setShowAdd(false);
@@ -467,7 +569,11 @@ function PrioritiesSection() {
         </Button>
       </div>
       <div className="space-y-2">
-        {issuePriorities.map(p => (
+        {issuePriorities.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+            {t("settings.noPriorities", "No priorities yet.")}
+          </div>
+        ) : issuePriorities.map(p => (
           <div key={p.id} className="flex items-center gap-3 p-3 rounded-md border border-border bg-card">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: p.color || "#ccc" }} />
             <span className="font-medium text-foreground flex-1">{p.name}</span>
@@ -481,7 +587,7 @@ function PrioritiesSection() {
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowAdd(false)}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={saving}>{t("ui.common.save")}</Button>
+            <Button onClick={handleAdd} disabled={saving || !form.name.trim()}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
@@ -707,7 +813,6 @@ function RolesSection() {
       <div className="space-y-2">
         {roles.map(role => {
           const isExpanded = expandedRoleId === role.id;
-          const perms = rolePermissions[role.id] || new Set();
           const isLoadingPerms = loadingPerms.has(role.id);
           return (
             <div key={role.id} className="rounded-md border border-border bg-card overflow-hidden">
@@ -821,13 +926,18 @@ function RolesSection() {
             </div>
           );
         })}
+        {roles.length === 0 && (
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+            {t("settings.noRoles", "No project roles yet.")}
+          </div>
+        )}
       </div>
 
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title={t("settings.addRole", "Add Role")}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowAdd(false)}>{t("ui.common.cancel")}</Button>
-            <Button onClick={handleAdd} disabled={saving}>{saving ? "..." : t("ui.common.save")}</Button>
+            <Button onClick={handleAdd} disabled={saving || !form.name.trim()}>{saving ? "..." : t("ui.common.save")}</Button>
           </div>
         }
       >
