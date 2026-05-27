@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
     paths:
       - 'src/**'
       - 'public/**'
@@ -46,7 +47,7 @@ jobs:
             VITE_GITHUB_CLIENT_ID=${{ vars.VITE_GITHUB_CLIENT_ID }}
             VITE_GITHUB_REDIRECT_URI=${{ vars.VITE_GITHUB_REDIRECT_URI }}
             VITE_CLOUDINARY_CLOUD_NAME=${{ vars.VITE_CLOUDINARY_CLOUD_NAME }}
-          tags: ${{ vars.DOCKER_USERNAME }}/iems-frontend:latest,${{ vars.DOCKER_USERNAME }}/iems-frontend:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/iems-frontend:latest,${{ secrets.DOCKER_USERNAME }}/iems-frontend:${{ github.sha }}
 
   deploy:
     name: Deploy to EC2
@@ -76,7 +77,7 @@ jobs:
             mkdir -p ~/iems/frontend
 
             cat > ~/iems/frontend/.env << EOF
-            IMAGE_NAME=${{ vars.DOCKER_USERNAME }}/iems-frontend:latest
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/iems-frontend:latest
             HOST_PORT=${{ vars.FRONTEND_HOST_PORT }}
             EOF
 
