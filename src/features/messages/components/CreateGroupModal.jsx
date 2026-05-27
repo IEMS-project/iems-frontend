@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import Input from "@/components/ui/input";
+import Button from "@/components/ui/button";
 import UserSelectionPanel from "@/components/ui/UserSelectionPanel";
 import { useTranslation } from "react-i18next";
 import { textColors, cn } from '@/theme/colors';

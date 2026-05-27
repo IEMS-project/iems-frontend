@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Avatar from "@/components/ui/Avatar.jsx";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { FaPlus, FaEllipsisV, FaBell, FaBellSlash, FaTrash } from "react-icons/fa";
 import { Pin } from "lucide-react";
 import { chatService } from "@/features/messages/api/chatService";

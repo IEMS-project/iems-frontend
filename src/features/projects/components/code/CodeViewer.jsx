@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { File, Copy, Check, Code } from "lucide-react";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import "prismjs/plugins/line-numbers/prism-line-numbers.css";

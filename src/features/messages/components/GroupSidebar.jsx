@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "@/components/ui/Avatar.jsx";
 import { documentService } from "@/features/documents/api/documentService";
 import { chatService } from "@/features/messages/api/chatService";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { X, Camera, Edit, Bell, BellOff, Trash2, Pin, ChevronDown, Image as ImageIcon, FileText, Link as LinkIcon, Search, Loader2 } from "lucide-react";
 import MediaPreviewModal from "./MediaPreviewModal";
 import { toast } from "sonner";

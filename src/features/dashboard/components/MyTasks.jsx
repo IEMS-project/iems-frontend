@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useDashboard } from "@/features/dashboard/context/DashboardContext";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import SectionHeader from "@/components/ui/SectionHeader";
 import DashboardTaskRow from "@/features/dashboard/components/DashboardTaskRow";

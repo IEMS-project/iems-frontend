@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import Button from "@/components/ui/button";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
+import Input from "@/components/ui/input";
+import Textarea from "@/components/ui/textarea";
 import UserSelect from "./UserSelect";
 import { projectService } from "@/features/projects/api/projectService";
 import { userService } from "@/features/profile/api/userService";
 import { useAuth } from "@/context/AuthContext";
 import { ProjectProvider, useProject } from "@/features/projects/context/ProjectContext";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
 import {

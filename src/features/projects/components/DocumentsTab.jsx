@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
-import { Card } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import { Card } from "@/components/ui/card";
+import Button from "@/components/ui/button";
 import {
     FileText,
     Upload,

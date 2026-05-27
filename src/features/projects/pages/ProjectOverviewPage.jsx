@@ -9,9 +9,9 @@ import {
     PieChart,
     Users,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Avatar from "@/components/ui/Avatar";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { buildDonutSlices } from "@/components/ui/donutUtils";
 import { projectService } from "@/features/projects/api/projectService";
 import { useProject } from "@/features/projects/context/ProjectContext";

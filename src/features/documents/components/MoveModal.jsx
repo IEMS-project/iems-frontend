@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { documentService } from "@/features/documents/api/documentService";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { colors, textColors, bgColors, borderColors, buttonColors, statusColors, cn } from "@/theme/colors";
 

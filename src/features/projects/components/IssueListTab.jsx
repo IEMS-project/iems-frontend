@@ -9,7 +9,7 @@ import {
 import { useProject } from "@/features/projects/context/ProjectContext";
 import IssueDetailModal from "./IssueDetailModal";
 import CreateIssueModal from "./CreateIssueModal";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import IssueDetailModal from "@/features/projects/components/IssueDetailModal";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Skeleton from "@/components/ui/Skeleton";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import Button from "@/components/ui/button";
+import Skeleton from "@/components/ui/skeleton";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";

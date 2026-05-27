@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { sprintService } from "@/features/projects/api/sprintService";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 function getPolyline(points, valueKey, width, height, minY, maxY) {
     if (!points.length) return "";

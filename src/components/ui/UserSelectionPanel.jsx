@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Avatar from "./Avatar";
-import Skeleton from "./Skeleton";
+import Skeleton from "./skeleton";
 import { textColors, bgColors, borderColors, cn } from '@/theme/colors';
 
 /**

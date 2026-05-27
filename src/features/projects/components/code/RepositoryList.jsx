@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import Button from "@/components/ui/button";
 import { Plus, Trash2, Code, LinkIcon, ExternalLink, Edit2 } from "lucide-react";
 import { githubService } from "@/features/projects/api/githubService";
 import GitHubTokenManager from "./GitHubTokenManager";

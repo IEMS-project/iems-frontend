@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { sprintService } from "@/features/projects/api/sprintService";
 import SprintBurndownChart from "@/features/projects/components/SprintBurndownChart";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 
 export default function ProjectBurndownPage() {
     const { t } = useTranslation();

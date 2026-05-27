@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaBrain, FaTrash, FaEye, FaEyeSlash, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import chatbotService from '@/features/chatbot/api/chatbotService';
-import Skeleton from '@/components/ui/Skeleton';
+import Skeleton from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { borderColors, bgColors, textColors, buttonColors } from '@/theme/colors';

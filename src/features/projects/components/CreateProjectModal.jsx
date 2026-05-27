@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
 import Modal from "@/components/ui/Modal";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import Textarea from "@/components/ui/textarea";
 import { projectService } from "@/features/projects/api/projectService";
 import { workflowService } from "@/features/projects/api/workflowService";
 import { toast } from "sonner";

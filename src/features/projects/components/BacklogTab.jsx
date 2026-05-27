@@ -6,8 +6,8 @@ import {
   PointerSensor, useSensor, useSensors,
   useDroppable, useDraggable,
 } from "@dnd-kit/core";
-import Button from "@/components/ui/Button";
-import Skeleton from "@/components/ui/Skeleton";
+import Button from "@/components/ui/button";
+import Skeleton from "@/components/ui/skeleton";
 import Avatar from "@/components/ui/Avatar";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCard";
 import CreateIssueModal from "./CreateIssueModal";

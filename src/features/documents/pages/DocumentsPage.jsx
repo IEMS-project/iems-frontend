@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import ShareModal from "@/features/documents/components/ShareModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import CreateFolderModal from "@/features/documents/components/CreateFolderModal";

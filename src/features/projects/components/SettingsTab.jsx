@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
+import Input from "@/components/ui/input";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useProject } from "@/features/projects/context/ProjectContext";

@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { issueService } from "@/features/projects/api/issueService";
 import ChildIssueRow from "./ChildIssueRow";
 import CollapsibleSection from "./CollapsibleSection";
-import Button from "@/components/ui/Button";
-import Skeleton from "@/components/ui/Skeleton";
+import Button from "@/components/ui/button";
+import Skeleton from "@/components/ui/skeleton";
 
 const IssueSubtasksSection = forwardRef(({
   projectId,

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
-import Skeleton from "@/components/ui/Skeleton";
+import Input from "@/components/ui/input";
+import Textarea from "@/components/ui/textarea";
+import Skeleton from "@/components/ui/skeleton";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { sprintService } from "@/features/projects/api/sprintService";
 import { toast } from "sonner";

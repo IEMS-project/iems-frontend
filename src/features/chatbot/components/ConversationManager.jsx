@@ -4,7 +4,7 @@ import ConversationList from './ConversationList';
 import MemoryPanel from './MemoryPanel';
 import ChatbotSettings from './ChatbotSettings';
 import chatbotService from '@/features/chatbot/api/chatbotService';
-import Skeleton from '@/components/ui/Skeleton';
+import Skeleton from '@/components/ui/skeleton';
 import { bgColors, textColors } from '@/theme/colors';
 
 const ConversationManager = ({

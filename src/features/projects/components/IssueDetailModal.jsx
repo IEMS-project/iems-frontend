@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "@/components/ui/Modal";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";

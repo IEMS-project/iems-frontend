@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatsCard from "@/components/ui/StatsCard";
 import { iamService } from "@/features/admin/api/iamService";
 import AccountsTable from "./AccountsTable";

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { chatService } from "@/features/messages/api/chatService";
 import Avatar from "@/components/ui/Avatar.jsx";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { FaTimes, FaBookmark } from "react-icons/fa";
 import { Pin } from "lucide-react";
 

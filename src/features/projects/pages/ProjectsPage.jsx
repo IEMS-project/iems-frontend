@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Button from "@/components/ui/button";
 import Modal from "@/components/ui/Modal";
-import Input from "@/components/ui/Input";
-import Textarea from "@/components/ui/Textarea";
+import Input from "@/components/ui/input";
+import Textarea from "@/components/ui/textarea";
 import {
     AlertDialog,
     AlertDialogAction,

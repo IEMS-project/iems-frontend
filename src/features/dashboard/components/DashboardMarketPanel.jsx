@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, Megaphone, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import { promotionService } from "@/features/admin/api/adminPromotionService";
 import { useDashboard } from "@/features/dashboard/context/DashboardContext";
 import DonutChart from "@/components/ui/DonutChart";

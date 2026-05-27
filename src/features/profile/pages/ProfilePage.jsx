@@ -14,12 +14,12 @@ import {
 } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import Avatar from "@/components/ui/Avatar.jsx";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import PremiumBadge from "@/components/ui/PremiumBadge";
 import { userService } from "@/features/profile/api/userService";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import ImageCropModal from "@/components/ui/ImageCropModal";
 import { cn, textColors } from "@/theme/colors";
 

@@ -4,7 +4,7 @@ import { Activity } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { projectService } from "@/features/projects/api/projectService";
 import { useDashboard } from "@/features/dashboard/context/DashboardContext";
-import Skeleton from "@/components/ui/Skeleton";
+import Skeleton from "@/components/ui/skeleton";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ActivityTimeline from "@/features/dashboard/components/ActivityTimeline";
 

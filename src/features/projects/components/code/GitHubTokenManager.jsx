@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import { Key } from "lucide-react";
 
 export default function GitHubTokenManager({ token, onSaveToken, onRemoveToken }) {

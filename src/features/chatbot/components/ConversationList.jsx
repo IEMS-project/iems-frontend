@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPlus, FaSearch, FaHistory } from 'react-icons/fa';
 import ConversationItem from './ConversationItem';
 import chatbotService from '@/features/chatbot/api/chatbotService';
-import Skeleton from '@/components/ui/Skeleton';
+import Skeleton from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { navColors, buttonColors, textColors, borderColors, statusColors, cn } from '@/theme/colors';
