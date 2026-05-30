@@ -1489,5 +1489,51 @@
     "minutesAgo": "{{count}} phút trước",
     "hoursAgo": "{{count}} giờ trước",
     "daysAgo": "{{count}} ngày trước"
+  },
+  "chatbot": {
+    "input": {
+      "placeholder": "Hỏi về dự án, công việc hoặc tài liệu... Bấm @ để chọn tài liệu",
+      "attachFile": "Đính kèm tệp",
+      "chooseEmbeddedDocument": "Chọn tài liệu đã embed",
+      "embeddedDocuments": "Tài liệu đã embed",
+      "selected": "Đã chọn",
+      "send": "Gửi",
+      "readingFile": "Đang đọc tệp...",
+      "responding": "Đang phản hồi...",
+      "removeAttachment": "Bỏ chọn {{name}}"
+    },
+    "page": {
+      "projectPrompt": "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?",
+      "generalPrompt": "Bạn dự định làm gì hôm nay?",
+      "loadingConversation": "Đang tải cuộc trò chuyện...",
+      "thinking": "AI đang suy nghĩ...",
+      "errorPrefix": "Lỗi",
+      "projectRequiredForAttachment": "Vui lòng mở chatbot trong một dự án để đính kèm tài liệu.",
+      "uploadFailed": "Không thể tải file lên chatbot.",
+      "streamError": "Xin lỗi, có lỗi xảy ra: {{error}}. Vui lòng thử lại sau."
+    },
+    "documents": {
+      "ragReady": "Tài liệu RAG ready của dự án ({{count}} đã chọn)",
+      "hide": "Ẩn",
+      "choose": "Chọn tài liệu"
+    },
+    "quickActions": {
+      "dailyPlan": {
+        "label": "Lập kế hoạch hôm nay",
+        "prompt": "Đọc các issue/task trong dự án này và lập kế hoạch làm việc hôm nay cho tôi. Ưu tiên việc quan trọng, việc gần deadline, blocker, và đưa ra thứ tự nên làm kèm lý do."
+      },
+      "riskReview": {
+        "label": "Phân tích rủi ro",
+        "prompt": "Phân tích tình hình công việc hiện tại trong dự án: task nào đang rủi ro, task nào có khả năng trễ, blocker nằm ở đâu, và đề xuất hành động tiếp theo."
+      },
+      "progressSummary": {
+        "label": "Tóm tắt tiến độ",
+        "prompt": "Tóm tắt tiến độ dự án hiện tại theo nhóm: việc đã xong, việc đang làm, việc bị kẹt, việc cần ưu tiên. Trả lời ngắn gọn nhưng đủ để báo cáo standup."
+      },
+      "nextActions": {
+        "label": "Đề xuất bước tiếp theo",
+        "prompt": "Dựa trên dữ liệu issue/task hiện tại, hãy đề xuất 5 hành động tiếp theo tôi nên làm để đẩy dự án tiến lên. Nếu có issue cụ thể, nêu issue key và lý do."
+      }
+    }
   }
 }

@@ -22,10 +22,12 @@ import DocumentsList from "@/features/documents/components/DocumentsList";
 import DocumentsGrid from "@/features/documents/components/DocumentsGrid";
 import FileDetailPanel from "@/features/documents/components/FileDetailPanel";
 import EmptyState from "@/features/documents/components/EmptyState";
+import UploadProgressPanel from "@/features/documents/components/UploadProgressPanel";
 
 export default function Documents() {
   const isMobile = useIsMobile();
   const [batchMoveModalOpen, setBatchMoveModalOpen] = React.useState(false);
+  const dragDepthRef = React.useRef(0);
   const {
     // State
     search,
@@ -65,6 +67,7 @@ export default function Documents() {
     setMoveItem,
     viewMode,
     setViewMode,
+    uploadTasks,
     sortedItems,
     currentPath,
 
@@ -78,6 +81,11 @@ export default function Documents() {
     toggleItemSelection,
     onCreateFolderConfirmed,
     onUploadFiles,
+    cancelUpload,
+    cancelAllUploads,
+    retryUpload,
+    retryFailedUploads,
+    clearFinishedUploads,
     onDrop,
     toggleFavorite,
     openShare,
@@ -98,8 +106,45 @@ export default function Documents() {
     handleEmptyTrash,
   } = useDocuments();
 
+  const hasDraggingFiles = (event) =>
+    Array.from(event.dataTransfer?.types || []).includes("Files");
+
+  const handleDragEnter = (event) => {
+    if (!hasDraggingFiles(event)) return;
+    event.preventDefault();
+    dragDepthRef.current += 1;
+    setIsDragging(true);
+  };
+
+  const handleDragOver = (event) => {
+    if (!hasDraggingFiles(event)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event) => {
+    if (!hasDraggingFiles(event)) return;
+    event.preventDefault();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (event) => {
+    dragDepthRef.current = 0;
+    onDrop(event);
+  };
+
   return (
-    <div className="flex rounded-2xl bg-[#f8fafd] p-4">
+    <div
+      className="flex rounded-2xl bg-[#f8fafd] p-4"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="border-border min-w-0 flex-1 space-y-4 rounded-2xl border bg-white p-4 shadow-sm">
         {/* Toolbar */}
         <DocumentsToolbar
@@ -142,9 +187,13 @@ export default function Documents() {
           className="flex border-t"
           onDragOver={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setIsDragging(true);
           }}
-          onDragLeave={() => setIsDragging(false)}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onDrop={onDrop}
         >
           <div
@@ -313,6 +362,15 @@ export default function Documents() {
           handleBatchMove(destinationFolderId);
           setBatchMoveModalOpen(false);
         }}
+      />
+
+      <UploadProgressPanel
+        tasks={uploadTasks}
+        onCancel={cancelUpload}
+        onCancelAll={cancelAllUploads}
+        onRetry={retryUpload}
+        onRetryFailed={retryFailedUploads}
+        onClearFinished={clearFinishedUploads}
       />
     </div>
   );

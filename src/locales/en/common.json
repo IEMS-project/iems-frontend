@@ -1558,5 +1558,51 @@
     "addRole": "Add Role",
     "roleAdded": "Role added",
     "roleDeleted": "Role deleted"
+  },
+  "chatbot": {
+    "input": {
+      "placeholder": "Ask about projects, tasks, or documents... Press @ to choose a document",
+      "attachFile": "Attach file",
+      "chooseEmbeddedDocument": "Choose embedded document",
+      "embeddedDocuments": "Embedded documents",
+      "selected": "Selected",
+      "send": "Send",
+      "readingFile": "Reading file...",
+      "responding": "Responding...",
+      "removeAttachment": "Remove {{name}}"
+    },
+    "page": {
+      "projectPrompt": "Project Agent: What should we prioritize in this project today?",
+      "generalPrompt": "What are you planning to work on today?",
+      "loadingConversation": "Loading conversation...",
+      "thinking": "AI is thinking...",
+      "errorPrefix": "Error",
+      "projectRequiredForAttachment": "Please open the chatbot inside a project to attach documents.",
+      "uploadFailed": "Could not upload the file to the chatbot.",
+      "streamError": "Sorry, something went wrong: {{error}}. Please try again."
+    },
+    "documents": {
+      "ragReady": "Project RAG-ready documents ({{count}} selected)",
+      "hide": "Hide",
+      "choose": "Choose documents"
+    },
+    "quickActions": {
+      "dailyPlan": {
+        "label": "Plan today",
+        "prompt": "Read the current project issues/tasks and create a work plan for today. Prioritize important work, near-deadline items, blockers, and explain the recommended order."
+      },
+      "riskReview": {
+        "label": "Review risks",
+        "prompt": "Analyze the current project work: which tasks are risky, which may be late, where blockers are, and what actions should happen next."
+      },
+      "progressSummary": {
+        "label": "Summarize progress",
+        "prompt": "Summarize current project progress by group: done, in progress, blocked, and priority work. Keep it concise but useful for standup."
+      },
+      "nextActions": {
+        "label": "Suggest next actions",
+        "prompt": "Based on current issue/task data, suggest 5 next actions I should take to move the project forward. Mention issue keys and reasons when available."
+      }
+    }
   }
 }

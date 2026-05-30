@@ -64,9 +64,46 @@ const CodeBlock = ({ language, children }) => {
   );
 };
 
-const ISSUE_LINE_PATTERN = /^(?:\d+\.\s*)?([A-Z]+-\d+)\s*\|\s*(.*?)\s*\|\s*status=(.*?)\s*\|\s*priority=(.*?)(?:\s*\|\s*due=([^|]+))?$/i;
+const ISSUE_LINE_PATTERN = /^(?:\d+\.\s*)?([A-Z]+-\d+)\s*\|\s*([^|]+)\s*\|(.+)$/i;
 const ISSUE_BADGE_REASON_PATTERN = /^(?:\d+\.\s*)?([A-Z]+-\d+)\s*\|\s*reason=(.+)$/i;
 const ISSUE_BADGE_KEY_PATTERN = /^(?:\d+\.\s*)?([A-Z]+-\d+)$/i;
+
+const parseIssueCardLine = (line) => {
+  const match = line.match(ISSUE_LINE_PATTERN);
+  if (!match) {
+    return null;
+  }
+
+  const meta = {};
+  String(match[3] || '')
+    .split('|')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .forEach((part) => {
+      const separatorIndex = part.indexOf('=');
+      if (separatorIndex <= 0) {
+        return;
+      }
+      const key = part.slice(0, separatorIndex).trim().toLowerCase();
+      const value = part.slice(separatorIndex + 1).trim();
+      meta[key] = value;
+    });
+
+  if (!meta.status && !meta.priority) {
+    return null;
+  }
+
+  return {
+    issueKey: (match[1] || '').trim(),
+    title: (match[2] || '').trim(),
+    status: meta.status || '',
+    priority: meta.priority || '',
+    dueDate: meta.due || null,
+    reason: meta.reason || null,
+    issueId: meta.id || meta.issueid || null,
+    projectId: meta.projectid || null,
+  };
+};
 
 const parseIssueListMessage = (content) => {
   if (!content || typeof content !== 'string') {
@@ -80,17 +117,21 @@ const parseIssueListMessage = (content) => {
 
   const items = [];
   let mode = 'cards';
+  const detailLines = [];
 
   if (lines.some(line => ISSUE_BADGE_REASON_PATTERN.test(line))) {
     mode = 'badges-with-reason';
-  } else if (lines.some(line => ISSUE_BADGE_KEY_PATTERN.test(line)) && !lines.some(line => ISSUE_LINE_PATTERN.test(line))) {
+  } else if (lines.some(line => ISSUE_BADGE_KEY_PATTERN.test(line)) && !lines.some(line => parseIssueCardLine(line))) {
     mode = 'badges';
   }
 
   for (const line of lines) {
     if (mode === 'badges-with-reason') {
       const reasonMatch = line.match(ISSUE_BADGE_REASON_PATTERN);
-      if (!reasonMatch) continue;
+      if (!reasonMatch) {
+        detailLines.push(line);
+        continue;
+      }
       items.push({
         issueKey: (reasonMatch[1] || '').trim(),
         reason: (reasonMatch[2] || '').trim(),
@@ -100,33 +141,37 @@ const parseIssueListMessage = (content) => {
 
     if (mode === 'badges') {
       const keyMatch = line.match(ISSUE_BADGE_KEY_PATTERN);
-      if (!keyMatch) continue;
+      if (!keyMatch) {
+        detailLines.push(line);
+        continue;
+      }
       items.push({
         issueKey: (keyMatch[1] || '').trim(),
       });
       continue;
     }
 
-    const cardMatch = line.match(ISSUE_LINE_PATTERN);
-    if (!cardMatch) continue;
-    items.push({
-      issueKey: (cardMatch[1] || '').trim(),
-      title: (cardMatch[2] || '').trim(),
-      status: (cardMatch[3] || '').trim(),
-      priority: (cardMatch[4] || '').trim(),
-      dueDate: (cardMatch[5] || '').trim() || null,
-    });
+    const cardItem = parseIssueCardLine(line);
+    if (!cardItem) {
+      detailLines.push(line);
+      continue;
+    }
+    items.push(cardItem);
   }
 
   if (!items.length) {
     return null;
   }
 
-  const summaryLine = lines.find(line => !ISSUE_LINE_PATTERN.test(line) && /tim thay|hien thi|issue/i.test(line)) || 'Danh sach cong viec';
+  const summaryLine = lines.find(line => !parseIssueCardLine(line) && /tim thay|hien thi|issue|cong viec|task|ke hoach/i.test(line)) || 'Danh sach cong viec';
+  const detailContent = detailLines
+    .filter(line => line !== summaryLine && !/^[-]{3,}$/.test(line) && !/^task_cards:?$/i.test(line))
+    .join('\n');
   return {
     summaryLine,
     items,
     mode,
+    detailContent,
   };
 };
 
@@ -144,8 +189,11 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
 
   const parsedIssueList = !isUser ? parseIssueListMessage(message) : null;
 
-  const openIssueDetail = async (issueKey) => {
-    if (!projectId) {
+  const openIssueDetail = async (itemOrKey) => {
+    const item = typeof itemOrKey === 'string' ? { issueKey: itemOrKey } : itemOrKey;
+    const targetProjectId = item.projectId || projectId;
+
+    if (!targetProjectId) {
       setIssueModalError('Khong xac dinh duoc du an hien tai de mo chi tiet issue.');
       setSelectedIssue(null);
       setIsIssueModalOpen(true);
@@ -157,9 +205,15 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
     setIsLoadingIssueDetail(true);
 
     try {
+      if (item.issueId) {
+        const detail = await issueService.getIssueById(targetProjectId, item.issueId);
+        setSelectedIssue(detail || item);
+        return;
+      }
+
       let lookup = issueLookup;
       if (!lookup) {
-        const allIssues = await issueService.getIssues(projectId);
+        const allIssues = await issueService.getIssues(targetProjectId);
         lookup = (allIssues || []).reduce((acc, issue) => {
           if (issue?.issueKey) {
             acc[issue.issueKey.toUpperCase()] = issue;
@@ -169,10 +223,16 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
         setIssueLookup(lookup);
       }
 
-      const basicIssue = lookup[issueKey.toUpperCase()];
+      const basicIssue = lookup[item.issueKey.toUpperCase()];
       if (!basicIssue) {
-        setSelectedIssue(null);
-        setIssueModalError(`Khong tim thay issue ${issueKey} trong du an.`);
+        setSelectedIssue({
+          id: item.issueId || item.issueKey,
+          issueKey: item.issueKey,
+          title: item.title || item.issueKey,
+          priorityId: item.priority || '',
+          statusId: item.status || '',
+        });
+        setIssueModalError(`Chua tai duoc chi tiet ${item.issueKey}; dang hien thi thong tin tom tat tu AI.`);
         return;
       }
 
@@ -181,11 +241,22 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
         return;
       }
 
-      const detail = await issueService.getIssueById(projectId, basicIssue.id);
+      const detail = await issueService.getIssueById(targetProjectId, basicIssue.id);
       setSelectedIssue(detail || basicIssue);
     } catch (error) {
-      setSelectedIssue(null);
-      setIssueModalError(error?.message || 'Khong the tai chi tiet issue.');
+      if (item?.issueKey) {
+        setSelectedIssue({
+          id: item.issueId || item.issueKey,
+          issueKey: item.issueKey,
+          title: item.title || item.issueKey,
+          priorityId: item.priority || '',
+          statusId: item.status || '',
+        });
+        setIssueModalError(error?.message || `Chua tai duoc chi tiet ${item.issueKey}; dang hien thi thong tin tom tat tu AI.`);
+      } else {
+        setSelectedIssue(null);
+        setIssueModalError(error?.message || 'Khong the tai chi tiet issue.');
+      }
     } finally {
       setIsLoadingIssueDetail(false);
     }
@@ -220,7 +291,7 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
               <div key={item.issueKey} className="rounded-lg border border-border bg-card p-2.5">
                 <button
                   type="button"
-                  onClick={() => openIssueDetail(item.issueKey)}
+                  onClick={() => openIssueDetail(item)}
                   className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-mono hover:bg-muted/70"
                 >
                   {item.issueKey}
@@ -242,7 +313,7 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
               <button
                 key={item.issueKey}
                 type="button"
-                onClick={() => openIssueDetail(item.issueKey)}
+                onClick={() => openIssueDetail(item)}
                 className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-xs font-mono hover:bg-muted/50"
               >
                 {item.issueKey}
@@ -278,7 +349,7 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
                 issueTypes={cardIssueTypes}
                 issuePriorities={cardIssuePriorities}
                 members={[]}
-                onClick={() => openIssueDetail(item.issueKey)}
+                onClick={() => openIssueDetail(item)}
               />
               <div className="px-1 text-[11px] text-muted-foreground flex flex-wrap items-center gap-2">
                 {item.status && (
@@ -286,9 +357,21 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
                 )}
                 {item.dueDate && <span>due {item.dueDate}</span>}
               </div>
+              {item.reason && (
+                <div className="mx-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">Ly do: </span>{item.reason}
+                </div>
+              )}
             </div>
           ))}
         </div>
+        {parsedIssueList.detailContent && (
+          <div className="text-sm prose prose-sm max-w-none dark:prose-invert prose-p:text-foreground prose-headings:text-foreground prose-li:text-foreground prose-strong:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {parsedIssueList.detailContent}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
     );
   };

@@ -134,6 +134,40 @@ class ChatbotService {
     }
   }
 
+  async uploadChatDocument(projectId, file) {
+    if (!projectId) {
+      throw new Error("Vui long mo chatbot trong mot project de dinh kem tai lieu.");
+    }
+
+    const tokens = getStoredTokens();
+    const headers = {};
+    if (tokens?.accessToken) {
+      headers.Authorization = `Bearer ${tokens.accessToken}`;
+    }
+    if (tokens?.userInfo?.userId) {
+      headers["X-User-Id"] = tokens.userInfo.userId;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetchWithAuthRefresh(
+      `${CHATBOT_BASE_URL}/api/ai/documents/upload?projectId=${encodeURIComponent(projectId)}`,
+      {
+        method: "POST",
+        headers,
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Upload failed with status ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   async getUserInfo() {
     const tokens = getStoredTokens();
     return {

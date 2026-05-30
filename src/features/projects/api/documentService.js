@@ -15,7 +15,7 @@ export const documentService = {
   },
 
   // Upload a document to a project
-  async uploadProjectDocument(projectId, file, folderId = null) {
+  async uploadProjectDocument(projectId, file, folderId = null, options = {}) {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -28,6 +28,8 @@ export const documentService = {
       method: "POST",
       body: formData,
       isFormData: true,
+      onUploadProgress: options.onUploadProgress,
+      signal: options.signal,
     });
     return data?.data || data;
   },

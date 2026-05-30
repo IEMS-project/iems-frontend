@@ -246,6 +246,8 @@ async function baseRequest(path, {
   retryOn401 = true,
   credentials = "include",
   isFormData = false,
+  onUploadProgress,
+  signal,
 } = {}) {
   const finalHeaders = { ...headers };
 
@@ -259,6 +261,8 @@ async function baseRequest(path, {
     withCredentials: toWithCredentials(credentials),
     withAuth,
     retryOn401,
+    onUploadProgress,
+    signal,
   };
 
   try {

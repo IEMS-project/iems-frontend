@@ -38,6 +38,21 @@ export const projectService = {
     return data?.data || data;
   },
 
+  async uploadProjectAvatar(projectId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const data = await request(`/document-service/api/documents/upload/project-avatar?projectId=${encodeURIComponent(projectId)}`, {
+      method: "POST",
+      body: formData,
+    });
+    return data?.data || data;
+  },
+
+  async getProjectAvatarUrl(projectId) {
+    const data = await request(`/document-service/api/documents/project-avatar/${encodeURIComponent(projectId)}`);
+    return data?.data || data || "";
+  },
+
   async deleteProject(projectId) {
     const data = await request(`${BASE}/${projectId}`, {
       method: "DELETE",

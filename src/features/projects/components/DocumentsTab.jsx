@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutletContext } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
@@ -36,6 +36,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import ProjectDocumentDetailPanel from './ProjectDocumentDetailPanel';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
+import UploadProgressPanel from '@/features/documents/components/UploadProgressPanel';
 
 // Helper to get file icon by type/extension
 const getFileIcon = (isFolder, fileType = '', fileName = '') => {
@@ -61,9 +62,10 @@ export default function DocumentsTab() {
     // Data State
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
+    const [uploadTasks, setUploadTasks] = useState([]);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
+    const uploadControllersRef = useRef(new Map());
 
     // Navigation State
     const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -77,21 +79,13 @@ export default function DocumentsTab() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [updatingEmbedDocId, setUpdatingEmbedDocId] = useState(null);
     const [selectedDoc, setSelectedDoc] = useState(null);
-    const [showSidebar, setShowSidebar] = useState(false);
-    const [movePath, setMovePath] = useState([]);
 
     // Inputs State
     const [newFolderName, setNewFolderName] = useState('');
     const [moveTargetId, setMoveTargetId] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        if (projectId) {
-            loadDocuments();
-        }
-    }, [projectId]);
-
-    const loadDocuments = async () => {
+    const loadDocuments = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -107,7 +101,99 @@ export default function DocumentsTab() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId, t]);
+
+    useEffect(() => {
+        if (projectId) {
+            loadDocuments();
+        }
+    }, [projectId, loadDocuments]);
+
+    const updateUploadTask = useCallback((taskId, patch) => {
+        setUploadTasks((prev) =>
+            prev.map((task) => (
+                task.id === taskId
+                    ? { ...task, ...(typeof patch === 'function' ? patch(task) : patch) }
+                    : task
+            ))
+        );
+    }, []);
+
+    const startUploadTask = useCallback((task) => {
+        const controller = new AbortController();
+        uploadControllersRef.current.set(task.id, controller);
+        updateUploadTask(task.id, { status: 'uploading', progress: task.progress || 0, error: null });
+
+        documentService.uploadProjectDocument(projectId, task.file, task.folderId, {
+            signal: controller.signal,
+            onUploadProgress: (event) => {
+                if (!event.total) return;
+                const uploadProgress = Math.round((event.loaded * 100) / event.total);
+                const progress = Math.min(90, Math.round((event.loaded * 90) / event.total));
+                updateUploadTask(task.id, {
+                    progress,
+                    status: uploadProgress >= 100 ? 'processing' : 'uploading',
+                });
+            },
+        })
+            .then(() => {
+                updateUploadTask(task.id, { status: 'completed', progress: 100, error: null });
+                loadDocuments();
+            })
+            .catch((err) => {
+                const canceled = err?.code === 'ERR_CANCELED' || controller.signal.aborted;
+                updateUploadTask(task.id, {
+                    status: canceled ? 'canceled' : 'failed',
+                    error: canceled ? null : (err?.message || t('ui.common.error')),
+                });
+                if (!canceled) {
+                    console.error('Upload error:', err);
+                }
+            })
+            .finally(() => {
+                uploadControllersRef.current.delete(task.id);
+            });
+    }, [loadDocuments, projectId, t, updateUploadTask]);
+
+    const cancelUpload = useCallback((taskId) => {
+        uploadControllersRef.current.get(taskId)?.abort();
+        updateUploadTask(taskId, (task) => (
+            task.status === 'queued' ? { status: 'canceled', progress: 0, error: null } : {}
+        ));
+    }, [updateUploadTask]);
+
+    const cancelAllUploads = useCallback(() => {
+        uploadControllersRef.current.forEach((controller) => controller.abort());
+        setUploadTasks((prev) =>
+            prev.map((task) =>
+                task.status === 'queued' || task.status === 'uploading' || task.status === 'processing'
+                    ? { ...task, status: 'canceled', error: null }
+                    : task
+            )
+        );
+    }, []);
+
+    const retryUpload = useCallback((taskId) => {
+        const task = uploadTasks.find((item) => item.id === taskId);
+        if (!task || task.status === 'uploading') return;
+        const retryTask = { ...task, progress: 0, status: 'queued', error: null };
+        updateUploadTask(taskId, retryTask);
+        window.setTimeout(() => startUploadTask(retryTask), 0);
+    }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+    const retryFailedUploads = useCallback(() => {
+        uploadTasks
+            .filter((task) => task.status === 'failed' || task.status === 'canceled')
+            .forEach((task) => {
+                const retryTask = { ...task, progress: 0, status: 'queued', error: null };
+                updateUploadTask(task.id, retryTask);
+                window.setTimeout(() => startUploadTask(retryTask), 0);
+            });
+    }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+    const clearFinishedUploads = useCallback(() => {
+        setUploadTasks((prev) => prev.filter((task) => task.status === 'queued' || task.status === 'uploading' || task.status === 'processing'));
+    }, []);
 
     // --- Derived Data ---
     const visibleDocuments = useMemo(() => {
@@ -144,28 +230,25 @@ export default function DocumentsTab() {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = async (e) => {
+    const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         e.target.value = '';
 
-        if (file.size > 50 * 1024 * 1024) {
-            toast.error(t('projectDocuments.fileTooLarge', 'File is too large (max 50MB)'));
-            return;
-        }
+        const task = {
+            id: `${Date.now()}-${file.name}`,
+            file,
+            folderId: currentFolderId,
+            name: file.name,
+            size: file.size,
+            progress: 0,
+            status: 'queued',
+            error: null,
+        };
 
-        try {
-            setUploading(true);
-            await documentService.uploadProjectDocument(projectId, file, currentFolderId);
-            toast.success(t('projectDocuments.uploadSuccess', 'Document uploaded successfully'));
-            loadDocuments();
-        } catch (err) {
-            console.error("Upload error:", err);
-            toast.error(err?.message || t('ui.common.error'));
-        } finally {
-            setUploading(false);
-        }
+        setUploadTasks((prev) => [...prev, task]);
+        window.setTimeout(() => startUploadTask(task), 0);
     };
 
     const submitCreateFolder = async () => {
@@ -209,7 +292,6 @@ export default function DocumentsTab() {
             toast.success(t('projectDocuments.moveSuccess', 'Moved successfully'));
             setShowMove(null);
             setMoveTargetId('');
-            setMovePath([]);
             loadDocuments();
         } catch (err) {
             toast.error(err?.message || t('ui.common.error'));
@@ -218,7 +300,6 @@ export default function DocumentsTab() {
 
     const handleSelectRow = (doc) => {
         setSelectedDoc(doc);
-        setShowSidebar(true);
     };
 
     const confirmDelete = (doc) => {
@@ -380,11 +461,11 @@ export default function DocumentsTab() {
                     />
                     <Button
                         onClick={handleUploadClick}
-                        disabled={uploading || loading}
+                        disabled={loading}
                         className="flex items-center gap-2"
                     >
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        {uploading ? t('projectDocuments.uploading', 'Uploading...') : t('projectDocuments.upload', 'Upload Document')}
+                        <Upload className="w-4 h-4" />
+                        {t('projectDocuments.upload', 'Upload Document')}
                     </Button>
                 </div>
             </div>
@@ -546,7 +627,6 @@ export default function DocumentsTab() {
                     documents={documents}
                     onClose={() => {
                         setSelectedDoc(null);
-                        setShowSidebar(false);
                     }}
                 />
             )}
@@ -609,7 +689,7 @@ export default function DocumentsTab() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={!!showMove} onOpenChange={(open) => !open && (setShowMove(null), setMoveTargetId(''), setMovePath([]))}>
+            <Dialog open={!!showMove} onOpenChange={(open) => !open && (setShowMove(null), setMoveTargetId(''))}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>{t('projectDocuments.move', 'Move')} "{showMove?.fileName}"</DialogTitle>
@@ -693,7 +773,7 @@ export default function DocumentsTab() {
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => (setShowMove(null), setMoveTargetId(''), setMovePath([]))}>
+                        <Button variant="outline" onClick={() => (setShowMove(null), setMoveTargetId(''))}>
                             {t('ui.common.cancel', 'Cancel')}
                         </Button>
                         <Button onClick={submitMove}>
@@ -737,6 +817,15 @@ export default function DocumentsTab() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <UploadProgressPanel
+                tasks={uploadTasks}
+                onCancel={cancelUpload}
+                onCancelAll={cancelAllUploads}
+                onRetry={retryUpload}
+                onRetryFailed={retryFailedUploads}
+                onClearFinished={clearFinishedUploads}
+            />
 
         </div>
     );

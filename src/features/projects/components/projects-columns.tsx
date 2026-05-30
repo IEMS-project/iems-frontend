@@ -14,11 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Avatar from "@/components/ui/Avatar"
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar"
 
 export type Project = {
   id: string
   name: string
   description: string
+  avatarUrl?: string | null
   status: string
   startDate: string | null
   endDate: string | null
@@ -48,9 +50,10 @@ export const columns: ColumnDef<Project>[] = [
       return (
         <Link
           to={`/projects/${project.id}/overview`}
-          className="font-bold text-foreground hover:underline"
+          className="flex items-center gap-2 font-bold text-foreground hover:underline"
         >
-          {project.name}
+          <ProjectAvatar project={project} size="xs" />
+          <span>{project.name}</span>
         </Link>
       )
     },

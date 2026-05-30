@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { projectService } from '@/features/projects/api/projectService';
+import { hydrateProjectsWithAvatars } from '@/features/projects/utils/projectAvatars';
 import { issueService } from '@/features/projects/api/issueService';
 
 const DashboardContext = createContext(undefined);
@@ -45,7 +46,7 @@ export function DashboardProvider({ children }) {
         try {
             setProjectsLoading(true);
             const data = await projectService.getMyProjects();
-            setProjects(Array.isArray(data) ? data : []);
+            setProjects(await hydrateProjectsWithAvatars(data));
         } catch (error) {
             console.error('Error loading projects:', error);
             setProjects([]);

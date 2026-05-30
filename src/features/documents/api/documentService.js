@@ -24,12 +24,15 @@ export const documentService = {
     return data?.data || data;
   },
 
-  async uploadFile(folderId, file) {
+  async uploadFile(folderId, file, options = {}) {
     const formData = new FormData();
     formData.append("file", file);
     const data = await request(`/document-service/api/files/upload?folderId=${folderId || ""}`, {
       method: "POST",
       body: formData,
+      isFormData: true,
+      onUploadProgress: options.onUploadProgress,
+      signal: options.signal,
     });
     return data?.data || data;
   },

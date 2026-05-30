@@ -5,6 +5,7 @@ import Input from "@/components/ui/input";
 import Textarea from "@/components/ui/textarea";
 import { projectService } from "@/features/projects/api/projectService";
 import { workflowService } from "@/features/projects/api/workflowService";
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
 import { toast } from "sonner";
 import { validateDates, todayStr } from "@/features/projects/utils/dateValidation";
 
@@ -37,6 +38,9 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     // Snapshots of backend-seeded defaults — used for dirty-checking
     const snapshotRef = useRef({ workflowData: null, priorities: null, issueTypes: null });
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState("");
+    const avatarInputRef = useRef(null);
 
     const [basicInfo, setBasicInfo] = useState({ ...INITIAL_BASIC_INFO });
 
@@ -54,6 +58,8 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setStep(0);
         setCreatedProjectId(null);
         setKeyManuallyEdited(false);
+        setAvatarFile(null);
+        setAvatarPreview("");
         setBasicInfo({ ...INITIAL_BASIC_INFO });
         setWorkflowData({ id: null, name: "", statuses: [] });
         setPriorities([]);
@@ -62,6 +68,20 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setInitializingStepData(false);
         snapshotRef.current = { workflowData: null, priorities: null, issueTypes: null };
         onClose();
+    };
+
+    const handleAvatarChange = (file) => {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.warning("Please choose an image file");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning("Avatar image must be 5MB or smaller");
+            return;
+        }
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
     };
 
     const loadProjectDefaults = async (projectId) => {
@@ -142,6 +162,13 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             };
             const created = await projectService.createProject(projectData);
             const projectId = created.id;
+            if (avatarFile) {
+                try {
+                    await projectService.uploadProjectAvatar(projectId, avatarFile);
+                } catch (avatarError) {
+                    toast.warning(avatarError?.message || "Project created, but avatar upload failed");
+                }
+            }
             setCreatedProjectId(projectId);
             setStep(1);
             setLoading(false);
@@ -425,6 +452,35 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             {/* ── Step 1: Basic Information ── */}
             {step === 0 && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2 flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted text-sm font-semibold text-muted-foreground hover:bg-accent"
+                            title="Choose project avatar"
+                        >
+                            {avatarPreview ? (
+                                <ProjectAvatar src={avatarPreview} name={basicInfo.name} size="xl" className="h-full w-full border-0 shadow-none" />
+                            ) : (
+                                <span>AVT</span>
+                            )}
+                        </button>
+                        <div className="min-w-0">
+                            <label className={labelCls}>Project Avatar</label>
+                            <Button type="button" variant="secondary" onClick={() => avatarInputRef.current?.click()}>
+                                Choose Image
+                            </Button>
+                            <p className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</p>
+                        </div>
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => handleAvatarChange(e.target.files?.[0])}
+                        />
+                    </div>
+
                     <div className="sm:col-span-2">
                         <label className={labelCls}>Project Name *</label>
                         <Input value={basicInfo.name} onChange={e => handleNameChange(e.target.value)} className={inputCls} placeholder="My Awesome Project" />

@@ -4,8 +4,10 @@ import ChatInput from '@/features/chatbot/components/ChatInput';
 import ConversationManager from '@/features/chatbot/components/ConversationManager';
 import chatbotService from '@/features/chatbot/api/chatbotService';
 import { documentService } from '@/features/projects/api/documentService';
+import { useTranslation } from 'react-i18next';
 
 const Chatbot = ({ projectId = null }) => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,6 +23,7 @@ const Chatbot = ({ projectId = null }) => {
   const [showDocumentPicker, setShowDocumentPicker] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [quickOptions, setQuickOptions] = useState([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -109,33 +112,62 @@ const Chatbot = ({ projectId = null }) => {
       // Fallback defaults when API is temporarily unavailable.
       setQuickOptions([
         {
-          id: 'important_my_tasks',
-          label: 'Cong viec quan trong cua toi',
-          prompt: 'Lay cac cong viec quan trong cua toi hom nay'
+          id: 'daily_plan',
+          label: t('chatbot.quickActions.dailyPlan.label'),
+          prompt: t('chatbot.quickActions.dailyPlan.prompt')
         },
         {
-          id: 'analysis',
-          label: 'Phan tich cong viec',
-          prompt: 'Phan tich cong viec hien tai va de xuat uu tien'
+          id: 'project_risk_review',
+          label: t('chatbot.quickActions.riskReview.label'),
+          prompt: t('chatbot.quickActions.riskReview.prompt')
         },
         {
-          id: 'move_to_in_progress',
-          label: 'Chuyen issue sang In Progress',
-          prompt: 'Chuyen issue IEMS-1 sang In Progress'
+          id: 'progress_summary',
+          label: t('chatbot.quickActions.progressSummary.label'),
+          prompt: t('chatbot.quickActions.progressSummary.prompt')
         },
         {
-          id: 'move_to_done',
-          label: 'Chuyen issue sang Done',
-          prompt: 'Chuyen issue IEMS-1 sang Done'
+          id: 'next_actions',
+          label: t('chatbot.quickActions.nextActions.label'),
+          prompt: t('chatbot.quickActions.nextActions.prompt')
         }
       ]);
     };
 
     loadQuickOptions();
-  }, [projectId]);
+  }, [projectId, t]);
 
   const handleSelectQuickOption = (prompt) => {
     handleSendMessage(prompt);
+  };
+
+  const handleUploadAttachment = async (file) => {
+    if (!projectId) {
+      setError(t('chatbot.page.projectRequiredForAttachment'));
+      return;
+    }
+
+    setIsUploadingAttachment(true);
+    setError(null);
+    try {
+      const uploaded = await chatbotService.uploadChatDocument(projectId, file);
+      const uploadedDoc = {
+        id: uploaded.id,
+        fileName: uploaded.fileName || file.name,
+        allowEmbedded: true,
+      };
+      setEmbeddableDocs(prev => {
+        if (prev.some(doc => doc.id === uploadedDoc.id)) return prev;
+        return [uploadedDoc, ...prev];
+      });
+      setSelectedDocumentIds(prev => prev.includes(uploadedDoc.id) ? prev : [...prev, uploadedDoc.id]);
+      setShowDocumentPicker(true);
+    } catch (error) {
+      console.error('Failed to upload chat attachment:', error);
+      setError(error?.message || t('chatbot.page.uploadFailed'));
+    } finally {
+      setIsUploadingAttachment(false);
+    }
   };
 
   const toggleSelectedDocument = (docId) => {
@@ -144,6 +176,26 @@ const Chatbot = ({ projectId = null }) => {
         ? prev.filter(id => id !== docId)
         : [...prev, docId]
     );
+  };
+
+  const selectedInputAttachments = embeddableDocs
+    .filter(doc => selectedDocumentIds.includes(doc.id))
+    .map(doc => ({
+      id: doc.id,
+      name: doc.fileName || doc.name || doc.id,
+    }));
+
+  const availableInputAttachments = embeddableDocs.map(doc => ({
+    id: doc.id,
+    name: doc.fileName || doc.name || doc.id,
+  }));
+
+  const handleRemoveAttachment = (docId) => {
+    setSelectedDocumentIds(prev => prev.filter(id => id !== docId));
+  };
+
+  const handleSelectInputAttachment = (docId) => {
+    setSelectedDocumentIds(prev => prev.includes(docId) ? prev : [...prev, docId]);
   };
 
   const renderDocumentSelector = () => {
@@ -159,9 +211,11 @@ const Chatbot = ({ projectId = null }) => {
           className="w-full flex items-center justify-between text-left"
         >
           <span className="text-xs text-muted-foreground">
-            Tai lieu RAG ready cua du an ({selectedDocumentIds.length} da chon)
+            {t('chatbot.documents.ragReady', { count: selectedDocumentIds.length })}
           </span>
-          <span className="text-xs text-blue-600">{showDocumentPicker ? 'An' : 'Chon tai lieu'}</span>
+          <span className="text-xs text-blue-600">
+            {showDocumentPicker ? t('chatbot.documents.hide') : t('chatbot.documents.choose')}
+          </span>
         </button>
 
         {showDocumentPicker && (
@@ -326,7 +380,7 @@ const Chatbot = ({ projectId = null }) => {
           if (currentBotMessageId) {
             const errorMessage = {
               id: botMessageId,
-              message: `Xin lỗi, có lỗi xảy ra: ${error}. Vui lòng thử lại sau.`,
+              message: t('chatbot.page.streamError', { error }),
               isUser: false,
               timestamp: new Date().toISOString()
             };
@@ -334,7 +388,7 @@ const Chatbot = ({ projectId = null }) => {
           } else {
             setMessages(prev => prev.map(msg =>
               msg.id === botMessageId
-                ? { ...msg, message: `Xin lỗi, có lỗi xảy ra: ${error}. Vui lòng thử lại sau.` }
+                ? { ...msg, message: t('chatbot.page.streamError', { error }) }
                 : msg
             ));
           }
@@ -356,7 +410,7 @@ const Chatbot = ({ projectId = null }) => {
       if (currentBotMessageId) {
         const errorMessage = {
           id: botMessageId,
-          message: `Xin lỗi, có lỗi xảy ra: ${error.message}. Vui lòng thử lại sau.`,
+          message: t('chatbot.page.streamError', { error: error.message }),
           isUser: false,
           timestamp: new Date().toISOString()
         };
@@ -364,7 +418,7 @@ const Chatbot = ({ projectId = null }) => {
       } else {
         setMessages(prev => prev.map(msg =>
           msg.id === botMessageId
-            ? { ...msg, message: `Xin lỗi, có lỗi xảy ra: ${error.message}. Vui lòng thử lại sau.` }
+            ? { ...msg, message: t('chatbot.page.streamError', { error: error.message }) }
             : msg
         ));
       }
@@ -436,7 +490,7 @@ const Chatbot = ({ projectId = null }) => {
                     <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
                       <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                    <p className="text-muted-foreground">Đang tải cuộc trò chuyện...</p>
+                    <p className="text-muted-foreground">{t('chatbot.page.loadingConversation')}</p>
                   </div>
                 </div>
               ) : (
@@ -452,7 +506,7 @@ const Chatbot = ({ projectId = null }) => {
                       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                         <div className="text-center mb-8">
                           <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                            {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
+                            {projectId ? t('chatbot.page.projectPrompt') : t('chatbot.page.generalPrompt')}
                           </h1>
                         </div>
                       </div>
@@ -485,7 +539,7 @@ const Chatbot = ({ projectId = null }) => {
                               <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              AI đang suy nghĩ...
+                              {t('chatbot.page.thinking')}
                             </p>
                           </div>
                         </div>
@@ -504,12 +558,16 @@ const Chatbot = ({ projectId = null }) => {
                     </div>
                   )}
 
-                  {renderDocumentSelector()}
-
                   <ChatInput
                     onSendMessage={handleSendMessage}
                     onSelectOption={handleSelectQuickOption}
-                    isLoading={isLoading}
+                    onUploadAttachment={handleUploadAttachment}
+                    isLoading={isLoading || isUploadingAttachment}
+                    isUploadingAttachment={isUploadingAttachment}
+                    attachments={selectedInputAttachments}
+                    onRemoveAttachment={handleRemoveAttachment}
+                    availableAttachments={availableInputAttachments}
+                    onSelectAttachment={handleSelectInputAttachment}
                     quickOptions={quickOptions}
                   />
                 </>
@@ -528,7 +586,7 @@ const Chatbot = ({ projectId = null }) => {
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
                       <div className="text-center mb-8">
                         <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
-                          {projectId ? "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?" : "Bạn dự định làm gì hôm nay?"}
+                          {projectId ? t('chatbot.page.projectPrompt') : t('chatbot.page.generalPrompt')}
                         </h1>
                       </div>
                     </div>
@@ -561,7 +619,7 @@ const Chatbot = ({ projectId = null }) => {
                             <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            AI đang suy nghĩ...
+                            {t('chatbot.page.thinking')}
                           </p>
                         </div>
                       </div>
@@ -580,12 +638,16 @@ const Chatbot = ({ projectId = null }) => {
                   </div>
                 )}
 
-                {renderDocumentSelector()}
-
                 <ChatInput
                   onSendMessage={handleSendMessage}
                   onSelectOption={handleSelectQuickOption}
-                  isLoading={isLoading}
+                  onUploadAttachment={handleUploadAttachment}
+                  isLoading={isLoading || isUploadingAttachment}
+                  isUploadingAttachment={isUploadingAttachment}
+                  attachments={selectedInputAttachments}
+                  onRemoveAttachment={handleRemoveAttachment}
+                  availableAttachments={availableInputAttachments}
+                  onSelectAttachment={handleSelectInputAttachment}
                   quickOptions={quickOptions}
                 />
               </>

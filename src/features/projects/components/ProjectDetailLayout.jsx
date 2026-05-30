@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -12,13 +12,14 @@ import { projectService } from "@/features/projects/api/projectService";
 import { userService } from "@/features/profile/api/userService";
 import { useAuth } from "@/context/AuthContext";
 import { ProjectProvider, useProject } from "@/features/projects/context/ProjectContext";
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
 import useDocumentTitle from "@/hooks/useDocumentTitle";
 import Skeleton from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
 import {
     Pencil, LayoutDashboard, Layers, Kanban, CheckSquare, Bot, CalendarDays,
-    LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical
+    LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical, Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -160,10 +161,16 @@ function ProjectDetailLayoutContent() {
 
     // Get data from ProjectContext
     const { projectData, loading, refreshProject } = useProject();
+    const avatarInputRef = useRef(null);
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [projectAvatarSrc, setProjectAvatarSrc] = useState("");
 
     // Edit project modal states
     const [showEditModal, setShowEditModal] = useState(false);
     const [users, setUsers] = useState([]);
+    const [editAvatarFile, setEditAvatarFile] = useState(null);
+    const [editAvatarPreview, setEditAvatarPreview] = useState("");
+    const editAvatarInputRef = useRef(null);
     const [formData, setFormData] = useState({
         name: "",
         description: "",
@@ -228,6 +235,8 @@ function ProjectDetailLayoutContent() {
             managerId: projectData?.managerId || "",
             status: projectData?.status || "PLANNING"
         });
+        setEditAvatarFile(null);
+        setEditAvatarPreview(projectAvatarSrc || projectData?.avatarUrl || "");
         setShowEditModal(true);
     };
 
@@ -249,6 +258,9 @@ function ProjectDetailLayoutContent() {
             };
 
             await projectService.updateProject(projectId, projectDataToSave);
+            if (editAvatarFile) {
+                await projectService.uploadProjectAvatar(projectId, editAvatarFile);
+            }
             toast.success(t("projects.messages.updated"));
 
             // Reload project data using context
@@ -263,7 +275,70 @@ function ProjectDetailLayoutContent() {
 
     const handleCloseEditModal = () => {
         setShowEditModal(false);
+        setEditAvatarFile(null);
+        setEditAvatarPreview("");
+        if (editAvatarInputRef.current) editAvatarInputRef.current.value = "";
     };
+
+    const handleEditAvatarChange = (file) => {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.warning("Please choose an image file");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning("Avatar image must be 5MB or smaller");
+            return;
+        }
+        setEditAvatarFile(file);
+        setEditAvatarPreview(URL.createObjectURL(file));
+    };
+
+    const handleProjectAvatarChange = async (file) => {
+        if (!file || !projectId || avatarUploading) return;
+        if (!file.type.startsWith("image/")) {
+            toast.warning("Please choose an image file");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning("Avatar image must be 5MB or smaller");
+            return;
+        }
+
+        try {
+            setAvatarUploading(true);
+            await projectService.uploadProjectAvatar(projectId, file);
+            toast.success("Project avatar updated");
+            await refreshProject();
+        } catch (error) {
+            toast.error(error?.message || "Failed to upload project avatar");
+        } finally {
+            setAvatarUploading(false);
+            if (avatarInputRef.current) avatarInputRef.current.value = "";
+        }
+    };
+
+    React.useEffect(() => {
+        let cancelled = false;
+        const loadProjectAvatar = async () => {
+            if (!projectData?.id) {
+                setProjectAvatarSrc("");
+                return;
+            }
+
+            try {
+                const avatarUrl = await projectService.getProjectAvatarUrl(projectData.id);
+                if (!cancelled) setProjectAvatarSrc(avatarUrl || projectData.avatarUrl || "");
+            } catch (_) {
+                if (!cancelled) setProjectAvatarSrc(projectData.avatarUrl || "");
+            }
+        };
+
+        loadProjectAvatar();
+        return () => {
+            cancelled = true;
+        };
+    }, [projectData?.id, projectData?.avatarUrl]);
 
 
     return (
@@ -281,6 +356,27 @@ function ProjectDetailLayoutContent() {
                             </div>
                         ) : (
                             <div className="flex items-center gap-3 min-w-0 mt-0.5">
+                                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md">
+                                    <ProjectAvatar project={projectData} src={projectAvatarSrc} size={11} className="h-full w-full" />
+                                    {canEditProject && (
+                                        <button
+                                            type="button"
+                                            onClick={() => avatarInputRef.current?.click()}
+                                            disabled={avatarUploading}
+                                            className="absolute inset-0 flex items-center justify-center bg-black/0 text-white opacity-0 transition hover:bg-black/45 hover:opacity-100 disabled:cursor-not-allowed"
+                                            title="Upload project avatar"
+                                        >
+                                            <Camera className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <input
+                                    ref={avatarInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => handleProjectAvatarChange(e.target.files?.[0])}
+                                />
                                 <h1 className="text-2xl font-bold truncate text-foreground tracking-tight select-all">{projectData?.name || '-'}</h1>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Badge variant="blue" className="whitespace-nowrap px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-none">
@@ -362,6 +458,37 @@ function ProjectDetailLayoutContent() {
                 }
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2 flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => editAvatarInputRef.current?.click()}
+                            className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted text-sm font-semibold text-muted-foreground hover:bg-accent"
+                            title="Choose project avatar"
+                        >
+                            {editAvatarPreview ? (
+                                <ProjectAvatar project={projectData} src={editAvatarPreview} name={formData.name} size="xl" className="h-full w-full border-0 shadow-none" />
+                            ) : (
+                                <span>{(formData.name || "P").trim().slice(0, 2).toUpperCase()}</span>
+                            )}
+                        </button>
+                        <div className="min-w-0">
+                            <label className="block text-sm font-medium text-foreground mb-1">
+                                Project Avatar
+                            </label>
+                            <Button type="button" variant="secondary" onClick={() => editAvatarInputRef.current?.click()}>
+                                Choose Image
+                            </Button>
+                            <p className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</p>
+                        </div>
+                        <input
+                            ref={editAvatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => handleEditAvatarChange(e.target.files?.[0])}
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.projectName")} {t("projects.form.required")}

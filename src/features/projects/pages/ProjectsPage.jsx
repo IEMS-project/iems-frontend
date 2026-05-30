@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { columns } from "@/features/projects/components/projects-columns";
 import { ProjectsDataTable } from "@/features/projects/components/projects-data-table";
 import CreateProjectModal from "@/features/projects/components/CreateProjectModal";
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
+import { hydrateProjectsWithAvatars } from "@/features/projects/utils/projectAvatars";
 import { cn } from "@/lib/utils";
 
 export default function Projects() {
@@ -33,6 +35,9 @@ export default function Projects() {
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [editingProject, setEditingProject] = useState(null);
     const [deletingProject, setDeletingProject] = useState(null);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState("");
+    const avatarInputRef = useRef(null);
     const [formData, setFormData] = useState({
         name: "",
         description: "",
@@ -51,7 +56,7 @@ export default function Projects() {
         try {
             setLoading(true);
             const projectsData = await projectService.getMyProjects();
-            setProjects(Array.isArray(projectsData) ? projectsData : []);
+            setProjects(await hydrateProjectsWithAvatars(projectsData));
         } catch (error) {
             console.error("Error loading projects:", error);
             toast.error(error?.message || t("ui.common.error"));
@@ -78,6 +83,8 @@ export default function Projects() {
             endDate: project.endDate ? project.endDate.toString().split("T")[0] : "",
             status: project.status || "PLANNING"
         });
+        setAvatarFile(null);
+        setAvatarPreview(project.avatarUrl || "");
         setShowModal(true);
     };
 
@@ -122,6 +129,9 @@ export default function Projects() {
 
             if (editingProject) {
                 await projectService.updateProject(editingProject.id, projectData);
+                if (avatarFile) {
+                    await projectService.uploadProjectAvatar(editingProject.id, avatarFile);
+                }
                 toast.success(t("projects.messages.updated"));
             } else {
                 await projectService.createProject(projectData);
@@ -133,6 +143,9 @@ export default function Projects() {
 
             setShowModal(false);
             setEditingProject(null);
+            setAvatarFile(null);
+            setAvatarPreview("");
+            if (avatarInputRef.current) avatarInputRef.current.value = "";
             setFormData({
                 name: "",
                 description: "",
@@ -149,6 +162,9 @@ export default function Projects() {
     const handleClose = () => {
         setShowModal(false);
         setEditingProject(null);
+        setAvatarFile(null);
+        setAvatarPreview("");
+        if (avatarInputRef.current) avatarInputRef.current.value = "";
         setFormData({
             name: "",
             description: "",
@@ -156,6 +172,20 @@ export default function Projects() {
             endDate: "",
             status: ""
         });
+    };
+
+    const handleAvatarChange = (file) => {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.warning("Please choose an image file");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning("Avatar image must be 5MB or smaller");
+            return;
+        }
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
     };
 
     return (
@@ -202,6 +232,39 @@ export default function Projects() {
                 }
             >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {editingProject && (
+                        <div className="sm:col-span-2 flex items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted text-sm font-semibold text-muted-foreground hover:bg-accent"
+                                title="Choose project avatar"
+                            >
+                                {avatarPreview ? (
+                                    <ProjectAvatar project={editingProject} src={avatarPreview} name={formData.name} size="xl" className="h-full w-full border-0 shadow-none" />
+                                ) : (
+                                    <span>{(formData.name || "P").trim().slice(0, 2).toUpperCase()}</span>
+                                )}
+                            </button>
+                            <div className="min-w-0">
+                                <label className="block text-sm font-medium text-foreground mb-1">
+                                    Project Avatar
+                                </label>
+                                <Button type="button" variant="secondary" onClick={() => avatarInputRef.current?.click()}>
+                                    Choose Image
+                                </Button>
+                                <p className="mt-1 text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</p>
+                            </div>
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => handleAvatarChange(e.target.files?.[0])}
+                            />
+                        </div>
+                    )}
+
                     <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-foreground mb-1">
                             {t("projects.form.projectName")} {t("projects.form.required")}

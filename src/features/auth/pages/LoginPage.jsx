@@ -9,6 +9,23 @@ export default function Login() {
   const [serverError, setServerError] = useState("");
   const processingOauthCodeRef = useRef(false);
 
+  function createOauthState() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    const randomValues = new Uint32Array(4);
+    if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+      crypto.getRandomValues(randomValues);
+    } else {
+      randomValues.forEach((_, index) => {
+        randomValues[index] = Math.floor(Math.random() * 0xffffffff);
+      });
+    }
+
+    return `${Date.now().toString(36)}-${Array.from(randomValues, (value) => value.toString(36)).join("")}`;
+  }
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get("code");
@@ -66,7 +83,7 @@ export default function Login() {
     }
 
     const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI || window.location.origin;
-    const state = crypto.randomUUID();
+    const state = createOauthState();
     sessionStorage.setItem("google_oauth_state", state);
 
     const googleUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -90,7 +107,7 @@ export default function Login() {
     }
 
     const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI || window.location.origin;
-    const state = crypto.randomUUID();
+    const state = createOauthState();
     sessionStorage.setItem("github_oauth_state", state);
 
     const githubUrl = new URL("https://github.com/login/oauth/authorize");

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { documentService } from "@/features/documents/api/documentService";
@@ -33,6 +33,8 @@ export function useDocuments() {
   const [renameItem, setRenameItem] = useState(null);
   const [moveItem, setMoveItem] = useState(null);
   const [viewMode, setViewMode] = useState("list");
+  const [uploadTasks, setUploadTasks] = useState([]);
+  const uploadControllersRef = useRef(new Map());
   const { setCustomBreadcrumbs } = useBreadcrumb();
 
   // Get currentFolderId from URL params
@@ -463,24 +465,120 @@ export function useDocuments() {
     }
   }
 
-  async function onUploadFiles(fileList) {
-    if (!fileList || fileList.length === 0) return;
+  const updateUploadTask = useCallback((taskId, patch) => {
+    setUploadTasks((prev) =>
+      prev.map((task) => (
+        task.id === taskId
+          ? { ...task, ...(typeof patch === "function" ? patch(task) : patch) }
+          : task
+      ))
+    );
+  }, []);
 
-    try {
-      for (const file of fileList) {
-        await documentService.uploadFile(currentFolderId, file);
-      }
-      loadFolderContents();
-      toast.success(t('documents.upload.successMultiple', { count: fileList.length }));
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      toast.error(error?.message || t('documents.upload.error'));
-    }
+  const startUploadTask = useCallback((task) => {
+    const controller = new AbortController();
+    uploadControllersRef.current.set(task.id, controller);
+    updateUploadTask(task.id, { status: "uploading", progress: task.progress || 0, error: null });
+
+    documentService.uploadFile(task.folderId, task.file, {
+      signal: controller.signal,
+      onUploadProgress: (event) => {
+        if (!event.total) return;
+        const uploadProgress = Math.round((event.loaded * 100) / event.total);
+        const progress = Math.min(90, Math.round((event.loaded * 90) / event.total));
+        updateUploadTask(task.id, {
+          progress,
+          status: uploadProgress >= 100 ? "processing" : "uploading",
+        });
+      },
+    })
+      .then(() => {
+        updateUploadTask(task.id, { status: "completed", progress: 100, error: null });
+        loadFolderContents();
+      })
+      .catch((error) => {
+        const canceled = error?.code === "ERR_CANCELED" || controller.signal.aborted;
+        updateUploadTask(task.id, {
+          status: canceled ? "canceled" : "failed",
+          error: canceled ? null : (error?.message || t('documents.upload.error')),
+        });
+        if (!canceled) {
+          console.error("Error uploading file:", error);
+        }
+      })
+      .finally(() => {
+        uploadControllersRef.current.delete(task.id);
+      });
+  }, [loadFolderContents, t, updateUploadTask]);
+
+  function onUploadFiles(fileList) {
+    const filesToUpload = Array.from(fileList || []);
+    if (filesToUpload.length === 0) return;
+
+    const folderId = currentFolderId;
+    const timestamp = Date.now();
+    const tasks = filesToUpload.map((file, index) => ({
+      id: `${timestamp}-${index}-${file.name}`,
+      file,
+      folderId,
+      name: file.name,
+      size: file.size,
+      progress: 0,
+      status: "queued",
+      error: null,
+    }));
+
+    setUploadTasks((prev) => [...prev, ...tasks]);
+    tasks.forEach((task) => {
+      window.setTimeout(() => startUploadTask(task), 0);
+    });
   }
+
+  const cancelUpload = useCallback((taskId) => {
+    uploadControllersRef.current.get(taskId)?.abort();
+    updateUploadTask(taskId, (task) => (
+      task.status === "queued" ? { status: "canceled", progress: 0, error: null } : {}
+    ));
+  }, [updateUploadTask]);
+
+  const cancelAllUploads = useCallback(() => {
+    uploadControllersRef.current.forEach((controller) => controller.abort());
+    setUploadTasks((prev) =>
+      prev.map((task) =>
+        task.status === "queued" || task.status === "uploading" || task.status === "processing"
+          ? { ...task, status: "canceled", error: null }
+          : task
+      )
+    );
+  }, []);
+
+  const retryUpload = useCallback((taskId) => {
+    const task = uploadTasks.find((item) => item.id === taskId);
+    if (!task || task.status === "uploading") return;
+    const retryTask = { ...task, progress: 0, status: "queued", error: null };
+    updateUploadTask(taskId, retryTask);
+    window.setTimeout(() => startUploadTask(retryTask), 0);
+  }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+  const retryFailedUploads = useCallback(() => {
+    uploadTasks
+      .filter((task) => task.status === "failed" || task.status === "canceled")
+      .forEach((task) => {
+        const retryTask = { ...task, progress: 0, status: "queued", error: null };
+        updateUploadTask(task.id, retryTask);
+        window.setTimeout(() => startUploadTask(retryTask), 0);
+      });
+  }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+  const clearFinishedUploads = useCallback(() => {
+    setUploadTasks((prev) => prev.filter((task) => task.status === "queued" || task.status === "uploading" || task.status === "processing"));
+  }, []);
 
   function onDrop(e) {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
+    if (!e.dataTransfer?.files?.length) return;
     onUploadFiles(e.dataTransfer.files);
   }
 
@@ -848,6 +946,7 @@ export function useDocuments() {
     setMoveItem,
     viewMode,
     setViewMode,
+    uploadTasks,
     sortedItems,
     currentPath,
 
@@ -861,6 +960,11 @@ export function useDocuments() {
     toggleItemSelection,
     onCreateFolderConfirmed,
     onUploadFiles,
+    cancelUpload,
+    cancelAllUploads,
+    retryUpload,
+    retryFailedUploads,
+    clearFinishedUploads,
     onDrop,
     toggleFavorite,
     openShare,

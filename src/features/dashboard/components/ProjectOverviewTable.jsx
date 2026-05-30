@@ -1,11 +1,5 @@
 import StatusBadge from "@/components/ui/StatusBadge";
-import { cn } from "@/lib/utils";
-
-function getProjectDotClass(project) {
-    const key = String(project?.projectKey || project?.name || project?.id || "iems");
-    const colors = ["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-cyan-500", "bg-rose-500"];
-    return colors[key.charCodeAt(0) % colors.length];
-}
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
 
 export default function ProjectOverviewTable({
     projects,
@@ -37,7 +31,7 @@ export default function ProjectOverviewTable({
                                 >
                                     <td className="min-w-64 px-3 py-2.5">
                                         <div className="flex items-center gap-3">
-                                            <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", getProjectDotClass(project))} />
+                                            <ProjectAvatar project={project} size="sm" />
                                             <div className="min-w-0">
                                                 <div className="truncate font-semibold text-foreground group-hover:text-primary">
                                                     {project.name || project.title || labels.na}

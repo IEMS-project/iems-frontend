@@ -31,15 +31,11 @@ import {
 import UserProfile from "@/layouts/UserProfile";
 import { promotionService } from "@/features/admin/api/adminPromotionService";
 import { projectService } from "@/features/projects/api/projectService";
+import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
+import { hydrateProjectsWithAvatars } from "@/features/projects/utils/projectAvatars";
 import { useUnreadCounts } from "@/context/UnreadCountsContext";
 import { getStoredTokens } from "@/lib/api";
 import { cn } from "@/lib/utils";
-
-function getProjectDotClass(project) {
-  const key = String(project?.projectKey || project?.name || project?.id || "iems");
-  const colors = ["bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-cyan-500", "bg-rose-500"];
-  return colors[key.charCodeAt(0) % colors.length];
-}
 
 function SidebarNavLink({ item, isActive, hasUnread }) {
   if (!item) return null;
@@ -105,7 +101,7 @@ export function AppSidebar() {
       try {
         setLoadingProjects(true);
         const data = await projectService.getMyProjects();
-        setProjects(Array.isArray(data) ? data : []);
+        setProjects(await hydrateProjectsWithAvatars(data));
       } catch (error) {
         console.error("Error loading projects:", error);
         setProjects([]);
@@ -234,7 +230,7 @@ export function AppSidebar() {
                             className="text-sidebar-foreground/76 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-primary/12 data-[active=true]:font-medium data-[active=true]:text-primary"
                           >
                             <NavLink to={`/projects/${project.id}/overview`}>
-                              <span className={cn("h-2 w-2 rounded-full", getProjectDotClass(project))} />
+                              <ProjectAvatar project={project} size="xs" className="h-5 w-5" />
                               <span className="truncate">{project.name}</span>
                             </NavLink>
                           </SidebarMenuSubButton>
