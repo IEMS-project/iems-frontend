@@ -14,6 +14,12 @@ import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { Paperclip, Trash2, Loader2, File, Upload } from "lucide-react";
 import FibonacciStoryPointInput, { isFibonacci } from "./FibonacciStoryPointInput";
+import {
+  ISSUE_TITLE_MAX_LENGTH,
+  firstIssueValidationMessage,
+  normalizeRichText,
+  validateIssueForm,
+} from "@/features/projects/utils/issueValidation";
 
 export default function CreateIssueModal({
   open,
@@ -37,6 +43,7 @@ export default function CreateIssueModal({
     storyPoints: "",
   });
   const [attachments, setAttachments] = useState([]);
+  const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -54,11 +61,18 @@ export default function CreateIssueModal({
         storyPoints: "",
       });
       setAttachments([]);
+      setErrors({});
     }
   }, [open, defaultSprintId, defaultStatusId]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const handleFileChange = async (e) => {
@@ -118,8 +132,10 @@ export default function CreateIssueModal({
     : null;
 
   const handleSubmit = async () => {
-    if (!formData.title.trim()) {
-      toast.warning(t("issues.messages.titleRequired", "Please enter issue title"));
+    const validationErrors = validateIssueForm(formData, { requireIssueType: true });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.warning(firstIssueValidationMessage(validationErrors));
       return;
     }
     if (formData.storyPoints !== "" && !isFibonacci(formData.storyPoints)) {
@@ -129,15 +145,16 @@ export default function CreateIssueModal({
 
     try {
       setSaving(true);
+      const description = normalizeRichText(formData.description);
       const payload = {
         title: formData.title.trim(),
-        description: formData.description || undefined,
-        issueTypeId: formData.issueTypeId || undefined,
-        priorityId: formData.priorityId || undefined,
-        assigneeId: formData.assigneeId || undefined,
-        sprintId: formData.sprintId || undefined,
-        parentId: formData.parentId || undefined,
-        storyPoints: formData.storyPoints ? parseInt(formData.storyPoints, 10) : undefined,
+        description: description || null,
+        issueTypeId: formData.issueTypeId,
+        priorityId: formData.priorityId || null,
+        assigneeId: formData.assigneeId || null,
+        sprintId: formData.sprintId || null,
+        parentId: formData.parentId || null,
+        storyPoints: formData.storyPoints ? parseInt(formData.storyPoints, 10) : null,
         statusId: defaultStatusId || undefined,
         attachments: attachments
           .filter(att => att.status === "success")
@@ -193,7 +210,9 @@ export default function CreateIssueModal({
             onChange={e => handleChange("title", e.target.value)}
             placeholder={t("issues.form.titlePlaceholder", "Enter issue title")}
             className="w-full"
+            maxLength={ISSUE_TITLE_MAX_LENGTH}
           />
+          {errors.title && <p className="mt-1 text-xs text-destructive">{errors.title}</p>}
         </div>
 
         {/* Status (pre-selected from column, readonly) */}
@@ -219,6 +238,7 @@ export default function CreateIssueModal({
             onChange={e => handleChange("issueTypeId", e)}
             placeholder={t("issues.form.selectType", "Select type")}
           />
+          {errors.issueTypeId && <p className="mt-1 text-xs text-destructive">{errors.issueTypeId}</p>}
         </div>
 
         {/* Priority */}
@@ -305,6 +325,7 @@ export default function CreateIssueModal({
             onChange={v => handleChange("description", v)}
             placeholder={t("issues.form.descriptionPlaceholder", "Enter description")}
           />
+          {errors.description && <p className="mt-1 text-xs text-destructive">{errors.description}</p>}
         </div>
 
         {/* Attachments - full width */}

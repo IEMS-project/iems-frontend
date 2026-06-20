@@ -719,6 +719,14 @@ export default function BacklogTab() {
           });
         }}
         onUpdate={closeSelectedIssue}
+        onDelete={() => {
+          const deletedIssueId = selectedIssue?.id;
+          closeSelectedIssue();
+          if (deletedIssueId) {
+            setLocalIssues((prev) => prev.filter((item) => item.id !== deletedIssueId));
+            setLocalBacklog((prev) => prev.filter((item) => item.id !== deletedIssueId));
+          }
+        }}
       />
     </DndContext>
   );

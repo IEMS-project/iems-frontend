@@ -8,6 +8,7 @@ import {
 	FaMapMarkerAlt,
 	FaPhone,
 	FaSave,
+	FaShieldAlt,
 	FaTimes,
 	FaUser,
 	FaVenusMars,
@@ -28,6 +29,19 @@ function formatDate(value) {
 	return new Date(value).toLocaleDateString("vi-VN");
 }
 
+function toDateInputValue(value) {
+	if (!value) return "";
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return "";
+	return date.toISOString().slice(0, 10);
+}
+
+const GENDER_OPTIONS = [
+	{ label: "Nam", value: "MALE" },
+	{ label: "Nữ", value: "FEMALE" },
+	{ label: "Khác", value: "OTHER" },
+];
+
 function formatDateTime(value) {
 	if (!value) return "";
 	return new Date(value).toLocaleString("vi-VN");
@@ -37,7 +51,7 @@ const profileLayoutStyles = `
 	.profile-page-layout {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
-		gap: 1.5rem;
+		gap: 1rem;
 	}
 
 	.profile-page-sidebar,
@@ -47,7 +61,7 @@ const profileLayoutStyles = `
 
 	@media (min-width: 768px) {
 		.profile-page-layout {
-			grid-template-columns: minmax(0, 40%) minmax(0, 60%);
+			grid-template-columns: minmax(320px, 34%) minmax(0, 66%);
 		}
 
 		.profile-page-sidebar {
@@ -62,7 +76,7 @@ function ProfileLayoutStyles() {
 	return <style>{profileLayoutStyles}</style>;
 }
 
-function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t }) {
+function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t, formErrors }) {
 	if (!isEditing) {
 		return (
 			<Button onClick={onEdit} className="w-full justify-center sm:w-fit">
@@ -74,7 +88,7 @@ function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t }) {
 
 	return (
 		<div className="flex w-full flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-			<Button onClick={onSave} disabled={loading} className="w-full justify-center">
+			<Button onClick={onSave} disabled={loading || Object.keys(formErrors).length > 0} className="w-full justify-center">
 				<FaSave className="h-4 w-4" />
 				{t("profile.actions.save")}
 			</Button>
@@ -100,6 +114,7 @@ function ProfileSummaryCard({
 	onSave,
 	onCancel,
 	t,
+	formErrors,
 }) {
 	const username = profile?.userName || profile?.email?.split("@")[0] || "user";
 	const expiresAt = formatDateTime(premiumUntil);
@@ -125,6 +140,7 @@ function ProfileSummaryCard({
 							onSave={onSave}
 							onCancel={onCancel}
 							t={t}
+							formErrors={formErrors}
 						/>
 					</div>
 				</div>
@@ -185,44 +201,7 @@ function ProfileSummaryCard({
 	);
 }
 
-function SubscriptionCard({ subscriptionType, premiumUntil, isPremium }) {
-	return null;
-	const expiresAt = formatDateTime(premiumUntil);
-	const planName = isPremium ? subscriptionType || "PREMIUM" : "FREE";
 
-	return (
-		<Card className="overflow-hidden rounded-3xl border-border/70 shadow-sm">
-			<div className="p-5">
-				<div className="flex items-start justify-between gap-4">
-					<div className="flex min-w-0 items-start gap-3">
-						<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
-							<FaIdBadge className="h-4 w-4" />
-						</div>
-
-						<div className="min-w-0">
-							<h3 className={cn("text-base font-semibold", textColors.primary)}>Gói hiện tại</h3>
-							<p className={cn("mt-1 text-xs", textColors.muted)}>
-								{isPremium && expiresAt ? (
-									<>
-										Hết hạn: <span className="font-semibold">{expiresAt}</span>
-									</>
-								) : (
-									"Bạn đang dùng gói miễn phí"
-								)}
-							</p>
-						</div>
-					</div>
-
-					<PremiumBadge
-						subscriptionType={planName}
-						premiumUntil={premiumUntil}
-						size="md"
-					/>
-				</div>
-			</div>
-		</Card>
-	);
-}
 
 function InfoItem({ icon, label, value, children }) {
 	return (
@@ -248,31 +227,60 @@ function InfoItem({ icon, label, value, children }) {
 	);
 }
 
-function DetailInfoGrid({ formData, profile, isEditing, onInputChange }) {
+function DetailInfoGrid({ formData, profile, isEditing, onInputChange, formErrors }) {
 	const username = profile?.userName || profile?.email?.split("@")[0] || "-";
 	const role = profile?.role || "Thành viên";
 	const genderText =
-		profile?.gender === "MALE"
+		formData.gender === "MALE"
 			? "Male"
-			: profile?.gender === "FEMALE"
+			: formData.gender === "FEMALE"
 				? "Female"
-				: profile?.gender || "-";
+				: formData.gender || "-";
 
 	return (
 		<Card className="rounded-3xl border-border/70 shadow-sm">
 			<div className="p-5 sm:p-6">
-				<div className="mb-5">
-					<h3 className={cn("text-xl font-semibold tracking-tight", textColors.primary)}>
-						Thông tin tài khoản
-					</h3>
-				</div>
-
 				<div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-					<InfoItem
-						icon={<FaUser className="h-4 w-4" />}
-						label="Họ và tên"
-						value={`${formData.firstName || ""} ${formData.lastName || ""}`.trim()}
-					/>
+
+					<InfoItem icon={<FaUser className="h-4 w-4" />} label="Tên">
+						{isEditing ? (
+							<div>
+								<Input
+									value={formData.firstName}
+									onChange={(e) => onInputChange("firstName", e.target.value)}
+									placeholder="Nhập tên"
+									className={cn("mt-2 h-10 text-sm", formErrors.firstName && "border-red-500")}
+								/>
+								{formErrors.firstName && (
+									<p className="mt-1 text-xs text-red-500">{formErrors.firstName}</p>
+								)}
+							</div>
+						) : (
+							<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
+								{formData.firstName || "-"}
+							</div>
+						)}
+					</InfoItem>
+
+					<InfoItem icon={<FaUser className="h-4 w-4" />} label="Họ">
+						{isEditing ? (
+							<div>
+								<Input
+									value={formData.lastName}
+									onChange={(e) => onInputChange("lastName", e.target.value)}
+									placeholder="Nhập họ"
+									className={cn("mt-2 h-10 text-sm", formErrors.lastName && "border-red-500")}
+								/>
+								{formErrors.lastName && (
+									<p className="mt-1 text-xs text-red-500">{formErrors.lastName}</p>
+								)}
+							</div>
+						) : (
+							<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
+								{formData.lastName || "-"}
+							</div>
+						)}
+					</InfoItem>
 
 					<InfoItem
 						icon={<FaAt className="h-4 w-4" />}
@@ -280,33 +288,37 @@ function DetailInfoGrid({ formData, profile, isEditing, onInputChange }) {
 						value={`@${username}`}
 					/>
 
-					<InfoItem
-						icon={<FaAt className="h-4 w-4" />}
-						label="Email"
-						value={formData.email}
-					/>
+					<InfoItem icon={<FaAt className="h-4 w-4" />} label="Email">
+						<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
+							{formData.email || "-"}
+						</div>
+					</InfoItem>
 
 					<InfoItem
-						icon={<FaBuilding className="h-4 w-4" />}
+						icon={<FaShieldAlt className="h-4 w-4" />}
 						label="Vai trò"
 						value={role}
 					/>
 
 					<InfoItem icon={<FaPhone className="h-4 w-4" />} label="Số điện thoại">
 						{isEditing ? (
-							<Input
-								value={formData.phone}
-								onChange={(e) => onInputChange("phone", e.target.value)}
-								placeholder="Nhập số điện thoại"
-								className="mt-2 h-10 text-sm"
-							/>
+							<div>
+								<Input
+									value={formData.phone}
+									onChange={(e) => onInputChange("phone", e.target.value)}
+									placeholder="Nhập số điện thoại"
+									className={cn("mt-2 h-10 text-sm", formErrors.phone && "border-red-500")}
+								/>
+								{formErrors.phone && (
+									<p className="mt-1 text-xs text-red-500">{formErrors.phone}</p>
+								)}
+							</div>
 						) : (
 							<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
 								{formData.phone || "-"}
 							</div>
 						)}
 					</InfoItem>
-
 					<InfoItem icon={<FaMapMarkerAlt className="h-4 w-4" />} label="Địa chỉ">
 						{isEditing ? (
 							<Input
@@ -322,17 +334,46 @@ function DetailInfoGrid({ formData, profile, isEditing, onInputChange }) {
 						)}
 					</InfoItem>
 
-					<InfoItem
-						icon={<FaCalendarAlt className="h-4 w-4" />}
-						label="Ngày sinh"
-						value={formatDate(profile?.dob)}
-					/>
+					<InfoItem icon={<FaCalendarAlt className="h-4 w-4" />} label="Ngày sinh">
+						{isEditing ? (
+							<div>
+								<Input
+									type="date"
+									value={toDateInputValue(formData.dob)}
+									onChange={(e) => onInputChange("dob", e.target.value)}
+									className={cn("mt-2 h-10 text-sm", formErrors.dob && "border-red-500")}
+								/>
+								{formErrors.dob && (
+									<p className="mt-1 text-xs text-red-500">{formErrors.dob}</p>
+								)}
+							</div>
+						) : (
+							<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
+								{formatDate(formData.dob)}
+							</div>
+						)}
+					</InfoItem>
 
-					<InfoItem
-						icon={<FaVenusMars className="h-4 w-4" />}
-						label="Giới tính"
-						value={genderText}
-					/>
+					<InfoItem icon={<FaVenusMars className="h-4 w-4" />} label="Giới tính">
+						{isEditing ? (
+							<select
+								value={formData.gender || ""}
+								onChange={(e) => onInputChange("gender", e.target.value)}
+								className="mt-2 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+							>
+								<option value="">Chọn giới tính</option>
+								{GENDER_OPTIONS.map((option) => (
+									<option key={option.value} value={option.value}>
+										{option.label}
+									</option>
+								))}
+							</select>
+						) : (
+							<div className={cn("mt-1 break-words text-sm font-semibold", textColors.primary)}>
+								{genderText}
+							</div>
+						)}
+					</InfoItem>
 				</div>
 			</div>
 		</Card>
@@ -373,8 +414,55 @@ export default function Profile() {
 		dob: "",
 		gender: "",
 	});
+	const [formErrors, setFormErrors] = useState({});
 	const [cropModalOpen, setCropModalOpen] = useState(false);
 	const [imageSrcForCrop, setImageSrcForCrop] = useState(null);
+
+	const validateField = (field, value) => {
+		const newErrors = { ...formErrors };
+
+		switch (field) {
+			case "firstName":
+				if (!value?.trim()) {
+					newErrors.firstName = "Tên không được rỗng";
+				} else {
+					delete newErrors.firstName;
+				}
+				break;
+			case "lastName":
+				if (!value?.trim()) {
+					newErrors.lastName = "Họ không được rỗng";
+				} else {
+					delete newErrors.lastName;
+				}
+				break;
+			case "phone":
+				if (value && !/^\d{10,11}$/.test(value)) {
+					newErrors.phone = "Số điện thoại phải có 10-11 chữ số";
+				} else {
+					delete newErrors.phone;
+				}
+				break;
+			case "dob":
+				if (value) {
+					const dobDate = new Date(value);
+					const today = new Date();
+					today.setHours(0, 0, 0, 0);
+					if (dobDate > today) {
+						newErrors.dob = "Ngày sinh không được trong tương lai";
+					} else {
+						delete newErrors.dob;
+					}
+				} else {
+					delete newErrors.dob;
+				}
+				break;
+			default:
+				delete newErrors[field];
+		}
+
+		setFormErrors(newErrors);
+	};
 
 	useEffect(() => {
 		let mounted = true;
@@ -418,6 +506,7 @@ export default function Profile() {
 			...prev,
 			[field]: value,
 		}));
+		validateField(field, value);
 	};
 
 	const handleSave = async () => {
@@ -427,8 +516,12 @@ export default function Profile() {
 			setSuccess("");
 
 			const payload = {
+				firstName: formData.firstName?.trim(),
+				lastName: formData.lastName?.trim(),
 				address: formData.address,
 				phone: formData.phone,
+				dob: formData.dob ? new Date(formData.dob).toISOString() : null,
+				gender: formData.gender || null,
 			};
 
 			const updated = await userService.updateMyProfile(payload);
@@ -444,11 +537,15 @@ export default function Profile() {
 
 	const handleCancel = () => {
 		setIsEditing(false);
-		setFormData((prev) => ({
-			...prev,
+		setFormData({
+			firstName: profile?.firstName || "",
+			lastName: profile?.lastName || "",
+			email: profile?.email || "",
 			phone: profile?.phone || "",
 			address: profile?.address || "",
-		}));
+			dob: profile?.dob || "",
+			gender: profile?.gender || "",
+		});
 	};
 
 	const handlePickAvatar = async (e) => {
@@ -516,6 +613,7 @@ export default function Profile() {
 								onSave={handleSave}
 								onCancel={handleCancel}
 								t={t}
+								formErrors={formErrors}
 							/>
 						</div>
 					</Card>
@@ -534,28 +632,26 @@ export default function Profile() {
 						onSave={handleSave}
 						onCancel={handleCancel}
 						t={t}
-					/>
-
-					<SubscriptionCard
-						subscriptionType={subscriptionType}
-						premiumUntil={premiumUntil}
-						isPremium={isPremium}
+						formErrors={formErrors}
 					/>
 				</aside>
 
 				<main className="profile-page-content space-y-4">
+					{error && (
+						<div className="rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+							{error}
+						</div>
+					)}
+
 					<DetailInfoGrid
 						formData={formData}
 						profile={profile}
 						isEditing={isEditing}
 						onInputChange={handleInputChange}
+						formErrors={formErrors}
 					/>
 
-					{error && (
-						<div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-							{error}
-						</div>
-					)}
+
 
 					{success && (
 						<div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">

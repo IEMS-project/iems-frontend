@@ -6,6 +6,7 @@ import { timeAgo } from "@/lib/utils";
 import Button from "@/components/ui/button";
 import MentionInput, { CommentContent, convertMarkdownToPlainText, convertPlainTextToMarkdown } from "@/components/ui/MentionInput";
 import Skeleton from "@/components/ui/skeleton";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { getActivityMeta } from "../../utils/issueStyles";
 import IssueAvatar from "./IssueAvatar";
 import CollapsibleSection from "./CollapsibleSection";
@@ -72,6 +73,7 @@ export default function IssueActivitySection({
   const [expandedComments, setExpandedComments] = useState({});
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [deletingComment, setDeletingComment] = useState(null);
 
   const [activityLoadingMore, setActivityLoadingMore] = useState(false);
   const activityPageRef = useRef(0);
@@ -202,15 +204,13 @@ export default function IssueActivitySection({
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    const confirmMsg = isVi 
-      ? "Bạn có chắc chắn muốn xóa bình luận này không?" 
-      : "Are you sure you want to delete this comment?";
-    if (!window.confirm(confirmMsg)) return;
+  const handleDeleteComment = async () => {
+    if (!deletingComment?.id) return;
 
     try {
-      await issueService.deleteComment(projectId, issueId, commentId);
+      await issueService.deleteComment(projectId, issueId, deletingComment.id);
       toast.success(isVi ? "Đã xóa bình luận thành công" : "Comment deleted successfully");
+      setDeletingComment(null);
       await loadComments();
     } catch (e) {
       toast.error(e?.message || (isVi ? "Lỗi khi xóa bình luận" : "Error deleting comment"));
@@ -363,7 +363,7 @@ export default function IssueActivitySection({
                     {isVi ? "Sửa" : "Edit"}
                   </button>
                   <button
-                    onClick={() => handleDeleteComment(comment.id)}
+                    onClick={() => setDeletingComment(comment)}
                     className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -543,6 +543,22 @@ export default function IssueActivitySection({
           </div>
         )}
       </CollapsibleSection>
+      <ConfirmDialog
+        open={!!deletingComment}
+        onOpenChange={(open) => !open && setDeletingComment(null)}
+        onConfirm={handleDeleteComment}
+        title={isVi ? "Xóa bình luận" : "Delete comment"}
+        description={
+          deletingComment && (repliesByRootParent[deletingComment.id]?.length || 0) > 0
+            ? (isVi
+              ? `Bình luận này có ${repliesByRootParent[deletingComment.id].length} phản hồi. Xóa bình luận cha sẽ xóa luôn các bình luận con.`
+              : `This comment has ${repliesByRootParent[deletingComment.id].length} replies. Deleting the parent comment will also delete its replies.`)
+            : (isVi ? "Bạn có chắc chắn muốn xóa bình luận này không?" : "Are you sure you want to delete this comment?")
+        }
+        confirmText={isVi ? "Xóa" : "Delete"}
+        cancelText={isVi ? "Hủy" : "Cancel"}
+        variant="destructive"
+      />
     </div>
   );
 }

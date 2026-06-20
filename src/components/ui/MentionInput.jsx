@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { projectService } from "@/features/projects/api/projectService";
+import Avatar from "@/components/ui/Avatar";
 
 /**
  * Textarea that supports @username mention.
@@ -9,6 +10,7 @@ import { projectService } from "@/features/projects/api/projectService";
  *   placeholder, rows, className, disabled
  */
 export default function MentionInput({
+    id,
     value,
     onChange,
     projectId,
@@ -95,6 +97,7 @@ export default function MentionInput({
     return (
         <div className="relative">
             <textarea
+                id={id}
                 ref={textareaRef}
                 value={value || ""}
                 onChange={handleChange}
@@ -113,15 +116,20 @@ export default function MentionInput({
                     {filtered.map((m, i) => {
                         const name = (m.userName || `${m.firstName || ""} ${m.lastName || ""}`).trim() || m.userEmail || m.email;
                         const email = m.userEmail || m.email;
+                        const avatarSrc = m.userImage || m.image || m.avatar || m.imageUrl || m.avatarUrl;
                         return (
                             <button
                                 key={m.userId || m.accountId || m.id || i}
                                 onMouseDown={e => { e.preventDefault(); insertMention(m); }}
                                 className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${i === dropdownIdx ? "bg-primary/10" : "hover:bg-muted"}`}
                             >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-                                    {(name || "U").charAt(0).toUpperCase()}
-                                </span>
+                                <Avatar
+                                    user={m}
+                                    src={avatarSrc}
+                                    name={name}
+                                    size={7}
+                                    className="ring-1 ring-border/70"
+                                />
                                 <span>
                                     <span className="block font-medium text-popover-foreground">{name}</span>
                                     {email && <span className="block text-xs text-muted-foreground">{email}</span>}

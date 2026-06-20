@@ -51,6 +51,7 @@ export const adminPromotionService = {
     const data = await request("/document-service/api/files/upload-public", {
       method: "POST",
       body: formData,
+      isFormData: true,
     });
     return data?.data || data || [];
   },

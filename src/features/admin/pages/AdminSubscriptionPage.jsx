@@ -16,9 +16,9 @@ const EMPTY_PROMOTION = {
   title: "",
   description: "",
   imageUrl: "",
-  ctaLabel: "Open",
-  ctaUrl: "/premium",
-  placement: "SIDEBAR",
+  ctaLabel: "",
+  ctaUrl: "",
+  placement: "DASHBOARD",
   priority: 0,
   active: true,
   startsAt: "",
@@ -28,16 +28,6 @@ const EMPTY_PROMOTION = {
 function formatMoney(value, currency = "VND") {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency, maximumFractionDigits: 0 }).format(value || 0);
 }
-
-function toDateInput(value) {
-  if (!value) return "";
-  return new Date(value).toISOString().slice(0, 16);
-}
-
-function fromDateInput(value) {
-  return value ? new Date(value).toISOString() : null;
-}
-
 
 const PLAN_ORDER = ["week", "month", "year"];
 const PLAN_LABELS = {
@@ -339,20 +329,65 @@ function PromotionsTab() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(EMPTY_PROMOTION);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState("");
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const load = useCallback(async () => setItems(await adminPromotionService.getPromotions()), []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminPromotionService.getPromotions();
+      setItems((Array.isArray(data) ? data : []).filter((item) => item.placement === "DASHBOARD"));
+    } catch (err) {
+      setError(err?.message || "Cannot load promotions.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   useEffect(() => { load(); }, [load]);
 
   const submit = async () => {
-    const payload = { ...form, startsAt: fromDateInput(form.startsAt), endsAt: fromDateInput(form.endsAt) };
-    if (editingId) await adminPromotionService.updatePromotion(editingId, payload);
-    else await adminPromotionService.createPromotion(payload);
-    setForm(EMPTY_PROMOTION);
-    setEditingId(null);
-    await load();
+    if (!form.title?.trim()) {
+      setError("Promotion title is required.");
+      return;
+    }
+    if (!form.imageUrl?.trim()) {
+      setError("Promotion image is required.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const payload = {
+        ...form,
+        title: form.title.trim(),
+        description: "",
+        imageUrl: form.imageUrl.trim(),
+        ctaLabel: form.ctaUrl ? (form.ctaLabel || "Open") : "",
+        ctaUrl: form.ctaUrl || "",
+        placement: "DASHBOARD",
+        priority: Number(form.priority || 0),
+        startsAt: null,
+        endsAt: null,
+      };
+      if (editingId) await adminPromotionService.updatePromotion(editingId, payload);
+      else await adminPromotionService.createPromotion(payload);
+      setMessage(editingId ? "Promotion updated." : "Promotion created.");
+      setForm(EMPTY_PROMOTION);
+      setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(err?.message || "Cannot save promotion.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePickImage = async (event) => {
@@ -379,20 +414,27 @@ function PromotionsTab() {
 
   return (
     <div className="space-y-4 p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold">Promo area management</h3>
+          <p className="text-sm text-muted-foreground">Dashboard promo: up hinh, nhap title, them nut Open neu can. Tu 2 promo active tro len se tu slide.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          </Button>
+        </div>
+      </div>
+      {message && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
+      {error && <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       <div className="grid gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-4">
         <Input placeholder="title" value={form.title} onChange={(e) => set("title", e.target.value)} />
-        <Input placeholder="placement" value={form.placement} onChange={(e) => set("placement", e.target.value.toUpperCase())} />
-        <Input placeholder="cta label" value={form.ctaLabel || ""} onChange={(e) => set("ctaLabel", e.target.value)} />
-        <Input placeholder="cta url" value={form.ctaUrl || ""} onChange={(e) => set("ctaUrl", e.target.value)} />
-        <Input className="md:col-span-2" placeholder="description" value={form.description || ""} onChange={(e) => set("description", e.target.value)} />
-        <Input className="md:col-span-2" placeholder="image url" value={form.imageUrl || ""} onChange={(e) => set("imageUrl", e.target.value)} />
+        <Input placeholder="Open button label (optional)" value={form.ctaLabel || ""} onChange={(e) => set("ctaLabel", e.target.value)} />
+        <Input placeholder="Open button link (optional)" value={form.ctaUrl || ""} onChange={(e) => set("ctaUrl", e.target.value)} />
         <Input type="file" accept="image/*" disabled={imageUploading} onChange={handlePickImage} />
-        <Input type="datetime-local" value={form.startsAt || ""} onChange={(e) => set("startsAt", e.target.value)} />
-        <Input type="datetime-local" value={form.endsAt || ""} onChange={(e) => set("endsAt", e.target.value)} />
-        <Input type="number" value={form.priority} onChange={(e) => set("priority", Number(e.target.value))} />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.active} onChange={(e) => set("active", e.target.checked)} /> Active</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!form.active} onChange={(e) => set("active", e.target.checked)} /> Show promo</label>
         <div className="flex gap-2 md:col-span-2">
-          <Button onClick={submit}>{editingId ? "Save promotion" : "Create promotion"}</Button>
+          <Button onClick={submit} disabled={saving || imageUploading}>{saving ? "Saving..." : editingId ? "Save promotion" : "Create promotion"}</Button>
           {editingId && <Button variant="outline" onClick={() => { setEditingId(null); setForm(EMPTY_PROMOTION); }}>Cancel</Button>}
         </div>
         {(form.imageUrl || imageUploading || imageError) && (
@@ -412,7 +454,13 @@ function PromotionsTab() {
         )}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        {items.map((item) => (
+        {loading && <div className="text-sm text-muted-foreground md:col-span-2">Loading promotions...</div>}
+        {!loading && items.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground md:col-span-2">
+            No dashboard promotions yet.
+          </div>
+        )}
+        {!loading && items.map((item) => (
           <div key={item.id} className="rounded-lg border border-border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-start gap-3">
@@ -421,8 +469,7 @@ function PromotionsTab() {
                 )}
                 <div className="min-w-0">
                   <div className="font-semibold">{item.title}</div>
-                  <div className="text-sm text-muted-foreground">{item.description}</div>
-                  <div className="mt-2 text-xs text-muted-foreground">{item.placement} | priority {item.priority}</div>
+                  <div className="mt-2 text-xs text-muted-foreground">{item.ctaUrl ? `Open: ${item.ctaUrl}` : "no Open button"}</div>
                 </div>
               </div>
               <button className={cn("rounded-full px-2 py-1 text-xs", item.active ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground")} onClick={() => adminPromotionService.setPromotionActive(item.id, !item.active).then(load)}>
@@ -432,7 +479,13 @@ function PromotionsTab() {
             <div className="mt-3 flex gap-2">
               <Button size="sm" variant="outline" onClick={() => {
                 setEditingId(item.id);
-                setForm({ ...item, startsAt: toDateInput(item.startsAt), endsAt: toDateInput(item.endsAt) });
+                setForm({
+                  ...EMPTY_PROMOTION,
+                  ...item,
+                  ctaLabel: item.ctaUrl ? (item.ctaLabel || "Open") : "",
+                  startsAt: "",
+                  endsAt: "",
+                });
               }}>Edit</Button>
               <Button size="sm" variant="ghost" onClick={() => adminPromotionService.deletePromotion(item.id).then(load)}>Delete</Button>
             </div>

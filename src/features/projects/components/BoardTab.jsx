@@ -838,6 +838,14 @@ export default function BoardTab() {
           )));
         }}
         onUpdate={() => { closeSelectedIssue(); loadSprintIssues(); }}
+        onDelete={() => {
+          const deletedIssueId = selectedIssue?.id;
+          closeSelectedIssue();
+          if (deletedIssueId) {
+            setSprintIssues((prev) => prev.filter((item) => item.id !== deletedIssueId));
+          }
+          loadSprintIssues();
+        }}
       />
       <CreateIssueModal
         open={!!createStatusId}

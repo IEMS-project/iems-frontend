@@ -17,6 +17,12 @@ import IssueSidebar from "./issue-detail/IssueSidebar";
 import IssueSubtasksSection from "./issue-detail/IssueSubtasksSection";
 import IssueActivitySection from "./issue-detail/IssueActivitySection";
 import CollapsibleSection from "./issue-detail/CollapsibleSection";
+import {
+  ISSUE_TITLE_MAX_LENGTH,
+  firstIssueValidationMessage,
+  normalizeRichText,
+  validateIssueForm,
+} from "@/features/projects/utils/issueValidation";
 
 function initForm(issue) {
   const resolvedAssigneeId =
@@ -66,6 +72,7 @@ export default function IssueDetailModal({
 
   const [form, setForm] = useState(() => initForm(issue));
   const [attachments, setAttachments] = useState(() => issue?.attachments || []);
+  const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -85,6 +92,7 @@ export default function IssueDetailModal({
   useEffect(() => {
     setForm(initForm(issue));
     setAttachments(issue?.attachments || []);
+    setErrors({});
     setCollapsed({ description: false, subtasks: false, activity: false, attachments: false });
   }, [issue?.id, open]);
 
@@ -160,7 +168,15 @@ export default function IssueDetailModal({
     }
   };
 
-  const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const set = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const resolveIssueAssigneeId = (issueData) =>
     issueData?.assigneeId ||
@@ -195,6 +211,12 @@ export default function IssueDetailModal({
 
   const handleSave = async () => {
     if (!isDirty) return;
+    const validationErrors = validateIssueForm(form, { requireIssueType: true });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      toast.warning(firstIssueValidationMessage(validationErrors));
+      return;
+    }
     if (form.storyPoints !== "" && form.storyPoints !== null && !isFibonacci(form.storyPoints)) {
       toast.warning("Story Points must be a Fibonacci number (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)");
       return;
@@ -203,8 +225,9 @@ export default function IssueDetailModal({
     if (dueDateError) { toast.warning(dueDateError); return; }
 
     const patch = {};
-    if (form.title !== (issue.title || "")) patch.title = form.title;
-    if (form.description !== (issue.description || "")) patch.description = form.description || null;
+    const description = normalizeRichText(form.description);
+    if (form.title !== (issue.title || "")) patch.title = form.title.trim();
+    if (description !== (issue.description || "")) patch.description = description || null;
     if (form.issueTypeId !== (issue.issueTypeId || "")) patch.issueTypeId = form.issueTypeId;
     if (form.statusId !== (issue.statusId || "")) patch.statusId = form.statusId;
     if (form.priorityId !== (issue.priorityId || "")) patch.priorityId = form.priorityId || null;
@@ -331,7 +354,9 @@ export default function IssueDetailModal({
                   onChange={e => set("title", e.target.value)}
                   className="w-full rounded-lg border border-transparent bg-transparent py-1 text-2xl font-semibold leading-tight text-foreground outline-none transition-colors hover:border-border hover:bg-muted/30 focus:border-primary/40 focus:bg-background focus:px-3"
                   placeholder="Issue title"
+                  maxLength={ISSUE_TITLE_MAX_LENGTH}
                 />
+                {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <div className="relative" ref={moreRef}>
@@ -436,6 +461,7 @@ export default function IssueDetailModal({
                     onChange={v => set("description", v)}
                     placeholder="Add a description..."
                   />
+                  {errors.description && <p className="mt-1 text-xs text-destructive">{errors.description}</p>}
                 </CollapsibleSection>
               </div>
 

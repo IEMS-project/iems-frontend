@@ -741,6 +741,18 @@ export default function IssueListTab() {
         issue={selectedIssue}
         targetCommentId={searchParams.get("commentId")}
         onUpdate={async () => { closeSelectedIssue(); await loadPagedIssues(); }}
+        onDelete={async () => {
+          const deletedIssueId = selectedIssue?.id;
+          closeSelectedIssue();
+          if (deletedIssueId) {
+            setIssues((prev) => prev.filter((issue) => issue.id !== deletedIssueId));
+            setPageInfo((prev) => ({
+              ...prev,
+              totalElements: Math.max((prev.totalElements ?? 0) - 1, 0),
+            }));
+          }
+          await loadPagedIssues();
+        }}
       />
 
       {/* Create Issue Modal */}
