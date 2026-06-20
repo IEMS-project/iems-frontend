@@ -67,17 +67,16 @@ export default function MentionInput({
     function insertMention(member) {
         if (!member) return;
         const name = (member.userName || `${member.firstName || ""} ${member.lastName || ""}`).trim() || member.userEmail || member.email || "user";
-        const userId = member.userId || member.accountId || member.id;
         const safeValue = value || "";
         const before = safeValue.slice(0, atPos);
         const after = safeValue.slice(textareaRef.current?.selectionStart || atPos + query.length + 1);
-        const newValue = `${before}@[${name}](${userId}) ${after}`;
+        const newValue = `${before}@${name} ${after}`;
         onChange(newValue);
         setShowDropdown(false);
         setQuery("");
         // Move cursor after mention
         setTimeout(() => {
-            const newPos = (before + `@[${name}](${userId}) `).length;
+            const newPos = (before + `@${name} `).length;
             textareaRef.current?.setSelectionRange(newPos, newPos);
             textareaRef.current?.focus();
         }, 0);
@@ -172,4 +171,35 @@ export function CommentContent({ content }) {
             })}
         </span>
     );
+}
+
+export function convertMarkdownToPlainText(text) {
+    if (!text) return "";
+    // Replace @[Name](ID) with @Name
+    return text.replace(/@\[([^\]]+)\]\(([^)]+)\)/g, '@$1');
+}
+
+export function convertPlainTextToMarkdown(text, members = []) {
+    if (!text) return "";
+    let parsed = text;
+    
+    // Sort members by name length descending to match longer names first
+    const sortedMembers = [...members].sort((a, b) => {
+        const nameA = (a.userName || `${a.firstName || ""} ${a.lastName || ""}`).trim();
+        const nameB = (b.userName || `${b.firstName || ""} ${b.lastName || ""}`).trim();
+        return nameB.length - nameA.length;
+    });
+
+    for (const m of sortedMembers) {
+        const name = (m.userName || `${m.firstName || ""} ${m.lastName || ""}`).trim();
+        const userId = m.userId || m.accountId || m.id;
+        if (!name || !userId) continue;
+
+        // Escape regex special chars
+        const escapedName = name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        // Match @Name followed by space, punctuation, or end of string
+        const regex = new RegExp(`@${escapedName}(?=\\s|$|[.,!?;:])`, 'g');
+        parsed = parsed.replace(regex, `@[${name}](${userId})`);
+    }
+    return parsed;
 }

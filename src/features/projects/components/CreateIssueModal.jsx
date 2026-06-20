@@ -9,8 +9,10 @@ import TypeSelect from "@/components/ui/TypeSelect";
 import PrioritySelect from "@/components/ui/PrioritySelect";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
+import { documentService } from "@/features/projects/api/documentService";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+import { Paperclip, Trash2, Loader2, File, Upload } from "lucide-react";
 import FibonacciStoryPointInput, { isFibonacci } from "./FibonacciStoryPointInput";
 
 export default function CreateIssueModal({
@@ -34,7 +36,9 @@ export default function CreateIssueModal({
     parentId: "",
     storyPoints: "",
   });
+  const [attachments, setAttachments] = useState([]);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = React.useRef(null);
 
   // Reset form when modal opens with new defaults
   useEffect(() => {
@@ -49,11 +53,63 @@ export default function CreateIssueModal({
         parentId: "",
         storyPoints: "",
       });
+      setAttachments([]);
     }
   }, [open, defaultSprintId, defaultStatusId]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    e.target.value = "";
+    const newAttachments = [...attachments];
+
+    for (const file of files) {
+      const tempId = `temp-${Date.now()}-${file.name}`;
+      const tempAttachment = {
+        tempId,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        progress: 0,
+        status: "uploading",
+      };
+
+      newAttachments.push(tempAttachment);
+      setAttachments([...newAttachments]);
+
+      try {
+        const response = await documentService.uploadProjectDocument(projectId, file);
+        const index = newAttachments.findIndex(att => att.tempId === tempId);
+        if (index !== -1) {
+          newAttachments[index] = {
+            fileId: response.id,
+            fileName: response.fileName,
+            fileUrl: response.downloadUrl || "",
+            fileType: response.fileType,
+            fileSize: response.fileSize,
+            status: "success",
+          };
+          setAttachments([...newAttachments]);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${file.name}`);
+        const index = newAttachments.findIndex(att => att.tempId === tempId);
+        if (index !== -1) {
+          newAttachments[index].status = "error";
+          setAttachments([...newAttachments]);
+        }
+      }
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   // Label for the pre-selected status column
@@ -83,6 +139,15 @@ export default function CreateIssueModal({
         parentId: formData.parentId || undefined,
         storyPoints: formData.storyPoints ? parseInt(formData.storyPoints, 10) : undefined,
         statusId: defaultStatusId || undefined,
+        attachments: attachments
+          .filter(att => att.status === "success")
+          .map(att => ({
+            fileId: att.fileId,
+            fileName: att.fileName,
+            fileUrl: att.fileUrl,
+            fileType: att.fileType,
+            fileSize: att.fileSize,
+          })),
       };
 
       await issueService.createIssue(projectId, payload);
@@ -240,6 +305,64 @@ export default function CreateIssueModal({
             onChange={v => handleChange("description", v)}
             placeholder={t("issues.form.descriptionPlaceholder", "Enter description")}
           />
+        </div>
+
+        {/* Attachments - full width */}
+        <div className="sm:col-span-2 border-t border-border pt-4">
+          <label className="block text-sm font-medium text-foreground mb-2 flex items-center gap-1.5">
+            <Paperclip className="w-4 h-4 text-muted-foreground" />
+            {t("issues.form.attachments", "Attachments")}
+          </label>
+
+          <input
+            type="file"
+            multiple
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <div className="flex flex-wrap gap-2 mb-3">
+            {attachments.map((att, idx) => (
+              <div
+                key={att.fileId || att.tempId || idx}
+                className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground group relative max-w-[280px]"
+              >
+                <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate pr-4" title={att.fileName}>
+                  {att.fileName}
+                </span>
+
+                {att.status === "uploading" ? (
+                  <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-primary" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(idx)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted-foreground/10"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
+                  </button>
+                )}
+                {att.status === "error" && (
+                  <span className="text-[10px] text-red-500 font-medium shrink-0 ml-1">
+                    Failed
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            {t("issues.form.uploadAttachments", "Upload files")}
+          </Button>
         </div>
       </div>
     </Modal>

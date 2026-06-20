@@ -1,11 +1,16 @@
 import React from "react";
+import Avatar from "@/components/ui/Avatar";
 
-export default function IssueAvatar({ name, size = "sm", color = "bg-blue-500" }) {
-  const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const sz = size === "sm" ? "w-6 h-6 text-[10px]" : "w-7 h-7 text-xs";
+export default function IssueAvatar({ name, user, src, size = "sm", className = "" }) {
+  // Map size prop: "sm" maps to "xs" (w-6 h-6), other sizes map to "sm" (w-8 h-8)
+  const avatarSize = size === "sm" ? "xs" : "sm";
   return (
-    <div className={`${sz} ${color} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}>
-      {initials}
-    </div>
+    <Avatar
+      user={user}
+      src={src}
+      name={name}
+      size={avatarSize}
+      className={className}
+    />
   );
 }

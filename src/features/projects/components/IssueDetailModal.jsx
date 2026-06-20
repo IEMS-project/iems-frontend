@@ -5,12 +5,13 @@ import Button from "@/components/ui/button";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
+import { documentService } from "@/features/projects/api/documentService";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { getIssueTypeIcon, getIssueTypeColor, getPriorityIcon } from "./IssueCard";
 import { isFibonacci } from "./FibonacciStoryPointInput";
 import { validateDates } from "@/features/projects/utils/dateValidation";
-import { Trash2, Save, MoreHorizontal, X } from "lucide-react";
+import { Trash2, Save, MoreHorizontal, X, Paperclip, File, Upload, Loader2 } from "lucide-react";
 import { getStatusStyle } from "../utils/issueStyles";
 import IssueSidebar from "./issue-detail/IssueSidebar";
 import IssueSubtasksSection from "./issue-detail/IssueSubtasksSection";
@@ -64,7 +65,9 @@ export default function IssueDetailModal({
   } = useProject();
 
   const [form, setForm] = useState(() => initForm(issue));
+  const [attachments, setAttachments] = useState(() => issue?.attachments || []);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Subtasks and Activity state
   const [subModalIssue, setSubModalIssue] = useState(null);
@@ -73,7 +76,7 @@ export default function IssueDetailModal({
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Collapse state
-  const [collapsed, setCollapsed] = useState({ description: false, subtasks: false, activity: false });
+  const [collapsed, setCollapsed] = useState({ description: false, subtasks: false, activity: false, attachments: false });
 
   // More actions dropdown
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -81,7 +84,8 @@ export default function IssueDetailModal({
 
   useEffect(() => {
     setForm(initForm(issue));
-    setCollapsed({ description: false, subtasks: false, activity: false });
+    setAttachments(issue?.attachments || []);
+    setCollapsed({ description: false, subtasks: false, activity: false, attachments: false });
   }, [issue?.id, open]);
 
   // Close more menu on outside click
@@ -90,6 +94,71 @@ export default function IssueDetailModal({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    e.target.value = "";
+    const newAttachments = [...attachments];
+
+    for (const file of files) {
+      const tempId = `temp-${Date.now()}-${file.name}`;
+      const tempAttachment = {
+        tempId,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        progress: 0,
+        status: "uploading",
+      };
+
+      newAttachments.push(tempAttachment);
+      setAttachments([...newAttachments]);
+
+      try {
+        const response = await documentService.uploadProjectDocument(projectId, file);
+        const index = newAttachments.findIndex(att => att.tempId === tempId);
+        if (index !== -1) {
+          newAttachments[index] = {
+            fileId: response.id,
+            fileName: response.fileName,
+            fileUrl: response.downloadUrl || "",
+            fileType: response.fileType,
+            fileSize: response.fileSize,
+            status: "success",
+          };
+          setAttachments([...newAttachments]);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${file.name}`);
+        const index = newAttachments.findIndex(att => att.tempId === tempId);
+        if (index !== -1) {
+          newAttachments[index].status = "error";
+          setAttachments([...newAttachments]);
+        }
+      }
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDownloadAttachment = async (att) => {
+    try {
+      const data = await documentService.getDocumentDownloadLink(projectId, att.fileId);
+      if (data?.downloadUrl) {
+        window.open(data.downloadUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        throw new Error("No download link received");
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("Failed to download attachment");
+    }
+  };
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -104,6 +173,13 @@ export default function IssueDetailModal({
 
   const initialAssigneeId = resolveIssueAssigneeId(issue);
 
+  const attachmentsChanged = (() => {
+    const existing = issue?.attachments || [];
+    if (existing.length !== attachments.length) return true;
+    const existingIds = new Set(existing.map(a => a.fileId));
+    return attachments.some(a => !existingIds.has(a.fileId));
+  })();
+
   const isDirty = issue && (
     form.title !== (issue.title || "") ||
     form.description !== (issue.description || "") ||
@@ -113,7 +189,8 @@ export default function IssueDetailModal({
     String(form.assigneeId || "") !== String(initialAssigneeId || "") ||
     form.sprintId !== (issue.sprintId || "") ||
     String(form.storyPoints) !== String(issue.storyPoints ?? "") ||
-    form.dueDate !== (issue.dueDate || "")
+    form.dueDate !== (issue.dueDate || "") ||
+    attachmentsChanged
   );
 
   const handleSave = async () => {
@@ -136,16 +213,26 @@ export default function IssueDetailModal({
       patch.storyPoints = form.storyPoints === "" ? null : parseInt(form.storyPoints, 10);
     }
     if (form.dueDate !== (issue.dueDate || "")) patch.dueDate = form.dueDate || null;
+    if (attachmentsChanged) {
+      patch.attachments = attachments.map(att => ({
+        fileId: att.fileId,
+        fileName: att.fileName,
+        fileUrl: att.fileUrl,
+        fileType: att.fileType,
+        fileSize: att.fileSize,
+      }));
+    }
 
     const nextSprintId = form.sprintId || null;
     const sprintChanged = String(nextSprintId || "") !== String(issue.sprintId || "");
-    const optimisticIssue = { ...issue, ...patch, sprintId: nextSprintId };
+    const optimisticIssue = { ...issue, ...patch, sprintId: nextSprintId, attachments: attachments };
     const previousIssue = issue;
 
     setSaving(true);
     updateIssueInCache(optimisticIssue);
     onOptimisticUpdate?.(optimisticIssue);
     setForm(initForm(optimisticIssue));
+    setAttachments(optimisticIssue.attachments || []);
     try {
 
       let savedIssue = optimisticIssue;
@@ -349,6 +436,76 @@ export default function IssueDetailModal({
                     onChange={v => set("description", v)}
                     placeholder="Add a description..."
                   />
+                </CollapsibleSection>
+              </div>
+
+              {/* Attachments */}
+              <div className="m-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <CollapsibleSection
+                  title="Attachments"
+                  collapsed={collapsed.attachments}
+                  onToggle={() => setCollapsed(p => ({ ...p, attachments: !p.attachments }))}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {attachments.map((att, idx) => (
+                      <div
+                        key={att.id || att.fileId || att.tempId || idx}
+                        className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground group relative max-w-[280px]"
+                      >
+                        <File className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                        {att.status === "success" || !att.status ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadAttachment(att)}
+                            className="truncate text-left pr-4 hover:underline hover:text-primary font-medium"
+                            title={att.fileName}
+                          >
+                            {att.fileName}
+                          </button>
+                        ) : (
+                          <span className="truncate pr-4 font-medium" title={att.fileName}>
+                            {att.fileName}
+                          </span>
+                        )}
+
+                        {att.status === "uploading" ? (
+                          <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-primary" />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(idx)}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted-foreground/10"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
+                          </button>
+                        )}
+                        {att.status === "error" && (
+                          <span className="text-[10px] text-red-500 font-medium shrink-0 ml-1">
+                            Failed
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload files
+                  </Button>
                 </CollapsibleSection>
               </div>
 
