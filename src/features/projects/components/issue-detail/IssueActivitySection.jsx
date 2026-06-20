@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, Send, X, CornerDownRight, ArrowRight } from "lucide-react";
+import { Plus, Send, X, CornerDownRight, ArrowRight, Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { issueService } from "@/features/projects/api/issueService";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/utils";
 import Button from "@/components/ui/button";
-import MentionInput, { CommentContent } from "@/components/ui/MentionInput";
+import MentionInput, { CommentContent, convertMarkdownToPlainText, convertPlainTextToMarkdown } from "@/components/ui/MentionInput";
 import Skeleton from "@/components/ui/skeleton";
 import { getActivityMeta } from "../../utils/issueStyles";
 import IssueAvatar from "./IssueAvatar";
 import CollapsibleSection from "./CollapsibleSection";
+import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 function StatusBadge({ value, workflowStatuses }) {
   if (!value) return null;
@@ -54,6 +56,10 @@ export default function IssueActivitySection({
   hasChildren,
   onAddChild
 }) {
+  const { userProfile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isVi = i18n.language === "vi";
+
   const [comments, setComments] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -62,6 +68,10 @@ export default function IssueActivitySection({
   const [activeTab, setActiveTab] = useState("comments");
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
+
+  const [expandedComments, setExpandedComments] = useState({});
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   const [activityLoadingMore, setActivityLoadingMore] = useState(false);
   const activityPageRef = useRef(0);
@@ -145,8 +155,9 @@ export default function IssueActivitySection({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
+      const parsedContent = convertPlainTextToMarkdown(newComment.trim(), members);
       await issueService.addComment(projectId, issueId, { 
-        content: newComment.trim(),
+        content: parsedContent,
         parentCommentId: replyingTo?.id
       });
       setNewComment("");
@@ -159,12 +170,6 @@ export default function IssueActivitySection({
 
   const handleStartReply = (comment) => {
     setReplyingTo(comment);
-    const authorName = comment.authorName || getAuthorName(comment.authorId) || "user";
-    const authorId = comment.authorId;
-    const mention = `@[${authorName}](${authorId}) `;
-    if (!newComment.includes(mention)) {
-      setNewComment(prev => mention + prev);
-    }
     // Scroll to input
     document.getElementById("main-comment-input")?.focus();
     document.getElementById("main-comment-input")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -176,48 +181,232 @@ export default function IssueActivitySection({
     return m?.fullName || m?.userName || m?.name || m?.email || null;
   };
 
-  const topLevelComments = comments.filter(c => !c.parentCommentId);
-  const repliesByParent = comments.reduce((acc, c) => {
-    if (c.parentCommentId) {
-      acc[c.parentCommentId] = acc[c.parentCommentId] || [];
-      acc[c.parentCommentId].push(c);
+  const handleStartEdit = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingText(convertMarkdownToPlainText(comment.content));
+  };
+
+  const handleUpdateComment = async (commentId) => {
+    if (!editingText.trim()) return;
+    try {
+      const parsedContent = convertPlainTextToMarkdown(editingText.trim(), members);
+      await issueService.updateComment(projectId, issueId, commentId, {
+        content: parsedContent
+      });
+      toast.success(isVi ? "Đã cập nhật bình luận" : "Comment updated successfully");
+      setEditingCommentId(null);
+      setEditingText("");
+      await loadComments();
+    } catch (e) {
+      toast.error(e?.message || (isVi ? "Lỗi khi cập nhật bình luận" : "Error updating comment"));
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const confirmMsg = isVi 
+      ? "Bạn có chắc chắn muốn xóa bình luận này không?" 
+      : "Are you sure you want to delete this comment?";
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await issueService.deleteComment(projectId, issueId, commentId);
+      toast.success(isVi ? "Đã xóa bình luận thành công" : "Comment deleted successfully");
+      await loadComments();
+    } catch (e) {
+      toast.error(e?.message || (isVi ? "Lỗi khi xóa bình luận" : "Error deleting comment"));
+    }
+  };
+
+  // Build a map of all comments for quick lookup
+  const commentsMap = new Map(comments.map(c => [c.id, c]));
+
+  // Helper to trace root parent comment ID
+  const getRootParentId = (commentId) => {
+    let current = commentsMap.get(commentId);
+    if (!current) return null;
+    while (current.parentCommentId && commentsMap.has(current.parentCommentId)) {
+      current = commentsMap.get(current.parentCommentId);
+    }
+    return current.id;
+  };
+
+  // Helper to get name of parent comment author
+  const getParentAuthorName = (comment) => {
+    if (!comment.parentCommentId) return null;
+    const parentComment = commentsMap.get(comment.parentCommentId);
+    if (!parentComment) return null;
+    return parentComment.authorName || getAuthorName(parentComment.authorId) || "User";
+  };
+
+  // Filter top level (root) comments
+  const topLevelComments = comments.filter(c => !c.parentCommentId || !commentsMap.has(c.parentCommentId));
+
+  // Group all replies flat under their root ancestor
+  const repliesByRootParent = comments.reduce((acc, c) => {
+    if (c.parentCommentId && commentsMap.has(c.parentCommentId)) {
+      const rootId = getRootParentId(c.id);
+      if (rootId && rootId !== c.id) {
+        acc[rootId] = acc[rootId] || [];
+        acc[rootId].push(c);
+      }
     }
     return acc;
   }, {});
 
-  const renderComment = (comment, isReply = false) => {
+  // Sort flat replies under each root by creation date
+  Object.keys(repliesByRootParent).forEach(rootId => {
+    repliesByRootParent[rootId].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  });
+
+  const renderComment = (comment, isReply = false, rootId = null) => {
     const name = comment.authorName || getAuthorName(comment.authorId) || "Unknown";
-    const replies = repliesByParent[comment.id] || [];
+    const replies = repliesByRootParent[comment.id] || [];
+    const isEdited = comment.updatedAt && comment.updatedAt !== comment.createdAt;
+    
+    const member = members.find(m => (m.accountId || m.id) === comment.authorId);
+    const avatarSrc = comment.authorImage || member?.image || member?.avatar || member?.imageUrl;
+
+    const isAuthor = userProfile && String(comment.authorId) === String(userProfile.id);
+    const targetName = getParentAuthorName(comment);
+
     return (
-      <div key={comment.id} className={isReply ? "pl-8 mt-2" : ""}>
+      <div key={comment.id} className="group relative">
         <div
           id={`comment-${comment.id}`}
-          className={`rounded-lg p-3 transition-colors ${
+          className={`rounded-xl p-3.5 transition-all duration-200 ${
             String(comment.id) === String(targetCommentId)
-              ? "bg-primary/10 ring-2 ring-primary/40"
-              : isReply ? "bg-muted/40 border-l-2 border-blue-400" : "bg-muted/60"
+              ? "bg-primary/10 ring-2 ring-primary/40 shadow-sm"
+              : isReply 
+                ? "bg-muted/30 border-l-2 border-blue-400/70 hover:bg-muted/40" 
+                : "bg-muted/50 hover:bg-muted/60 shadow-sm"
           }`}
         >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <IssueAvatar name={name} />
-              <span className="text-xs font-semibold text-foreground">{name}</span>
-              <span className="text-xs text-muted-foreground" title={comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2.5">
+              <IssueAvatar name={name} src={avatarSrc} user={member} size={isReply ? "sm" : "md"} />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <span className="text-xs font-semibold text-foreground">{name}</span>
+                {targetName && comment.parentCommentId !== rootId && (
+                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    {isVi ? "trả lời" : "replied to"} <span className="font-semibold text-foreground/80">@{targetName}</span>
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-muted-foreground" title={comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}>
                 {timeAgo(comment.createdAt)}
+                {isEdited && (
+                  <span className="ml-1.5 text-[10px] italic font-normal text-muted-foreground/80">
+                    {isVi ? "(đã chỉnh sửa)" : "(edited)"}
+                  </span>
+                )}
               </span>
             </div>
-            {!isReply && (
+          </div>
+
+          {/* Content / Edit Box */}
+          {editingCommentId === comment.id ? (
+            <div className="mt-1.5 space-y-2">
+              <MentionInput
+                value={editingText}
+                onChange={setEditingText}
+                projectId={projectId}
+                placeholder={isVi ? "Sửa bình luận..." : "Edit comment..."}
+                rows={3}
+                className="w-full"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditingText("");
+                  }}
+                  className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {isVi ? "Hủy" : "Cancel"}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleUpdateComment(comment.id)}
+                  disabled={!editingText.trim()}
+                  className="px-3 h-8 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  {isVi ? "Lưu" : "Save"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap pl-0.5">
+              <CommentContent content={comment.content} />
+            </p>
+          )}
+
+          {/* Footer Action Buttons (Only when not editing) */}
+          {editingCommentId !== comment.id && (
+            <div className="flex items-center gap-3.5 mt-2.5 pt-1 border-t border-border/10 opacity-70 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => handleStartReply(comment)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-500 transition-colors"
+                className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-blue-500 transition-colors"
               >
-                <CornerDownRight className="w-3 h-3" />Reply
+                <CornerDownRight className="w-3 h-3" />
+                {isVi ? "Trả lời" : "Reply"}
               </button>
+              {isAuthor && (
+                <>
+                  <button
+                    onClick={() => handleStartEdit(comment)}
+                    className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-blue-500 transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    {isVi ? "Sửa" : "Edit"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    {isVi ? "Xóa" : "Delete"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Nested replies section for top-level comments */}
+        {!isReply && replies.length > 0 && (
+          <div className="mt-2 pl-4 ml-4 border-l border-border/80 space-y-3">
+            <button
+              onClick={() => {
+                setExpandedComments(prev => ({
+                  ...prev,
+                  [comment.id]: !prev[comment.id]
+                }));
+              }}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors px-1 py-1"
+            >
+              {expandedComments[comment.id] ? (
+                <>
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  {isVi ? `Ẩn ${replies.length} phản hồi` : `Hide ${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  {isVi ? `Xem ${replies.length} phản hồi` : `Show ${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+                </>
+              )}
+            </button>
+
+            {expandedComments[comment.id] && (
+              <div className="space-y-3 pt-1">
+                {replies.map(r => renderComment(r, true, comment.id))}
+              </div>
             )}
           </div>
-          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap"><CommentContent content={comment.content} /></p>
-        </div>
-        {replies.length > 0 && <div className="space-y-2 mt-2">{replies.map(r => renderComment(r, true))}</div>}
+        )}
       </div>
     );
   };
