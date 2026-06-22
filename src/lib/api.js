@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8080";
+const DEFAULT_GATEWAY_URL =
+  typeof window !== "undefined" ? `${window.location.origin}/api` : "/api";
+
+const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
 const CHATBOT_BASE_URL = import.meta.env.VITE_CHATBOT_URL || `${GATEWAY_BASE_URL}/ai-service`;
 const STORAGE_KEY = "iems.auth";
 

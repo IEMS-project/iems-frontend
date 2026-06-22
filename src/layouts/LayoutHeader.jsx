@@ -15,6 +15,7 @@ export default function LayoutHeader({ searchOpen, onOpenSearch, onCloseSearch }
             <div className="ml-auto flex min-w-0 items-center gap-2">
                 <button
                     type="button"
+                    aria-label="Mở tìm kiếm"
                     onClick={onOpenSearch}
                     className="hidden w-52 max-w-[32vw] items-center gap-2 rounded-lg border border-border/70 bg-background/70 px-3 py-1.5 text-sm text-muted-foreground shadow-sm shadow-slate-900/[0.02] backdrop-blur transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary sm:flex lg:w-64"
                 >

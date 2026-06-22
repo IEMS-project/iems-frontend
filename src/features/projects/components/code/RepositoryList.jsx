@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Button from "@/components/ui/button";
@@ -17,6 +17,9 @@ export default function RepositoryList() {
     const [editingRepo, setEditingRepo] = useState(null);
     const [repoName, setRepoName] = useState("");
     const [repoLink, setRepoLink] = useState("");
+    const [repoErrors, setRepoErrors] = useState({});
+    const repoNameInputRef = useRef(null);
+    const repoLinkInputRef = useRef(null);
 
     useEffect(() => {
         loadRepositories();
@@ -35,11 +38,43 @@ export default function RepositoryList() {
         }
     };
 
-    const handleAddRepository = async () => {
-        if (!repoName.trim() || !repoLink.trim()) {
-            alert("Please fill in all fields");
-            return;
+    const resetRepositoryForm = () => {
+        setRepoName("");
+        setRepoLink("");
+        setRepoErrors({});
+    };
+
+    const isValidGitHubRepoUrl = (value) => {
+        const trimmed = value.trim();
+        try {
+            const url = new URL(trimmed);
+            if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com") {
+                return false;
+            }
+            const [owner, repo, ...rest] = url.pathname.split("/").filter(Boolean);
+            return Boolean(owner && repo) && rest.length === 0;
+        } catch {
+            return false;
         }
+    };
+
+    const validateRepositoryForm = () => {
+        const errors = {};
+        if (!repoName.trim()) errors.name = "Repository name is required.";
+        if (!repoLink.trim()) {
+            errors.link = "Repository URL is required.";
+        } else if (!isValidGitHubRepoUrl(repoLink)) {
+            errors.link = "Repository URL must be a valid GitHub URL.";
+        }
+
+        setRepoErrors(errors);
+        if (errors.name) repoNameInputRef.current?.focus();
+        else if (errors.link) repoLinkInputRef.current?.focus();
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleAddRepository = async () => {
+        if (!validateRepositoryForm()) return;
 
         try {
             await githubService.createRepository({
@@ -49,8 +84,7 @@ export default function RepositoryList() {
             });
 
             setShowAddDialog(false);
-            setRepoName("");
-            setRepoLink("");
+            resetRepositoryForm();
             loadRepositories();
         } catch (error) {
             console.error("Error adding repository:", error);
@@ -76,14 +110,12 @@ export default function RepositoryList() {
         setEditingRepo(repo);
         setRepoName(repo.name);
         setRepoLink(repo.repoLink);
+        setRepoErrors({});
         setShowEditDialog(true);
     };
 
     const handleUpdateRepository = async () => {
-        if (!repoName.trim() || !repoLink.trim()) {
-            alert("Please fill in all fields");
-            return;
-        }
+        if (!validateRepositoryForm()) return;
 
         try {
             await githubService.updateRepository(editingRepo.id, {
@@ -93,8 +125,7 @@ export default function RepositoryList() {
 
             setShowEditDialog(false);
             setEditingRepo(null);
-            setRepoName("");
-            setRepoLink("");
+            resetRepositoryForm();
             loadRepositories();
         } catch (error) {
             console.error("Error updating repository:", error);
@@ -130,22 +161,38 @@ export default function RepositoryList() {
                             <div>
                                 <label className="block text-sm font-medium mb-2">Repository Name</label>
                                 <input
+                                    ref={repoNameInputRef}
+                                    id="add-repository-name"
                                     type="text"
                                     value={repoName}
-                                    onChange={(e) => setRepoName(e.target.value)}
+                                    onChange={(e) => {
+                                        setRepoName(e.target.value);
+                                        setRepoErrors(prev => ({ ...prev, name: "" }));
+                                    }}
                                     placeholder="My Backend"
-                                    className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    className={`w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 text-sm ${repoErrors.name ? "border-destructive focus:ring-destructive/30" : "border-border focus:ring-primary"}`}
+                                    aria-invalid={repoErrors.name ? "true" : "false"}
+                                    aria-describedby={repoErrors.name ? "add-repository-name-error" : undefined}
                                 />
+                                {repoErrors.name && <p id="add-repository-name-error" className="mt-1 text-xs font-medium text-destructive">{repoErrors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-2">Repository Link</label>
                                 <input
+                                    ref={repoLinkInputRef}
+                                    id="add-repository-link"
                                     type="text"
                                     value={repoLink}
-                                    onChange={(e) => setRepoLink(e.target.value)}
+                                    onChange={(e) => {
+                                        setRepoLink(e.target.value);
+                                        setRepoErrors(prev => ({ ...prev, link: "" }));
+                                    }}
                                     placeholder="https://github.com/owner/repo"
-                                    className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    className={`w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 text-sm ${repoErrors.link ? "border-destructive focus:ring-destructive/30" : "border-border focus:ring-primary"}`}
+                                    aria-invalid={repoErrors.link ? "true" : "false"}
+                                    aria-describedby={repoErrors.link ? "add-repository-link-error" : undefined}
                                 />
+                                {repoErrors.link && <p id="add-repository-link-error" className="mt-1 text-xs font-medium text-destructive">{repoErrors.link}</p>}
                             </div>
                         </div>
                         <div className="flex gap-2 justify-end">
@@ -154,8 +201,7 @@ export default function RepositoryList() {
                                 size="sm"
                                 onClick={() => {
                                     setShowAddDialog(false);
-                                    setRepoName("");
-                                    setRepoLink("");
+                                    resetRepositoryForm();
                                 }}
                             >
                                 Cancel
@@ -184,22 +230,38 @@ export default function RepositoryList() {
                             <div>
                                 <label className="block text-sm font-medium mb-2">Repository Name</label>
                                 <input
+                                    ref={repoNameInputRef}
+                                    id="edit-repository-name"
                                     type="text"
                                     value={repoName}
-                                    onChange={(e) => setRepoName(e.target.value)}
+                                    onChange={(e) => {
+                                        setRepoName(e.target.value);
+                                        setRepoErrors(prev => ({ ...prev, name: "" }));
+                                    }}
                                     placeholder="My Backend"
-                                    className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    className={`w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 text-sm ${repoErrors.name ? "border-destructive focus:ring-destructive/30" : "border-border focus:ring-primary"}`}
+                                    aria-invalid={repoErrors.name ? "true" : "false"}
+                                    aria-describedby={repoErrors.name ? "edit-repository-name-error" : undefined}
                                 />
+                                {repoErrors.name && <p id="edit-repository-name-error" className="mt-1 text-xs font-medium text-destructive">{repoErrors.name}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-2">Repository Link</label>
                                 <input
+                                    ref={repoLinkInputRef}
+                                    id="edit-repository-link"
                                     type="text"
                                     value={repoLink}
-                                    onChange={(e) => setRepoLink(e.target.value)}
+                                    onChange={(e) => {
+                                        setRepoLink(e.target.value);
+                                        setRepoErrors(prev => ({ ...prev, link: "" }));
+                                    }}
                                     placeholder="https://github.com/owner/repo"
-                                    className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    className={`w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 text-sm ${repoErrors.link ? "border-destructive focus:ring-destructive/30" : "border-border focus:ring-primary"}`}
+                                    aria-invalid={repoErrors.link ? "true" : "false"}
+                                    aria-describedby={repoErrors.link ? "edit-repository-link-error" : undefined}
                                 />
+                                {repoErrors.link && <p id="edit-repository-link-error" className="mt-1 text-xs font-medium text-destructive">{repoErrors.link}</p>}
                             </div>
                         </div>
                         <div className="flex gap-2 justify-end">
@@ -209,8 +271,7 @@ export default function RepositoryList() {
                                 onClick={() => {
                                     setShowEditDialog(false);
                                     setEditingRepo(null);
-                                    setRepoName("");
-                                    setRepoLink("");
+                                    resetRepositoryForm();
                                 }}
                             >
                                 Cancel
@@ -243,7 +304,10 @@ export default function RepositoryList() {
                             <Button
                                 variant="default"
                                 size="sm"
-                                onClick={() => setShowAddDialog(true)}
+                                onClick={() => {
+                                    resetRepositoryForm();
+                                    setShowAddDialog(true);
+                                }}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Repository
@@ -265,7 +329,10 @@ export default function RepositoryList() {
                             </p>
                             <Button
                                 variant="default"
-                                onClick={() => setShowAddDialog(true)}
+                                onClick={() => {
+                                    resetRepositoryForm();
+                                    setShowAddDialog(true);
+                                }}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Add Your First Repository

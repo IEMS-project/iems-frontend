@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Search, X, FileText, FolderKanban, Loader2, ArrowRight } from "lucide-react";
 import { searchService } from "@/features/search/api/searchService";
@@ -109,7 +110,7 @@ export default function CommandPalette({ open, onClose }) {
 
     if (!open) return null;
 
-    return (
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
@@ -198,7 +199,8 @@ export default function CommandPalette({ open, onClose }) {
                     <span>{allResults.length} kết quả</span>
                 </div>
             </div>
-        </>
+        </>,
+        document.body
     );
 }
 

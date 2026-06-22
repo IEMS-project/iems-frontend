@@ -1,7 +1,10 @@
 import { getStoredTokens } from "@/lib/api";
 
 const NOTIFICATION_BASE_URL =
-    import.meta.env.VITE_NOTIFICATION_URL || "http://localhost:8090";
+    import.meta.env.VITE_NOTIFICATION_URL ||
+    (typeof window !== "undefined"
+        ? `${window.location.origin}/api/notification-service`
+        : "/api/notification-service");
 
 function authHeaders() {
     const tokens = getStoredTokens();

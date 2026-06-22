@@ -178,7 +178,7 @@ function WorkflowSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.workflowStatuses", "Workflow Statuses")}</h3>
         <Button size="sm" onClick={() => setShowAddStatus(true)} disabled={!defaultWf || workflowsLoading}>
           <Plus className="w-4 h-4 mr-1" /> {t("settings.addStatus", "Add Status")}
@@ -439,7 +439,7 @@ function IssueTypesSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.issueTypes", "Issue Types")}</h3>
         <Button size="sm" onClick={() => { setShowAdd(true); setActiveIconPicker(null); }}>
           <Plus className="w-4 h-4 mr-1" /> {t("ui.common.add")}
@@ -562,7 +562,7 @@ function PrioritiesSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.priorities", "Priorities")}</h3>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus className="w-4 h-4 mr-1" /> {t("ui.common.add")}
@@ -803,7 +803,7 @@ function RolesSection() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">{t("settings.roles", "Roles & Permissions")}</h3>
         <Button size="sm" onClick={() => setShowAdd(true)}>
           <Plus className="w-4 h-4 mr-1" /> {t("ui.common.add")}
@@ -846,8 +846,8 @@ function RolesSection() {
                     <p className="text-xs text-muted-foreground py-2">Loading permissions…</p>
                   ) : (
                     <>
-                      <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
-                        <div className="flex items-center gap-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Permissions</p>
                           
                           {/* Save & Discard Buttons */}
@@ -881,7 +881,7 @@ function RolesSection() {
                           <span className="text-sm font-semibold text-foreground uppercase tracking-wide">Select All</span>
                         </label>
                       </div>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                      <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                         {PERMISSION_GROUPS.map(({ group, perms: groupPerms }) => {
                           const currentDraft = draftPerms[role.id] || new Set();
                           const isGroupChecked = groupPerms.length > 0 && groupPerms.every(p => currentDraft.has(p.code));

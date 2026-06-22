@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/button";
@@ -45,7 +45,14 @@ export default function CreateIssueModal({
   const [attachments, setAttachments] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
+  const titleInputRef = useRef(null);
+  const typeFieldRef = useRef(null);
+  const formDataRef = useRef(formData);
+
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   // Reset form when modal opens with new defaults
   useEffect(() => {
@@ -62,11 +69,25 @@ export default function CreateIssueModal({
       });
       setAttachments([]);
       setErrors({});
+      formDataRef.current = {
+        title: "",
+        description: "",
+        issueTypeId: "",
+        priorityId: "",
+        assigneeId: "",
+        sprintId: defaultSprintId || "",
+        parentId: "",
+        storyPoints: "",
+      };
     }
   }, [open, defaultSprintId, defaultStatusId]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      formDataRef.current = next;
+      return next;
+    });
     setErrors(prev => {
       if (!prev[field]) return prev;
       const next = { ...prev };
@@ -132,29 +153,39 @@ export default function CreateIssueModal({
     : null;
 
   const handleSubmit = async () => {
-    const validationErrors = validateIssueForm(formData, { requireIssueType: true });
+    const currentFormData = {
+      ...formDataRef.current,
+      title: titleInputRef.current?.value ?? formDataRef.current.title,
+    };
+    formDataRef.current = currentFormData;
+    setFormData(currentFormData);
+
+    const validationErrors = validateIssueForm(currentFormData, { requireIssueType: true });
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      if (validationErrors.title) titleInputRef.current?.focus();
+      else if (validationErrors.issueTypeId) typeFieldRef.current?.querySelector("button")?.focus();
+      toast.dismiss();
       toast.warning(firstIssueValidationMessage(validationErrors));
       return;
     }
-    if (formData.storyPoints !== "" && !isFibonacci(formData.storyPoints)) {
+    if (currentFormData.storyPoints !== "" && !isFibonacci(currentFormData.storyPoints)) {
       toast.warning("Story Points must be a Fibonacci number (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)");
       return;
     }
 
     try {
       setSaving(true);
-      const description = normalizeRichText(formData.description);
+      const description = normalizeRichText(currentFormData.description);
       const payload = {
-        title: formData.title.trim(),
+        title: currentFormData.title.trim(),
         description: description || null,
-        issueTypeId: formData.issueTypeId,
-        priorityId: formData.priorityId || null,
-        assigneeId: formData.assigneeId || null,
-        sprintId: formData.sprintId || null,
-        parentId: formData.parentId || null,
-        storyPoints: formData.storyPoints ? parseInt(formData.storyPoints, 10) : null,
+        issueTypeId: currentFormData.issueTypeId,
+        priorityId: currentFormData.priorityId || null,
+        assigneeId: currentFormData.assigneeId || null,
+        sprintId: currentFormData.sprintId || null,
+        parentId: currentFormData.parentId || null,
+        storyPoints: currentFormData.storyPoints ? parseInt(currentFormData.storyPoints, 10) : null,
         statusId: defaultStatusId || undefined,
         attachments: attachments
           .filter(att => att.status === "success")
@@ -206,6 +237,7 @@ export default function CreateIssueModal({
             {t("issues.form.title", "Title")} *
           </label>
           <Input
+            ref={titleInputRef}
             value={formData.title}
             onChange={e => handleChange("title", e.target.value)}
             placeholder={t("issues.form.titlePlaceholder", "Enter issue title")}
@@ -228,7 +260,7 @@ export default function CreateIssueModal({
         )}
 
         {/* Issue Type */}
-        <div>
+        <div ref={typeFieldRef}>
           <label className="block text-sm font-medium text-foreground mb-1">
             {t("issues.form.type", "Type")}
           </label>

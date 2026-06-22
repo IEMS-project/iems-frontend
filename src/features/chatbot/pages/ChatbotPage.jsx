@@ -3,6 +3,7 @@ import ChatMessage from '@/features/chatbot/components/ChatMessage';
 import ChatInput from '@/features/chatbot/components/ChatInput';
 import ConversationManager from '@/features/chatbot/components/ConversationManager';
 import chatbotService from '@/features/chatbot/api/chatbotService';
+import { AGENT_FRIENDLY_ERROR, sanitizeAgentResponse } from '@/features/chatbot/utils/sanitizeAgentResponse';
 import { documentService } from '@/features/projects/api/documentService';
 import { useTranslation } from 'react-i18next';
 
@@ -112,24 +113,29 @@ const Chatbot = ({ projectId = null }) => {
       // Fallback defaults when API is temporarily unavailable.
       setQuickOptions([
         {
+          id: 'project_health',
+          label: 'Tóm tắt sức khỏe dự án',
+          prompt: 'Tóm tắt sức khỏe dự án theo các mục: Tổng quan, Thống kê theo trạng thái, Việc đang làm, Việc đã xong, Việc quá hạn/rủi ro và Nhận xét sức khỏe dự án.'
+        },
+        {
           id: 'daily_plan',
-          label: t('chatbot.quickActions.dailyPlan.label'),
-          prompt: t('chatbot.quickActions.dailyPlan.prompt')
+          label: 'Lập kế hoạch hôm nay',
+          prompt: 'Lập kế hoạch hôm nay, chỉ nêu Top 5 issue ưu tiên với issue key, title, status, priority, due date và lý do ưu tiên.'
         },
         {
-          id: 'project_risk_review',
-          label: t('chatbot.quickActions.riskReview.label'),
-          prompt: t('chatbot.quickActions.riskReview.prompt')
+          id: 'sprint_risk',
+          label: 'Phân tích rủi ro sprint',
+          prompt: 'Phân tích rủi ro sprint hiện tại, nêu mức rủi ro, issue rủi ro chính, tác động và hành động đề xuất.'
         },
         {
-          id: 'progress_summary',
-          label: t('chatbot.quickActions.progressSummary.label'),
-          prompt: t('chatbot.quickActions.progressSummary.prompt')
+          id: 'member_workload',
+          label: 'Ai đang quá tải?',
+          prompt: 'Phân tích workload thành viên trong dự án: ai đang quá tải, ai cần hỗ trợ và nên phân bổ lại việc nào.'
         },
         {
-          id: 'next_actions',
-          label: t('chatbot.quickActions.nextActions.label'),
-          prompt: t('chatbot.quickActions.nextActions.prompt')
+          id: 'standup_report',
+          label: 'Tạo báo cáo standup',
+          prompt: 'Tạo báo cáo standup ngắn gọn cho dự án hôm nay: đã xong, đang làm, blocker, rủi ro và việc ưu tiên tiếp theo.'
         }
       ]);
     };
@@ -298,7 +304,7 @@ const Chatbot = ({ projectId = null }) => {
   };
 
   const handleSendMessage = async (question) => {
-    if (!question.trim()) return;
+    if (!question.trim() || isLoading || isUploadingAttachment) return;
 
     // If no conversation is active, start creating a new one
     if (!activeConversationId && !isCreatingNewConversation) {
@@ -339,14 +345,14 @@ const Chatbot = ({ projectId = null }) => {
               // Cập nhật message hiện có
               return prev.map(msg =>
                 msg.id === botMessageId
-                  ? { ...msg, message: msg.message + chunk }
+                  ? { ...msg, message: sanitizeAgentResponse(msg.message + chunk) }
                   : msg
               );
             } else {
               // Tạo bot message mới với chunk đầu tiên
               const botMessage = {
                 id: botMessageId,
-                message: chunk,
+                message: sanitizeAgentResponse(chunk),
                 isUser: false,
                 timestamp: new Date().toISOString()
               };
@@ -380,7 +386,7 @@ const Chatbot = ({ projectId = null }) => {
           if (currentBotMessageId) {
             const errorMessage = {
               id: botMessageId,
-              message: t('chatbot.page.streamError', { error }),
+              message: AGENT_FRIENDLY_ERROR,
               isUser: false,
               timestamp: new Date().toISOString()
             };
@@ -388,11 +394,11 @@ const Chatbot = ({ projectId = null }) => {
           } else {
             setMessages(prev => prev.map(msg =>
               msg.id === botMessageId
-                ? { ...msg, message: t('chatbot.page.streamError', { error }) }
+                ? { ...msg, message: AGENT_FRIENDLY_ERROR }
                 : msg
             ));
           }
-          setError(error);
+          setError(AGENT_FRIENDLY_ERROR);
           setIsLoading(false);
           setCurrentBotMessageId(null);
           setHasStartedStreaming(false);
@@ -410,7 +416,7 @@ const Chatbot = ({ projectId = null }) => {
       if (currentBotMessageId) {
         const errorMessage = {
           id: botMessageId,
-          message: t('chatbot.page.streamError', { error: error.message }),
+          message: AGENT_FRIENDLY_ERROR,
           isUser: false,
           timestamp: new Date().toISOString()
         };
@@ -418,11 +424,11 @@ const Chatbot = ({ projectId = null }) => {
       } else {
         setMessages(prev => prev.map(msg =>
           msg.id === botMessageId
-            ? { ...msg, message: t('chatbot.page.streamError', { error: error.message }) }
+            ? { ...msg, message: AGENT_FRIENDLY_ERROR }
             : msg
         ));
       }
-      setError(error.message);
+      setError(AGENT_FRIENDLY_ERROR);
       setIsLoading(false);
       setCurrentBotMessageId(null);
       setHasStartedStreaming(false);

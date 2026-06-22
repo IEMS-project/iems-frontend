@@ -57,7 +57,7 @@ function ColumnToggleDropdown({ visibleColumns, onToggle, onClose, anchorEl }) {
   return createPortal(
     <div
       ref={ref}
-      style={{ position: "fixed", top: rect.bottom + 4, right: window.innerWidth - rect.right, zIndex: 9999, minWidth: 180 }}
+      style={{ position: "fixed", top: rect.bottom + 4, right: Math.max(8, window.innerWidth - rect.right), zIndex: 9999, minWidth: 180 }}
       className="rounded-md border border-border bg-popover shadow-xl py-1"
     >
       <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border mb-1">
@@ -316,6 +316,36 @@ export default function IssueListTab() {
     setSearch(""); setFilterStatus(""); setFilterType("");
     setFilterPriority(""); setFilterAssignee(""); setFilterSprint("");
   };
+  const closeTransientLayers = useCallback(() => {
+    setShowFilterDropdown(false);
+    setShowColDropdown(false);
+  }, []);
+
+  const openFilterDropdown = () => {
+    setShowFilterDropdown((open) => {
+      const next = !open;
+      if (next) setShowColDropdown(false);
+      return next;
+    });
+  };
+
+  const openColumnDropdown = () => {
+    setShowColDropdown((open) => {
+      const next = !open;
+      if (next) setShowFilterDropdown(false);
+      return next;
+    });
+  };
+
+  const openCreateIssue = () => {
+    closeTransientLayers();
+    setShowCreate(true);
+  };
+
+  const openImportIssues = () => {
+    closeTransientLayers();
+    setShowImport(true);
+  };
 
   const filteredSorted = useMemo(() => {
     let list = [...(issues || [])];
@@ -517,7 +547,7 @@ export default function IssueListTab() {
           <button
             ref={filterBtnRef}
             type="button"
-            onClick={() => setShowFilterDropdown(v => !v)}
+            onClick={openFilterDropdown}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs text-foreground hover:bg-muted transition-colors"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -592,7 +622,7 @@ export default function IssueListTab() {
           </button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
           <span className="text-sm text-muted-foreground">
             {pageInfo.totalElements} {t("issues.issues", "issues")}
           </span>
@@ -601,7 +631,7 @@ export default function IssueListTab() {
           <div className="relative">
             <button
               ref={colBtnRef}
-              onClick={() => setShowColDropdown(v => !v)}
+              onClick={openColumnDropdown}
               className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
             >
               <Columns className="w-4 h-4" />
@@ -620,7 +650,7 @@ export default function IssueListTab() {
 
           <button
             type="button"
-            onClick={handleExportIssues}
+            onClick={() => { closeTransientLayers(); handleExportIssues(); }}
             disabled={exporting}
             className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-60"
           >
@@ -630,7 +660,7 @@ export default function IssueListTab() {
 
           <button
             type="button"
-            onClick={() => setShowImport(true)}
+            onClick={openImportIssues}
             className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted transition-colors"
           >
             <Upload className="w-4 h-4" />
@@ -638,7 +668,7 @@ export default function IssueListTab() {
           </button>
 
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={openCreateIssue}
             className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
             <Plus className="w-4 h-4" />

@@ -68,9 +68,8 @@ function AnalyticBars({ title, icon, items, total, emptyText }) {
                     items.map((item) => {
                         const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
                         return (
-                            <button
+                            <div
                                 key={item.key}
-                                type="button"
                                 className="group w-full rounded-lg border border-transparent p-2 text-left transition-all hover:border-border hover:bg-muted/45"
                             >
                                 <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
@@ -85,7 +84,7 @@ function AnalyticBars({ title, icon, items, total, emptyText }) {
                                         style={{ width: `${Math.max(4, percent)}%`, backgroundColor: item.color }}
                                     />
                                 </div>
-                            </button>
+                            </div>
                         );
                     })
                 )}
@@ -160,21 +159,18 @@ function StatusBreakdownWidget({ title, meta, total, slices, items, emptyText })
 
                         <div className="grid min-w-0 gap-1.5">
                             {items.map((item) => (
-                                <button
+                                <div
                                     key={item.key}
-                                    type="button"
-                                    className="flex min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="flex min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                                     onMouseEnter={() => setActiveKey(item.key)}
                                     onMouseLeave={() => setActiveKey(null)}
-                                    onFocus={() => setActiveKey(item.key)}
-                                    onBlur={() => setActiveKey(null)}
                                 >
                                     <span className="flex min-w-0 items-center gap-2">
                                         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                                         <span className="truncate">{item.label}</span>
                                     </span>
                                     <span className="shrink-0 font-semibold text-foreground">{item.value}</span>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -274,13 +270,34 @@ function TimelineCard({ projectData, t }) {
     );
 }
 
-function ActivityFeed({ activities, loading, loadingMore, sentinelRef, workflowStatuses, t }) {
+function ActivityFeed({ activities, loading, loadingMore, sentinelRef, workflowStatuses, t, error, onRetry }) {
     if (loading) {
         return (
             <div className="space-y-3">
                 {Array.from({ length: 6 }).map((_, index) => (
                     <Skeleton key={index} className="h-14 rounded-xl" />
                 ))}
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="rounded-xl border border-dashed border-destructive/40 bg-destructive/5 px-4 py-10 text-center">
+                <Activity className="mx-auto h-6 w-6 text-destructive" />
+                <p className="mt-2 text-sm font-medium text-foreground">
+                    {t("projects.detail.overview.activityLoadError", "Unable to load recent activity")}
+                </p>
+                <p className="mx-auto mt-1 max-w-xs text-xs text-muted-foreground">
+                    {t("projects.detail.overview.activityLoadErrorDescription", "Please try again.")}
+                </p>
+                <button
+                    type="button"
+                    onClick={onRetry}
+                    className="mt-4 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                    {t("ui.common.retry", "Retry")}
+                </button>
             </div>
         );
     }
@@ -406,19 +423,21 @@ export default function ProjectOverviewPage() {
 
     const [activities, setActivities] = useState([]);
     const [activitiesLoading, setActivitiesLoading] = useState(true);
+    const [activitiesError, setActivitiesError] = useState(null);
     const [activityLoadingMore, setActivityLoadingMore] = useState(false);
     const activityPageRef = useRef(0);
     const activityHasMoreRef = useRef(false);
     const activityLoadingMoreRef = useRef(false);
     const activitySentinelRef = useRef(null);
 
-    useEffect(() => {
+    const loadInitialActivities = useCallback(() => {
         setActivitiesLoading(true);
+        setActivitiesError(null);
         setActivities([]);
         activityPageRef.current = 0;
         activityHasMoreRef.current = false;
         activityLoadingMoreRef.current = false;
-        projectService.getActivities(projectId, 0, 20)
+        return projectService.getActivities(projectId, 0, 20)
             .then((res) => {
                 setActivities(res.content || []);
                 activityHasMoreRef.current = !res.last;
@@ -426,9 +445,14 @@ export default function ProjectOverviewPage() {
             .catch((error) => {
                 console.error("Error loading activities:", error);
                 setActivities([]);
+                setActivitiesError(error);
             })
             .finally(() => setActivitiesLoading(false));
     }, [projectId]);
+
+    useEffect(() => {
+        loadInitialActivities();
+    }, [loadInitialActivities]);
 
     const loadMoreActivities = useCallback(() => {
         if (activityLoadingMoreRef.current || !activityHasMoreRef.current) return;
@@ -582,6 +606,8 @@ export default function ProjectOverviewPage() {
                                 activities={activities}
                                 loading={activitiesLoading}
                                 loadingMore={activityLoadingMore}
+                                error={activitiesError}
+                                onRetry={loadInitialActivities}
                                 sentinelRef={activitySentinelRef}
                                 workflowStatuses={workflowStatuses}
                                 t={t}

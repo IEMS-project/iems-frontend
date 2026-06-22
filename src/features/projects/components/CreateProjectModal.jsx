@@ -41,8 +41,12 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState("");
     const avatarInputRef = useRef(null);
+    const nameInputRef = useRef(null);
+    const keyInputRef = useRef(null);
+    const startDateInputRef = useRef(null);
 
     const [basicInfo, setBasicInfo] = useState({ ...INITIAL_BASIC_INFO });
+    const [basicErrors, setBasicErrors] = useState({});
 
     // workflowData.id = existing workflow id from backend (null if none)
     const [workflowData, setWorkflowData] = useState({ id: null, name: "", statuses: [] });
@@ -61,6 +65,7 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
         setAvatarFile(null);
         setAvatarPreview("");
         setBasicInfo({ ...INITIAL_BASIC_INFO });
+        setBasicErrors({});
         setWorkflowData({ id: null, name: "", statuses: [] });
         setPriorities([]);
         setIssueTypes([]);
@@ -135,30 +140,70 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             name: value,
             projectKey: keyManuallyEdited ? prev.projectKey : autoKey,
         }));
+        setBasicErrors(prev => ({ ...prev, name: "", ...(keyManuallyEdited ? {} : { projectKey: "" }) }));
     };
 
     const handleKeyChange = (value) => {
         setKeyManuallyEdited(true);
         setBasicInfo(prev => ({
             ...prev,
-            projectKey: value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10),
+            projectKey: value.toUpperCase(),
         }));
+        setBasicErrors(prev => ({ ...prev, projectKey: "" }));
+    };
+
+    const validateBasicInfo = () => {
+        const currentBasicInfo = {
+            ...basicInfo,
+            startDate: startDateInputRef.current?.value || basicInfo.startDate,
+        };
+        if (currentBasicInfo.startDate !== basicInfo.startDate) {
+            setBasicInfo(prev => ({ ...prev, startDate: currentBasicInfo.startDate }));
+        }
+
+        const nextErrors = {};
+        if (!currentBasicInfo.name.trim()) nextErrors.name = "Project Name is required.";
+        const key = currentBasicInfo.projectKey.trim();
+        if (!key) {
+            nextErrors.projectKey = "Project Key is required.";
+        } else if (key.length > 10) {
+            nextErrors.projectKey = "Project Key must be 10 characters or fewer.";
+        } else if (!/^[A-Z0-9]+$/.test(key)) {
+            nextErrors.projectKey = "Project Key can only contain A-Z and 0-9. Remove spaces, accents, and symbols.";
+        }
+        if (!currentBasicInfo.startDate) nextErrors.startDate = "Start Date is required.";
+
+        const dateError = validateDates({ startDate: currentBasicInfo.startDate, endDate: currentBasicInfo.endDate });
+        if (dateError && !nextErrors.startDate) nextErrors.startDate = dateError;
+
+        setBasicErrors(nextErrors);
+
+        if (nextErrors.name) nameInputRef.current?.focus();
+        else if (nextErrors.projectKey) keyInputRef.current?.focus();
+        else if (nextErrors.startDate) startDateInputRef.current?.focus();
+
+        return Object.keys(nextErrors).length === 0;
     };
 
     // ── Step 1: create project, then load backend defaults ────────
     const handleStep1Next = async () => {
-        if (!basicInfo.name.trim()) { toast.warning("Project name is required"); return; }
-        if (!basicInfo.projectKey.trim()) { toast.warning("Project key is required"); return; }
-        if (!basicInfo.startDate) { toast.warning("Start date is required"); return; }
-        const dateError = validateDates({ startDate: basicInfo.startDate, endDate: basicInfo.endDate });
-        if (dateError) { toast.warning(dateError); return; }
+        if (!validateBasicInfo()) {
+            toast.warning("Please fix the highlighted fields before continuing.");
+            return;
+        }
+        const currentBasicInfo = {
+            ...basicInfo,
+            startDate: startDateInputRef.current?.value || basicInfo.startDate,
+        };
 
         setLoading(true);
         try {
             const projectData = {
-                ...basicInfo,
-                startDate: new Date(basicInfo.startDate).toISOString(),
-                endDate: basicInfo.endDate ? new Date(basicInfo.endDate).toISOString() : null,
+                ...currentBasicInfo,
+                name: currentBasicInfo.name.trim(),
+                projectKey: currentBasicInfo.projectKey.trim(),
+                startDate: new Date(currentBasicInfo.startDate).toISOString(),
+                endDate: currentBasicInfo.endDate ? new Date(currentBasicInfo.endDate).toISOString() : null,
             };
             const created = await projectService.createProject(projectData);
             const projectId = created.id;
@@ -175,7 +220,12 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
             loadProjectDefaults(projectId);
             return;
         } catch (error) {
-            toast.error(error?.message || "Failed to create project");
+            const message = error?.message || "Failed to create project";
+            if (/duplicate|already exists|project key/i.test(message)) {
+                setBasicErrors(prev => ({ ...prev, projectKey: message }));
+                keyInputRef.current?.focus();
+            }
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -430,7 +480,9 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
     );
 
     const inputCls = "w-full rounded border border-border bg-background text-foreground p-2 text-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-400/30";
+    const errorInputCls = "border-destructive focus:border-destructive focus:ring-destructive/20";
     const labelCls = "block text-sm font-medium text-foreground mb-1";
+    const fieldErrorCls = "mt-1 text-xs font-medium text-destructive";
 
     // visible = not _removed
     const visibleStatuses = workflowData.statuses.filter(s => !s._removed);
@@ -482,19 +534,60 @@ export default function CreateProjectModal({ open, onClose, onCreated }) {
                     </div>
 
                     <div className="sm:col-span-2">
-                        <label className={labelCls}>Project Name *</label>
-                        <Input value={basicInfo.name} onChange={e => handleNameChange(e.target.value)} className={inputCls} placeholder="My Awesome Project" />
+                        <label className={labelCls} htmlFor="create-project-name">Project Name *</label>
+                        <Input
+                            ref={nameInputRef}
+                            id="create-project-name"
+                            value={basicInfo.name}
+                            onChange={e => handleNameChange(e.target.value)}
+                            className={`${inputCls} ${basicErrors.name ? errorInputCls : ""}`}
+                            placeholder="My Awesome Project"
+                            required
+                            aria-invalid={basicErrors.name ? "true" : "false"}
+                            aria-describedby={basicErrors.name ? "create-project-name-error" : undefined}
+                        />
+                        {basicErrors.name && <p id="create-project-name-error" className={fieldErrorCls}>{basicErrors.name}</p>}
                     </div>
 
                     <div className="sm:col-span-2">
-                        <label className={labelCls}>Project Key *</label>
-                        <Input value={basicInfo.projectKey} onChange={e => handleKeyChange(e.target.value)} className={inputCls} placeholder="MAP" maxLength={10} />
-                        <p className="text-xs text-muted-foreground mt-1">Unique identifier (max 10 chars, letters &amp; numbers only)</p>
+                        <label className={labelCls} htmlFor="create-project-key">Project Key *</label>
+                        <Input
+                            ref={keyInputRef}
+                            id="create-project-key"
+                            value={basicInfo.projectKey}
+                            onChange={e => handleKeyChange(e.target.value)}
+                            className={`${inputCls} ${basicErrors.projectKey ? errorInputCls : ""}`}
+                            placeholder="MAP"
+                            required
+                            aria-invalid={basicErrors.projectKey ? "true" : "false"}
+                            aria-describedby={basicErrors.projectKey ? "create-project-key-error create-project-key-help" : "create-project-key-help"}
+                        />
+                        <p id="create-project-key-help" className="text-xs text-muted-foreground mt-1">Only A-Z and 0-9, up to 10 characters.</p>
+                        {basicErrors.projectKey && <p id="create-project-key-error" className={fieldErrorCls}>{basicErrors.projectKey}</p>}
                     </div>
 
                     <div>
-                        <label className={labelCls}>Start Date *</label>
-                        <Input type="date" min={todayStr()} value={basicInfo.startDate} onChange={e => setBasicInfo(prev => ({ ...prev, startDate: e.target.value }))} className={inputCls} />
+                        <label className={labelCls} htmlFor="create-project-start-date">Start Date *</label>
+                        <Input
+                            ref={startDateInputRef}
+                            id="create-project-start-date"
+                            type="date"
+                            min={todayStr()}
+                            value={basicInfo.startDate}
+                            onInput={e => {
+                                setBasicInfo(prev => ({ ...prev, startDate: e.target.value }));
+                                setBasicErrors(prev => ({ ...prev, startDate: "" }));
+                            }}
+                            onChange={e => {
+                                setBasicInfo(prev => ({ ...prev, startDate: e.target.value }));
+                                setBasicErrors(prev => ({ ...prev, startDate: "" }));
+                            }}
+                            className={`${inputCls} ${basicErrors.startDate ? errorInputCls : ""}`}
+                            required
+                            aria-invalid={basicErrors.startDate ? "true" : "false"}
+                            aria-describedby={basicErrors.startDate ? "create-project-start-date-error" : undefined}
+                        />
+                        {basicErrors.startDate && <p id="create-project-start-date-error" className={fieldErrorCls}>{basicErrors.startDate}</p>}
                     </div>
                     <div>
                         <label className={labelCls}>End Date</label>

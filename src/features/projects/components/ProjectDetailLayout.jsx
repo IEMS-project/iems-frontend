@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { getStatusTranslationKey } from "@/lib/i18n";
 import {
     Pencil, LayoutDashboard, Layers, Kanban, CheckSquare, Bot, CalendarDays,
-    LineChart, Repeat, Users, Settings, GitBranch, FileText, GripVertical, Camera
+    LineChart, Repeat, Users, Settings, GitBranch, FileText, Camera, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -30,7 +30,6 @@ import {
     horizontalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 
 const DEFAULT_TABS = [
     { id: "overview", label: "overview", path: "overview" },
@@ -95,6 +94,8 @@ function SortableTab({ tab, isActive, labelText, onClick }) {
             ref={setNodeRef}
             style={style}
             onClick={onClick}
+            aria-label={labelText}
+            aria-current={isActive ? "page" : undefined}
             {...attributes}
             {...listeners}
             className={cn(
@@ -160,7 +161,7 @@ function ProjectDetailLayoutContent() {
     };
 
     // Get data from ProjectContext
-    const { projectData, loading, refreshProject } = useProject();
+    const { projectData, projectError, loading, refreshProject } = useProject();
     const avatarInputRef = useRef(null);
     const [avatarUploading, setAvatarUploading] = useState(false);
     const [projectAvatarSrc, setProjectAvatarSrc] = useState("");
@@ -329,7 +330,7 @@ function ProjectDetailLayoutContent() {
             try {
                 const avatarUrl = await projectService.getProjectAvatarUrl(projectData.id);
                 if (!cancelled) setProjectAvatarSrc(avatarUrl || projectData.avatarUrl || "");
-            } catch (_) {
+            } catch {
                 if (!cancelled) setProjectAvatarSrc(projectData.avatarUrl || "");
             }
         };
@@ -340,13 +341,42 @@ function ProjectDetailLayoutContent() {
         };
     }, [projectData?.id, projectData?.avatarUrl]);
 
+    if (projectError && !loading) {
+        return (
+            <div className="flex h-full min-h-[420px] items-center justify-center p-6">
+                <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-sm">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <AlertTriangle className="h-6 w-6" />
+                    </div>
+                    <h1 className="mt-4 text-xl font-semibold text-foreground">
+                        {projectError.status === 404 ? "Project not found" : "Unable to load project"}
+                    </h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        {projectError.status === 404
+                            ? "The project URL is invalid or this project no longer exists."
+                            : projectError.message}
+                    </p>
+                    <div className="mt-5 flex justify-center gap-2">
+                        <Button variant="secondary" onClick={() => navigate("/projects")}>
+                            Back to projects
+                        </Button>
+                        {projectError.status !== 404 && (
+                            <Button onClick={refreshProject}>
+                                Try again
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* Project Header with Tab Navigation - Fixed */}
             <div className="shrink-0 border-b border-border bg-background z-10">
                 {/* Row 1: Project Info */}
-                <div className="flex items-center justify-between px-6 pt-4 pb-2">
+                <div className="flex items-center justify-between px-4 pt-4 pb-2 sm:px-6">
                     <div className="flex flex-col gap-1 min-w-0">
 
                         {loading && !projectData ? (
@@ -355,7 +385,7 @@ function ProjectDetailLayoutContent() {
                                 <Skeleton className="h-5 w-24" />
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3 min-w-0 mt-0.5">
+                            <div className="flex min-w-0 flex-wrap items-center gap-3 mt-0.5">
                                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md">
                                     <ProjectAvatar project={projectData} src={projectAvatarSrc} size={11} className="h-full w-full" />
                                     {canEditProject && (
@@ -377,8 +407,8 @@ function ProjectDetailLayoutContent() {
                                     className="hidden"
                                     onChange={e => handleProjectAvatarChange(e.target.files?.[0])}
                                 />
-                                <h1 className="text-2xl font-bold truncate text-foreground tracking-tight select-all">{projectData?.name || '-'}</h1>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <h1 className="min-w-0 max-w-full truncate text-xl font-bold text-foreground tracking-tight select-all sm:text-2xl">{projectData?.name || '-'}</h1>
+                                <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
                                     <Badge variant="blue" className="whitespace-nowrap px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-none">
                                         {projectData?.status ? t(getStatusTranslationKey(projectData.status)) : t('dashboard.status.unknown')}
                                     </Badge>
@@ -400,7 +430,7 @@ function ProjectDetailLayoutContent() {
                 </div>
 
                 {/* Row 2: Draggable Tab Navigation */}
-                <div className="px-6 border-t border-border/30 bg-muted/5">
+                <div className="border-t border-border/30 bg-muted/5 px-4 sm:px-6">
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -410,7 +440,7 @@ function ProjectDetailLayoutContent() {
                             items={orderedTabs.map(t => t.id)}
                             strategy={horizontalListSortingStrategy}
                         >
-                            <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none py-1" aria-label="Tabs">
+                            <nav className="flex max-w-full items-center gap-1 overflow-x-auto overscroll-x-contain py-1 [scrollbar-width:thin]" aria-label="Tabs">
                                 {orderedTabs
                                     .filter(tab => !tab.premiumOnly || projectData?.ownerSubscription === "PREMIUM")
                                     .map((tab) => (

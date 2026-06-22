@@ -43,7 +43,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [previewMedia, setPreviewMedia] = useState({ isOpen: false });
   const mockLinks = [
-    { id: 'l1', url: 'http://localhost:8080/document-service', label: 'local' },
+    { id: 'l1', url: '/api/document-service', label: 'local' },
     { id: 'l2', url: 'https://example.com/spec', label: 'Spec' },
     { id: 'l3', url: 'https://cloud.mongodb.com', label: 'MongoDB Cloud' }
   ];

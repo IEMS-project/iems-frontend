@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -75,8 +75,36 @@ export default function IssueFiltersDropdown({
     includeBacklogSprintOption = false,
 }) {
     const [openPicker, setOpenPicker] = useState(null);
+    const dropdownRef = useRef(null);
 
     const rect = anchorEl?.getBoundingClientRect();
+
+    useEffect(() => {
+        const handleMouseDown = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target) &&
+                anchorEl &&
+                !anchorEl.contains(event.target)
+            ) {
+                onClose?.();
+            }
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                if (openPicker) setOpenPicker(null);
+                else onClose?.();
+            }
+        };
+
+        document.addEventListener("mousedown", handleMouseDown);
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("mousedown", handleMouseDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [anchorEl, onClose, openPicker]);
+
     if (!rect) return null;
 
     const statusLabel = workflowStatuses.find((s) => s.id === filterStatus)?.name || "All";
@@ -158,7 +186,8 @@ export default function IssueFiltersDropdown({
 
     return createPortal(
         <div
-            style={{ position: "fixed", top: rect.bottom + 4, right: window.innerWidth - rect.right, zIndex: 9999, width: 340 }}
+            ref={dropdownRef}
+            style={{ position: "fixed", top: rect.bottom + 4, right: Math.max(8, window.innerWidth - rect.right), zIndex: 9999, width: "min(340px, calc(100vw - 16px))" }}
             className="rounded-md border border-border bg-popover shadow-xl p-3 space-y-3"
         >
             <div className="grid grid-cols-2 gap-2">

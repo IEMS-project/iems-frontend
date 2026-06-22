@@ -528,11 +528,7 @@ export const chatService = {
 };
 
 export const chatWs = {
-  // In dev, connect directly to chat-service to ensure WebSocket upgrade works
-  // Fallback to gateway path otherwise
-  wsPath: (typeof window !== 'undefined' && window.location && window.location.port === '5173')
-    ? 'http://localhost:8091/ws'
-    : `${GATEWAY_BASE_URL.replace(/\/$/, '')}/chat-service/ws`,
+  wsPath: `${GATEWAY_BASE_URL.replace(/\/$/, '')}/chat-service/ws`,
   convoTopic: (id) => `/topic/conversations/${id}`,
   userTopic: (userId) => `/topic/user-updates/${userId}`,
   sendToConversation: (id) => `/app/conversations/${id}/send`,

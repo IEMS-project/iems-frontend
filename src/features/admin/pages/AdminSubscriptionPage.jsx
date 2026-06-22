@@ -259,6 +259,8 @@ function PaymentsTab() {
   const totalElements = page?.totalElements || 0;
   const canPrev = pageIndex > 0;
   const canNext = totalPages > 0 && pageIndex < totalPages - 1;
+  const canSyncPayment = (payment) => ["PENDING", "PROCESSING", "FAILED"].includes(String(payment.status || "").toUpperCase());
+  const canCancelPayment = (payment) => String(payment.status || "").toUpperCase() === "PENDING";
 
   return (
     <div className="space-y-4 p-4">
@@ -303,8 +305,12 @@ function PaymentsTab() {
             <span>{payment.status}</span>
             <span>{payment.createdAt ? new Date(payment.createdAt).toLocaleString("vi-VN") : "-"}</span>
             <span className="flex justify-end gap-1">
-              <Button size="sm" variant="outline" onClick={() => adminPaymentService.syncPayment(payment.orderCode).then(load)}>Sync</Button>
-              <Button size="sm" variant="ghost" onClick={() => adminPaymentService.cancelPayment(payment.orderCode).then(load)}>Cancel</Button>
+              {canSyncPayment(payment) && (
+                <Button size="sm" variant="outline" onClick={() => adminPaymentService.syncPayment(payment.orderCode).then(load)}>Sync</Button>
+              )}
+              {canCancelPayment(payment) && (
+                <Button size="sm" variant="ghost" onClick={() => adminPaymentService.cancelPayment(payment.orderCode).then(load)}>Cancel</Button>
+              )}
             </span>
           </div>
         ))}
@@ -518,14 +524,31 @@ function LimitsTab() {
   const load = useCallback(async () => setLimits(await subscriptionLimitService.getLimits()), []);
   useEffect(() => { load(); }, [load]);
 
+  const getLimitErrors = (item) => {
+    const errors = {};
+    LIMIT_FIELDS.forEach(([key, label]) => {
+      const value = item[key];
+      if (value === "" || value === null || value === undefined || Number.isNaN(Number(value))) {
+        errors[key] = `${label} is required.`;
+      } else if (Number(value) < 0) {
+        errors[key] = `${label} must be 0 or greater.`;
+      } else if (!Number.isSafeInteger(Number(value))) {
+        errors[key] = `${label} is too large.`;
+      }
+    });
+    return errors;
+  };
+
   const updateLocal = (planType, key, value) => {
     setLimits((prev) => prev.map((item) => item.planType === planType ? { ...item, [key]: value } : item));
   };
 
   const save = async (item) => {
+    if (Object.keys(getLimitErrors(item)).length > 0) return;
     setSaving(item.planType);
     try {
-      await subscriptionLimitService.updateLimits(item.planType, item);
+      const numericLimits = Object.fromEntries(LIMIT_FIELDS.map(([key]) => [key, Number(item[key])]));
+      await subscriptionLimitService.updateLimits(item.planType, { ...item, ...numericLimits });
       await load();
     } finally {
       setSaving(null);
@@ -534,14 +557,17 @@ function LimitsTab() {
 
   return (
     <div className="grid gap-4 p-4 lg:grid-cols-2">
-      {limits.map((item) => (
+      {limits.map((item) => {
+        const errors = getLimitErrors(item);
+        const invalid = Object.keys(errors).length > 0;
+        return (
         <div key={item.planType} className="rounded-lg border border-border bg-card p-4">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">{item.planType}</h3>
               <p className="text-xs text-muted-foreground">Editable plan limits used by project enforcement and pricing pages.</p>
             </div>
-            <Button onClick={() => save(item)} disabled={saving === item.planType}>
+            <Button onClick={() => save(item)} disabled={saving === item.planType || invalid}>
               {saving === item.planType ? "Saving..." : "Save"}
             </Button>
           </div>
@@ -550,7 +576,17 @@ function LimitsTab() {
             {LIMIT_FIELDS.map(([key, label]) => (
               <label key={key} className="space-y-1 text-sm">
                 <span className="text-muted-foreground">{label}</span>
-                <Input type="number" min="0" value={item[key] ?? 0} onChange={(e) => updateLocal(item.planType, key, Number(e.target.value))} />
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={item[key] ?? ""}
+                  onChange={(e) => updateLocal(item.planType, key, e.target.value === "" ? "" : Number(e.target.value))}
+                  aria-invalid={errors[key] ? "true" : "false"}
+                  aria-describedby={errors[key] ? `${item.planType}-${key}-error` : undefined}
+                  className={cn(errors[key] && "border-destructive focus-visible:ring-destructive/40")}
+                />
+                {errors[key] && <p id={`${item.planType}-${key}-error`} className="text-xs font-medium text-destructive">{errors[key]}</p>}
               </label>
             ))}
           </div>
@@ -564,7 +600,8 @@ function LimitsTab() {
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

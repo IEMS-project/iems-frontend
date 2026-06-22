@@ -357,6 +357,16 @@ export default function MessageItem({
             setFileSizeText(null);
             return;
         }
+        try {
+            const parsedUrl = new URL(url, window.location.origin);
+            if (parsedUrl.origin !== window.location.origin) {
+                setFileSizeText(null);
+                return;
+            }
+        } catch {
+            setFileSizeText(null);
+            return;
+        }
         if (fileSizeCache.has(url)) {
             setFileSizeText(fileSizeCache.get(url));
             return;

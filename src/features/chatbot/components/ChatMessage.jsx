@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import { issueService } from '@/features/projects/api/issueService';
 import IssueDetailModal from '@/features/projects/components/IssueDetailModal';
 import IssueCard from '@/features/projects/components/IssueCard';
+import { sanitizeAgentResponse } from '@/features/chatbot/utils/sanitizeAgentResponse';
 
 // CodeBlock component with copy functionality
 const CodeBlock = ({ language, children }) => {
@@ -180,6 +181,32 @@ const stripHtml = (value) => {
   return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
+const parseStructuredAgentResponse = (content) => {
+  if (!content || typeof content !== 'string') return null;
+  const trimmed = content.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+  try {
+    const parsed = JSON.parse(trimmed);
+    return parsed?.type && parsed?.title ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const badgeClass = (value = '') => {
+  const normalized = String(value).toLowerCase();
+  if (normalized.includes('high') || normalized.includes('cao') || normalized.includes('block')) {
+    return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900';
+  }
+  if (normalized.includes('done') || normalized.includes('xong') || normalized.includes('hoàn thành')) {
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900';
+  }
+  if (normalized.includes('progress') || normalized.includes('đang')) {
+    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900';
+  }
+  return 'bg-muted text-muted-foreground border-border';
+};
+
 const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], projectId = null }) => {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -187,7 +214,9 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
   const [isLoadingIssueDetail, setIsLoadingIssueDetail] = useState(false);
   const [issueModalError, setIssueModalError] = useState(null);
 
-  const parsedIssueList = !isUser ? parseIssueListMessage(message) : null;
+  const displayMessage = isUser ? message : sanitizeAgentResponse(message);
+  const structuredResponse = !isUser ? parseStructuredAgentResponse(displayMessage) : null;
+  const parsedIssueList = !isUser ? parseIssueListMessage(displayMessage) : null;
 
   const openIssueDetail = async (itemOrKey) => {
     const item = typeof itemOrKey === 'string' ? { issueKey: itemOrKey } : itemOrKey;
@@ -376,6 +405,102 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
     );
   };
 
+  const renderStructuredResponse = () => {
+    if (!structuredResponse) return null;
+    const metrics = Array.isArray(structuredResponse.metrics) ? structuredResponse.metrics : [];
+    const sections = Array.isArray(structuredResponse.sections) ? structuredResponse.sections : [];
+    const issues = Array.isArray(structuredResponse.issues) ? structuredResponse.issues : [];
+    const actions = Array.isArray(structuredResponse.actions) ? structuredResponse.actions : [];
+
+    return (
+      <div className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm">
+        <div>
+          <div className="mb-1 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+            {structuredResponse.type}
+          </div>
+          <h3 className="text-base font-semibold text-foreground">{structuredResponse.title}</h3>
+          {structuredResponse.summary && (
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{structuredResponse.summary}</p>
+          )}
+        </div>
+
+        {metrics.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {metrics.map((metric, index) => (
+              <div key={`${metric.label}-${index}`} className="rounded-md border border-border bg-background p-2.5">
+                <div className="text-[11px] text-muted-foreground">{metric.label}</div>
+                <div className="mt-1 text-lg font-semibold text-foreground">{String(metric.value ?? '')}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {issues.length > 0 && (
+          <div className="overflow-x-auto rounded-md border border-border">
+            <table className="min-w-full text-left text-xs">
+              <thead className="bg-muted/60 text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Issue</th>
+                  <th className="px-3 py-2 font-medium">Tiêu đề</th>
+                  <th className="px-3 py-2 font-medium">Trạng thái</th>
+                  <th className="px-3 py-2 font-medium">Priority</th>
+                  <th className="px-3 py-2 font-medium">Hạn chót</th>
+                  <th className="px-3 py-2 font-medium">Lý do</th>
+                </tr>
+              </thead>
+              <tbody>
+                {issues.map((issue, index) => (
+                  <tr key={`${issue.issueKey}-${index}`} className="border-t border-border">
+                    <td className="whitespace-nowrap px-3 py-2 font-mono font-medium">{issue.issueKey}</td>
+                    <td className="min-w-48 px-3 py-2">{issue.title}</td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 ${badgeClass(issue.statusName)}`}>
+                        {issue.statusName || 'Chưa phân loại'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 ${badgeClass(issue.priorityName)}`}>
+                        {issue.priorityName || 'Chưa phân loại'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{issue.dueDate || 'Chưa có hạn chót'}</td>
+                    <td className="min-w-56 px-3 py-2 text-muted-foreground">{issue.reason || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {sections.map((section, index) => (
+          <div key={`${section.title}-${index}`} className="rounded-md border border-border bg-background p-3">
+            <h4 className="mb-2 text-sm font-semibold text-foreground">{section.title}</h4>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              {(section.items || []).map((item, itemIndex) => (
+                <li key={itemIndex}>- {item}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        {actions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {actions.map((action, index) => (
+              <button
+                key={`${action.type || action}-${index}`}
+                type="button"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500"
+                onClick={() => window.alert('Mình đã chuẩn bị xác nhận. Bước gọi API sau xác nhận sẽ được nối ở lớp action handler.')}
+              >
+                {action.label || action}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -398,8 +523,10 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
                     ))}
                   </div>
                 )}
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message}</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{displayMessage}</p>
               </div>
+            ) : structuredResponse ? (
+              renderStructuredResponse()
             ) : parsedIssueList ? (
               renderIssueListCards()
             ) : (
@@ -464,7 +591,7 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
                     h3: ({ children }) => <h3 className="text-sm font-bold mb-2">{children}</h3>,
                   }}
                 >
-                  {message}
+                  {displayMessage}
                 </ReactMarkdown>
               </div>
             )}

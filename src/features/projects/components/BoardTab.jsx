@@ -571,11 +571,11 @@ export default function BoardTab() {
           </button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
           <select
             value={selectedSprintId}
             onChange={e => setSelectedSprintId(e.target.value)}
-            className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm font-medium min-w-[180px]"
+            className="min-w-[180px] max-w-full flex-1 rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm font-medium sm:flex-none"
           >
             {sprints.map(s => (
               <option key={s.id} value={s.id}>

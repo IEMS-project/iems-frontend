@@ -7,6 +7,18 @@ import { workflowService } from '@/features/projects/api/workflowService';
 
 const ProjectContext = createContext(null);
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function toProjectError(error, fallbackMessage = "Unable to load this project.") {
+    if (error?.status === 404) {
+        return { status: 404, message: "Project not found." };
+    }
+    return {
+        status: error?.status || 500,
+        message: error?.message || fallbackMessage,
+    };
+}
+
 export function ProjectProvider({ children }) {
     const { projectId } = useParams();
     const navigate = useNavigate();
@@ -15,6 +27,7 @@ export function ProjectProvider({ children }) {
     const [projectData, setProjectData] = useState(null);
     const [members, setMembers] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [projectError, setProjectError] = useState(null);
 
     // New entities
     const [issues, setIssues] = useState([]);
@@ -36,8 +49,15 @@ export function ProjectProvider({ children }) {
     // ── Refresh Functions ──────────────────────────────────────
     const refreshProject = useCallback(async () => {
         if (!projectId) return;
+        if (!UUID_PATTERN.test(projectId)) {
+            setProjectData(null);
+            setProjectError({ status: 404, message: "Project not found." });
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
+            setProjectError(null);
             const data = await projectService.getProjectById(projectId);
             if (data?.status === "error" &&
                 (data.message?.includes("Permission denied") ||
@@ -55,6 +75,8 @@ export function ProjectProvider({ children }) {
                 return;
             }
             console.error("Error loading project:", e);
+            setProjectData(null);
+            setProjectError(toProjectError(e));
         } finally {
             setLoading(false);
         }
@@ -201,10 +223,32 @@ export function ProjectProvider({ children }) {
     useEffect(() => {
         if (!projectId) return;
 
+        if (!UUID_PATTERN.test(projectId)) {
+            setProjectData(null);
+            setMembers([]);
+            setRoles([]);
+            setIssues([]);
+            setBacklogIssues([]);
+            setSprints([]);
+            setWorkflows([]);
+            setWorkflowStatuses([]);
+            setIssueTypes([]);
+            setIssuePriorities([]);
+            setProjectError({ status: 404, message: "Project not found." });
+            setLoading(false);
+            setMembersLoading(false);
+            setRolesLoading(false);
+            setIssuesLoading(false);
+            setSprintsLoading(false);
+            setWorkflowsLoading(false);
+            return;
+        }
+
         const loadAllData = async () => {
             // Load project data first
             try {
                 setLoading(true);
+                setProjectError(null);
                 const data = await projectService.getProjectById(projectId);
                 if (data?.status === "error" &&
                     (data.message?.includes("Permission denied") ||
@@ -222,6 +266,9 @@ export function ProjectProvider({ children }) {
                     return;
                 }
                 console.error("Error loading project:", e);
+                setProjectData(null);
+                setProjectError(toProjectError(e));
+                return;
             } finally {
                 setLoading(false);
             }
@@ -303,6 +350,7 @@ export function ProjectProvider({ children }) {
     const value = {
         // Data
         projectData,
+        projectError,
         members,
         roles,
         issues,

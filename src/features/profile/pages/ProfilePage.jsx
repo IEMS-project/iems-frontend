@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
 	FaAt,
 	FaBuilding,
@@ -76,7 +76,7 @@ function ProfileLayoutStyles() {
 	return <style>{profileLayoutStyles}</style>;
 }
 
-function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t, formErrors }) {
+function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t, formErrors, canSave }) {
 	if (!isEditing) {
 		return (
 			<Button onClick={onEdit} className="w-full justify-center sm:w-fit">
@@ -88,7 +88,7 @@ function ActionButtons({ isEditing, loading, onEdit, onSave, onCancel, t, formEr
 
 	return (
 		<div className="flex w-full flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-			<Button onClick={onSave} disabled={loading || Object.keys(formErrors).length > 0} className="w-full justify-center">
+			<Button onClick={onSave} disabled={loading || !canSave || Object.keys(formErrors).length > 0} className="w-full justify-center">
 				<FaSave className="h-4 w-4" />
 				{t("profile.actions.save")}
 			</Button>
@@ -115,6 +115,7 @@ function ProfileSummaryCard({
 	onCancel,
 	t,
 	formErrors,
+	canSave,
 }) {
 	const username = profile?.userName || profile?.email?.split("@")[0] || "user";
 	const expiresAt = formatDateTime(premiumUntil);
@@ -141,6 +142,7 @@ function ProfileSummaryCard({
 							onCancel={onCancel}
 							t={t}
 							formErrors={formErrors}
+							canSave={canSave}
 						/>
 					</div>
 				</div>
@@ -489,6 +491,7 @@ export default function Profile() {
 					dob: data?.dob || "",
 					gender: data?.gender || "",
 				});
+				setFormErrors({});
 			} catch (e) {
 				setError(e?.message || t("profile.messages.loadFailed"));
 			} finally {
@@ -509,8 +512,58 @@ export default function Profile() {
 		validateField(field, value);
 	};
 
+	const validateForm = (data = formData) => {
+		const errors = {};
+		if (!data.firstName?.trim()) errors.firstName = "Tên không được rỗng";
+		if (!data.lastName?.trim()) errors.lastName = "Họ không được rỗng";
+		if (data.phone && !/^\d{10,11}$/.test(data.phone)) {
+			errors.phone = "Số điện thoại phải có 10-11 chữ số";
+		}
+		if (data.dob) {
+			const dobDate = new Date(data.dob);
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			if (dobDate > today) errors.dob = "Ngày sinh không được trong tương lai";
+		}
+		return errors;
+	};
+
+	const normalizedProfileForm = useMemo(() => ({
+		firstName: formData.firstName?.trim() || "",
+		lastName: formData.lastName?.trim() || "",
+		phone: formData.phone || "",
+		address: formData.address || "",
+		dob: toDateInputValue(formData.dob),
+		gender: formData.gender || "",
+	}), [formData]);
+
+	const originalProfileForm = useMemo(() => ({
+		firstName: profile?.firstName?.trim() || "",
+		lastName: profile?.lastName?.trim() || "",
+		phone: profile?.phone || "",
+		address: profile?.address || "",
+		dob: toDateInputValue(profile?.dob),
+		gender: profile?.gender || "",
+	}), [profile]);
+
+	const isDirty = useMemo(
+		() => JSON.stringify(normalizedProfileForm) !== JSON.stringify(originalProfileForm),
+		[normalizedProfileForm, originalProfileForm]
+	);
+	const canSave = isEditing && isDirty && Object.keys(formErrors).length === 0 && Object.keys(validateForm(formData)).length === 0;
+
 	const handleSave = async () => {
 		try {
+			const nextErrors = validateForm(formData);
+			setFormErrors(nextErrors);
+			if (Object.keys(nextErrors).length > 0) {
+				setError("Please fix the highlighted fields before saving.");
+				return;
+			}
+			if (!isDirty) {
+				setError("No changes detected.");
+				return;
+			}
 			setLoading(true);
 			setError("");
 			setSuccess("");
@@ -546,6 +599,8 @@ export default function Profile() {
 			dob: profile?.dob || "",
 			gender: profile?.gender || "",
 		});
+		setFormErrors({});
+		setError("");
 	};
 
 	const handlePickAvatar = async (e) => {
@@ -614,6 +669,7 @@ export default function Profile() {
 								onCancel={handleCancel}
 								t={t}
 								formErrors={formErrors}
+								canSave={canSave}
 							/>
 						</div>
 					</Card>
@@ -633,6 +689,7 @@ export default function Profile() {
 						onCancel={handleCancel}
 						t={t}
 						formErrors={formErrors}
+						canSave={canSave}
 					/>
 				</aside>
 
