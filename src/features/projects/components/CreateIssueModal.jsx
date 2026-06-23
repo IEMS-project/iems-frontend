@@ -10,9 +10,10 @@ import PrioritySelect from "@/components/ui/PrioritySelect";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { documentService } from "@/features/projects/api/documentService";
+import { aiSuggestionService } from "@/features/projects/api/aiSuggestionService";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
-import { Paperclip, Trash2, Loader2, File, Upload } from "lucide-react";
+import { Sparkles, Paperclip, Trash2, Loader2, File, Upload } from "lucide-react";
 import FibonacciStoryPointInput, { isFibonacci } from "./FibonacciStoryPointInput";
 import {
   ISSUE_TITLE_MAX_LENGTH,
@@ -45,6 +46,8 @@ export default function CreateIssueModal({
   const [attachments, setAttachments] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState(null);
   const fileInputRef = useRef(null);
   const titleInputRef = useRef(null);
   const typeFieldRef = useRef(null);
@@ -69,6 +72,7 @@ export default function CreateIssueModal({
       });
       setAttachments([]);
       setErrors({});
+      setAiSuggestion(null);
       formDataRef.current = {
         title: "",
         description: "",
@@ -82,18 +86,66 @@ export default function CreateIssueModal({
     }
   }, [open, defaultSprintId, defaultStatusId]);
 
-  const handleChange = (field, value) => {
+  const handleChange = (field, value, options = {}) => {
     setFormData(prev => {
       const next = { ...prev, [field]: value };
       formDataRef.current = next;
       return next;
     });
+    if (!options.preserveSuggestion) {
+      setAiSuggestion(null);
+    }
     setErrors(prev => {
       if (!prev[field]) return prev;
       const next = { ...prev };
       delete next[field];
       return next;
     });
+  };
+
+  const handleAiSuggest = async () => {
+    const currentFormData = {
+      ...formDataRef.current,
+      title: titleInputRef.current?.value ?? formDataRef.current.title,
+    };
+    if (!currentFormData.title?.trim()) {
+      toast.warning(t("issues.aiSuggestion.titleRequired", "Enter a title before asking AI to suggest."));
+      titleInputRef.current?.focus();
+      return;
+    }
+    try {
+      setSuggesting(true);
+      const selectedIssueType = issueTypes.find(type => type.id === currentFormData.issueTypeId);
+      const selectedPriority = issuePriorities.find(priority => priority.id === currentFormData.priorityId);
+      const suggestion = await aiSuggestionService.estimateIssue(projectId, {
+        title: currentFormData.title.trim(),
+        description: normalizeRichText(currentFormData.description) || null,
+        issueTypeId: currentFormData.issueTypeId || null,
+        issueTypeName: selectedIssueType?.name || null,
+        priorityId: currentFormData.priorityId || null,
+        priorityName: selectedPriority?.name || null,
+        sprintId: currentFormData.sprintId || null,
+      });
+      setAiSuggestion(suggestion);
+      if (suggestion?.suggestedStoryPoints !== undefined && suggestion?.suggestedStoryPoints !== null) {
+        handleChange("storyPoints", String(suggestion.suggestedStoryPoints), { preserveSuggestion: true });
+      }
+      if (suggestion?.suggestedAssigneeId) {
+        handleChange("assigneeId", String(suggestion.suggestedAssigneeId), { preserveSuggestion: true });
+      }
+      toast.success(t("issues.aiSuggestion.ready", "AI suggestion is ready"));
+    } catch (error) {
+      console.error("AI suggestion error:", error);
+      toast.error(error?.message || t("issues.aiSuggestion.failed", "Could not get AI suggestion"));
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const applySuggestionField = (field, value) => {
+    if (value === undefined || value === null || value === "") return;
+    handleChange(field, String(value), { preserveSuggestion: true });
+    toast.success(t("issues.aiSuggestion.applied", "Suggestion applied"));
   };
 
   const handleFileChange = async (e) => {
@@ -288,9 +340,20 @@ export default function CreateIssueModal({
 
         {/* Assignee */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            {t("issues.form.assignee", "Assignee")}
-          </label>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label className="block text-sm font-medium text-foreground">
+              {t("issues.form.assignee", "Assignee")}
+            </label>
+            {aiSuggestion?.suggestedAssigneeId && (
+              <button
+                type="button"
+                onClick={() => applySuggestionField("assigneeId", aiSuggestion.suggestedAssigneeId)}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700"
+              >
+                {t("issues.aiSuggestion.applyAssignee", "Apply AI")}
+              </button>
+            )}
+          </div>
           <AssigneeSelect
             members={members}
             value={formData.assigneeId}
@@ -320,15 +383,82 @@ export default function CreateIssueModal({
 
         {/* Story Points */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
-            {t("issues.form.storyPoints", "Story Points")}
-          </label>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label className="block text-sm font-medium text-foreground">
+              {t("issues.form.storyPoints", "Story Points")}
+            </label>
+            <button
+              type="button"
+              onClick={handleAiSuggest}
+              disabled={suggesting}
+              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:opacity-60"
+            >
+              {suggesting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              {t("issues.aiSuggestion.suggest", "AI suggest")}
+            </button>
+          </div>
           <FibonacciStoryPointInput
             value={formData.storyPoints}
             onChange={v => handleChange("storyPoints", v)}
             className="rounded-md border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
           />
         </div>
+
+        {aiSuggestion && (
+          <div className="sm:col-span-2 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-sm text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="font-semibold">
+                {t("issues.aiSuggestion.title", "AI suggestion")}
+                <span className="ml-2 text-xs font-normal opacity-75">
+                  {Math.round((aiSuggestion.confidence || 0) * 100)}% confidence
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {aiSuggestion.suggestedStoryPoints != null && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => applySuggestionField("storyPoints", aiSuggestion.suggestedStoryPoints)}
+                  >
+                    {t("issues.aiSuggestion.applyPoints", "Apply")} {aiSuggestion.suggestedStoryPoints} pts
+                  </Button>
+                )}
+                {aiSuggestion.suggestedAssigneeId && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => applySuggestionField("assigneeId", aiSuggestion.suggestedAssigneeId)}
+                  >
+                    {t("issues.aiSuggestion.applyAssignee", "Apply assignee")}
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <div className="text-xs font-semibold uppercase opacity-70">{t("issues.aiSuggestion.reasons", "Reasons")}</div>
+                <ul className="mt-1 list-disc pl-4">
+                  {(aiSuggestion.reasons || []).map((reason, index) => <li key={index}>{reason}</li>)}
+                </ul>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase opacity-70">{t("issues.aiSuggestion.similar", "Similar tasks")}</div>
+                <div className="mt-1 space-y-1">
+                  {(aiSuggestion.similarIssues || []).slice(0, 3).map(issue => (
+                    <div key={issue.id || issue.issueKey} className="truncate">
+                      <span className="font-mono">{issue.issueKey}</span> · {issue.title} · {issue.storyPoints ?? "?"} pts
+                    </div>
+                  ))}
+                  {(!aiSuggestion.similarIssues || aiSuggestion.similarIssues.length === 0) && (
+                    <div className="opacity-75">{t("issues.aiSuggestion.noSimilar", "No close historical task yet.")}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Parent Issue */}
         <div>

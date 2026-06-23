@@ -16,12 +16,13 @@ import IssueFiltersDropdown from "./shared/IssueFiltersDropdown";
 import { useProject } from "@/features/projects/context/ProjectContext";
 import { issueService } from "@/features/projects/api/issueService";
 import { sprintService } from "@/features/projects/api/sprintService";
+import { aiSuggestionService } from "@/features/projects/api/aiSuggestionService";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import {
   Plus, ChevronDown, ChevronRight, Play, CheckCircle2, Search,
-  Layers, GripVertical, SlidersHorizontal, X,
+  Layers, GripVertical, SlidersHorizontal, X, Sparkles, Loader2,
 } from "lucide-react";
 
 const SPRINT_STATUS_COLORS = {
@@ -129,6 +130,9 @@ export default function BacklogTab() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterBtnRef = useRef(null);
   const [activeIssue, setActiveIssue] = useState(null);
+  const [suggestingSprintId, setSuggestingSprintId] = useState(null);
+  const [sprintSuggestions, setSprintSuggestions] = useState({});
+  const [applyingAssignmentKey, setApplyingAssignmentKey] = useState(null);
 
   // Multi-select
   const [selectedIssueIds, setSelectedIssueIds] = useState(new Set());
@@ -291,6 +295,52 @@ export default function BacklogTab() {
       await Promise.all([refreshSprints(), refreshIssues()]);
     } catch (e) {
       toast.error(e?.message || "Error completing sprint");
+    }
+  };
+
+  const handleSuggestSprintAssignments = async (sprint) => {
+    try {
+      setSuggestingSprintId(sprint.id);
+      const response = await aiSuggestionService.suggestSprintAssignments(projectId, sprint.id);
+      setSprintSuggestions(prev => ({ ...prev, [sprint.id]: response }));
+      toast.success(t("issues.aiSuggestion.ready", "AI suggestion is ready"));
+    } catch (error) {
+      console.error("Sprint assignment suggestion error:", error);
+      toast.error(error?.message || t("issues.aiSuggestion.failed", "Could not get AI suggestion"));
+    } finally {
+      setSuggestingSprintId(null);
+    }
+  };
+
+  const handleApplyAssignment = async (sprintId, assignment) => {
+    if (!assignment?.issueId || !assignment?.suggestedAssigneeId) return;
+    const key = `${sprintId}:${assignment.issueId}`;
+    const prevIssues = localIssues;
+    try {
+      setApplyingAssignmentKey(key);
+      setLocalIssues(prev => prev.map(issue =>
+        String(issue.id) === String(assignment.issueId)
+          ? { ...issue, assigneeId: assignment.suggestedAssigneeId }
+          : issue
+      ));
+      await issueService.assignIssue(projectId, assignment.issueId, assignment.suggestedAssigneeId);
+      setSprintSuggestions(prev => {
+        const current = prev[sprintId];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [sprintId]: {
+            ...current,
+            assignments: (current.assignments || []).filter(item => String(item.issueId) !== String(assignment.issueId)),
+          },
+        };
+      });
+      toast.success(t("issues.aiSuggestion.applied", "Suggestion applied"));
+    } catch (error) {
+      setLocalIssues(prevIssues);
+      toast.error(error?.message || "Error assigning issue");
+    } finally {
+      setApplyingAssignmentKey(null);
     }
   };
 
@@ -541,6 +591,19 @@ export default function BacklogTab() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  {(sprint.status === "PLANNED" || sprint.status === "ACTIVE") && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleSuggestSprintAssignments(sprint)}
+                      disabled={suggestingSprintId === sprint.id || sprintIssues.length === 0}
+                    >
+                      {suggestingSprintId === sprint.id
+                        ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                        : <Sparkles className="w-3.5 h-3.5 mr-1" />}
+                      {t("issues.aiSuggestion.assignSprint", "Suggest assignees")}
+                    </Button>
+                  )}
                   {sprint.status === "PLANNED" && (
                     <Button size="sm" variant="secondary" onClick={() => handleStartSprint(sprint)}>
                       <Play className="w-3.5 h-3.5 mr-1" /> {t("sprints.start", "Start")}
@@ -559,6 +622,40 @@ export default function BacklogTab() {
                 const isClosed = sprint.status === "COMPLETED" || sprint.status === "CANCELLED";
                 return (
                   <DroppableZone id={containerId} isDragging={!!activeIssue} className="border-t border-border" disabled={isClosed}>
+                    {sprintSuggestions[sprint.id]?.assignments?.length > 0 && (
+                      <div className="border-b border-blue-200 bg-blue-50/70 px-4 py-3 text-sm text-blue-950 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+                        <div className="mb-2 flex items-center gap-2 font-semibold">
+                          <Sparkles className="h-4 w-4" />
+                          {t("issues.aiSuggestion.assignmentTitle", "AI assignment suggestions")}
+                        </div>
+                        <div className="space-y-2">
+                          {sprintSuggestions[sprint.id].assignments.map(assignment => {
+                            const key = `${sprint.id}:${assignment.issueId}`;
+                            return (
+                              <div key={assignment.issueId} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-background/70 px-3 py-2">
+                                <div className="min-w-0">
+                                  <div className="truncate">
+                                    <span className="font-mono">{assignment.issueKey}</span> · {assignment.title}
+                                  </div>
+                                  <div className="text-xs opacity-75">
+                                    {assignment.storyPoints} pts → {assignment.suggestedAssigneeName}
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => handleApplyAssignment(sprint.id, assignment)}
+                                  disabled={applyingAssignmentKey === key}
+                                >
+                                  {applyingAssignmentKey === key && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                                  {t("issues.aiSuggestion.apply", "Apply")}
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {sprintIssues.length === 0 ? (
                       <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                         {t("issues.noIssues", "No issues in this sprint")}
