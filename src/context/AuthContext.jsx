@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredTokens } from "../lib/api";
-import { authService } from "../services/authService";
-import { userService } from "../services/userService";
+import { getStoredTokens } from "@/lib/api";
+import { authService } from "@/features/auth/api/authService";
+import { userService } from "@/features/profile/api/userService";
 
 const AuthContext = createContext(null);
 
@@ -13,14 +13,16 @@ export function AuthProvider({ children }) {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const isAuthenticated = !!session?.accessToken;
 
-  // Load user profile when authenticated
   const loadUserProfile = useCallback(async () => {
     if (!isAuthenticated) return;
 
     setLoadingProfile(true);
     try {
-      const profile = await userService.getMyProfile();
-      setUserProfile(profile);
+      const [profile, subscription] = await Promise.all([
+        userService.getMyProfile(),
+        userService.getMySubscription().catch(() => null),
+      ]);
+      setUserProfile(profile ? { ...profile, ...subscription } : null);
     } catch (error) {
       console.error("Failed to load user profile:", error);
       setUserProfile(null);
@@ -30,20 +32,20 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    // Load profile when authenticated and profile is not loaded yet
     if (isAuthenticated && !userProfile && !loadingProfile) {
       loadUserProfile();
     }
   }, [isAuthenticated, userProfile, loadingProfile, loadUserProfile]);
 
-  const login = useCallback(async (usernameOrEmail, password) => {
-    const payload = await authService.login(usernameOrEmail, password);
+  const finalizeLogin = useCallback(async (payload) => {
     setSession(payload);
 
-    // Load user profile after login
     try {
-      const profile = await userService.getMyProfile();
-      setUserProfile(profile);
+      const [profile, subscription] = await Promise.all([
+        userService.getMyProfile(),
+        userService.getMySubscription().catch(() => null),
+      ]);
+      setUserProfile(profile ? { ...profile, ...subscription } : null);
     } catch (error) {
       console.error("Failed to load user profile after login:", error);
     }
@@ -52,11 +54,30 @@ export function AuthProvider({ children }) {
     return payload;
   }, [navigate]);
 
+  const login = useCallback(async (usernameOrEmail, password) => {
+    const payload = await authService.login(usernameOrEmail, password);
+    return finalizeLogin(payload);
+  }, [finalizeLogin]);
+
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const payload = await authService.googleAuth(idToken);
+    return finalizeLogin(payload);
+  }, [finalizeLogin]);
+
+  const loginWithGoogleCode = useCallback(async (code) => {
+    const payload = await authService.googleAuthCode(code);
+    return finalizeLogin(payload);
+  }, [finalizeLogin]);
+
+  const loginWithGithub = useCallback(async (code) => {
+    const payload = await authService.githubAuth(code);
+    return finalizeLogin(payload);
+  }, [finalizeLogin]);
+
   const logout = useCallback(() => {
     authService.logout();
     setSession(null);
     setUserProfile(null);
-    // Remove GitHub token on logout
     localStorage.removeItem("github_access_token");
     navigate("/login", { replace: true });
   }, [navigate]);
@@ -68,8 +89,11 @@ export function AuthProvider({ children }) {
     loadingProfile,
     loadUserProfile,
     login,
+    loginWithGoogle,
+    loginWithGoogleCode,
+    loginWithGithub,
     logout
-  }), [session, isAuthenticated, userProfile, loadingProfile, loadUserProfile, login, logout]);
+  }), [session, isAuthenticated, userProfile, loadingProfile, loadUserProfile, login, loginWithGoogle, loginWithGoogleCode, loginWithGithub, logout]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -83,6 +107,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-
-
-

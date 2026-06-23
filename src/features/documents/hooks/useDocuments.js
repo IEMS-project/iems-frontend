@@ -1,0 +1,993 @@
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
+import { documentService } from "@/features/documents/api/documentService";
+import { getStoredTokens } from "@/lib/api";
+import { toast } from "sonner";
+import { useBreadcrumb } from "@/context/BreadcrumbContext";
+
+export function useDocuments() {
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [folders, setFolders] = useState([]);
+  const [allFolders, setAllFolders] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [search, setSearch] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [filterMode, setFilterMode] = useState("all"); // "all" | "favorites"
+  const [favorites, setFavorites] = useState([]);
+  const [shareItem, setShareItem] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [modifiedFilter, setModifiedFilter] = useState("all");
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [selectedRecipients, setSelectedRecipients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [renameItem, setRenameItem] = useState(null);
+  const [moveItem, setMoveItem] = useState(null);
+  const [viewMode, setViewMode] = useState("list");
+  const [uploadTasks, setUploadTasks] = useState([]);
+  const uploadControllersRef = useRef(new Map());
+  const { setCustomBreadcrumbs } = useBreadcrumb();
+
+  // Get currentFolderId from URL params
+  const currentFolderId = searchParams.get("folderId") || null;
+
+  // Function to navigate to a folder (updates URL)
+  const setCurrentFolderId = useCallback((folderId) => {
+    if (folderId) {
+      setSearchParams({ folderId });
+    } else {
+      setSearchParams({});
+    }
+  }, [setSearchParams]);
+
+  // Load folder contents
+  const loadFolderContents = useCallback(async () => {
+    try {
+      setLoading(true);
+      if (currentFolderId) {
+        const [contentsResp, allFoldersResp] = await Promise.all([
+          documentService.getFolderContents(currentFolderId),
+          documentService.getAllFolders(),
+        ]);
+        setFolders(contentsResp.folders || []);
+        setFiles(contentsResp.files || []);
+        setAllFolders(allFoldersResp || []);
+      } else {
+        const [foldersResponse, filesResponse] = await Promise.all([
+          documentService.getAllFolders(),
+          documentService.getAllFiles(),
+        ]);
+        setAllFolders(foldersResponse || []);
+        setFolders(foldersResponse || []);
+        setFiles(filesResponse || []);
+      }
+    } catch (error) {
+      console.error("Error loading folder contents:", error);
+      setFolders([]);
+      setFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentFolderId]);
+
+  // Load favorites
+  const loadFavorites = useCallback(async () => {
+    try {
+      setLoading(true);
+      const favoritesData = await documentService.getFavorites();
+      setFavorites(favoritesData || []);
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load trash items
+  const [trashItems, setTrashItems] = useState([]);
+  
+  const loadTrash = useCallback(async () => {
+    try {
+      setLoading(true);
+      const trashData = await documentService.getTrash();
+      setTrashItems(trashData || []);
+    } catch (error) {
+      console.error("Error loading trash:", error);
+      setTrashItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (filterMode === "favorites") {
+      loadFavorites();
+    } else if (filterMode === "trash") {
+      loadTrash();
+    } else {
+      loadFolderContents();
+    }
+  }, [filterMode, loadFavorites, loadTrash, loadFolderContents]);
+
+  useEffect(() => {
+    setSelectedItem(null);
+    setShowMobileDetails(false);
+    setSelectedItems(new Set());
+  }, [currentFolderId]);
+
+  // Build breadcrumb path
+  const currentPath = useMemo(() => {
+    if (!allFolders.length) return [];
+
+    const idToFolder = new Map(allFolders.map((f) => [f.id, f]));
+    const path = [];
+
+    if (currentFolderId) {
+      let cursor = idToFolder.get(currentFolderId);
+      while (cursor) {
+        path.unshift(cursor);
+        cursor = cursor.parentId ? idToFolder.get(cursor.parentId) : null;
+      }
+    }
+
+    return path;
+  }, [allFolders, currentFolderId]);
+
+  // Update breadcrumb
+  useEffect(() => {
+    const breadcrumbs = [
+      { label: t('breadcrumb.home'), to: "/" },
+      { 
+        label: t('documents.title'), 
+        onClick: currentFolderId ? () => {
+          setCurrentFolderId(null);
+          setFilterMode("all");
+        } : undefined 
+      },
+    ];
+
+    if (currentPath.length > 0) {
+      currentPath.forEach((folder, index) => {
+        const isLast = index === currentPath.length - 1;
+        breadcrumbs.push({
+          label: folder.name,
+          onClick: isLast ? undefined : () => {
+            setCurrentFolderId(folder.id);
+          },
+        });
+      });
+    }
+
+    setCustomBreadcrumbs(breadcrumbs);
+
+    return () => {
+      setCustomBreadcrumbs(null);
+    };
+  }, [currentPath, setCustomBreadcrumbs, t]);
+
+  const idToFolder = useMemo(
+    () => new Map(allFolders.map((f) => [f.id, f])),
+    [allFolders]
+  );
+
+  function goUpOneLevel() {
+    if (!currentFolderId) return;
+    const current = idToFolder.get(currentFolderId);
+    setCurrentFolderId(current?.parentId ?? null);
+  }
+
+  const visibleFolders = useMemo(
+    () =>
+      (allFolders.length ? allFolders : folders).filter(
+        (f) =>
+          f.parentId === currentFolderId &&
+          f.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    [allFolders, folders, currentFolderId, search]
+  );
+
+  const visibleFiles = useMemo(
+    () =>
+      files.filter(
+        (f) =>
+          f.folderId === currentFolderId &&
+          f.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    [files, currentFolderId, search]
+  );
+
+  // Combine folders and files for sorting (or show favorites)
+  const allItems = useMemo(() => {
+    // If showing favorites, display favorite items
+    if (filterMode === "favorites") {
+      return favorites
+        .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+        .map((f) => ({
+          ...f,
+          type: f.targetType === "FOLDER" ? "folder" : "file",
+          id: f.targetId,
+          size: f.size || 0,
+          date: f.createdAt || f.updatedAt,
+          favorite: true,
+        }));
+    }
+
+    // If showing trash, display deleted items
+    if (filterMode === "trash") {
+      return trashItems
+        .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+        .map((f) => ({
+          ...f,
+          type: f.itemType === "FOLDER" ? "folder" : "file",
+          size: f.size || 0,
+          date: f.deletedAt,
+          isTrash: true,
+        }));
+    }
+
+    // Normal view - show folders and files
+    const folderItems = visibleFolders.map((f) => ({
+      ...f,
+      type: "folder",
+      size: 0,
+      date: f.createdAt || f.updatedAt,
+    }));
+    const fileItems = visibleFiles.map((f) => ({
+      ...f,
+      type: "file",
+      date: f.createdAt || f.updatedAt,
+    }));
+    return [...folderItems, ...fileItems];
+  }, [visibleFolders, visibleFiles, filterMode, favorites, trashItems, search]);
+
+  const ownerOptions = useMemo(() => {
+    const map = new Map();
+    allItems.forEach((item) => {
+      const ownerId = item?.ownerId;
+      if (!ownerId) return;
+      const ownerLabel =
+        item?.ownerName || item?.ownerFullName || item?.ownerEmail || t("documents.fileDetail.unknown");
+      map.set(String(ownerId), ownerLabel);
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [allItems, t]);
+
+  const getFileCategory = useCallback((item) => {
+    if (!item) return "other";
+    if (item.type === "folder") return "folder";
+
+    const name = String(item.name || "").toLowerCase();
+    const extension = name.includes(".") ? name.split(".").pop() : "";
+
+    const imageExt = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic"]);
+    const pdfExt = new Set(["pdf"]);
+    const excelExt = new Set(["xls", "xlsx", "csv", "ods"]);
+    const docExt = new Set(["doc", "docx", "txt", "rtf", "odt"]);
+
+    if (imageExt.has(extension)) return "image";
+    if (pdfExt.has(extension)) return "pdf";
+    if (excelExt.has(extension)) return "excel";
+    if (docExt.has(extension)) return "doc";
+    return "other";
+  }, []);
+
+  const matchesModifiedFilter = useCallback((item) => {
+    if (modifiedFilter === "all") return true;
+
+    const rawDate = item?.updatedAt || item?.createdAt || item?.date;
+    if (!rawDate) return false;
+    const itemDate = new Date(rawDate);
+    if (Number.isNaN(itemDate.getTime())) return false;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (modifiedFilter) {
+      case "today":
+        return itemDate >= startOfToday;
+      case "last7days": {
+        const threshold = new Date(now);
+        threshold.setDate(now.getDate() - 7);
+        return itemDate >= threshold;
+      }
+      case "last30days": {
+        const threshold = new Date(now);
+        threshold.setDate(now.getDate() - 30);
+        return itemDate >= threshold;
+      }
+      case "thisYear":
+        return itemDate.getFullYear() === now.getFullYear();
+      case "lastYear":
+        return itemDate.getFullYear() === now.getFullYear() - 1;
+      default:
+        return true;
+    }
+  }, [modifiedFilter]);
+
+  const filteredItems = useMemo(() => {
+    return allItems.filter((item) => {
+      if (typeFilter !== "all") {
+        const category = getFileCategory(item);
+        if (category !== typeFilter) return false;
+      }
+
+      if (ownerFilter !== "all") {
+        if (String(item?.ownerId || "") !== String(ownerFilter)) return false;
+      }
+
+      if (!matchesModifiedFilter(item)) return false;
+
+      return true;
+    });
+  }, [allItems, typeFilter, ownerFilter, getFileCategory, matchesModifiedFilter]);
+
+  // Sorting logic
+  const parseFileSize = (sizeStr) => {
+    if (typeof sizeStr === "number") return sizeStr;
+    if (!sizeStr) return 0;
+    const size = parseFloat(sizeStr);
+    if (sizeStr.includes("GB")) return size * 1024 * 1024 * 1024;
+    if (sizeStr.includes("MB")) return size * 1024 * 1024;
+    if (sizeStr.includes("KB")) return size * 1024;
+    return size;
+  };
+
+  const parseDate = (dateStr) => {
+    if (!dateStr) return 0;
+    return new Date(dateStr).getTime();
+  };
+
+  const sortItems = (items) => {
+    return [...items].sort((a, b) => {
+      if (a.type === "folder" && b.type !== "folder") return -1;
+      if (a.type !== "folder" && b.type === "folder") return 1;
+
+      let comparison = 0;
+      switch (sortBy) {
+        case "name":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "date":
+          comparison = parseDate(a.date) - parseDate(b.date);
+          break;
+        case "size":
+          comparison = parseFileSize(a.size) - parseFileSize(b.size);
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  };
+
+  const sortedItems = sortItems(filteredItems);
+
+  const handleSortChange = (option) => {
+    if (sortBy === option) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(option);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortLabel = () => {
+    const directionIcon = sortDirection === "asc" ? "↑" : "↓";
+    switch (sortBy) {
+      case "name":
+        return `${t('documents.header.sortByName')} ${directionIcon}`;
+      case "date":
+        return `${t('documents.header.sortByDate')} ${directionIcon}`;
+      case "size":
+        return `${t('documents.header.sortBySize')} ${directionIcon}`;
+      default:
+        return directionIcon;
+    }
+  };
+
+  const handleItemClick = (item) => {
+    // Always show details panel for list/detail view
+    setSelectedItem(item);
+    if (showMobileDetails !== undefined) {
+      setShowMobileDetails(true);
+    }
+  };
+
+  const openItemDetails = (item) => {
+    if (!item) return;
+    setSelectedItem(item);
+    if (showMobileDetails !== undefined) {
+      setShowMobileDetails(true);
+    }
+  };
+
+  const handleItemDoubleClick = (item) => {
+    // Don't allow navigation/opening in trash mode
+    if (filterMode === "trash") {
+      return;
+    }
+    
+    if (item.type === "folder") {
+      // If in favorites mode, switch back to all mode first
+      if (filterMode === "favorites") {
+        setFilterMode("all");
+      }
+      setCurrentFolderId(item.id);
+    } else if (item.path) {
+      // Open file in new tab using Cloudinary CDN URL
+      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      const fileUrl = `https://res.cloudinary.com/${cloudName}/raw/upload/${item.path}`;
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === sortedItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(sortedItems.map((item) => item.id)));
+    }
+  };
+
+  const toggleItemSelection = (itemId, event) => {
+    event.stopPropagation();
+    const newSelectedItems = new Set(selectedItems);
+    if (newSelectedItems.has(itemId)) {
+      newSelectedItems.delete(itemId);
+    } else {
+      newSelectedItems.add(itemId);
+    }
+    setSelectedItems(newSelectedItems);
+  };
+
+  // Event handlers
+  async function onCreateFolderConfirmed() {
+    const name = newFolderName.trim();
+    if (!name) return;
+
+    try {
+      await documentService.createFolder(name, currentFolderId);
+      setNewFolderName("");
+      setIsCreateOpen(false);
+      loadFolderContents();
+      toast.success(t('documents.createFolder.success'));
+    } catch (error) {
+      console.error("Error creating folder:", error);
+      toast.error(error?.message || t('documents.createFolder.error'));
+    }
+  }
+
+  const updateUploadTask = useCallback((taskId, patch) => {
+    setUploadTasks((prev) =>
+      prev.map((task) => (
+        task.id === taskId
+          ? { ...task, ...(typeof patch === "function" ? patch(task) : patch) }
+          : task
+      ))
+    );
+  }, []);
+
+  const startUploadTask = useCallback((task) => {
+    const controller = new AbortController();
+    uploadControllersRef.current.set(task.id, controller);
+    updateUploadTask(task.id, { status: "uploading", progress: task.progress || 0, error: null });
+
+    documentService.uploadFile(task.folderId, task.file, {
+      signal: controller.signal,
+      onUploadProgress: (event) => {
+        if (!event.total) return;
+        const uploadProgress = Math.round((event.loaded * 100) / event.total);
+        const progress = Math.min(90, Math.round((event.loaded * 90) / event.total));
+        updateUploadTask(task.id, {
+          progress,
+          status: uploadProgress >= 100 ? "processing" : "uploading",
+        });
+      },
+    })
+      .then(() => {
+        updateUploadTask(task.id, { status: "completed", progress: 100, error: null });
+        loadFolderContents();
+      })
+      .catch((error) => {
+        const canceled = error?.code === "ERR_CANCELED" || controller.signal.aborted;
+        updateUploadTask(task.id, {
+          status: canceled ? "canceled" : "failed",
+          error: canceled ? null : (error?.message || t('documents.upload.error')),
+        });
+        if (!canceled) {
+          console.error("Error uploading file:", error);
+        }
+      })
+      .finally(() => {
+        uploadControllersRef.current.delete(task.id);
+      });
+  }, [loadFolderContents, t, updateUploadTask]);
+
+  function onUploadFiles(fileList) {
+    const filesToUpload = Array.from(fileList || []);
+    if (filesToUpload.length === 0) return;
+
+    const folderId = currentFolderId;
+    const timestamp = Date.now();
+    const tasks = filesToUpload.map((file, index) => ({
+      id: `${timestamp}-${index}-${file.name}`,
+      file,
+      folderId,
+      name: file.name,
+      size: file.size,
+      progress: 0,
+      status: "queued",
+      error: null,
+    }));
+
+    setUploadTasks((prev) => [...prev, ...tasks]);
+    tasks.forEach((task) => {
+      window.setTimeout(() => startUploadTask(task), 0);
+    });
+  }
+
+  const cancelUpload = useCallback((taskId) => {
+    uploadControllersRef.current.get(taskId)?.abort();
+    updateUploadTask(taskId, (task) => (
+      task.status === "queued" ? { status: "canceled", progress: 0, error: null } : {}
+    ));
+  }, [updateUploadTask]);
+
+  const cancelAllUploads = useCallback(() => {
+    uploadControllersRef.current.forEach((controller) => controller.abort());
+    setUploadTasks((prev) =>
+      prev.map((task) =>
+        task.status === "queued" || task.status === "uploading" || task.status === "processing"
+          ? { ...task, status: "canceled", error: null }
+          : task
+      )
+    );
+  }, []);
+
+  const retryUpload = useCallback((taskId) => {
+    const task = uploadTasks.find((item) => item.id === taskId);
+    if (!task || task.status === "uploading") return;
+    const retryTask = { ...task, progress: 0, status: "queued", error: null };
+    updateUploadTask(taskId, retryTask);
+    window.setTimeout(() => startUploadTask(retryTask), 0);
+  }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+  const retryFailedUploads = useCallback(() => {
+    uploadTasks
+      .filter((task) => task.status === "failed" || task.status === "canceled")
+      .forEach((task) => {
+        const retryTask = { ...task, progress: 0, status: "queued", error: null };
+        updateUploadTask(task.id, retryTask);
+        window.setTimeout(() => startUploadTask(retryTask), 0);
+      });
+  }, [startUploadTask, updateUploadTask, uploadTasks]);
+
+  const clearFinishedUploads = useCallback(() => {
+    setUploadTasks((prev) => prev.filter((task) => task.status === "queued" || task.status === "uploading" || task.status === "processing"));
+  }, []);
+
+  function onDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (!e.dataTransfer?.files?.length) return;
+    onUploadFiles(e.dataTransfer.files);
+  }
+
+  async function toggleFavorite(item, type) {
+    try {
+      // Optimistic update - update UI immediately
+      const newFavoriteState = !item.favorite;
+      
+      const updateItem = (items) =>
+        items.map((i) => (i.id === item.id ? { ...i, favorite: newFavoriteState } : i));
+
+      setFolders((prev) => updateItem(prev));
+      setFiles((prev) => updateItem(prev));
+      setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: newFavoriteState } : prev);
+
+      // Make API call in background
+      const result = await documentService.toggleFavorite(
+        item.id,
+        type.toUpperCase()
+      );
+
+      // If API result differs from optimistic update, sync it
+      if (result !== newFavoriteState) {
+        const correctUpdateItem = (items) =>
+          items.map((i) => (i.id === item.id ? { ...i, favorite: result } : i));
+        setFolders((prev) => correctUpdateItem(prev));
+        setFiles((prev) => correctUpdateItem(prev));
+        setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: result } : prev);
+      }
+
+      // If in favorites mode and item was unfavorited, refresh the list
+      if (filterMode === "favorites" && !result) {
+        loadFavorites();
+      }
+
+      const action = result ? t('documents.favorite.added') : t('documents.favorite.removed');
+      const itemType = type === "folder" ? t('documents.types.folder') : t('documents.types.file');
+      toast.success(
+        `${action} ${itemType} '${item.name}'`
+      );
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error(error?.message || t('documents.favorite.error'));
+      // Revert optimistic update on error
+      loadFolderContents();
+    }
+  }
+
+  function openShare(item, type) {
+    setSelectedRecipients([]);
+    setShareItem({ type, data: item });
+  }
+
+  function confirmDelete(item, type) {
+    setDeleteItem({ type, data: item });
+  }
+
+  async function onConfirmDelete() {
+    if (!deleteItem) return;
+
+    try {
+      if (deleteItem.type === "folder") {
+        await documentService.deleteFolder(deleteItem.data.id);
+        if (currentFolderId === deleteItem.data.id) {
+          setCurrentFolderId(deleteItem.data.parentId ?? null);
+        }
+      } else {
+        await documentService.deleteFile(deleteItem.data.id);
+      }
+      loadFolderContents();
+      setDeleteItem(null);
+      toast.success(t('documents.delete.success'));
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast.error(error?.message || t('documents.delete.error'));
+    }
+  }
+
+  // Trash handlers
+  async function handleRestore(item) {
+    try {
+      if (item.type === "folder") {
+        await documentService.restoreFolder(item.id);
+      } else {
+        await documentService.restoreFile(item.id);
+      }
+      loadTrash();
+      toast.success(t('documents.trash.restoreSuccess'));
+    } catch (error) {
+      console.error("Error restoring item:", error);
+      toast.error(error?.message || t('documents.trash.restoreError'));
+    }
+  }
+
+  async function handlePermanentDelete(item) {
+    try {
+      if (item.type === "folder") {
+        await documentService.permanentDeleteFolder(item.id);
+      } else {
+        await documentService.permanentDeleteFile(item.id);
+      }
+      loadTrash();
+      toast.success(t('documents.trash.permanentDeleteSuccess'));
+    } catch (error) {
+      console.error("Error permanently deleting item:", error);
+      toast.error(error?.message || t('documents.trash.permanentDeleteError'));
+    }
+  }
+
+  async function handleEmptyTrash() {
+    try {
+      await documentService.emptyTrash();
+      loadTrash();
+      toast.success(t('documents.trash.emptySuccess'));
+    } catch (error) {
+      console.error("Error emptying trash:", error);
+      toast.error(error?.message || t('documents.trash.emptyError'));
+    }
+  }
+
+  async function handleShare(permission) {
+    try {
+      await documentService.shareItem(
+        shareItem.data.id,
+        shareItem.type.toUpperCase(),
+        selectedRecipients,
+        permission
+      );
+      toast.success(t('documents.share.success'));
+      return true;
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast.error(error?.message || t('documents.share.error'));
+      return false;
+    }
+  }
+
+  function handleRename(item, type) {
+    setRenameItem({ id: item.id, type, data: item });
+  }
+
+  function handleMove(item, type) {
+    setMoveItem({ id: item.id, type, data: item });
+  }
+
+  async function handleRenameConfirm(newName) {
+    if (!renameItem) return;
+    try {
+      if (renameItem.type === "folder") {
+        await documentService.renameFolder(renameItem.data.id, newName);
+      } else {
+        await documentService.renameFile(renameItem.data.id, newName);
+      }
+      loadFolderContents();
+    } catch (error) {
+      console.error("Error renaming:", error);
+      throw error;
+    }
+  }
+
+  async function handleGeneralAccessUpdate(permission) {
+    if (!shareItem) return;
+
+    const targetItem = shareItem.data;
+    const targetType = shareItem.type;
+
+    if (targetItem?.permission === permission) return;
+
+    try {
+      if (targetType === "folder") {
+        await documentService.updateFolderPermission(
+          targetItem.id,
+          permission
+        );
+      } else {
+        await documentService.updateFilePermission(
+          targetItem.id,
+          permission
+        );
+      }
+
+      setShareItem((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            permission,
+          },
+        };
+      });
+
+      setSelectedItem((prev) => {
+        if (!prev) return prev;
+        if (String(prev.id) !== String(targetItem.id) || prev.type !== targetType) return prev;
+        return {
+          ...prev,
+          permission,
+        };
+      });
+
+      if (targetType === "folder") {
+        setFolders((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+        setAllFolders((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+      } else {
+        setFiles((prev) => prev.map((item) => (
+          String(item.id) === String(targetItem.id)
+            ? { ...item, permission }
+            : item
+        )));
+      }
+
+    } catch (error) {
+      console.error("Error updating permission:", error);
+      throw error;
+    }
+  }
+
+  function handleMoveCompleted() {
+    loadFolderContents();
+  }
+
+  const getCurrentUserId = () => {
+    const tokens = getStoredTokens();
+    return tokens?.userInfo?.userId;
+  };
+
+  const isOwner = (item) => {
+    const currentUserId = getCurrentUserId();
+    return currentUserId && String(currentUserId) === String(item.ownerId);
+  };
+
+  async function handleBatchDelete() {
+    if (selectedItems.size === 0) return;
+
+    const fileIds = [];
+    const folderIds = [];
+
+    selectedItems.forEach((itemId) => {
+      const item = sortedItems.find((i) => i.id === itemId);
+      if (item) {
+        if (item.type === "folder") {
+          folderIds.push(item.id);
+        } else {
+          fileIds.push(item.id);
+        }
+      }
+    });
+
+    try {
+      const result = await documentService.batchDelete(fileIds, folderIds);
+      setSelectedItems(new Set());
+      loadFolderContents();
+
+      if (result.failureCount > 0) {
+        toast.warning(
+          t('documents.batchDelete.partial', {
+            success: result.successCount,
+            total: result.totalRequested,
+            failed: result.failureCount
+          })
+        );
+      } else {
+        toast.success(t('documents.batchDelete.success', { count: result.successCount }));
+      }
+    } catch (error) {
+      console.error("Error batch deleting:", error);
+      toast.error(error?.message || t('documents.batchDelete.error'));
+    }
+  }
+
+  async function handleBatchMove(destinationFolderId) {
+    if (selectedItems.size === 0) return;
+
+    const fileIds = [];
+    const folderIds = [];
+
+    selectedItems.forEach((itemId) => {
+      const item = sortedItems.find((i) => i.id === itemId);
+      if (item) {
+        if (item.type === "folder") {
+          folderIds.push(item.id);
+        } else {
+          fileIds.push(item.id);
+        }
+      }
+    });
+
+    try {
+      const result = await documentService.batchMove(
+        fileIds,
+        folderIds,
+        destinationFolderId
+      );
+      setSelectedItems(new Set());
+      loadFolderContents();
+
+      if (result.failureCount > 0) {
+        toast.warning(
+          t('documents.batchMove.partial', {
+            success: result.successCount,
+            total: result.totalRequested,
+            failed: result.failureCount
+          })
+        );
+      } else {
+        toast.success(t('documents.batchMove.success', { count: result.successCount }));
+      }
+    } catch (error) {
+      console.error("Error batch moving:", error);
+      toast.error(error?.message || t('documents.batchMove.error'));
+    }
+  }
+
+  return {
+    // State
+    folders,
+    allFolders,
+    files,
+    currentFolderId,
+    setCurrentFolderId,
+    search,
+    setSearch,
+    isDragging,
+    setIsDragging,
+    filterMode,
+    setFilterMode,
+    shareItem,
+    setShareItem,
+    deleteItem,
+    setDeleteItem,
+    selectedItem,
+    setSelectedItem,
+    showMobileDetails,
+    setShowMobileDetails,
+    sortBy,
+    sortDirection,
+    typeFilter,
+    setTypeFilter,
+    ownerFilter,
+    setOwnerFilter,
+    modifiedFilter,
+    setModifiedFilter,
+    ownerOptions,
+    selectedItems,
+    setSelectedItems,
+    isCreateOpen,
+    setIsCreateOpen,
+    newFolderName,
+    setNewFolderName,
+    selectedRecipients,
+    setSelectedRecipients,
+    loading,
+    renameItem,
+    setRenameItem,
+    moveItem,
+    setMoveItem,
+    viewMode,
+    setViewMode,
+    uploadTasks,
+    sortedItems,
+    currentPath,
+
+    // Handlers
+    handleSortChange,
+    getSortLabel,
+    handleItemClick,
+    handleItemDoubleClick,
+    openItemDetails,
+    toggleSelectAll,
+    toggleItemSelection,
+    onCreateFolderConfirmed,
+    onUploadFiles,
+    cancelUpload,
+    cancelAllUploads,
+    retryUpload,
+    retryFailedUploads,
+    clearFinishedUploads,
+    onDrop,
+    toggleFavorite,
+    openShare,
+    confirmDelete,
+    onConfirmDelete,
+    handleShare,
+    handleRename,
+    handleMove,
+    handleRenameConfirm,
+    handleGeneralAccessUpdate,
+    handleMoveCompleted,
+    isOwner,
+    goUpOneLevel,
+    handleBatchDelete,
+    handleBatchMove,
+    // Trash handlers
+    handleRestore,
+    handlePermanentDelete,
+    handleEmptyTrash,
+  };
+}
+
+
+
+
+

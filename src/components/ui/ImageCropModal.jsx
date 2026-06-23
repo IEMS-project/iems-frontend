@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import Button from './Button';
+import Button from './button';
 import { FaSave, FaTimes } from 'react-icons/fa';
 
 export default function ImageCropModal({ isOpen, onClose, imageSrc, onCropComplete }) {

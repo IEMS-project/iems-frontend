@@ -41,6 +41,46 @@
     "detail": "Chi tiết"
   },
   "dashboard": {
+    "header": {
+      "eyebrow": "Không gian làm việc IEMS",
+      "subtitle": "Tóm tắt tiến độ, nhiệm vụ quan trọng và log gần đây."
+    },
+    "marketPanel": {
+      "eyebrow": "Tổng quan",
+      "title": "Analytics IEMS",
+      "projectsCta": "Dự án",
+      "distributionTitle": "Luồng nhiệm vụ",
+      "taskCount": "{{count}} nhiệm vụ",
+      "completionTitle": "Tỉ lệ hoàn thành",
+      "taskLabel": "nhiệm vụ",
+      "completionMeta": "{{completed}}/{{total}}",
+      "promoTitle": "Khu vực giới thiệu",
+      "promoDescription": "Banner sprint, thông báo hoặc quảng cáo nội bộ.",
+      "promoCta": "Mở",
+      "segments": {
+        "backlog": "Tồn đọng",
+        "doing": "Đang làm",
+        "done": "Hoàn thành",
+        "overdue": "Trễ hạn"
+      }
+    },
+    "recentActivity": {
+      "title": "Log gần đây",
+      "emptyTitle": "Chưa có hoạt động nào",
+      "emptyDescription": "Khi có cập nhật trong dự án, timeline sẽ hiển thị tại đây.",
+      "justNow": "Vừa xong",
+      "minutesAgo": "{{count}} phút trước",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước",
+      "types": {
+        "created": "Tạo nhiệm vụ",
+        "updated": "Cập nhật",
+        "assigned": "Phân công",
+        "completed": "Hoàn thành",
+        "commented": "Bình luận",
+        "activity": "Hoạt động"
+      }
+    },
     "projectOverview": {
       "title": "Tổng quan dự án",
       "project": "Dự án",
@@ -52,6 +92,7 @@
     },
     "myTasks": {
       "title": "Nhiệm vụ của tôi",
+      "todayTitle": "Task hôm nay",
       "noTasks": "Không có nhiệm vụ nào",
       "noDueDate": "Không có hạn",
       "overdue": "Quá hạn {{days}} ngày",
@@ -386,11 +427,17 @@
     "detail": {
       "tabs": {
         "overview": "Tổng quan",
-        "timeline": "Tiến độ",
-        "phases": "Giai đoạn",
-        "tasks": "Nhiệm vụ",
+        "backlog": "Tồn đọng",
+        "board": "Bảng",
+        "tasks": "Vấn đề",
+        "agent": "Trợ lý AI",
+        "timeline": "Dòng thời gian",
+        "burndown": "Burndown",
+        "sprints": "Sprint",
         "members": "Thành viên",
-        "code": "Mã nguồn"
+        "settings": "Cài đặt",
+        "code": "Mã nguồn",
+        "documents": "Tài liệu"
       },
       "overview": {
         "title": "Tổng quan dự án",
@@ -588,6 +635,69 @@
       }
     }
   },
+  "projectDocuments": {
+    "title": "Tài liệu Dự án",
+    "upload": "Tải tài liệu lên",
+    "uploading": "Đang tải lên...",
+    "empty": "Chưa có tài liệu nào",
+    "emptyDesc": "Tải tài liệu lên để chia sẻ với nhóm của bạn.",
+    "deleteConfirmTitle": "Xóa Tài liệu",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa {{name}}? Hành động này không thể hoàn tác.",
+    "deleteSuccess": "Đã xóa tài liệu",
+    "uploadSuccess": "Tải tài liệu lên thành công",
+    "createFolderSuccess": "Đã tạo thư mục thành công",
+    "renameSuccess": "Đổi tên thành công",
+    "moveSuccess": "Di chuyển thành công",
+    "newFolder": "Thư mục mới",
+    "rename": "Đổi tên",
+    "move": "Di chuyển",
+    "upOneLevel": "Lên một cấp",
+    "fileTooLarge": "Kích thước tệp quá lớn (tối đa 50MB)",
+    "accessDenied": "Bạn không có quyền truy cập để xem tài liệu của dự án này.",
+    "accessRestricted": "Hạn chế Truy cập",
+    "columns": {
+      "name": "Tên",
+      "size": "Kích thước",
+      "date": "Ngày tải lên"
+    }
+  },
+  "sprints": {
+    "title": "Sprint",
+    "create": "Tạo sprint",
+    "edit": "Chỉnh sửa sprint",
+    "start": "Bắt đầu",
+    "complete": "Hoàn thành",
+    "empty": "Chưa có sprint nào. Hãy tạo sprint đầu tiên!",
+    "form": {
+      "name": "Tên sprint",
+      "namePlaceholder": "Ví dụ: Sprint 1",
+      "goal": "Mục tiêu sprint",
+      "goalPlaceholder": "Mục tiêu của sprint này là gì?",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc"
+    },
+    "messages": {
+      "nameRequired": "Tên sprint là bắt buộc",
+      "created": "Đã tạo sprint",
+      "updated": "Đã cập nhật sprint",
+      "started": "Đã bắt đầu sprint",
+      "completed": "Đã hoàn thành sprint",
+      "cancelled": "Đã hủy sprint",
+      "deleted": "Đã xóa sprint",
+      "deleteConfirm": "Bạn có chắc muốn xóa sprint này?"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "selectSprint": "Chọn sprint",
+      "total": "Tổng",
+      "remaining": "Còn lại",
+      "completed": "Hoàn thành",
+      "progress": "Tiến độ",
+      "actual": "Thực tế",
+      "ideal": "Lý tưởng",
+      "noData": "Chưa có dữ liệu burndown"
+    }
+  },
   "tables": {
     "filter": "Lọc",
     "columns": "Cột",
@@ -689,12 +799,34 @@
       "sort": "Sắp xếp",
       "sortByName": "Theo tên",
       "sortByDate": "Theo ngày",
-      "sortBySize": "Theo dung lượng"
+      "sortBySize": "Theo dung lượng",
+      "type": "Loại",
+      "typeAll": "Tất cả loại",
+      "typeFolder": "Thư mục",
+      "typeDoc": "Tài liệu",
+      "typeExcel": "Bảng tính",
+      "typePdf": "PDF",
+      "typeImage": "Hình ảnh",
+      "typeOther": "Khác",
+      "owner": "Người",
+      "ownerAll": "Tất cả chủ sở hữu",
+      "modified": "Lần sửa đổi gần đây nhất",
+      "modifiedAll": "Bất kỳ lúc nào",
+      "modifiedToday": "Hôm nay",
+      "modifiedLast7Days": "7 ngày qua",
+      "modifiedLast30Days": "30 ngày qua",
+      "modifiedThisYear": "Năm nay",
+      "modifiedLastYear": "Năm ngoái",
+      "clearFilters": "Xóa tất cả"
     },
     "list": {
       "name": "Tên",
       "dateCreated": "Ngày tạo",
       "size": "Kích thước"
+    },
+    "grid": {
+      "folders": "Thư mục",
+      "files": "Tệp"
     },
     "emptyState": {
       "title": "Thư mục này trống.",
@@ -761,24 +893,52 @@
       "update": "Cập nhật",
       "cancel": "Hủy",
       "processing": "Đang xử lý...",
-      "success": "Quyền đã được cập nhật thành công"
+      "success": "Quyền đã được cập nhật thành công",
+      "owner": "Chủ sở hữu",
+      "editor": "Chỉnh sửa",
+      "viewer": "Xem"
     },
     "share": {
       "title": "Chia sẻ",
+      "dialogTitle": "Chia sẻ \"{{name}}\"",
       "shareItem": "Chia sẻ {{type}}: <strong>{{name}}</strong>",
       "folder": "thư mục",
       "file": "tệp",
       "copyLink": "Sao chép liên kết",
       "linkCopied": "Đã sao chép liên kết",
       "searchPlaceholder": "Nhập tên...",
+      "accessList": "Những người có quyền truy cập",
+      "owner": "Chủ sở hữu",
+      "generalAccess": "Quyền truy cập chung",
+      "restricted": "Hạn chế",
+      "anyoneWithLink": "Bất kỳ ai có đường liên kết",
       "permission": "Quyền",
       "viewer": "Xem",
       "editor": "Chỉnh sửa",
       "selected": "Đã chọn {{count}}/{{total}}",
       "share": "Chia sẻ",
+      "done": "Xong",
       "cancel": "Hủy",
+      "noUsersFound": "Không tìm thấy người dùng phù hợp",
       "success": "Chia sẻ thành công",
       "error": "Lỗi khi chia sẻ"
+    },
+    "activity": {
+      "item": {
+        "created": "Đã tạo mục {{itemName}}",
+        "renamed": "Đã đổi tên thành \"{{newName}}\"",
+        "permissionUpdated": "Đã cập nhật quyền truy cập: {{permissionLabel}}",
+        "moved": "Đã di chuyển mục",
+        "movedToTrash": "Đã chuyển vào thùng rác",
+        "restored": "Đã khôi phục mục",
+        "permanentlyDeleted": "Đã xóa vĩnh viễn",
+        "shared": "Đã chia sẻ với {{count}} người",
+        "unshared": "Đã gỡ chia sẻ với {{count}} người",
+        "sharePermissionUpdated": "Đã cập nhật quyền người được chia sẻ: {{permission}}",
+        "shareRemoved": "Đã xóa một quyền chia sẻ",
+        "favorited": "Đã thêm vào yêu thích",
+        "unfavorited": "Đã bỏ khỏi yêu thích"
+      }
     },
     "sharedUsers": {
       "title": "Người dùng đã chia sẻ",
@@ -814,6 +974,7 @@
       "success": "Đã di chuyển thành công"
     },
     "contextMenu": {
+      "details": "Thông tin",
       "rename": "Đổi tên",
       "permission": "Quyền",
       "share": "Chia sẻ",
@@ -838,6 +999,9 @@
     },
     "fileDetail": {
       "details": "Thông tin",
+      "activity": "Hoạt động",
+      "overview": "Tổng quan",
+      "access": "Quyền truy cập",
       "name": "Tên:",
       "type": "Loại:",
       "size": "Kích thước:",
@@ -849,12 +1013,36 @@
       "file": "Tệp",
       "public": "Công khai",
       "private": "Riêng tư",
+      "publicDescription": "Bất kỳ ai có liên kết đều có thể truy cập",
+      "privateDescription": "Chỉ những người được cấp quyền mới có thể truy cập",
       "unknown": "Không rõ",
       "location": "Vị trí:",
       "myFiles": "Tệp của tôi",
       "settings": "Cài đặt",
       "shareFile": "Chia sẻ tệp",
-      "favorite": "Yêu thích"
+      "favorite": "Yêu thích",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "activityUpdated": "Bạn đã chỉnh sửa mục này",
+      "activityCreated": "Bạn đã tạo mục này",
+      "activityDeleted": "Mục đã được chuyển vào thùng rác",
+      "activityPublic": "Mục đang ở chế độ công khai",
+      "activityRestricted": "Mục đang ở chế độ hạn chế",
+      "activityFavorite": "Mục đã được đánh dấu yêu thích",
+      "activityMarkedFavorite": "Bạn đã thêm mục này vào yêu thích",
+      "activityUnmarkedFavorite": "Bạn đã bỏ đánh dấu yêu thích",
+      "activityMovedToTrash": "Bạn đã chuyển mục này vào thùng rác",
+      "activityRestored": "Bạn đã khôi phục mục này",
+      "activityDeletedPermanently": "Bạn đã xóa vĩnh viễn mục này",
+      "activityShared": "Bạn đã chia sẻ mục này với {{count}} người",
+      "activityRenamed": "Bạn đã đổi tên mục thành \"{{name}}\"",
+      "activityMoved": "Bạn đã di chuyển mục này",
+      "activitySharePermissionChanged": "Bạn đã đổi quyền của {{name}} thành {{permission}}",
+      "now": "Vừa xong",
+      "noActivity": "Chưa có hoạt động nào gần đây",
+      "peopleWithAccess": "Người có quyền truy cập",
+      "manageAccess": "Quản lý quyền",
+      "notShared": "Chưa chia sẻ với ai"
     },
     "types": {
       "folder": "thư mục",
@@ -881,6 +1069,7 @@
       "title": "Quản lý phân quyền",
       "tabs": {
         "accounts": "Quản lý tài khoản",
+        "roles": "Roles",
         "rolesPermissions": "Roles & Permissions"
       },
       "accounts": {
@@ -926,7 +1115,21 @@
         "lockedAccounts": "Tài khoản bị khóa",
         "accountManagement": "Quản lý tài khoản & phân quyền",
         "accountManagementDescription": "Xem và chỉnh sửa quyền truy cập theo từng tài khoản người dùng",
-        "resetPasswordDescription": "Thiết lập mật khẩu mới cho tài khoản này"
+        "resetPasswordDescription": "Thiết lập mật khẩu mới cho tài khoản này",
+        "userProfileSaveSuccess": "Cập nhật thông tin người dùng thành công",
+        "userProfileSaveError": "Lỗi khi cập nhật thông tin người dùng",
+        "userProfile": "Thông tin người dùng",
+        "firstName": "Tên",
+        "lastName": "Họ",
+        "phone": "Số điện thoại",
+        "gender": "Giới tính",
+        "address": "Địa chỉ",
+        "saveProfile": "Lưu thông tin",
+        "selectGender": "Chọn giới tính",
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác",
+        "noUserProfile": "Không tìm thấy thông tin người dùng cho tài khoản này"
       },
       "roles": {
         "title": "Roles",
@@ -1174,6 +1377,19 @@
   },
   "profile": {
     "title": "Hồ sơ cá nhân",
+    "tabs": {
+      "personalInfo": "Thông tin cá nhân",
+      "notifications": "Thông báo"
+    },
+    "notificationSettings": {
+      "title": "Cài đặt thông báo",
+      "emailTitle": "Thông báo qua Email",
+      "emailDesc": "Chọn các sự kiện bạn muốn nhận thông báo qua email.",
+      "taskAssigned": "Khi được giao nhiệm vụ",
+      "projectJoined": "Khi được thêm vào dự án",
+      "taskDueSoon": "Khi nhiệm vụ sắp đến hạn (1 ngày)",
+      "saveSuccess": "Cập nhật cài đặt thành công"
+    },
     "stats": {
       "projectsCompleted": "Dự án hoàn thành",
       "tasksCompleted": "Nhiệm vụ hoàn thành",
@@ -1235,6 +1451,13 @@
     "notifications": "Thông báo",
     "logout": "Đăng xuất"
   },
+  "settingsPage": {
+    "title": "Cài đặt",
+    "appearance": "Giao diện",
+    "appearanceDescription": "Chuyển đổi giữa chế độ sáng và tối.",
+    "language": "Ngôn ngữ",
+    "languageDescription": "Chọn ngôn ngữ hiển thị."
+  },
   "comments": {
     "title": "Bình luận",
     "placeholder": "Viết bình luận...",
@@ -1266,5 +1489,51 @@
     "minutesAgo": "{{count}} phút trước",
     "hoursAgo": "{{count}} giờ trước",
     "daysAgo": "{{count}} ngày trước"
+  },
+  "chatbot": {
+    "input": {
+      "placeholder": "Hỏi về dự án, công việc hoặc tài liệu... Bấm @ để chọn tài liệu",
+      "attachFile": "Đính kèm tệp",
+      "chooseEmbeddedDocument": "Chọn tài liệu đã embed",
+      "embeddedDocuments": "Tài liệu đã embed",
+      "selected": "Đã chọn",
+      "send": "Gửi",
+      "readingFile": "Đang đọc tệp...",
+      "responding": "Đang phản hồi...",
+      "removeAttachment": "Bỏ chọn {{name}}"
+    },
+    "page": {
+      "projectPrompt": "Project Agent: Bạn cần ưu tiên gì trong dự án hôm nay?",
+      "generalPrompt": "Bạn dự định làm gì hôm nay?",
+      "loadingConversation": "Đang tải cuộc trò chuyện...",
+      "thinking": "AI đang suy nghĩ...",
+      "errorPrefix": "Lỗi",
+      "projectRequiredForAttachment": "Vui lòng mở chatbot trong một dự án để đính kèm tài liệu.",
+      "uploadFailed": "Không thể tải file lên chatbot.",
+      "streamError": "Xin lỗi, có lỗi xảy ra: {{error}}. Vui lòng thử lại sau."
+    },
+    "documents": {
+      "ragReady": "Tài liệu RAG ready của dự án ({{count}} đã chọn)",
+      "hide": "Ẩn",
+      "choose": "Chọn tài liệu"
+    },
+    "quickActions": {
+      "dailyPlan": {
+        "label": "Lập kế hoạch hôm nay",
+        "prompt": "Đọc các issue/task trong dự án này và lập kế hoạch làm việc hôm nay cho tôi. Ưu tiên việc quan trọng, việc gần deadline, blocker, và đưa ra thứ tự nên làm kèm lý do."
+      },
+      "riskReview": {
+        "label": "Phân tích rủi ro",
+        "prompt": "Phân tích tình hình công việc hiện tại trong dự án: task nào đang rủi ro, task nào có khả năng trễ, blocker nằm ở đâu, và đề xuất hành động tiếp theo."
+      },
+      "progressSummary": {
+        "label": "Tóm tắt tiến độ",
+        "prompt": "Tóm tắt tiến độ dự án hiện tại theo nhóm: việc đã xong, việc đang làm, việc bị kẹt, việc cần ưu tiên. Trả lời ngắn gọn nhưng đủ để báo cáo standup."
+      },
+      "nextActions": {
+        "label": "Đề xuất bước tiếp theo",
+        "prompt": "Dựa trên dữ liệu issue/task hiện tại, hãy đề xuất 5 hành động tiếp theo tôi nên làm để đẩy dự án tiến lên. Nếu có issue cụ thể, nêu issue key và lý do."
+      }
+    }
   }
 }

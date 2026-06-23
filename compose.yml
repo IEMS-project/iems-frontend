@@ -1,0 +1,13 @@
+services:
+  frontend:
+    image: ${IMAGE_NAME}
+    container_name: iems-frontend
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT}:80"
+    networks:
+      - iems-network
+
+networks:
+  iems-network:
+    external: true

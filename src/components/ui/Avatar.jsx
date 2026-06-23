@@ -1,4 +1,5 @@
 import React from "react";
+import { Crown } from "lucide-react";
 
 function getInitialsFromName(name = "") {
 	const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
@@ -42,13 +43,21 @@ function getColorClasses(key) {
 	return colors[index];
 }
 
-export default function Avatar({ user, src, name = "", size = "md", className = "" }) {
+function isActivePremium(user) {
+	if (!user || typeof user !== "object") return false;
+	const subscriptionType = user.subscriptionType || user.account?.subscriptionType;
+	const premiumUntil = user.premiumUntil || user.account?.premiumUntil;
+	return subscriptionType === "PREMIUM" && (!premiumUntil || new Date(premiumUntil) > new Date());
+}
+
+export default function Avatar({ user, src, name = "", size = "md", premium = false, className = "" }) {
 	// Resolve image source flexibly:
 	// - If `src` prop provided, use it.
 	// - If `user` is a string and looks like a URL, use it.
 	// - Otherwise scan `user` keys (top-level and one-level nested objects) and pick the first value
 	//   whose key name contains common image indicators (image, avatar, photo, picture, url, src)
 	const looksLikeUrl = (v) => typeof v === 'string' && v.length > 0 && /^(https?:)?\/\//i.test(v);
+	const looksLikeRelativeImagePath = (v) => typeof v === 'string' && /^(\/|\.\.?\/).+/i.test(v);
 
 	let imageSrc = src;
 	if (!imageSrc && typeof user === 'string') {
@@ -60,7 +69,13 @@ export default function Avatar({ user, src, name = "", size = "md", className = 
 		if (typeof v === 'string') {
 			const trimmed = v.trim();
 			if (trimmed === '' || trimmed.toLowerCase() === 'null') return false;
-			return looksLikeUrl(trimmed) || /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(trimmed);
+			return (
+				looksLikeUrl(trimmed) ||
+				looksLikeRelativeImagePath(trimmed) ||
+				trimmed.startsWith('data:image/') ||
+				trimmed.startsWith('blob:') ||
+				/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(trimmed)
+			);
 		}
 		return false;
 	};
@@ -126,9 +141,51 @@ export default function Avatar({ user, src, name = "", size = "md", className = 
 	const numericSize = typeof size === 'number' ? `${size * 0.25}rem` : undefined;
 	const sizeClasses = typeof size === 'string' ? getSizeClasses(size) : null;
 
-	const colorClasses = getColorClasses(user?.firstName || displayName.charAt(0));
+	const crownSize = (() => {
+		if (typeof size === "number") return Math.max(8, Math.round(size * 1.6));
+		switch (size) {
+			case "xs":
+				return 8;
+			case "sm":
+				return 9;
+			case "md":
+				return 10;
+			case "lg":
+				return 11;
+			case "xl":
+				return 12;
+			case "2xl":
+				return 13;
+			default:
+				return 10;
+		}
+	})();
 
-	const wrapperClass = `${sizeClasses ? sizeClasses : ''} ${colorClasses} rounded-full flex items-center justify-center font-semibold overflow-hidden ${className}`.trim();
+	const crownBadgeClass = (() => {
+		if (typeof size === "number") return "h-4 w-4";
+		switch (size) {
+			case "xs":
+				return "h-3.5 w-3.5";
+			case "sm":
+				return "h-4 w-4";
+			case "md":
+				return "h-5 w-5";
+			case "lg":
+				return "h-5 w-5";
+			case "xl":
+				return "h-6 w-6";
+			case "2xl":
+				return "h-6 w-6";
+			default:
+				return "h-4 w-4";
+		}
+	})();
+
+	const colorClasses = getColorClasses(user?.firstName || displayName.charAt(0));
+	const showPremiumCrown = premium || isActivePremium(user);
+
+	const wrapperClass = `${sizeClasses ? sizeClasses : ''} relative rounded-full inline-flex shrink-0 overflow-visible ${className}`.trim();
+	const avatarClass = `${colorClasses} h-full w-full overflow-hidden rounded-full flex items-center justify-center font-semibold`.trim();
 
 	return (
 		<div
@@ -136,11 +193,22 @@ export default function Avatar({ user, src, name = "", size = "md", className = 
 			style={numericSize ? { width: numericSize, height: numericSize } : undefined}
 			title={displayName}
 		>
-			{imageSrc ? (
-				<img src={imageSrc} alt={displayName} className="h-full w-full object-cover" />
-			) : (
-				<span className="select-none">{getInitialsFromName(displayName)}</span>
+			{showPremiumCrown && (
+				<span
+					className={`pointer-events-none absolute left-[24%] top-[1%] z-10 ${crownBadgeClass} -translate-x-1/2 -translate-y-1/2 -rotate-[24deg] flex items-center justify-center rounded-full border border-white/90 bg-amber-400 text-amber-950 shadow-sm dark:border-slate-900`}
+					aria-label="Premium"
+					title="Premium"
+				>
+					<Crown size={crownSize} className="block" />
+				</span>
 			)}
+			<div className={avatarClass}>
+				{imageSrc ? (
+					<img src={imageSrc} alt={displayName} className="h-full w-full object-cover" />
+				) : (
+					<span className="select-none">{getInitialsFromName(displayName)}</span>
+				)}
+			</div>
 		</div>
 	);
 }

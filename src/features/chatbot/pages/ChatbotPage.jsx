@@ -1,0 +1,668 @@
+import React, { useState, useRef, useEffect } from 'react';
+import ChatMessage from '@/features/chatbot/components/ChatMessage';
+import ChatInput from '@/features/chatbot/components/ChatInput';
+import ConversationManager from '@/features/chatbot/components/ConversationManager';
+import chatbotService from '@/features/chatbot/api/chatbotService';
+import { AGENT_FRIENDLY_ERROR, sanitizeAgentResponse } from '@/features/chatbot/utils/sanitizeAgentResponse';
+import { documentService } from '@/features/projects/api/documentService';
+import { useTranslation } from 'react-i18next';
+
+const Chatbot = ({ projectId = null }) => {
+  const { t } = useTranslation();
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentBotMessageId, setCurrentBotMessageId] = useState(null);
+  const [hasStartedStreaming, setHasStartedStreaming] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [isCreatingNewConversation, setIsCreatingNewConversation] = useState(false);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  const [refreshConversations, setRefreshConversations] = useState(0);
+  const [embeddableDocs, setEmbeddableDocs] = useState([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
+  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [quickOptions, setQuickOptions] = useState([]);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (autoScrollEnabled) {
+      scrollToBottom();
+    }
+  }, [messages, autoScrollEnabled]);
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setAutoScrollEnabled(distanceFromBottom < 80);
+  };
+
+  // Add welcome message only when a conversation is selected
+  useEffect(() => {
+    if (activeConversationId) {
+      // Load conversation messages - don't add welcome message for existing conversations
+      setMessages([]);
+    } else if (isCreatingNewConversation) {
+      // For new conversations, show empty messages
+      setMessages([]);
+    } else {
+      // No conversation selected - show empty messages for welcome screen
+      setMessages([]);
+    }
+  }, [activeConversationId, isCreatingNewConversation]);
+
+  // Load conversations on mount and when switching project scope
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        setMessages([]);
+        setActiveConversationId(null);
+        setIsCreatingNewConversation(false);
+
+        const data = await chatbotService.getConversations(projectId);
+        if (data && data.current_conversation) {
+          setActiveConversationId(data.current_conversation.id);
+          await handleConversationSelect(data.current_conversation.id);
+        }
+      } catch (error) {
+        console.error('Error loading conversations:', error);
+      }
+    };
+
+    loadConversations();
+  }, [projectId]);
+
+  useEffect(() => {
+    const loadEmbeddableDocs = async () => {
+      if (!projectId) {
+        setEmbeddableDocs([]);
+        setSelectedDocumentIds([]);
+        setShowDocumentPicker(false);
+        return;
+      }
+
+      try {
+        const docs = await documentService.getEmbeddableDocuments(projectId);
+        setEmbeddableDocs(docs || []);
+        setSelectedDocumentIds(prev => prev.filter(id => (docs || []).some(d => d.id === id)));
+      } catch (err) {
+        console.error('Failed to load embeddable docs:', err);
+      }
+    };
+
+    loadEmbeddableDocs();
+  }, [projectId, refreshConversations]);
+
+  useEffect(() => {
+    const loadQuickOptions = async () => {
+      const options = await chatbotService.getQuickOptions(projectId);
+      if (options.length > 0) {
+        setQuickOptions(options);
+        return;
+      }
+
+      // Fallback defaults when API is temporarily unavailable.
+      setQuickOptions([
+        {
+          id: 'project_health',
+          label: 'Tóm tắt sức khỏe dự án',
+          prompt: 'Tóm tắt sức khỏe dự án theo các mục: Tổng quan, Thống kê theo trạng thái, Việc đang làm, Việc đã xong, Việc quá hạn/rủi ro và Nhận xét sức khỏe dự án.'
+        },
+        {
+          id: 'daily_plan',
+          label: 'Lập kế hoạch hôm nay',
+          prompt: 'Lập kế hoạch hôm nay, chỉ nêu Top 5 issue ưu tiên với issue key, title, status, priority, due date và lý do ưu tiên.'
+        },
+        {
+          id: 'sprint_risk',
+          label: 'Phân tích rủi ro sprint',
+          prompt: 'Phân tích rủi ro sprint hiện tại, nêu mức rủi ro, issue rủi ro chính, tác động và hành động đề xuất.'
+        },
+        {
+          id: 'member_workload',
+          label: 'Ai đang quá tải?',
+          prompt: 'Phân tích workload thành viên trong dự án: ai đang quá tải, ai cần hỗ trợ và nên phân bổ lại việc nào.'
+        },
+        {
+          id: 'standup_report',
+          label: 'Tạo báo cáo standup',
+          prompt: 'Tạo báo cáo standup ngắn gọn cho dự án hôm nay: đã xong, đang làm, blocker, rủi ro và việc ưu tiên tiếp theo.'
+        }
+      ]);
+    };
+
+    loadQuickOptions();
+  }, [projectId, t]);
+
+  const handleSelectQuickOption = (prompt) => {
+    handleSendMessage(prompt);
+  };
+
+  const handleUploadAttachment = async (file) => {
+    if (!projectId) {
+      setError(t('chatbot.page.projectRequiredForAttachment'));
+      return;
+    }
+
+    setIsUploadingAttachment(true);
+    setError(null);
+    try {
+      const uploaded = await chatbotService.uploadChatDocument(projectId, file);
+      const uploadedDoc = {
+        id: uploaded.id,
+        fileName: uploaded.fileName || file.name,
+        allowEmbedded: true,
+      };
+      setEmbeddableDocs(prev => {
+        if (prev.some(doc => doc.id === uploadedDoc.id)) return prev;
+        return [uploadedDoc, ...prev];
+      });
+      setSelectedDocumentIds(prev => prev.includes(uploadedDoc.id) ? prev : [...prev, uploadedDoc.id]);
+      setShowDocumentPicker(true);
+    } catch (error) {
+      console.error('Failed to upload chat attachment:', error);
+      setError(error?.message || t('chatbot.page.uploadFailed'));
+    } finally {
+      setIsUploadingAttachment(false);
+    }
+  };
+
+  const toggleSelectedDocument = (docId) => {
+    setSelectedDocumentIds(prev =>
+      prev.includes(docId)
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  const selectedInputAttachments = embeddableDocs
+    .filter(doc => selectedDocumentIds.includes(doc.id))
+    .map(doc => ({
+      id: doc.id,
+      name: doc.fileName || doc.name || doc.id,
+    }));
+
+  const availableInputAttachments = embeddableDocs.map(doc => ({
+    id: doc.id,
+    name: doc.fileName || doc.name || doc.id,
+  }));
+
+  const handleRemoveAttachment = (docId) => {
+    setSelectedDocumentIds(prev => prev.filter(id => id !== docId));
+  };
+
+  const handleSelectInputAttachment = (docId) => {
+    setSelectedDocumentIds(prev => prev.includes(docId) ? prev : [...prev, docId]);
+  };
+
+  const renderDocumentSelector = () => {
+    if (!projectId || embeddableDocs.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mx-4 md:mx-6 mb-2 p-3 rounded-lg border border-border bg-card">
+        <button
+          type="button"
+          onClick={() => setShowDocumentPicker(prev => !prev)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <span className="text-xs text-muted-foreground">
+            {t('chatbot.documents.ragReady', { count: selectedDocumentIds.length })}
+          </span>
+          <span className="text-xs text-blue-600">
+            {showDocumentPicker ? t('chatbot.documents.hide') : t('chatbot.documents.choose')}
+          </span>
+        </button>
+
+        {showDocumentPicker && (
+          <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto mt-3">
+            {embeddableDocs.map(doc => (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => toggleSelectedDocument(doc.id)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${selectedDocumentIds.includes(doc.id)
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-background text-foreground border-border hover:bg-muted'
+                  }`}
+              >
+                {doc.fileName}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const handleConversationSelect = async (conversationId) => {
+    setActiveConversationId(conversationId);
+    setIsCreatingNewConversation(false); // Reset flag khi chọn conversation khác
+    setIsLoadingConversation(true); // Set loading state
+    setMessages([]);
+
+    try {
+      // Load conversation messages from API
+      const response = await chatbotService.getConversationMessages(conversationId);
+      console.log('Conversation messages response:', response);
+
+      if (response.success && response.turns && response.turns.length > 0) {
+        // Handle backend response with turns structure (ưu tiên)
+        const formattedMessages = [];
+        response.turns.forEach((turn, index) => {
+          // Add user message
+          formattedMessages.push({
+            id: `turn_${index}_user_${Date.now()}`,
+            message: turn.question,
+            isUser: true,
+            timestamp: turn.timestamp || new Date().toISOString()
+          });
+          // Add bot message
+          formattedMessages.push({
+            id: `turn_${index}_bot_${Date.now()}`,
+            message: turn.answer,
+            isUser: false,
+            timestamp: turn.timestamp || new Date().toISOString()
+          });
+        });
+        console.log('Formatted messages from turns:', formattedMessages);
+        setMessages(formattedMessages);
+      } else if (response.success && response.messages && response.messages.length > 0) {
+        // Convert backend messages to frontend format
+        const formattedMessages = response.messages.map(msg => ({
+          id: msg.id || Date.now() + Math.random(),
+          message: msg.content || msg.message,
+          isUser: msg.role === 'user' || msg.isUser || false,
+          timestamp: msg.timestamp || msg.created_at || new Date().toISOString()
+        }));
+        console.log('Formatted messages:', formattedMessages);
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading conversation messages:', error);
+      // Fallback welcome message
+
+    } finally {
+      setIsLoadingConversation(false); // Always clear loading state
+    }
+  };
+
+  const handleNewConversation = () => {
+    setActiveConversationId(null);
+    setIsCreatingNewConversation(true); // Đánh dấu đang tạo conversation mới
+    setMessages([]); // Clear messages, EmptyChat will be shown
+  };
+
+  const handleSendMessage = async (question) => {
+    if (!question.trim() || isLoading || isUploadingAttachment) return;
+
+    // If no conversation is active, start creating a new one
+    if (!activeConversationId && !isCreatingNewConversation) {
+      setIsCreatingNewConversation(true);
+    }
+
+    const selectedAttachments = embeddableDocs
+      .filter(doc => selectedDocumentIds.includes(doc.id))
+      .map(doc => ({ id: doc.id, name: doc.fileName }));
+
+    const userMessage = {
+      id: Date.now(),
+      message: question,
+      isUser: true,
+      attachments: selectedAttachments,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setError(null);
+
+    // Không tạo bot message placeholder ngay, chỉ set loading state
+    const botMessageId = Date.now() + 1;
+    setCurrentBotMessageId(botMessageId);
+    setHasStartedStreaming(false);
+
+    try {
+      await chatbotService.sendMessageStream(
+        question,
+        // onChunk
+        (chunk) => {
+          setMessages(prev => {
+            // Kiểm tra xem đã có bot message chưa
+            const existingBotMessage = prev.find(msg => msg.id === botMessageId);
+
+            if (existingBotMessage) {
+              // Cập nhật message hiện có
+              return prev.map(msg =>
+                msg.id === botMessageId
+                  ? { ...msg, message: sanitizeAgentResponse(msg.message + chunk) }
+                  : msg
+              );
+            } else {
+              // Tạo bot message mới với chunk đầu tiên
+              const botMessage = {
+                id: botMessageId,
+                message: sanitizeAgentResponse(chunk),
+                isUser: false,
+                timestamp: new Date().toISOString()
+              };
+              return [...prev, botMessage];
+            }
+          });
+
+          // Đánh dấu đã bắt đầu streaming và ẩn loading indicator
+          if (!hasStartedStreaming) {
+            setHasStartedStreaming(true);
+            setCurrentBotMessageId(null);
+          }
+        },
+        // onEnd
+        () => {
+          setIsLoading(false);
+          setCurrentBotMessageId(null);
+          setHasStartedStreaming(false);
+
+          // Refresh conversation list after first message to show new conversation
+          if (isCreatingNewConversation) {
+            setRefreshConversations(prev => prev + 1);
+            // Keep isCreatingNewConversation = true to maintain current chat screen
+            // Don't set activeConversationId or reset isCreatingNewConversation
+          }
+        },
+        // onError
+        (error) => {
+          console.error('Error in streaming:', error);
+          // Tạo error message nếu chưa có bot message
+          if (currentBotMessageId) {
+            const errorMessage = {
+              id: botMessageId,
+              message: AGENT_FRIENDLY_ERROR,
+              isUser: false,
+              timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, errorMessage]);
+          } else {
+            setMessages(prev => prev.map(msg =>
+              msg.id === botMessageId
+                ? { ...msg, message: AGENT_FRIENDLY_ERROR }
+                : msg
+            ));
+          }
+          setError(AGENT_FRIENDLY_ERROR);
+          setIsLoading(false);
+          setCurrentBotMessageId(null);
+          setHasStartedStreaming(false);
+          setIsCreatingNewConversation(false); // Reset flag khi có lỗi
+        },
+        // conversationId - để null để backend tự động tạo conversation mới khi cần
+        // Nếu đang tạo conversation mới hoặc không có active conversation, để null
+        isCreatingNewConversation || !activeConversationId ? null : activeConversationId,
+        projectId,
+        selectedDocumentIds
+      );
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Tạo error message nếu chưa có bot message
+      if (currentBotMessageId) {
+        const errorMessage = {
+          id: botMessageId,
+          message: AGENT_FRIENDLY_ERROR,
+          isUser: false,
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        setMessages(prev => prev.map(msg =>
+          msg.id === botMessageId
+            ? { ...msg, message: AGENT_FRIENDLY_ERROR }
+            : msg
+        ));
+      }
+      setError(AGENT_FRIENDLY_ERROR);
+      setIsLoading(false);
+      setCurrentBotMessageId(null);
+      setHasStartedStreaming(false);
+      setIsCreatingNewConversation(false); // Reset flag khi có lỗi
+    }
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-card text-foreground">
+        {/* Sidebar */}
+        <div className={`${showSidebar ? 'w-80' : 'w-16'} transition-all duration-300 bg-card border-r border-border hidden md:flex md:flex-col`}>
+          <ConversationManager
+            activeConversationId={activeConversationId}
+            projectId={projectId}
+            onConversationSelect={handleConversationSelect}
+            onNewConversation={handleNewConversation}
+            onToggleSidebar={() => setShowSidebar(!showSidebar)}
+            showSidebar={showSidebar}
+            refreshTrigger={refreshConversations}
+            className="h-full"
+          />
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {showSidebar && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowSidebar(false)}></div>
+            <div className="absolute left-0 top-0 h-full w-80 bg-card border-r border-border">
+              <ConversationManager
+                activeConversationId={activeConversationId}
+                projectId={projectId}
+                onConversationSelect={handleConversationSelect}
+                onNewConversation={handleNewConversation}
+                onToggleSidebar={() => setShowSidebar(!showSidebar)}
+                showSidebar={showSidebar}
+                refreshTrigger={refreshConversations}
+                className="h-full"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col bg-background">
+          {/* Mobile menu button - Only show on mobile */}
+          <div className="md:hidden p-4 border-b border-border bg-card/80">
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="p-2 text-muted-foreground hover:text-foreground"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Messages Area or Empty State */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {activeConversationId || isCreatingNewConversation ? (
+              isLoadingConversation ? (
+                /* Loading State */
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-muted-foreground">{t('chatbot.page.loadingConversation')}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Messages Container */}
+                  <div
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                  >
+                    {/* Show question for new conversation or no conversation - only when no messages */}
+                    {(isCreatingNewConversation || (!activeConversationId && !isCreatingNewConversation)) && messages.length === 0 && (
+                      <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
+                        <div className="text-center mb-8">
+                          <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
+                            {projectId ? t('chatbot.page.projectPrompt') : t('chatbot.page.generalPrompt')}
+                          </h1>
+                        </div>
+                      </div>
+                    )}
+
+                    {messages.map((msg) => (
+                      <ChatMessage
+                        key={msg.id}
+                        message={msg.message}
+                        isUser={msg.isUser}
+                        attachments={msg.attachments || []}
+                        timestamp={msg.timestamp}
+                        projectId={projectId}
+                      />
+                    ))}
+
+                    {/* Loading Indicator */}
+                    {isLoading && currentBotMessageId && !hasStartedStreaming && (
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        </div>
+                        <div className="bg-muted/70 rounded-lg px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {t('chatbot.page.thinking')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Error Display */}
+                  {error && (
+                    <div className="mx-4 md:mx-6 mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        Lỗi: {error}
+                      </p>
+                    </div>
+                  )}
+
+                  <ChatInput
+                    onSendMessage={handleSendMessage}
+                    onSelectOption={handleSelectQuickOption}
+                    onUploadAttachment={handleUploadAttachment}
+                    isLoading={isLoading || isUploadingAttachment}
+                    isUploadingAttachment={isUploadingAttachment}
+                    attachments={selectedInputAttachments}
+                    onRemoveAttachment={handleRemoveAttachment}
+                    availableAttachments={availableInputAttachments}
+                    onSelectAttachment={handleSelectInputAttachment}
+                    quickOptions={quickOptions}
+                  />
+                </>
+              )
+            ) : (
+              /* No conversation selected - show welcome message with same logic */
+              <>
+                {/* Messages Container */}
+                <div
+                  ref={messagesContainerRef}
+                  onScroll={handleMessagesScroll}
+                  className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6"
+                >
+                  {/* Show question for no conversation - only when no messages */}
+                  {messages.length === 0 && (
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
+                      <div className="text-center mb-8">
+                        <h1 className="text-2xl md:text-3xl font-medium text-foreground mb-8">
+                          {projectId ? t('chatbot.page.projectPrompt') : t('chatbot.page.generalPrompt')}
+                        </h1>
+                      </div>
+                    </div>
+                  )}
+
+                  {messages.map((msg) => (
+                    <ChatMessage
+                      key={msg.id}
+                      message={msg.message}
+                      isUser={msg.isUser}
+                      attachments={msg.attachments || []}
+                      timestamp={msg.timestamp}
+                      projectId={projectId}
+                    />
+                  ))}
+
+                  {/* Loading Indicator */}
+                  {isLoading && currentBotMessageId && !hasStartedStreaming && (
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      </div>
+                      <div className="bg-muted/70 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-muted-foreground/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {t('chatbot.page.thinking')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="mx-4 md:mx-6 mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      Lỗi: {error}
+                    </p>
+                  </div>
+                )}
+
+                <ChatInput
+                  onSendMessage={handleSendMessage}
+                  onSelectOption={handleSelectQuickOption}
+                  onUploadAttachment={handleUploadAttachment}
+                  isLoading={isLoading || isUploadingAttachment}
+                  isUploadingAttachment={isUploadingAttachment}
+                  attachments={selectedInputAttachments}
+                  onRemoveAttachment={handleRemoveAttachment}
+                  availableAttachments={availableInputAttachments}
+                  onSelectAttachment={handleSelectInputAttachment}
+                  quickOptions={quickOptions}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Chatbot;

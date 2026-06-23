@@ -11,9 +11,6 @@ export default defineConfig({
     },
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
   },
-  define: {
-    global: 'window'  // <-- thêm dòng này để fix lỗi sockjs-client
-  },
   server: {
     proxy: {
       '/chat-service': {

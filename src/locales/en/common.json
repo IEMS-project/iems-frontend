@@ -41,6 +41,46 @@
     "detail": "Detail"
   },
   "dashboard": {
+    "header": {
+      "eyebrow": "IEMS Workspace",
+      "subtitle": "Track progress, key tasks, and recent activity."
+    },
+    "marketPanel": {
+      "eyebrow": "Overview",
+      "title": "Analytics IEMS",
+      "projectsCta": "Projects",
+      "distributionTitle": "Task flow",
+      "taskCount": "{{count}} task",
+      "completionTitle": "Completion rate",
+      "taskLabel": "task",
+      "completionMeta": "{{completed}}/{{total}}",
+      "promoTitle": "Promo area",
+      "promoDescription": "Sprint banner, announcement, or internal promotion.",
+      "promoCta": "Open",
+      "segments": {
+        "backlog": "Backlog",
+        "doing": "Doing",
+        "done": "Done",
+        "overdue": "Late"
+      }
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "emptyTitle": "No activity yet",
+      "emptyDescription": "Project updates will appear here.",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "types": {
+        "created": "Task created",
+        "updated": "Updated",
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "commented": "Commented",
+        "activity": "Activity"
+      }
+    },
     "projectOverview": {
       "title": "Project Overview",
       "project": "Project",
@@ -52,6 +92,7 @@
     },
     "myTasks": {
       "title": "My Tasks",
+      "todayTitle": "Today tasks",
       "noTasks": "No tasks available",
       "noDueDate": "No due date",
       "overdue": "Overdue {{days}} days",
@@ -386,11 +427,17 @@
     "detail": {
       "tabs": {
         "overview": "Overview",
+        "backlog": "Backlog",
+        "board": "Board",
+        "tasks": "Issues",
+        "agent": "AI Agent",
         "timeline": "Timeline",
-        "phases": "Phases",
-        "tasks": "Tasks",
+        "burndown": "Burndown",
+        "sprints": "Sprints",
         "members": "Members",
-        "code": "Source Code"
+        "settings": "Settings",
+        "code": "Source Code",
+        "documents": "Documents"
       },
       "overview": {
         "title": "Project Overview",
@@ -588,6 +635,32 @@
       }
     }
   },
+  "projectDocuments": {
+    "title": "Project Documents",
+    "upload": "Upload Document",
+    "uploading": "Uploading...",
+    "empty": "No documents yet",
+    "emptyDesc": "Upload documents to share with your team.",
+    "deleteConfirmTitle": "Delete Document",
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "deleteSuccess": "Document deleted",
+    "uploadSuccess": "Document uploaded successfully",
+    "createFolderSuccess": "Folder created successfully",
+    "renameSuccess": "Renamed successfully",
+    "moveSuccess": "Moved successfully",
+    "newFolder": "New Folder",
+    "rename": "Rename",
+    "move": "Move",
+    "upOneLevel": "Up one level",
+    "fileTooLarge": "File is too large (max 50MB)",
+    "accessDenied": "You do not have access to view this project's documents.",
+    "accessRestricted": "Access Restricted",
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "date": "Upload Date"
+    }
+  },
   "tables": {
     "filter": "Filter",
     "columns": "Columns",
@@ -689,12 +762,34 @@
       "sort": "Sort",
       "sortByName": "By name",
       "sortByDate": "By date",
-      "sortBySize": "By size"
+      "sortBySize": "By size",
+      "type": "Type",
+      "typeAll": "All types",
+      "typeFolder": "Folder",
+      "typeDoc": "Document",
+      "typeExcel": "Spreadsheet",
+      "typePdf": "PDF",
+      "typeImage": "Image",
+      "typeOther": "Other",
+      "owner": "Owner",
+      "ownerAll": "All owners",
+      "modified": "Last modified",
+      "modifiedAll": "Any time",
+      "modifiedToday": "Today",
+      "modifiedLast7Days": "Last 7 days",
+      "modifiedLast30Days": "Last 30 days",
+      "modifiedThisYear": "This year",
+      "modifiedLastYear": "Last year",
+      "clearFilters": "Clear all"
     },
     "list": {
       "name": "Name",
       "dateCreated": "Date Created",
       "size": "Size"
+    },
+    "grid": {
+      "folders": "Folders",
+      "files": "Files"
     },
     "emptyState": {
       "title": "This folder is empty.",
@@ -761,24 +856,52 @@
       "update": "Update",
       "cancel": "Cancel",
       "processing": "Processing...",
-      "success": "Permission updated successfully"
+      "success": "Permission updated successfully",
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
     },
     "share": {
       "title": "Share",
+      "dialogTitle": "Share \"{{name}}\"",
       "shareItem": "Share {{type}}: <strong>{{name}}</strong>",
       "folder": "folder",
       "file": "file",
       "copyLink": "Copy Link",
       "linkCopied": "Link copied",
       "searchPlaceholder": "Enter name...",
+      "accessList": "People with access",
+      "owner": "Owner",
+      "generalAccess": "General access",
+      "restricted": "Restricted",
+      "anyoneWithLink": "Anyone with the link",
       "permission": "Permission",
       "viewer": "Viewer",
       "editor": "Editor",
       "selected": "Selected {{count}}/{{total}}",
       "share": "Share",
+      "done": "Done",
       "cancel": "Cancel",
+      "noUsersFound": "No matching users found",
       "success": "Shared successfully",
       "error": "Error sharing"
+    },
+    "activity": {
+      "item": {
+        "created": "Created item {{itemName}}",
+        "renamed": "Renamed to \"{{newName}}\"",
+        "permissionUpdated": "Updated access: {{permissionLabel}}",
+        "moved": "Moved item",
+        "movedToTrash": "Moved to trash",
+        "restored": "Restored item",
+        "permanentlyDeleted": "Permanently deleted",
+        "shared": "Shared with {{count}} people",
+        "unshared": "Removed sharing for {{count}} people",
+        "sharePermissionUpdated": "Updated shared user permission: {{permission}}",
+        "shareRemoved": "Removed one share permission",
+        "favorited": "Added to favorites",
+        "unfavorited": "Removed from favorites"
+      }
     },
     "sharedUsers": {
       "title": "Shared Users",
@@ -814,6 +937,7 @@
       "success": "Successfully moved"
     },
     "contextMenu": {
+      "details": "Details",
       "rename": "Rename",
       "permission": "Permission",
       "share": "Share",
@@ -838,6 +962,9 @@
     },
     "fileDetail": {
       "details": "Details",
+      "activity": "Activity",
+      "overview": "Overview",
+      "access": "Access",
       "name": "Name:",
       "type": "Type:",
       "size": "Size:",
@@ -849,12 +976,36 @@
       "file": "File",
       "public": "Public",
       "private": "Private",
+      "publicDescription": "Anyone with the link can access",
+      "privateDescription": "Only people with access can open this item",
       "unknown": "Unknown",
       "location": "Location:",
       "myFiles": "My Files",
       "settings": "Settings",
       "shareFile": "Share file",
-      "favorite": "Favorite"
+      "favorite": "Favorite",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "activityUpdated": "You edited this item",
+      "activityCreated": "You created this item",
+      "activityDeleted": "Item moved to trash",
+      "activityPublic": "Item is publicly accessible",
+      "activityRestricted": "Item is restricted",
+      "activityFavorite": "Item marked as favorite",
+      "activityMarkedFavorite": "You added this item to favorites",
+      "activityUnmarkedFavorite": "You removed this item from favorites",
+      "activityMovedToTrash": "You moved this item to trash",
+      "activityRestored": "You restored this item",
+      "activityDeletedPermanently": "You permanently deleted this item",
+      "activityShared": "You shared this item with {{count}} people",
+      "activityRenamed": "You renamed this item to \"{{name}}\"",
+      "activityMoved": "You moved this item",
+      "activitySharePermissionChanged": "You changed {{name}} permission to {{permission}}",
+      "now": "Just now",
+      "noActivity": "No recent activity",
+      "peopleWithAccess": "People with access",
+      "manageAccess": "Manage access",
+      "notShared": "Not shared with anyone"
     },
     "types": {
       "folder": "folder",
@@ -881,6 +1032,7 @@
       "title": "Access Control",
       "tabs": {
         "accounts": "Account Management",
+        "roles": "Roles",
         "rolesPermissions": "Roles & Permissions"
       },
       "accounts": {
@@ -926,7 +1078,21 @@
         "lockedAccounts": "Locked Accounts",
         "accountManagement": "Account Management & Permissions",
         "accountManagementDescription": "View and edit access permissions for each user account",
-        "resetPasswordDescription": "Set a new password for this account"
+        "resetPasswordDescription": "Set a new password for this account",
+        "userProfileSaveSuccess": "User profile updated successfully",
+        "userProfileSaveError": "Failed to update user profile",
+        "userProfile": "User Profile",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phone": "Phone",
+        "gender": "Gender",
+        "address": "Address",
+        "saveProfile": "Save Profile",
+        "selectGender": "Select Gender",
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "noUserProfile": "No user profile found for this account"
       },
       "roles": {
         "title": "Roles",
@@ -1173,7 +1339,20 @@
     }
   },
   "profile": {
-    "title": "Personal Profile",
+    "title": "User Profile",
+    "tabs": {
+      "personalInfo": "Personal Info",
+      "notifications": "Notifications"
+    },
+    "notificationSettings": {
+      "title": "Notification Settings",
+      "emailTitle": "Email Notifications",
+      "emailDesc": "Choose which events you want to receive via email.",
+      "taskAssigned": "When assigned a task",
+      "projectJoined": "When joined a project",
+      "taskDueSoon": "When task is due soon (1 day)",
+      "saveSuccess": "Notification settings updated successfully"
+    },
     "stats": {
       "projectsCompleted": "Projects Completed",
       "tasksCompleted": "Tasks Completed",
@@ -1235,6 +1414,13 @@
     "notifications": "Notifications",
     "logout": "Logout"
   },
+  "settingsPage": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark mode.",
+    "language": "Language",
+    "languageDescription": "Choose the display language."
+  },
   "comments": {
     "title": "Comments",
     "placeholder": "Write a comment...",
@@ -1266,5 +1452,157 @@
     "minutesAgo": "{{count}} minutes ago",
     "hoursAgo": "{{count}} hours ago",
     "daysAgo": "{{count}} days ago"
+  },
+  "issues": {
+    "createIssue": "Create Issue",
+    "search": "Search issues...",
+    "backlog": "Backlog",
+    "issues": "issues",
+    "points": "pts",
+    "noIssues": "No issues in this sprint",
+    "emptyBacklog": "Backlog is empty",
+    "dropHere": "Drop issues here",
+    "noDescription": "No description",
+    "comments": "Comments",
+    "noComments": "No comments yet",
+    "addComment": "Add a comment...",
+    "details": "Details",
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "Enter issue title",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "type": "Type",
+      "selectType": "Select type",
+      "priority": "Priority",
+      "selectPriority": "Select priority",
+      "assignee": "Assignee",
+      "selectAssignee": "Select assignee",
+      "unassigned": "Unassigned",
+      "sprint": "Sprint",
+      "backlog": "Backlog",
+      "storyPoints": "Story Points",
+      "parentIssue": "Parent Issue",
+      "noParent": "None",
+      "status": "Status",
+      "reporter": "Reporter",
+      "created": "Created"
+    },
+    "messages": {
+      "titleRequired": "Please enter issue title",
+      "created": "Issue created successfully",
+      "updated": "Issue updated",
+      "deleted": "Issue deleted",
+      "statusChanged": "Status changed",
+      "invalidTransition": "This status transition is not allowed"
+    }
+  },
+  "sprints": {
+    "title": "Sprints",
+    "create": "Create Sprint",
+    "edit": "Edit Sprint",
+    "start": "Start",
+    "complete": "Complete",
+    "empty": "No sprints yet. Create your first sprint!",
+    "form": {
+      "name": "Sprint Name",
+      "namePlaceholder": "e.g. Sprint 1",
+      "goal": "Sprint Goal",
+      "goalPlaceholder": "What is the goal of this sprint?",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "messages": {
+      "nameRequired": "Sprint name is required",
+      "created": "Sprint created",
+      "updated": "Sprint updated",
+      "started": "Sprint started",
+      "completed": "Sprint completed",
+      "cancelled": "Sprint cancelled",
+      "deleted": "Sprint deleted",
+      "deleteConfirm": "Delete this sprint?"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "selectSprint": "Select sprint",
+      "total": "Total",
+      "remaining": "Remaining",
+      "completed": "Completed",
+      "progress": "Progress",
+      "actual": "Actual",
+      "ideal": "Ideal",
+      "noData": "No burndown data"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark mode.",
+    "language": "Language",
+    "languageDescription": "Choose the display language.",
+    "workflow": "Workflow",
+    "issueTypes": "Issue Types",
+    "priorities": "Priorities",
+    "roles": "Roles",
+    "workflowStatuses": "Workflow Statuses",
+    "addStatus": "Add Status",
+    "flow": "Workflow Flow",
+    "statusAdded": "Status added",
+    "statusDeleted": "Status removed",
+    "addType": "Add Issue Type",
+    "typeAdded": "Issue type added",
+    "typeDeleted": "Issue type deleted",
+    "addPriority": "Add Priority",
+    "priorityAdded": "Priority added",
+    "priorityDeleted": "Priority deleted",
+    "addRole": "Add Role",
+    "roleAdded": "Role added",
+    "roleDeleted": "Role deleted"
+  },
+  "chatbot": {
+    "input": {
+      "placeholder": "Ask about projects, tasks, or documents... Press @ to choose a document",
+      "attachFile": "Attach file",
+      "chooseEmbeddedDocument": "Choose embedded document",
+      "embeddedDocuments": "Embedded documents",
+      "selected": "Selected",
+      "send": "Send",
+      "readingFile": "Reading file...",
+      "responding": "Responding...",
+      "removeAttachment": "Remove {{name}}"
+    },
+    "page": {
+      "projectPrompt": "Project Agent: What should we prioritize in this project today?",
+      "generalPrompt": "What are you planning to work on today?",
+      "loadingConversation": "Loading conversation...",
+      "thinking": "AI is thinking...",
+      "errorPrefix": "Error",
+      "projectRequiredForAttachment": "Please open the chatbot inside a project to attach documents.",
+      "uploadFailed": "Could not upload the file to the chatbot.",
+      "streamError": "Sorry, something went wrong: {{error}}. Please try again."
+    },
+    "documents": {
+      "ragReady": "Project RAG-ready documents ({{count}} selected)",
+      "hide": "Hide",
+      "choose": "Choose documents"
+    },
+    "quickActions": {
+      "dailyPlan": {
+        "label": "Plan today",
+        "prompt": "Read the current project issues/tasks and create a work plan for today. Prioritize important work, near-deadline items, blockers, and explain the recommended order."
+      },
+      "riskReview": {
+        "label": "Review risks",
+        "prompt": "Analyze the current project work: which tasks are risky, which may be late, where blockers are, and what actions should happen next."
+      },
+      "progressSummary": {
+        "label": "Summarize progress",
+        "prompt": "Summarize current project progress by group: done, in progress, blocked, and priority work. Keep it concise but useful for standup."
+      },
+      "nextActions": {
+        "label": "Suggest next actions",
+        "prompt": "Based on current issue/task data, suggest 5 next actions I should take to move the project forward. Mention issue keys and reasons when available."
+      }
+    }
   }
 }

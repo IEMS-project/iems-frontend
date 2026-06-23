@@ -8,22 +8,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ showLabel = false }) {
     const { i18n } = useTranslation();
 
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
     };
 
+    const currentLanguage = i18n.language === 'vi'
+        ? { flag: '/vietnam.png', alt: 'Vietnam Flag', label: 'Tiếng Việt' }
+        : { flag: '/england.png', alt: 'England Flag', label: 'English' };
+
     // Get current language flag
     const getCurrentFlag = () => {
-        const flagSrc = i18n.language === 'vi' ? '/vietnam.png' : '/england.png';
-        const altText = i18n.language === 'vi' ? 'Vietnam Flag' : 'England Flag';
-
         return (
             <img
-                src={flagSrc}
-                alt={altText}
+                src={currentLanguage.flag}
+                alt={currentLanguage.alt}
                 className="h-5 w-auto object-contain rounded-sm"
             />
         );
@@ -32,8 +33,9 @@ export default function LanguageSwitcher() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size={showLabel ? "default" : "icon"} className={showLabel ? "h-9 gap-2 px-3" : "h-8 w-8"}>
                     {getCurrentFlag()}
+                    {showLabel && <span className="text-sm font-medium">{currentLanguage.label}</span>}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
