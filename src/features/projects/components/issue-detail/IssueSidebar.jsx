@@ -329,7 +329,17 @@ export default function IssueSidebar({
       <DetailField label="Sprint" icon={Zap}>
         <select value={currentForm.sprintId || ""} onChange={e => handleChange("sprintId", e.target.value)} className={selectClass}>
           <option value="">Backlog</option>
-          {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {sprints
+            .filter(s => s.status === "PLANNED" || s.status === "ACTIVE" || s.id === currentForm.sprintId)
+            .map(s => (
+              <option
+                key={s.id}
+                value={s.id}
+                disabled={s.status === "COMPLETED" || s.status === "CANCELLED"}
+              >
+                {s.name}
+              </option>
+            ))}
         </select>
       </DetailField>
 

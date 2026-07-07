@@ -619,7 +619,9 @@ export function useDocuments() {
         items.map((i) => (i.id === item.id ? { ...i, favorite: newFavoriteState } : i));
 
       setFolders((prev) => updateItem(prev));
+      setAllFolders((prev) => updateItem(prev));
       setFiles((prev) => updateItem(prev));
+      setFavorites((prev) => updateItem(prev));
       setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: newFavoriteState } : prev);
 
       // Make API call in background
@@ -633,7 +635,9 @@ export function useDocuments() {
         const correctUpdateItem = (items) =>
           items.map((i) => (i.id === item.id ? { ...i, favorite: result } : i));
         setFolders((prev) => correctUpdateItem(prev));
+        setAllFolders((prev) => correctUpdateItem(prev));
         setFiles((prev) => correctUpdateItem(prev));
+        setFavorites((prev) => correctUpdateItem(prev));
         setSelectedItem((prev) => prev?.id === item.id ? { ...prev, favorite: result } : prev);
       }
 
