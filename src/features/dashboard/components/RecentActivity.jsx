@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Activity } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { projectService } from "@/features/projects/api/projectService";
-import { useDashboard } from "@/features/dashboard/context/DashboardContext";
 import Skeleton from "@/components/ui/skeleton";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ActivityTimeline from "@/features/dashboard/components/ActivityTimeline";
@@ -17,39 +16,15 @@ function getActivityContent(response) {
 
 export default function RecentActivity({ className = "" }) {
     const { t } = useTranslation();
-    const { projects } = useDashboard();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
-            if (!projects || projects.length === 0) {
-                setActivities([]);
-                setLoading(false);
-                return;
-            }
-
             setLoading(true);
             try {
-                const projectsToLoad = projects.slice(0, 3);
-                const results = await Promise.allSettled(
-                    projectsToLoad.map(async (project) => {
-                        const response = await projectService.getActivities(project.id || project.projectId, 0, 5);
-                        const content = getActivityContent(response);
-                        return content.map((activity) => ({
-                            ...activity,
-                            projectName: activity.projectName || project.name || project.title,
-                        }));
-                    })
-                );
-
-                const all = results
-                    .filter((result) => result.status === "fulfilled")
-                    .flatMap((result) => result.value)
-                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-                    .slice(0, 5);
-
-                setActivities(all);
+                const response = await projectService.getRecentActivities(0, 5);
+                setActivities(getActivityContent(response));
             } catch (error) {
                 console.error("Failed to load activities:", error);
                 setActivities([]);
@@ -59,7 +34,7 @@ export default function RecentActivity({ className = "" }) {
         }
 
         load();
-    }, [projects]);
+    }, []);
 
     return (
         <Card className={`overflow-hidden rounded-2xl border-border bg-card shadow-sm ${className}`}>

@@ -271,4 +271,9 @@ export const projectService = {
     return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
   },
 
+  async getRecentActivities(page = 0, size = 5) {
+    const data = await request(`${BASE}/activities/recent?page=${page}&size=${size}`);
+    return data?.data || { content: [], page: 0, totalPages: 1, totalElements: 0 };
+  },
+
 };

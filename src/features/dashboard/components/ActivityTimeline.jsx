@@ -23,6 +23,7 @@ export default function ActivityTimeline({ activities }) {
         ISSUE_CREATED: { icon: Zap, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-950/40", label: t("dashboard.recentActivity.types.created") },
         ISSUE_STATUS_CHANGED: { icon: Repeat2, color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-50 dark:bg-violet-950/40", label: "Đổi trạng thái" },
         ISSUE_REMOVED_FROM_SPRINT: { icon: Trash2, color: "text-red-600 dark:text-red-300", bg: "bg-red-50 dark:bg-red-950/40", label: "Gỡ khỏi sprint" },
+        ISSUE_MOVED_TO_SPRINT: { icon: PlusCircle, color: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-950/40", label: "Thêm vào sprint" },
         ISSUE_ADDED_TO_SPRINT: { icon: PlusCircle, color: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-950/40", label: "Thêm vào sprint" },
         ISSUE_UPDATED: { icon: GitCommit, color: "text-sky-600 dark:text-sky-300", bg: "bg-sky-50 dark:bg-sky-950/40", label: t("dashboard.recentActivity.types.updated") },
         ISSUE_ASSIGNED: { icon: UserPlus, color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-50 dark:bg-violet-950/40", label: t("dashboard.recentActivity.types.assigned") },
