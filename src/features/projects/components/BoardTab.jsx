@@ -239,8 +239,13 @@ export default function BoardTab() {
     if (filterAssignee) filtered = filtered.filter((i) => String(resolveIssueAssigneeId(i) || "") === String(filterAssignee));
     const columns = {};
     workflowStatuses.forEach(status => { columns[status.id] = { status, issues: [] }; });
+    const defaultStatusId = workflowStatuses[0]?.id;
     filtered.forEach(issue => {
-      if (columns[issue.statusId]) columns[issue.statusId].issues.push(issue);
+      if (columns[issue.statusId]) {
+        columns[issue.statusId].issues.push(issue);
+        return;
+      }
+      if (defaultStatusId) columns[defaultStatusId].issues.push(issue);
     });
     return columns;
   }, [sprintIssues, workflowStatuses, searchQuery, filterStatus, filterType, filterPriority, filterAssignee]);
@@ -286,9 +291,12 @@ export default function BoardTab() {
     // ── Card dropped into a column ──────────────────────────────
     if (type === "card") {
       const overId = String(over.id);
-      const targetStatusId = overId.startsWith("drop-")
+      const rawTargetStatusId = overId.startsWith("drop-")
         ? overId.slice(5)
         : (workflowStatuses.some(s => s.id === overId) ? overId : null);
+      const targetStatusId = workflowStatuses.some(s => String(s.id) === String(rawTargetStatusId))
+        ? rawTargetStatusId
+        : null;
       if (!targetStatusId) return;
       const issue = active.data.current.issue;
       if (issue.statusId === targetStatusId) return;
