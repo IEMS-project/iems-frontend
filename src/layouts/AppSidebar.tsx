@@ -62,6 +62,10 @@ function SidebarNavLink({ item, isActive, hasUnread }) {
   );
 }
 
+function isInProgressProject(project) {
+  return String(project?.status || "").toUpperCase() === "IN_PROGRESS";
+}
+
 export function AppSidebar() {
   const { t } = useTranslation();
   const { state } = useSidebar();
@@ -99,7 +103,8 @@ export function AppSidebar() {
       try {
         setLoadingProjects(true);
         const data = await projectService.getMyProjects();
-        setProjects(await hydrateProjectsWithAvatars(data));
+        const hydratedProjects = await hydrateProjectsWithAvatars(data);
+        setProjects(hydratedProjects.filter(isInProgressProject));
       } catch (error) {
         console.error("Error loading projects:", error);
         setProjects([]);
