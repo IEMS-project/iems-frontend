@@ -62,8 +62,22 @@ function SidebarNavLink({ item, isActive, hasUnread }) {
   );
 }
 
-function isInProgressProject(project) {
-  return String(project?.status || "").toUpperCase() === "IN_PROGRESS";
+function isActiveProject(project) {
+  const status = String(project?.status || "").toUpperCase();
+  if (status === "IN_PROGRESS") return true;
+  if (["COMPLETED", "CANCELLED", "ON_HOLD"].includes(status)) return false;
+  if (!project?.startDate || !project?.endDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date(project.startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(project.endDate);
+  end.setHours(23, 59, 59, 999);
+
+  return start <= today && today <= end;
 }
 
 export function AppSidebar() {
@@ -104,7 +118,7 @@ export function AppSidebar() {
         setLoadingProjects(true);
         const data = await projectService.getMyProjects();
         const hydratedProjects = await hydrateProjectsWithAvatars(data);
-        setProjects(hydratedProjects.filter(isInProgressProject));
+        setProjects(hydratedProjects.filter(isActiveProject));
       } catch (error) {
         console.error("Error loading projects:", error);
         setProjects([]);
