@@ -74,6 +74,11 @@ export const documentService = {
     return data?.data || data;
   },
 
+  async getFileLink(id) {
+    const data = await request(`/document-service/api/files/${id}/link`);
+    return data?.data || data;
+  },
+
   async shareItem(id, type, userIds, permission = "VIEWER") {
     const data = await request(`/document-service/api/items/${id}/share?type=${type}`, {
       method: "POST",

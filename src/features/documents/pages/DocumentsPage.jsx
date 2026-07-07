@@ -23,6 +23,7 @@ import DocumentsGrid from "@/features/documents/components/DocumentsGrid";
 import FileDetailPanel from "@/features/documents/components/FileDetailPanel";
 import EmptyState from "@/features/documents/components/EmptyState";
 import UploadProgressPanel from "@/features/documents/components/UploadProgressPanel";
+import DocumentPreviewModal from "@/features/documents/components/DocumentPreviewModal";
 
 export default function Documents() {
   const isMobile = useIsMobile();
@@ -68,6 +69,9 @@ export default function Documents() {
     viewMode,
     setViewMode,
     uploadTasks,
+    previewItem,
+    previewUrl,
+    previewLoading,
     sortedItems,
     currentPath,
 
@@ -77,6 +81,8 @@ export default function Documents() {
     handleItemClick,
     handleItemDoubleClick,
     openItemDetails,
+    openDocumentPreview,
+    closeDocumentPreview,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,
@@ -237,6 +243,7 @@ export default function Documents() {
                 onItemClick={handleItemClick}
                 onItemDoubleClick={handleItemDoubleClick}
                 onShowDetails={openItemDetails}
+                onPreview={openDocumentPreview}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
                 onRename={handleRename}
@@ -256,6 +263,7 @@ export default function Documents() {
                 onItemClick={handleItemClick}
                 onItemDoubleClick={handleItemDoubleClick}
                 onShowDetails={openItemDetails}
+                onPreview={openDocumentPreview}
                 onToggleSelectAll={toggleSelectAll}
                 onToggleItemSelection={toggleItemSelection}
                 onToggleFavorite={toggleFavorite}
@@ -371,6 +379,13 @@ export default function Documents() {
         onRetry={retryUpload}
         onRetryFailed={retryFailedUploads}
         onClearFinished={clearFinishedUploads}
+      />
+
+      <DocumentPreviewModal
+        item={previewItem}
+        previewUrl={previewUrl}
+        loading={previewLoading}
+        onClose={closeDocumentPreview}
       />
     </div>
   );

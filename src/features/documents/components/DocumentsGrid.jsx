@@ -20,6 +20,7 @@ import {
   Info,
   MoreHorizontalIcon,
   RotateCcw,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFileIcon, getFolderIcon } from "./fileIconUtils";
@@ -48,6 +49,7 @@ export default function DocumentsGrid({
   onItemClick,
   onItemDoubleClick,
   onShowDetails,
+  onPreview,
   onToggleItemSelection,
   onToggleFavorite,
   onRename,
@@ -135,6 +137,12 @@ export default function DocumentsGrid({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {!isTrashMode && item.type === "file" && (
+                          <DropdownMenuItem onClick={() => onPreview(item)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            {t("ui.common.view", "View")}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => onShowDetails(item)}>
                           <Info className="mr-2 h-4 w-4" />
                           {t("documents.contextMenu.details")}

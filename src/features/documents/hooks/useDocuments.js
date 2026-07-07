@@ -34,6 +34,9 @@ export function useDocuments() {
   const [moveItem, setMoveItem] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [uploadTasks, setUploadTasks] = useState([]);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const uploadControllersRef = useRef(new Map());
   const { setCustomBreadcrumbs } = useBreadcrumb();
 
@@ -409,6 +412,34 @@ export function useDocuments() {
     }
   };
 
+  const openDocumentPreview = async (item) => {
+    if (!item || item.type !== "file") return;
+    try {
+      setPreviewItem(item);
+      setPreviewUrl(null);
+      setPreviewLoading(true);
+      const data = await documentService.getFileLink(item.id);
+      const url = data?.presignedUrl || data?.downloadUrl || data?.url;
+      if (!url) {
+        throw new Error("No preview link received");
+      }
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Error opening preview:", error);
+      toast.error(error?.message || t("documents.preview.error", "Unable to preview this document"));
+      setPreviewItem(null);
+      setPreviewUrl(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closeDocumentPreview = () => {
+    setPreviewItem(null);
+    setPreviewUrl(null);
+    setPreviewLoading(false);
+  };
+
   const handleItemDoubleClick = (item) => {
     // Don't allow navigation/opening in trash mode
     if (filterMode === "trash") {
@@ -421,11 +452,8 @@ export function useDocuments() {
         setFilterMode("all");
       }
       setCurrentFolderId(item.id);
-    } else if (item.path) {
-      // Open file in new tab using Cloudinary CDN URL
-      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      const fileUrl = `https://res.cloudinary.com/${cloudName}/raw/upload/${item.path}`;
-      window.open(fileUrl, '_blank');
+    } else {
+      openDocumentPreview(item);
     }
   };
 
@@ -947,6 +975,9 @@ export function useDocuments() {
     viewMode,
     setViewMode,
     uploadTasks,
+    previewItem,
+    previewUrl,
+    previewLoading,
     sortedItems,
     currentPath,
 
@@ -956,6 +987,8 @@ export function useDocuments() {
     handleItemClick,
     handleItemDoubleClick,
     openItemDetails,
+    openDocumentPreview,
+    closeDocumentPreview,
     toggleSelectAll,
     toggleItemSelection,
     onCreateFolderConfirmed,
