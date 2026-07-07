@@ -76,7 +76,6 @@ export default function IssueCard({
   const typeName = issueTypes.find(t => t.id === issue.issueTypeId)?.name || "TASK";
   const priorityObj = issuePriorities.find(p => p.id === issue.priorityId);
   const priorityName = priorityObj?.name || "";
-  const priorityColor = priorityObj?.color || "#FFAB00";
 
   const TypeIcon = getIssueTypeIcon(typeName);
   const typeColor = getIssueTypeColor(typeName);
@@ -88,33 +87,26 @@ export default function IssueCard({
   const assigneeObj = members.find(m => String(resolveMemberId(m) || "") === String(assigneeId || "")) || issue?.assignee;
   const assigneeName = assigneeObj?.fullName || assigneeObj?.userName || assigneeObj?.name || assigneeObj?.email;
 
-  const typeBorderColor = {
-    EPIC: "border-l-purple-500",
-    STORY: "border-l-green-500",
-    TASK: "border-l-blue-500",
-    BUG: "border-l-red-500",
-    SUBTASK: "border-l-cyan-500",
-  }[typeName.toUpperCase()] || "border-l-blue-500";
-
   return (
     <div
-      className={`group rounded-lg border border-border border-l-[4px] ${typeBorderColor} bg-card p-3 cursor-pointer 
-        hover:border-r-border/80 hover:border-y-border/80 hover:shadow-md hover:-translate-y-0.5
+      className={`group rounded-lg border border-border/70 bg-card/95 p-3.5 cursor-pointer shadow-sm
+        hover:border-primary/30 hover:bg-card hover:shadow-md hover:-translate-y-0.5
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
         transition-all duration-150 ease-out ${className}`}
       onClick={() => onClick?.(issue)}
       draggable={draggable}
       onDragStart={onDragStart}
     >
       {/* Top row: type icon + issue key */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className={`inline-flex items-center justify-center w-5 h-5 rounded ${typeBg}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`inline-flex items-center justify-center w-5 h-5 rounded-md ring-1 ring-black/5 dark:ring-white/10 ${typeBg}`}>
           <TypeIcon className={`w-3.5 h-3.5 ${typeColor}`} />
         </span>
-        <span className="text-xs font-medium text-muted-foreground">{issue.issueKey}</span>
+        <span className="text-xs font-semibold tracking-normal text-muted-foreground">{issue.issueKey}</span>
       </div>
 
       {/* Title */}
-      <p className="text-sm font-medium text-foreground leading-snug mb-2 line-clamp-2">
+      <p className="text-sm font-medium text-foreground leading-snug mb-3 line-clamp-2">
         {issue.title}
       </p>
 
