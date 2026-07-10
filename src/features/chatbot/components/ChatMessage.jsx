@@ -207,7 +207,16 @@ const badgeClass = (value = '') => {
   return 'bg-muted text-muted-foreground border-border';
 };
 
-const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], projectId = null }) => {
+const ChatMessage = ({
+  message,
+  isUser = false,
+  timestamp,
+  attachments = [],
+  projectId = null,
+  proposedActions = [],
+  actionStatus = null,
+  onAllowAction,
+}) => {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [issueLookup, setIssueLookup] = useState(null);
@@ -501,6 +510,38 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
     );
   };
 
+  const renderProposedActions = () => {
+    if (isUser || !Array.isArray(proposedActions) || proposedActions.length === 0) {
+      if (actionStatus === 'allowed') {
+        return (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <FaCheck className="h-3 w-3" />
+            Đã cho phép
+          </div>
+        );
+      }
+      return null;
+    }
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        {proposedActions.map((action, index) => (
+          <button
+            key={`${action.type || 'action'}-${action.payload?.actionId || index}`}
+            type="button"
+            onClick={() => onAllowAction?.(action)}
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!onAllowAction}
+            title="Cho phép chatbot thực hiện thao tác này"
+          >
+            <FaCheck className="h-3 w-3" />
+            Allow
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -595,6 +636,7 @@ const ChatMessage = ({ message, isUser = false, timestamp, attachments = [], pro
                 </ReactMarkdown>
               </div>
             )}
+            {renderProposedActions()}
           </div>
         </div>
       </div>

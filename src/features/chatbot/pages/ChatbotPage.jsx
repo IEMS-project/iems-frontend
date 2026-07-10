@@ -147,6 +147,61 @@ const Chatbot = ({ projectId = null }) => {
     handleSendMessage(prompt);
   };
 
+  const handleAllowAction = async (action, messageId) => {
+    const actionId = action?.payload?.actionId || action?.actionId;
+    const conversationId = activeConversationId || action?.payload?.conversationId;
+    if (!actionId || !conversationId || isLoading) {
+      setError('Không đủ dữ liệu để xác nhận thao tác. Vui lòng gửi lại yêu cầu cập nhật.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              proposedActions: [],
+              actionStatus: 'allowed',
+            }
+          : msg
+      ));
+
+      const response = await chatbotService.confirmAction({
+        conversationId,
+        actionId,
+        projectId,
+        selectedDocumentIds,
+      });
+
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          message: sanitizeAgentResponse(response?.answer || 'Đã thực hiện thao tác.'),
+          isUser: false,
+          timestamp: response?.timestamp || new Date().toISOString(),
+          proposedActions: response?.proposedActions || [],
+        }
+      ]);
+    } catch (error) {
+      console.error('Error confirming action:', error);
+      setError(error?.message || AGENT_FRIENDLY_ERROR);
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              proposedActions: action ? [action] : msg.proposedActions,
+              actionStatus: null,
+            }
+          : msg
+      ));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUploadAttachment = async (file) => {
     if (!projectId) {
       setError(t('chatbot.page.projectRequiredForAttachment'));
@@ -367,10 +422,21 @@ const Chatbot = ({ projectId = null }) => {
           }
         },
         // onEnd
-        () => {
+        (endData = {}) => {
           setIsLoading(false);
           setCurrentBotMessageId(null);
           setHasStartedStreaming(false);
+          if (endData.conversationId && !activeConversationId) {
+            setActiveConversationId(endData.conversationId);
+            setIsCreatingNewConversation(false);
+          }
+          if (endData.proposedActions?.length) {
+            setMessages(prev => prev.map(msg =>
+              msg.id === botMessageId
+                ? { ...msg, proposedActions: endData.proposedActions }
+                : msg
+            ));
+          }
 
           // Refresh conversation list after first message to show new conversation
           if (isCreatingNewConversation) {
@@ -526,6 +592,9 @@ const Chatbot = ({ projectId = null }) => {
                         attachments={msg.attachments || []}
                         timestamp={msg.timestamp}
                         projectId={projectId}
+                        proposedActions={msg.proposedActions || []}
+                        actionStatus={msg.actionStatus}
+                        onAllowAction={(action) => handleAllowAction(action, msg.id)}
                       />
                     ))}
 
@@ -606,6 +675,9 @@ const Chatbot = ({ projectId = null }) => {
                       attachments={msg.attachments || []}
                       timestamp={msg.timestamp}
                       projectId={projectId}
+                      proposedActions={msg.proposedActions || []}
+                      actionStatus={msg.actionStatus}
+                      onAllowAction={(action) => handleAllowAction(action, msg.id)}
                     />
                   ))}
 

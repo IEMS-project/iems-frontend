@@ -111,7 +111,7 @@ class ChatbotService {
             if (data.type === "chunk") {
               onChunk(data.content);
             } else if (data.type === "end") {
-              onEnd();
+              onEnd(data);
               return;
             } else if (data.type === "error") {
               onError(data.error);
@@ -127,11 +127,25 @@ class ChatbotService {
       if (remaining) {
         buffer += remaining;
       }
-      onEnd();
+      onEnd({});
     } catch (error) {
       console.error("Error in streaming:", error);
       onError(error.message);
     }
+  }
+
+  async confirmAction({ conversationId, actionId, projectId = null, selectedDocumentIds = [] }) {
+    if (!conversationId || !actionId) {
+      throw new Error("Missing action confirmation data");
+    }
+    const body = { conversationId, actionId };
+    if (projectId) body.projectId = projectId;
+    if (selectedDocumentIds?.length) body.selectedDocumentIds = selectedDocumentIds;
+    return chatbotRequest("/api/ai/actions/confirm", {
+      method: "POST",
+      headers: this.buildUserHeaders(),
+      body,
+    });
   }
 
   async uploadChatDocument(projectId, file) {
