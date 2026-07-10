@@ -46,20 +46,6 @@ const Chatbot = ({ projectId = null }) => {
     setAutoScrollEnabled(distanceFromBottom < 80);
   };
 
-  // Add welcome message only when a conversation is selected
-  useEffect(() => {
-    if (activeConversationId) {
-      // Load conversation messages - don't add welcome message for existing conversations
-      setMessages([]);
-    } else if (isCreatingNewConversation) {
-      // For new conversations, show empty messages
-      setMessages([]);
-    } else {
-      // No conversation selected - show empty messages for welcome screen
-      setMessages([]);
-    }
-  }, [activeConversationId, isCreatingNewConversation]);
-
   // Load conversations on mount and when switching project scope
   useEffect(() => {
     const loadConversations = async () => {
@@ -431,18 +417,46 @@ const Chatbot = ({ projectId = null }) => {
             setIsCreatingNewConversation(false);
           }
           if (endData.proposedActions?.length) {
-            setMessages(prev => prev.map(msg =>
-              msg.id === botMessageId
-                ? { ...msg, proposedActions: endData.proposedActions }
-                : msg
-            ));
+            setMessages(prev => {
+              let attached = false;
+              const byId = prev.map(msg => {
+                if (msg.id === botMessageId) {
+                  attached = true;
+                  return { ...msg, proposedActions: endData.proposedActions };
+                }
+                return msg;
+              });
+
+              if (attached) {
+                return byId;
+              }
+
+              const lastBotIndex = [...byId].reverse().findIndex(msg => !msg.isUser);
+              if (lastBotIndex >= 0) {
+                const targetIndex = byId.length - 1 - lastBotIndex;
+                return byId.map((msg, index) =>
+                  index === targetIndex
+                    ? { ...msg, proposedActions: endData.proposedActions }
+                    : msg
+                );
+              }
+
+              return [
+                ...byId,
+                {
+                  id: botMessageId,
+                  message: '',
+                  isUser: false,
+                  timestamp: new Date().toISOString(),
+                  proposedActions: endData.proposedActions,
+                }
+              ];
+            });
           }
 
           // Refresh conversation list after first message to show new conversation
           if (isCreatingNewConversation) {
             setRefreshConversations(prev => prev + 1);
-            // Keep isCreatingNewConversation = true to maintain current chat screen
-            // Don't set activeConversationId or reset isCreatingNewConversation
           }
         },
         // onError
