@@ -11,6 +11,7 @@ import {
   FaSyncAlt,
 } from "react-icons/fa";
 import { chatService } from "@/features/messages/api/chatService";
+import { formatChatDateTime } from "@/features/messages/utils/chatTime";
 
 export default function MediaPreviewModal({
   isOpen,
@@ -323,9 +324,7 @@ export default function MediaPreviewModal({
                       : "border-white/20"
                     } bg-black`}
                   onClick={() => setCurrentIndex(idx)}
-                  title={new Date(m.sentAt || Date.now()).toLocaleString(
-                    "vi-VN"
-                  )}
+                  title={formatChatDateTime(m.sentAt || Date.now())}
                 >
                   {(m.type || "").toUpperCase() === "IMAGE" ? (
                     <img
@@ -371,15 +370,12 @@ export default function MediaPreviewModal({
                     </span>
                     {(current.sentAt || sentAt) && (
                       <span className="text-gray-300 text-xs">
-                        {new Date(current.sentAt || sentAt).toLocaleString(
-                          "vi-VN",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            day: "2-digit",
-                            month: "2-digit",
-                          }
-                        )}
+                        {formatChatDateTime(current.sentAt || sentAt, {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                        })}
                       </span>
                     )}
                   </div>

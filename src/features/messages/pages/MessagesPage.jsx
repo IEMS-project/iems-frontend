@@ -11,6 +11,7 @@ import EmptyChat from "@/features/messages/components/EmptyChat";
 import ConversationList from "@/features/messages/components/ConversationList";
 import ChatArea from "@/features/messages/components/ChatArea";
 import { toast } from "sonner";
+import { getChatTimeMs } from "@/features/messages/utils/chatTime";
 
 
 // Utility function to generate unique message keys
@@ -408,8 +409,8 @@ function Messages() {
             };
             // Ensure chronological order after append
             const newMessages = [...prev, normalized].sort((a, b) => {
-                const ta = new Date(a.sentAt || a.timestamp).getTime();
-                const tb = new Date(b.sentAt || b.timestamp).getTime();
+                const ta = getChatTimeMs(a.sentAt || a.timestamp);
+                const tb = getChatTimeMs(b.sentAt || b.timestamp);
                 return ta - tb;
             });
             setTimeout(() => scrollToBottom(), 100);
@@ -626,7 +627,7 @@ function Messages() {
                         return conv;
                     });
                     // Sort by updatedAt descending
-                    return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                    return updated.sort((a, b) => getChatTimeMs(b.updatedAt) - getChatTimeMs(a.updatedAt));
                 });
                 console.log('🔄 Reordered conversations by updatedAt');
             }
@@ -1111,8 +1112,8 @@ function Messages() {
 
             if (aPinned && bPinned) {
                 // Both pinned, sort by pinnedAt desc
-                const aPinnedAt = a.pinnedAt ? new Date(a.pinnedAt).getTime() : 0;
-                const bPinnedAt = b.pinnedAt ? new Date(b.pinnedAt).getTime() : 0;
+                const aPinnedAt = getChatTimeMs(a.pinnedAt);
+                const bPinnedAt = getChatTimeMs(b.pinnedAt);
                 return bPinnedAt - aPinnedAt;
             }
 
@@ -1121,14 +1122,14 @@ function Messages() {
             const bLastMsg = b.lastMessage;
 
             if (aLastMsg && bLastMsg) {
-                const aTime = new Date(aLastMsg.sentAt || aLastMsg.timestamp || 0).getTime();
-                const bTime = new Date(bLastMsg.sentAt || bLastMsg.timestamp || 0).getTime();
+                const aTime = getChatTimeMs(aLastMsg.sentAt || aLastMsg.timestamp);
+                const bTime = getChatTimeMs(bLastMsg.sentAt || bLastMsg.timestamp);
                 return bTime - aTime;
             }
 
             // Fallback to updatedAt
-            const aUpdated = new Date(a.updatedAt || 0).getTime();
-            const bUpdated = new Date(b.updatedAt || 0).getTime();
+            const aUpdated = getChatTimeMs(a.updatedAt);
+            const bUpdated = getChatTimeMs(b.updatedAt);
             return bUpdated - aUpdated;
         });
     }, [searchQuery, conversations, currentUserId, uiTick]);
@@ -1513,8 +1514,8 @@ function Messages() {
 
             // Replace entire list with the block only
             setMessages(uniqueBlock.sort((a, b) => {
-                const timeA = new Date(a.sentAt || a.timestamp).getTime();
-                const timeB = new Date(b.sentAt || b.timestamp).getTime();
+                const timeA = getChatTimeMs(a.sentAt || a.timestamp);
+                const timeB = getChatTimeMs(b.sentAt || b.timestamp);
                 return timeA - timeB;
             }));
 
@@ -1555,20 +1556,20 @@ function Messages() {
     async function checkAndFillGaps(targetMessage) {
         try {
             // Find the closest messages before and after the target
-            const targetTime = new Date(targetMessage.sentAt || targetMessage.timestamp).getTime();
+            const targetTime = getChatTimeMs(targetMessage.sentAt || targetMessage.timestamp);
 
             const beforeMessage = messages
-                .filter(m => new Date(m.sentAt || m.timestamp).getTime() < targetTime)
-                .sort((a, b) => new Date(b.sentAt || b.timestamp).getTime() - new Date(a.sentAt || a.timestamp).getTime())[0];
+                .filter(m => getChatTimeMs(m.sentAt || m.timestamp) < targetTime)
+                .sort((a, b) => getChatTimeMs(b.sentAt || b.timestamp) - getChatTimeMs(a.sentAt || a.timestamp))[0];
 
             const afterMessage = messages
-                .filter(m => new Date(m.sentAt || m.timestamp).getTime() > targetTime)
-                .sort((a, b) => new Date(a.sentAt || a.timestamp).getTime() - new Date(b.sentAt || b.timestamp).getTime())[0];
+                .filter(m => getChatTimeMs(m.sentAt || m.timestamp) > targetTime)
+                .sort((a, b) => getChatTimeMs(a.sentAt || a.timestamp) - getChatTimeMs(b.sentAt || b.timestamp))[0];
 
             // If we have both before and after messages, check for gaps
             if (beforeMessage && afterMessage) {
-                const beforeTime = new Date(beforeMessage.sentAt || beforeMessage.timestamp).getTime();
-                const afterTime = new Date(afterMessage.sentAt || afterMessage.timestamp).getTime();
+                const beforeTime = getChatTimeMs(beforeMessage.sentAt || beforeMessage.timestamp);
+                const afterTime = getChatTimeMs(afterMessage.sentAt || afterMessage.timestamp);
                 const timeDiff = afterTime - beforeTime;
 
                 // If there's a significant time gap (more than 5 minutes), fill it
@@ -1596,8 +1597,8 @@ function Messages() {
                         setMessages(prev => {
                             const combined = [...prev, ...gapMessages];
                             return combined.sort((a, b) => {
-                                const timeA = new Date(a.sentAt || a.timestamp).getTime();
-                                const timeB = new Date(b.sentAt || b.timestamp).getTime();
+                                const timeA = getChatTimeMs(a.sentAt || a.timestamp);
+                                const timeB = getChatTimeMs(b.sentAt || b.timestamp);
                                 return timeA - timeB;
                             });
                         });

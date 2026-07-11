@@ -7,6 +7,7 @@ import { chatService } from "@/features/messages/api/chatService";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useTranslation } from "react-i18next";
+import { formatChatDate, getChatTimeMs, parseChatDate } from "@/features/messages/utils/chatTime";
 
 export default function ConversationList({
   conversations,
@@ -59,14 +60,15 @@ export default function ConversationList({
       const aTime = lastMessagesByConv?.current?.[a.id]?.timestamp || a.lastMessage?.sentAt || a.updatedAt || new Date(0);
       const bTime = lastMessagesByConv?.current?.[b.id]?.timestamp || b.lastMessage?.sentAt || b.updatedAt || new Date(0);
 
-      return new Date(bTime).getTime() - new Date(aTime).getTime();
+      return getChatTimeMs(bTime) - getChatTimeMs(aTime);
     });
   }, [searchQuery, conversations, currentUserId, getConversationDisplayName, lastMessagesByConv, uiTick]);
   const showSkeletons = loadingConversations && filteredConversations.length === 0;
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const date = parseChatDate(timestamp);
+    if (!date) return '';
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -83,7 +85,7 @@ export default function ConversationList({
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       return days[date.getDay()];
     }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return formatChatDate(timestamp, { month: 'short', day: 'numeric' }, 'en-US');
   };
 
   const handlePinConversation = async (conversationId, isPinned) => {

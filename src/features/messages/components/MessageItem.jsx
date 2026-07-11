@@ -14,6 +14,7 @@ import {
     Check
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatChatTime } from "@/features/messages/utils/chatTime";
 
 // Simple in-memory cache for file sizes keyed by URL
 const fileSizeCache = new Map();
@@ -548,7 +549,7 @@ export default function MessageItem({
                                                         ? 'text-background/70'
                                                         : 'text-muted-foreground'
                                                     }`}>
-                                                    {new Date(message.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                    {formatChatTime(message.sentAt, { hour: '2-digit', minute: '2-digit' })}
                                                     {message.pinned && (
                                                         <span className="ml-1">📌</span>
                                                     )}

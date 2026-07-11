@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import MessageItem from "./MessageItem";
 import MessageTimestamp from "./MessageTimestamp";
 import { FaChevronDown, FaSpinner } from "react-icons/fa";
+import { getChatTimeMs, isSameLocalDay } from "@/features/messages/utils/chatTime";
 
 function generateMessageKey(message, index) {
   if (message._id) return message._id;
@@ -41,7 +42,7 @@ export default function MessageList({
     if (currentMsg.senderId !== previousMsg.senderId) return false;
 
     // Check if within 5 minutes (300000 ms)
-    const timeDiff = new Date(currentMsg.sentAt) - new Date(previousMsg.sentAt);
+    const timeDiff = getChatTimeMs(currentMsg.sentAt) - getChatTimeMs(previousMsg.sentAt);
     if (timeDiff > 300000) return false; // 5 minutes
 
     return true;
@@ -119,8 +120,8 @@ export default function MessageList({
         if (!previousMsg) {
           showTimestamp = true;
         } else if (m.sentAt && previousMsg.sentAt) {
-          const timeDiff = new Date(m.sentAt) - new Date(previousMsg.sentAt);
-          const diffDays = new Date(m.sentAt).toDateString() !== new Date(previousMsg.sentAt).toDateString();
+          const timeDiff = getChatTimeMs(m.sentAt) - getChatTimeMs(previousMsg.sentAt);
+          const diffDays = !isSameLocalDay(m.sentAt, previousMsg.sentAt);
           showTimestamp = timeDiff > 1800000 || diffDays; // 30 minutes or different day
         }
 

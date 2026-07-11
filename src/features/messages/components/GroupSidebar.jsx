@@ -3,11 +3,12 @@ import Avatar from "@/components/ui/Avatar.jsx";
 import { documentService } from "@/features/documents/api/documentService";
 import { chatService } from "@/features/messages/api/chatService";
 import Skeleton from "@/components/ui/skeleton";
-import { X, Camera, Edit, Bell, BellOff, Trash2, Pin, ChevronDown, Image as ImageIcon, FileText, Link as LinkIcon, Search, Loader2 } from "lucide-react";
+import { X, Camera, Edit, Bell, BellOff, Trash2, Pin, ChevronDown, Image as ImageIcon, FileText, Link as LinkIcon, Search, Loader2, UserMinus } from "lucide-react";
 import MediaPreviewModal from "./MediaPreviewModal";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useTranslation } from "react-i18next";
+import { formatChatDate, formatChatDateTime, formatChatTime, getChatTimeMs, parseChatDate } from "@/features/messages/utils/chatTime";
 
 export default function GroupSidebar({ conversation, currentUserId, getUserName, getUserImage, getUserPremium, onConversationUpdated, onClose, onReplyMessage, onReply, onMessageClick, openSearch = false, onSearchOpened }) {
   const { t } = useTranslation();
@@ -31,6 +32,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
   const [searchPage, setSearchPage] = useState(0);
   const [searchHasMore, setSearchHasMore] = useState(false);
   const [searchTotal, setSearchTotal] = useState(0);
+  const [removingMemberId, setRemovingMemberId] = useState(null);
   // Media & files lazy data
   const [mediaItems, setMediaItems] = useState([]); // {id,url,type,sentAt,senderId}
   const [mediaCursor, setMediaCursor] = useState(null);
@@ -178,7 +180,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
       }
     }
     // Sort newest first
-    collected.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+    collected.sort((a, b) => getChatTimeMs(b.sentAt) - getChatTimeMs(a.sentAt));
     return { items: collected, nextCursor: next, hasMore };
   };
 
@@ -293,19 +295,38 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const date = parseChatDate(timestamp);
+    if (!date) return '';
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      return formatChatTime(timestamp, { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
       return 'Hôm qua';
     } else if (diffDays < 7) {
-      return date.toLocaleDateString('vi-VN', { weekday: 'short' });
+      return formatChatDate(timestamp, { weekday: 'short' });
     } else {
-      return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      return formatChatDate(timestamp, { day: '2-digit', month: '2-digit' });
+    }
+  };
+
+  const handleRemoveMember = async (uid) => {
+    if (!conversation?.id || !uid || uid === currentUserId || !isOwner) return;
+    try {
+      setRemovingMemberId(uid);
+      const updated = await chatService.removeMember(conversation.id, uid);
+      onConversationUpdated?.(updated || {
+        ...conversation,
+        members: (conversation.members || []).filter(memberId => memberId !== uid)
+      });
+      toast.success(t('messages.group.memberRemoved', 'Đã xóa thành viên khỏi nhóm'));
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.message || t('messages.group.removeMemberError', 'Không thể xóa thành viên'));
+    } finally {
+      setRemovingMemberId(null);
     }
   };
 
@@ -325,7 +346,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         const exist = new Set(prev.map(x => x.id));
         const dedup = more.filter(x => !exist.has(x.id));
         const next = [...prev, ...dedup];
-        next.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+        next.sort((a, b) => getChatTimeMs(b.sentAt) - getChatTimeMs(a.sentAt));
         return next;
       });
       setMediaCursor(resp?.nextCursor || null);
@@ -344,7 +365,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
         const exist = new Set(prev.map(x => x.id));
         const dedup = more.filter(x => !exist.has(x.id));
         const next = [...prev, ...dedup];
-        next.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+        next.sort((a, b) => getChatTimeMs(b.sentAt) - getChatTimeMs(a.sentAt));
         return next;
       });
       setFileCursor(resp?.nextCursor || null);
@@ -523,13 +544,13 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                   <div className="grid grid-cols-4 gap-2">
                     {mediaItems.map(im => (
                       im.type === 'VIDEO' ? (
-                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded bg-black" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'VIDEO', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
+                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded bg-black" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'VIDEO', sentAt: im.sentAt, senderId: im.senderId })} title={formatChatDateTime(im.sentAt)}>
                           <video className="w-full h-full object-cover" preload="metadata" muted>
                             <source src={im.url} />
                           </video>
                         </button>
                       ) : (
-                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'IMAGE', sentAt: im.sentAt, senderId: im.senderId })} title={new Date(im.sentAt).toLocaleString('vi-VN')}>
+                        <button key={im.id} className="w-full aspect-square overflow-hidden rounded" onClick={() => setPreviewMedia({ isOpen: true, messageId: im.id, url: im.url, type: 'IMAGE', sentAt: im.sentAt, senderId: im.senderId })} title={formatChatDateTime(im.sentAt)}>
                           <img src={im.url} alt="img" loading="lazy" className="w-full h-full object-cover" />
                         </button>
                       )
@@ -573,7 +594,7 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
                         <FileText className="w-5 h-5 text-foreground" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm truncate text-foreground">{f.name}</div>
-                          <div className="text-xs text-muted-foreground truncate">{new Date(f.sentAt).toLocaleString('vi-VN')}</div>
+                          <div className="text-xs text-muted-foreground truncate">{formatChatDateTime(f.sentAt)}</div>
                         </div>
                       </a>
                     ))}
@@ -622,7 +643,17 @@ export default function GroupSidebar({ conversation, currentUserId, getUserName,
               {members.map(uid => (
                 <div key={uid} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50">
                   <Avatar src={getUserImage(uid)} name={getUserName(uid)} size={10} premium={getUserPremium?.(uid)} />
-                  <div className="text-sm font-medium truncate text-foreground">{getUserName(uid)}</div>
+                  <div className="text-sm font-medium truncate text-foreground flex-1">{getUserName(uid)}</div>
+                  {isOwner && uid !== currentUserId && (
+                    <button
+                      onClick={() => handleRemoveMember(uid)}
+                      disabled={removingMemberId === uid}
+                      className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                      title={t('messages.group.removeMember', 'Xóa thành viên')}
+                    >
+                      {removingMemberId === uid ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserMinus className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,13 +1,15 @@
 import React from "react";
+import { formatChatDate, formatChatTime, parseChatDate } from "@/features/messages/utils/chatTime";
 
 // Format timestamp to show "HH:MM Hôm nay", "HH:MM Hôm qua", etc.
 const formatMessageTimestamp = (date) => {
-    const messageDate = new Date(date);
+    const messageDate = parseChatDate(date);
+    if (!messageDate) return "";
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const timeString = messageDate.toLocaleTimeString('vi-VN', {
+    const timeString = formatChatTime(date, {
         hour: '2-digit',
         minute: '2-digit'
     });
@@ -25,12 +27,12 @@ const formatMessageTimestamp = (date) => {
     // Check if within this week
     const daysAgo = Math.floor((today - messageDate) / (1000 * 60 * 60 * 24));
     if (daysAgo < 7) {
-        const dayName = messageDate.toLocaleDateString('vi-VN', { weekday: 'long' });
+        const dayName = formatChatDate(date, { weekday: 'long' });
         return `${timeString} ${dayName}`;
     }
 
     // Older messages - show date
-    const dateString = messageDate.toLocaleDateString('vi-VN', {
+    const dateString = formatChatDate(date, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'

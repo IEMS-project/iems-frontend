@@ -4,6 +4,7 @@ import Avatar from "@/components/ui/Avatar.jsx";
 import Skeleton from "@/components/ui/skeleton";
 import { FaTimes, FaBookmark } from "react-icons/fa";
 import { Pin } from "lucide-react";
+import { formatChatDate, formatChatTime, parseChatDate } from "@/features/messages/utils/chatTime";
 
 const PinnedMessages = forwardRef(function PinnedMessages({ 
     conversationId, 
@@ -57,19 +58,20 @@ const PinnedMessages = forwardRef(function PinnedMessages({
 
     const formatTime = (timestamp) => {
         if (!timestamp) return '';
-        const date = new Date(timestamp);
+        const date = parseChatDate(timestamp);
+        if (!date) return '';
         const now = new Date();
         const diffMs = now - date;
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         
         if (diffDays === 0) {
-            return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            return formatChatTime(timestamp, { hour: '2-digit', minute: '2-digit' });
         } else if (diffDays === 1) {
             return 'Hôm qua';
         } else if (diffDays < 7) {
-            return date.toLocaleDateString('vi-VN', { weekday: 'short' });
+            return formatChatDate(timestamp, { weekday: 'short' });
         } else {
-            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            return formatChatDate(timestamp, { day: '2-digit', month: '2-digit' });
         }
     };
 

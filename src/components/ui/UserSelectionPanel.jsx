@@ -4,6 +4,19 @@ import Avatar from "./Avatar";
 import Skeleton from "./skeleton";
 import { textColors, bgColors, borderColors, cn } from '@/theme/colors';
 
+const getUserId = (user) => user?.id || user?.userId || user?.accountId || user?._id || user?.uuid;
+const toId = (id) => id == null ? "" : String(id);
+const getDisplayName = (user, fallbackId) => (
+    user?.fullName ||
+    user?.userName ||
+    `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+    user?.email ||
+    user?.userEmail ||
+    fallbackId
+);
+const getEmail = (user) => user?.email || user?.userEmail || "";
+const getImage = (user) => user?.image || user?.userImage || "";
+
 /**
  * UserSelectionPanel - Component UI chung để chọn người dùng
  * Hiển thị danh sách người dùng bên trái và danh sách đã chọn bên phải
@@ -36,8 +49,8 @@ export default function UserSelectionPanel({
     const { t } = useTranslation();
     // Ensure selectedIds is a Set
     const selectedSet = useMemo(() => {
-        if (selectedIds instanceof Set) return selectedIds;
-        return new Set(selectedIds || []);
+        const values = selectedIds instanceof Set ? Array.from(selectedIds) : (selectedIds || []);
+        return new Set(values.map(toId).filter(Boolean));
     }, [selectedIds]);
 
     // Filter users based on query
@@ -45,11 +58,12 @@ export default function UserSelectionPanel({
         const q = query.trim().toLowerCase();
         if (!q) return users;
         return users.filter((u) => {
-            const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
+            const fullName = getDisplayName(u, "");
+            const email = getEmail(u);
             return (
                 fullName.toLowerCase().includes(q) ||
-                (u.email || "").toLowerCase().includes(q) ||
-                (u.id || u.userId || "").toLowerCase().includes(q)
+                email.toLowerCase().includes(q) ||
+                (getUserId(u) || "").toLowerCase().includes(q)
             );
         });
     }, [query, users]);
@@ -57,12 +71,11 @@ export default function UserSelectionPanel({
     // Get list of selected users
     const selectedList = useMemo(() => {
         if (!selectedSet || selectedSet.size === 0) return [];
-        // If preselectedUsers provided, use them directly for display
-        if (preselectedUsers && preselectedUsers.length > 0) {
-            return preselectedUsers.filter(u => selectedSet.has(u.id || u.userId));
-        }
-        // Otherwise, derive from users list
-        const idToUser = new Map(users.map((u) => [u.id || u.userId, u]));
+        const idToUser = new Map();
+        [...(users || []), ...(preselectedUsers || [])].forEach((u) => {
+            const id = toId(getUserId(u));
+            if (id) idToUser.set(id, { ...idToUser.get(id), ...u });
+        });
         return Array.from(selectedSet)
             .map((id) => idToUser.get(id))
             .filter(Boolean);
@@ -100,8 +113,9 @@ export default function UserSelectionPanel({
                 ) : (
                     <>
                         {filtered.map((u) => {
-                            const userId = u.id || u.userId;
-                            const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
+                            const userId = toId(getUserId(u));
+                            const fullName = getDisplayName(u, userId);
+                            const email = getEmail(u);
                             const isChecked = selectedSet.has(userId);
                             return (
                                 <div
@@ -117,16 +131,16 @@ export default function UserSelectionPanel({
                                     />
                                     <Avatar
                                         user={u}
-                                        src={u.image}
-                                        name={fullName || u.email || userId}
+                                        src={getImage(u)}
+                                        name={fullName}
                                         size="sm"
                                     />
                                     <div className="flex-1 min-w-0">
                                         <div className={cn("font-medium truncate", textColors.primary)}>
-                                            {fullName || u.email || userId}
+                                            {fullName}
                                         </div>
                                         <div className={cn("text-sm truncate", textColors.secondary)}>
-                                            {u.email}
+                                            {email}
                                         </div>
                                     </div>
                                 </div>
@@ -147,9 +161,10 @@ export default function UserSelectionPanel({
                 style={{ maxHeight: `${maxHeight}rem` }}
             >
                 {selectedList.map((u) => {
-                    const userId = u.id || u.userId;
-                    const fullName = (u.fullName || `${u.firstName || ""} ${u.lastName || ""}`).trim();
-                    const isCurrentUser = userId === currentUserId;
+                    const userId = toId(getUserId(u));
+                    const fullName = getDisplayName(u, userId);
+                    const email = getEmail(u);
+                    const isCurrentUser = userId === toId(currentUserId);
                     return (
                         <div
                             key={userId}
@@ -157,16 +172,16 @@ export default function UserSelectionPanel({
                         >
                             <Avatar
                                 user={u}
-                                src={u.image}
-                                name={fullName || u.email || userId}
+                                src={getImage(u)}
+                                name={fullName}
                                 size="xs"
                             />
                             <div className="flex flex-col flex-1 min-w-0">
                                 <span className={cn("font-medium truncate", textColors.primary)}>
-                                    {fullName || u.email || userId}
+                                    {fullName}
                                 </span>
                                 <span className={cn("text-sm truncate", textColors.secondary)}>
-                                    {u.email}
+                                    {email}
                                 </span>
                             </div>
                             {!isCurrentUser && (

@@ -7,6 +7,9 @@ import { chatService } from "@/features/messages/api/chatService";
 import { useTranslation } from "react-i18next";
 import { textColors, bgColors, borderColors, cn } from '@/theme/colors';
 
+const getUserId = (user) => user?.id || user?.userId || user?.accountId || user?._id || user?.uuid;
+const toId = (id) => id == null ? "" : String(id);
+
 export default function GroupMembersModal({ open, onClose, conversationId, allUsers = [], currentUserId, onChanged }) {
     const { t } = useTranslation();
     const [members, setMembers] = useState([]);
@@ -23,9 +26,9 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
                 setLoadingMembers(true);
                 const list = await chatService.getConversationMembers(conversationId);
                 setMembers(list || []);
-                const init = new Set((list || []).map(m => m.userId || m.id).filter(Boolean));
+                const init = new Set((list || []).map(m => toId(getUserId(m))).filter(Boolean));
                 // ensure current user stays selected
-                if (currentUserId) init.add(currentUserId);
+                if (currentUserId) init.add(toId(currentUserId));
                 setSelectedIds(init);
             } catch (e) { /* ignore */ }
             finally {
@@ -38,14 +41,15 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
         }
     }, [open, conversationId, currentUserId]);
 
-    const originalMemberIds = useMemo(() => new Set((members || []).map(m => m.userId || m.id)), [members]);
+    const originalMemberIds = useMemo(() => new Set((members || []).map(m => toId(getUserId(m))).filter(Boolean)), [members]);
 
     function toggle(id) {
+        id = toId(id);
         if (!id) return;
         const next = new Set(selectedIds);
         if (next.has(id)) {
             // Keep current user always included
-            if (id !== currentUserId) next.delete(id);
+            if (id !== toId(currentUserId)) next.delete(id);
         } else {
             next.add(id);
         }
@@ -59,7 +63,7 @@ export default function GroupMembersModal({ open, onClose, conversationId, allUs
             // additions: in selected but not in original
             const additions = Array.from(selectedIds).filter(id => !originalMemberIds.has(id));
             // removals: in original but not in selected (cannot remove self)
-            const removals = Array.from(originalMemberIds).filter(id => !selectedIds.has(id) && id !== currentUserId);
+            const removals = Array.from(originalMemberIds).filter(id => !selectedIds.has(id) && id !== toId(currentUserId));
 
             // Apply changes
             for (const uid of additions) {
