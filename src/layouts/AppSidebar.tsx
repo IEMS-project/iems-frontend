@@ -162,8 +162,12 @@ export function AppSidebar() {
               className="h-12 rounded-xl border border-transparent text-sidebar-foreground hover:border-primary/15 hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20">
-                  I
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-background shadow-sm ring-1 ring-sidebar-border">
+                  <img
+                    src="/iems_logo.png"
+                    alt="IEMS"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 {!collapsed && (
                   <div className="flex min-w-0 flex-col">
