@@ -25,9 +25,30 @@ export type Project = {
   startDate: string | null
   endDate: string | null
   managerId: string
+  createdBy?: string
+  createdByAccountId?: string
+  ownerId?: string
   managerName: string
   managerEmail: string
   managerImage: string | null
+}
+
+function normalizeId(value: unknown) {
+  return value == null ? "" : String(value).trim().toLowerCase()
+}
+
+function isProjectOwner(project: Project, currentUserId: unknown) {
+  const current = normalizeId(currentUserId)
+  if (!current) return false
+
+  const ownerIds = [
+    project.managerId,
+    project.ownerId,
+    project.createdBy,
+    project.createdByAccountId,
+  ].map(normalizeId).filter(Boolean)
+
+  return ownerIds.includes(current)
 }
 
 export const columns: ColumnDef<Project>[] = [
@@ -173,6 +194,8 @@ export const columns: ColumnDef<Project>[] = [
     cell: ({ row, table }) => {
       const { t } = useTranslation()
       const project = row.original
+      const currentUserId = (table.options.meta as any)?.currentUserId
+      const canManageProject = isProjectOwner(project, currentUserId)
 
       return (
         <DropdownMenu>
@@ -187,24 +210,28 @@ export const columns: ColumnDef<Project>[] = [
             <DropdownMenuItem asChild>
               <Link to={`/projects/${project.id}/overview`}>{t('projects.actions.view')}</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                const onEdit = (table.options.meta as any)?.onEdit
-                if (onEdit) onEdit(project)
-              }}
-            >
-              {t('projects.actions.edit')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                const onDelete = (table.options.meta as any)?.onDelete
-                if (onDelete) onDelete(project)
-              }}
-              className="text-red-600 focus:text-red-600"
-            >
-              {t('projects.actions.delete')}
-            </DropdownMenuItem>
+            {canManageProject && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const onEdit = (table.options.meta as any)?.onEdit
+                    if (onEdit) onEdit(project)
+                  }}
+                >
+                  {t('projects.actions.edit')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    const onDelete = (table.options.meta as any)?.onDelete
+                    if (onDelete) onDelete(project)
+                  }}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  {t('projects.actions.delete')}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

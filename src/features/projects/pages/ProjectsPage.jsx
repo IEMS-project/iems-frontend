@@ -23,6 +23,7 @@ import { ProjectsDataTable } from "@/features/projects/components/projects-data-
 import CreateProjectModal from "@/features/projects/components/CreateProjectModal";
 import ProjectAvatar from "@/features/projects/components/ProjectAvatar";
 import { hydrateProjectsWithAvatars } from "@/features/projects/utils/projectAvatars";
+import { getStoredTokens } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export default function Projects() {
@@ -45,6 +46,10 @@ export default function Projects() {
         endDate: "",
         status: ""
     });
+    const currentUserId = useMemo(() => {
+        const userInfo = getStoredTokens()?.userInfo || {};
+        return userInfo.accountId || userInfo.userId || userInfo.id || "";
+    }, []);
 
     const expectedDeleteText = useMemo(
         () => deletingProject ? `delete ${deletingProject.name}` : "",
@@ -211,6 +216,7 @@ export default function Projects() {
                             loading={loading}
                             onEdit={handleEditProject}
                             onDelete={handleDeleteProject}
+                            currentUserId={currentUserId}
                         />
                     </CardContent>
                 </Card>

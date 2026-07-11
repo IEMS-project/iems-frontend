@@ -39,6 +39,7 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean
   onEdit?: (data: TData) => void
   onDelete?: (data: TData) => void
+  currentUserId?: string
 }
 
 export function ProjectsDataTable<TData, TValue>({
@@ -47,6 +48,7 @@ export function ProjectsDataTable<TData, TValue>({
   loading = false,
   onEdit,
   onDelete,
+  currentUserId,
 }: DataTableProps<TData, TValue>) {
   const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -71,6 +73,7 @@ export function ProjectsDataTable<TData, TValue>({
     meta: {
       onEdit,
       onDelete,
+      currentUserId,
     },
   })
 
