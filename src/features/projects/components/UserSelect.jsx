@@ -257,7 +257,8 @@ export default function UserSelect({
             {displayList.map((u) => {
               const id = u.userId || u.id;
               const fullName = (u.fullName || `${u.firstName || ''} ${u.lastName || ''}`).trim();
-              const isDisabled = Boolean(u.alreadyMember);
+              const isLocked = u.enabled === false;
+              const isDisabled = Boolean(u.alreadyMember) || isLocked;
               const isChecked = multiple && selectedIds.includes(id);
               return (
                 <div
@@ -274,8 +275,11 @@ export default function UserSelect({
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate text-foreground">{fullName || u.email}</div>
                     <div className="text-sm text-muted-foreground truncate">{u.email}</div>
-                    {isDisabled && (
+                    {u.alreadyMember && (
                       <div className="text-xs text-amber-600 dark:text-amber-400">Already in project</div>
+                    )}
+                    {isLocked && (
+                      <div className="text-xs text-red-500 dark:text-red-400 font-medium">Account is locked</div>
                     )}
                   </div>
                 </div>
