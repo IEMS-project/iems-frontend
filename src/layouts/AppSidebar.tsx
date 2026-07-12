@@ -289,16 +289,16 @@ export function AppSidebar() {
                 ) : (
                   <NavLink
                     to="/premium"
-                    className="group/premium flex w-full items-center gap-3 rounded-xl border border-[#ffd76a]/90 bg-gradient-to-br from-[#fff9df] via-[#ffd85a] to-[#e3a51b] px-2.5 py-2.5 text-sm text-[#3a2403] shadow-sm shadow-[#ffd85a]/35 transition-all hover:border-[#ffe58a] hover:from-[#fffdf0] hover:via-[#ffe16f] hover:to-[#f0b72a] hover:shadow-md hover:shadow-[#ffd85a]/45 dark:border-[#ffe58a]/55 dark:from-[#ffe58a]/30 dark:via-[#f6c236]/30 dark:to-[#8a5a12]/55 dark:text-[#fff7d4]"
+                    className="group/premium flex w-full items-center gap-3 rounded-xl border border-[#ffd76a]/90 bg-gradient-to-br from-[#fff9df] via-[#ffd85a] to-[#e3a51b] px-2.5 py-2.5 text-sm text-[#3a2403] shadow-sm shadow-[#ffd85a]/35 transition-all hover:border-[#ffe58a] hover:from-[#fffdf0] hover:via-[#ffe16f] hover:to-[#f0b72a] hover:shadow-md hover:shadow-[#ffd85a]/45"
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70 text-[#9a640d] shadow-sm ring-1 ring-[#ffe58a]/80 dark:bg-white/14 dark:text-[#ffe58a] dark:ring-[#ffe58a]/35">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/70 text-[#9a640d] shadow-sm ring-1 ring-[#ffe58a]/80">
                       <Crown className="h-4 w-4" />
                     </span>
                     <span className="flex min-w-0 flex-col leading-tight">
                       <span className="truncate text-xs font-semibold">Gói Premium</span>
-                      <span className="truncate text-[11px] text-[#5d3a0a] dark:text-[#ffe9a3]/80">Xem và nâng cấp gói</span>
+                      <span className="truncate text-[11px] text-[#5d3a0a]">Xem và nâng cấp gói</span>
                     </span>
-                    <Sparkles className="ml-auto h-3.5 w-3.5 text-[#9a640d] drop-shadow-sm dark:text-[#ffe58a]" />
+                    <Sparkles className="ml-auto h-3.5 w-3.5 text-[#9a640d] drop-shadow-sm" />
                   </NavLink>
                 )}
               </SidebarMenuItem>

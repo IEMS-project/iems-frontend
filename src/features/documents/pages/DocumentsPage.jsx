@@ -145,13 +145,13 @@ export default function Documents() {
 
   return (
     <div
-      className="flex rounded-2xl bg-[#f8fafd] p-4"
+      className="flex rounded-2xl bg-[#f8fafd] dark:bg-background p-4"
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="border-border min-w-0 flex-1 space-y-4 rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="border-border min-w-0 flex-1 space-y-4 rounded-2xl border bg-white dark:bg-card p-4 shadow-sm">
         {/* Toolbar */}
         <DocumentsToolbar
           onUpload={onUploadFiles}

@@ -89,9 +89,9 @@ export default function DocumentsGrid({
               <div
                 key={item.id}
                 className={cn(
-                  "group relative flex flex-col rounded-xl border border-[#d8e2f0] bg-white p-3 transition-colors hover:border-[#8ab4f8] hover:bg-[#f8fafd]",
-                  selectedItem?.id === item.id && "border-[#8ab4f8] bg-[#edf3fe]",
-                  selectedItems.has(item.id) && "border-[#8ab4f8]"
+                  "group relative flex flex-col rounded-xl border border-[#d8e2f0] dark:border-border bg-white dark:bg-card p-3 transition-colors hover:border-[#8ab4f8] dark:hover:border-primary hover:bg-[#f8fafd] dark:hover:bg-muted/50",
+                  selectedItem?.id === item.id && "border-[#8ab4f8] dark:border-primary bg-[#edf3fe] dark:bg-primary/20",
+                  selectedItems.has(item.id) && "border-[#8ab4f8] dark:border-primary"
                 )}
               >
                 <div className="mb-2 flex items-center justify-between">

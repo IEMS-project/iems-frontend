@@ -76,7 +76,7 @@ export default function DocumentsHeader({
   return (
     <div className="space-y-4">
       {/* Filter Tabs */}
-      <div className="flex items-center justify-between rounded-xl border border-[#e4e8ee] bg-[#f8fafd] px-3 py-2">
+      <div className="flex items-center justify-between rounded-xl border border-[#e4e8ee] dark:border-border bg-[#f8fafd] dark:bg-muted/40 px-3 py-2">
         <div className="flex items-center gap-2 overflow-x-auto">
           <Button
             variant={filterMode === "all" ? "default" : "ghost"}
@@ -123,7 +123,7 @@ export default function DocumentsHeader({
       <div className="flex flex-wrap items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-xl border-[#d0d7e2] bg-white">
+            <Button variant="outline" size="sm" className="rounded-xl border-[#d0d7e2] dark:border-border bg-white dark:bg-secondary/40">
               {t("documents.header.type")}: {getTypeLabel()} <ChevronDownIcon className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -143,7 +143,7 @@ export default function DocumentsHeader({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="max-w-[260px] rounded-xl border-[#d0d7e2] bg-white">
+            <Button variant="outline" size="sm" className="max-w-[260px] rounded-xl border-[#d0d7e2] dark:border-border bg-white dark:bg-secondary/40">
               <span className="truncate">
                 {t("documents.header.owner")}: {selectedOwner?.name || t("documents.header.ownerAll")}
               </span>
@@ -165,7 +165,7 @@ export default function DocumentsHeader({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-xl border-[#d0d7e2] bg-white">
+            <Button variant="outline" size="sm" className="rounded-xl border-[#d0d7e2] dark:border-border bg-white dark:bg-secondary/40">
               {t("documents.header.modified")}: {getModifiedLabel()} <ChevronDownIcon className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -206,11 +206,11 @@ export default function DocumentsHeader({
             placeholder={t('documents.header.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 max-w-xl rounded-full border-[#d0d7e2] bg-[#f8fafd]"
+            className="h-10 max-w-xl rounded-full border-[#d0d7e2] dark:border-border bg-[#f8fafd] dark:bg-[#181d2a]"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-full border-[#d0d7e2] bg-white">
+              <Button variant="outline" size="sm" className="rounded-full border-[#d0d7e2] dark:border-border bg-white dark:bg-secondary/40">
                 {t('documents.header.sort')}: {getSortLabel()} <ChevronDownIcon className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -228,7 +228,7 @@ export default function DocumentsHeader({
           </DropdownMenu>
         </div>
         {/* View Mode Toggle */}
-        <div className="flex items-center rounded-full border border-[#d0d7e2] bg-white p-0.5">
+        <div className="flex items-center rounded-full border border-[#d0d7e2] dark:border-border bg-white dark:bg-[#181d2a] p-0.5">
           <Button
             variant={viewMode === "list" ? "default" : "ghost"}
             size="sm"

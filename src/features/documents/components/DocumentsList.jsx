@@ -68,7 +68,7 @@ export default function DocumentsList({
   return (
     <>
       {/* Table Header */}
-      <div className="flex items-center border-b border-[#dde3ea] bg-[#f8fafd] p-2 text-sm font-medium text-muted-foreground lg:p-4">
+      <div className="flex items-center border-b border-[#dde3ea] dark:border-border bg-[#f8fafd] dark:bg-muted/35 p-2 text-sm font-medium text-muted-foreground lg:p-4">
         <div className="flex min-w-0 items-center space-x-4 flex-1">
           <Checkbox
             checked={selectedItems.size === sortedItems.length && sortedItems.length > 0}
@@ -90,9 +90,9 @@ export default function DocumentsList({
           <div
             key={item.id}
             className={cn(
-              "flex cursor-pointer items-center justify-between border-b border-[#eef2f7] p-2 transition-colors hover:bg-[#f8fafd] lg:p-4",
-              selectedItem?.id === item.id && "bg-[#edf3fe]",
-              selectedItems.has(item.id) && "border-[#8ab4f8] bg-[#edf3fe]"
+              "flex cursor-pointer items-center justify-between border-b border-[#eef2f7] dark:border-border p-2 transition-colors hover:bg-[#f8fafd] dark:hover:bg-muted/30 lg:p-4",
+              selectedItem?.id === item.id && "bg-[#edf3fe] dark:bg-primary/20",
+              selectedItems.has(item.id) && "border-[#8ab4f8] dark:border-primary bg-[#edf3fe] dark:bg-primary/20"
             )}
             onClick={(e) => {
               if (e.ctrlKey || e.metaKey) {

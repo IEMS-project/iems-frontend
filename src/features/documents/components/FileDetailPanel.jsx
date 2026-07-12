@@ -244,8 +244,8 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
     : fallbackActivityItems;
 
   return (
-    <div className="relative w-[360px] flex-shrink-0 border-s border-[#e1e7ef] bg-[#f8fafd]">
-      <div className="sticky top-0 z-10 border-b border-[#e1e7ef] bg-[#f8fafd] px-4 py-3">
+    <div className="relative w-[360px] flex-shrink-0 border-s border-[#e1e7ef] dark:border-border bg-[#f8fafd] dark:bg-card">
+      <div className="sticky top-0 z-10 border-b border-[#e1e7ef] dark:border-border bg-[#f8fafd] dark:bg-card px-4 py-3">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2">
@@ -265,7 +265,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
       </div>
 
       <Tabs defaultValue="details" className="px-4 pb-4 pt-3">
-        <TabsList className="grid h-9 w-full grid-cols-2 bg-white">
+        <TabsList className="grid h-9 w-full grid-cols-2 bg-white dark:bg-muted">
           <TabsTrigger value="details" className="text-xs">
             {t("documents.fileDetail.details")}
           </TabsTrigger>
@@ -276,7 +276,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
 
         <TabsContent value="details" className="space-y-4">
           {/* People with access - Moved to top */}
-          <div className="rounded-xl border border-[#dde3ea] bg-white p-3">
+          <div className="rounded-xl border border-[#dde3ea] dark:border-border bg-white dark:bg-muted/30 p-3">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("documents.fileDetail.peopleWithAccess")}
@@ -295,7 +295,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
             <div className="space-y-2 text-sm">
               {/* Owner */}
               {ownerInfo && (
-                <div className="flex items-center justify-between rounded-lg bg-[#f8fafd] p-2">
+                <div className="flex items-center justify-between rounded-lg bg-[#f8fafd] dark:bg-muted/50 p-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Avatar
                       user={ownerInfo}
@@ -351,7 +351,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#dde3ea] bg-white p-3">
+          <div className="rounded-xl border border-[#dde3ea] dark:border-border bg-white dark:bg-muted/30 p-3">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("documents.fileDetail.overview")}
             </h3>
@@ -391,7 +391,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#dde3ea] bg-white p-3">
+          <div className="rounded-xl border border-[#dde3ea] dark:border-border bg-white dark:bg-muted/30 p-3">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("documents.fileDetail.access")}
             </h3>
@@ -423,7 +423,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
         <TabsContent value="activity" className="space-y-3">
           {activityItems.length > 0 ? (
             activityItems.map((entry) => (
-              <div key={entry.key} className="rounded-xl border border-[#dde3ea] bg-white p-3">
+              <div key={entry.key} className="rounded-xl border border-[#dde3ea] dark:border-border bg-white dark:bg-muted/30 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <span className="text-sm text-foreground">{entry.label}</span>
@@ -439,7 +439,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
               </div>
             ))
           ) : (
-            <div className="rounded-xl border border-[#dde3ea] bg-white p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-[#dde3ea] dark:border-border bg-white dark:bg-muted/30 p-4 text-sm text-muted-foreground">
               <div className="mb-2 flex items-center gap-2">
                 <Clock3 className="h-4 w-4" />
                 {t("documents.fileDetail.noActivity")}
@@ -447,7 +447,7 @@ export default function FileDetailPanel({ selectedItem, currentPath, onClose, on
             </div>
           )}
 
-          <div className="rounded-xl border border-dashed border-[#c9d4e4] bg-white p-3 text-xs text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-[#c9d4e4] dark:border-border bg-white dark:bg-muted/30 p-3 text-xs text-muted-foreground">
             <div className="mb-2 flex items-center gap-2">
               <FolderTree className="h-4 w-4" />
               {t("documents.fileDetail.location")}
