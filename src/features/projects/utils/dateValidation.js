@@ -18,14 +18,22 @@ export function toDateStr(value) {
   ].join("-");
 }
 
-export function validateDates({ startDate, endDate, createdAt, allowPastStart = false } = {}) {
+export function validateDates({ startDate, endDate, dueDate, createdAt, allowPastStart = false } = {}) {
   const today = todayStr();
   const start = toDateStr(startDate);
   const end = toDateStr(endDate);
+  const due = toDateStr(dueDate);
   const created = toDateStr(createdAt);
 
   if (start && !allowPastStart && start < today)
     return "Start date cannot be in the past.";
+
+  if (due) {
+    if (due < today)
+      return "Due date cannot be in the past.";
+    if (created && due < created)
+      return "Due date cannot be before the issue's creation date.";
+  }
 
   if (end) {
     if (end < today)

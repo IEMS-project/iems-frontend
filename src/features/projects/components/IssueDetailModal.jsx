@@ -221,8 +221,10 @@ export default function IssueDetailModal({
       toast.warning("Story Points must be a Fibonacci number (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89)");
       return;
     }
-    const dueDateError = validateDates({ startDate: form.dueDate, createdAt: issue?.createdAt });
-    if (dueDateError) { toast.warning(dueDateError); return; }
+    if (form.dueDate !== (issue.dueDate || "")) {
+      const dueDateError = validateDates({ dueDate: form.dueDate, createdAt: issue?.createdAt });
+      if (dueDateError) { toast.warning(dueDateError); return; }
+    }
 
     const patch = {};
     const description = normalizeRichText(form.description);

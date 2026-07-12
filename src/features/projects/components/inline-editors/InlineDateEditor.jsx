@@ -13,7 +13,7 @@ export default function InlineDateEditor({ value, onSave, anchorEl, onClose, cre
   useEffect(() => {
     function onMD(e) {
       if (ref.current && !ref.current.contains(e.target) && anchorEl && !anchorEl.contains(e.target)) {
-        const err = validateDates({ startDate: val, createdAt });
+        const err = validateDates({ dueDate: val, createdAt });
         if (err) { toast.error(err); }
         else { onSave(val); }
         onClose();
@@ -42,7 +42,7 @@ export default function InlineDateEditor({ value, onSave, anchorEl, onClose, cre
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => {
           if (e.key === "Enter") {
-            const err = validateDates({ startDate: val, createdAt });
+            const err = validateDates({ dueDate: val, createdAt });
             if (err) { toast.error(err); return; }
             onSave(val); onClose();
           }
